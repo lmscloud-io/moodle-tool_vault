@@ -27,3 +27,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['messageprovider:statusupdate'] = 'Status update for Vault - site migration';
 $string['pluginname'] = 'Vault - site migration';
+$string['site restore'] = 'Site restore';
+$string['sitebackup'] = 'Site backup';
+$string['siterestore'] = 'Site restore';

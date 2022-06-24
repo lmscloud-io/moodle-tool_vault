@@ -19,24 +19,20 @@ namespace tool_vault;
 /**
  * The api_test test class.
  *
+ * @covers      \tool_vault\api
  * @package     tool_vault
  * @category    test
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class api_test_test extends \advanced_testcase {
-
-    // Write the tests here as public funcions.
-    // Please refer to {@link https://docs.moodle.org/dev/PHPUnit} for more details on PHPUnit tests in Moodle.
+class api_test extends \advanced_testcase {
 
     /**
      * Dummy test.
      *
      * This is to be replaced by some actually usefule test.
-     *
-     * @coversNothing
      */
     public function test_dummy() {
-        $this->assertTrue(false);
+        $this->assertNotEmpty(\core_component::get_component_directory('tool_vault'));
     }
 }

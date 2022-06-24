@@ -27,6 +27,11 @@ defined('MOODLE_INTERNAL') || die();
 
 $messageproviders = [
 
-    'statusupdate' => array(
-    ),
+    'statusupdate' => [
+        'defaults' => [
+            'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+        ],
+        'capability'  => 'moodle/site:config',
+    ],
 ];
