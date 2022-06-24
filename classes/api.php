@@ -92,12 +92,14 @@ class api {
      * @param string $method
      * @param array $params
      * @param bool $authheader include authentication header
+     * @param string|null $apikey override current api key (used in the validation function)
      * @return mixed
      */
-    public static function api_call(string $endpoint, string $method, array $params = [], bool $authheader = true) {
+    public static function api_call(string $endpoint, string $method, array $params = [],
+                                    bool $authheader = true, ?string $apikey = null) {
         $curl = new \curl();
         if ($authheader) {
-            $curl->setHeader(['X-Api-Key: ' . self::get_api_key()]);
+            $curl->setHeader(['X-Api-Key: ' . ($apikey ?? self::get_api_key())]);
         }
         $curl->setHeader(['Accept: application/json', 'Expect:']);
 
@@ -127,11 +129,12 @@ class api {
         }
 
         $info = $curl->get_info();
+        $error = $curl->error;
         $errno = $curl->get_errno();
         if ($errno || !is_array($info) || $info['http_code'] != 200) {
             // TODO string, display error, etc.
             // @codingStandardsIgnoreLine
-            throw new \moodle_exception('Can not connect to API: '.print_r($info, true));
+            throw new \moodle_exception("Can not connect to API, errno $errno, error '$error': ". $rv."\n". print_r($info, true));
         }
         return json_decode($rv, true);
     }
@@ -200,6 +203,90 @@ class api {
             // TODO process error properly.
             // @codingStandardsIgnoreLine
             throw new \moodle_exception('Could not upload file to backup: '.$res."\n".print_r($info, true));
+        }
+    }
+
+    /**
+     * Validate API key
+     *
+     * @param string $apikey
+     * @return bool
+     */
+    public static function validate_api_key(string $apikey) {
+        try {
+            $result = self::api_call('backups', 'GET', [], true, $apikey);
+        } catch (\moodle_exception $e) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Get a list of all remote backups for this api key
+     *
+     * @return array
+     */
+    public static function get_remote_backups() {
+        $backups = self::api_call('backups', 'GET', []);
+        // TODO change API to return data in different format.
+        $backups = array_map(function($b) {
+            if (!empty($b['metadata'])) {
+                foreach ($b['metadata'] as $k => $v) {
+                    $b[$k] = $v;
+                }
+            }
+            unset($b['metadata']);
+            return $b;
+        }, $backups['backups']);
+        usort($backups, function($a, $b) {
+            return - $a['timecreated'] + $b['timecreated'];
+        });
+        return $backups;
+    }
+
+    /**
+     * Get information about one backup
+     *
+     * @param string $backupkey
+     * @param string|null $withstatus
+     * @return mixed
+     */
+    public static function get_remote_backup(string $backupkey, ?string $withstatus = null) {
+        $result = self::api_call("backups/{$backupkey}", 'GET');
+        if (isset($withstatus) && $result['status'] !== $withstatus) {
+            throw new \moodle_exception('Backup has a wrong status');
+        }
+        return $result;
+    }
+
+    /**
+     * Helper function to format the dates for the backup/restore logs
+     *
+     * @param int $timestamp
+     * @return string
+     */
+    public static function format_date_for_logs(int $timestamp) {
+        return "[".userdate($timestamp, get_string('strftimedatetimeaccurate', 'core_langconfig'))."]";
+    }
+
+    /**
+     * Download backup file
+     *
+     * @param string $backupkey
+     * @param string $filepath
+     * @return void
+     */
+    public static function download_backup_file(string $backupkey, string $filepath) {
+        $filename = basename($filepath);
+        $result = self::api_call("backups/$backupkey/download/$filename", 'get', []);
+        if (empty($result['downloadurl'])) {
+            // TODO string?
+            throw new \moodle_exception('Unable to download backup file');
+        }
+        $curl = new \curl();
+        $result = $curl->download_one($result['downloadurl'], [], ['filepath' => $filepath]);
+        if (!$result) {
+            throw new \moodle_exception('Unable to download backup file');
         }
     }
 }

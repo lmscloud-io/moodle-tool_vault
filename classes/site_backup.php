@@ -126,7 +126,7 @@ class site_backup {
         $now = time();
         $data['timecreated'] = $now;
         $data['timemodified'] = $now;
-        $data['logs'] = "[".userdate($now, get_string('strftimedatetimeaccurate', 'core_langconfig'))."] ".$log."\n";
+        $data['logs'] = api::format_date_for_logs($now)." ".$log."\n";
         $DB->insert_record('tool_vault_backups', (object)$data);
     }
 
@@ -143,14 +143,14 @@ class site_backup {
         $backup = $DB->get_record('tool_vault_backups', ['id' => $id]);
         $data['id'] = $id;
         $now = time();
-        if ($data['statis'] ?? '' === self::STATUS_INPROGRESS && $backup->status === self::STATUS_SCHEDULED) {
+        if ($data['status'] ?? '' === self::STATUS_INPROGRESS && $backup->status === self::STATUS_SCHEDULED) {
             $data['timestarted'] = $now;
         }
-        if ($data['statis'] ?? '' === self::STATUS_FINISHED) {
+        if ($data['status'] ?? '' === self::STATUS_FINISHED) {
             $data['timefinished'] = $now;
         }
         if (in_array($data['statis'] ?? '', [self::STATUS_FAILEDTOSTART, self::STATUS_FAILED])) {
-            $data['timefailes'] = $now;
+            $data['timefailed'] = $now;
         }
         $data['timemodified'] = $now;
         $data['logs'] = $backup->logs."[".userdate($now, get_string('strftimedatetimeaccurate', 'core_langconfig'))."] ".$log."\n";

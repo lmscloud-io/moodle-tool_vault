@@ -17,16 +17,18 @@
 namespace tool_vault\task;
 
 use core\task\adhoc_task;
+use tool_vault\api;
 use tool_vault\site_backup;
+use tool_vault\site_restore;
 
 /**
- * Ad-hoc task for site backup
+ * Ad-hoc task for site restore
  *
  * @package     tool_vault
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class backup_task extends adhoc_task {
+class restore_task extends adhoc_task {
 
     /**
      * Do the job.
@@ -34,18 +36,11 @@ class backup_task extends adhoc_task {
      */
     public function execute() {
         try {
-            $backupkey = site_backup::start_backup();
-        } catch (\Throwable $t) {
-            mtrace("Failed to start backup: ".$t->getMessage());
-            return;
-        }
-
-        $backup = new site_backup($backupkey);
-        try {
-            $backup->execute();
+            $restore = new site_restore();
+            $restore->execute();
         } catch (\Throwable $t) {
             // TODO analyse error, reschedule.
-            mtrace("Failed to execute backup: ".$t->getMessage()."\n".$t->getTraceAsString());
+            mtrace("Failed to restore: ".$t->getMessage()."\n".$t->getTraceAsString());
         }
     }
 
