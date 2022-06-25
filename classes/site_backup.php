@@ -50,6 +50,32 @@ class site_backup {
     }
 
     /**
+     * Should the table be skipped from the backup
+     *
+     * @param \xmldb_table $table
+     * @return bool
+     */
+    public function is_table_skipped(\xmldb_table $table): bool {
+        return preg_match('/^tool_vault[$_]/', strtolower($table->getName()));
+    }
+
+    /**
+     * Should the datadir subfolder be skipped from the backup
+     *
+     * @param string $path relative path under $CFG->datadir
+     * @return bool
+     */
+    public function is_dir_skipped(string $path): bool {
+        return in_array($path, [
+            'cache',
+            'localcache',
+            'temp',
+            'sessions',
+            'trashdir',
+        ]) || preg_match('/^\\./', $path);
+    }
+
+    /**
      * List of all backups performed on this server
      *
      * @param array|null $statuses
@@ -204,20 +230,141 @@ class site_backup {
         $backup = $DB->get_record('tool_vault_backups',
             ['backupkey' => $this->backupkey, 'status' => self::STATUS_INPROGRESS], '*', MUST_EXIST);
 
-        // TODO.
-        $tempdir = make_request_directory();
-        $filename = 'dbdump.sql';
-        $filepath = $tempdir.DIRECTORY_SEPARATOR.$filename;
-        $fh = fopen($filepath, 'w+');
-        // TODO error handling if empty($fh).
-        fwrite($fh, 'hello');
-        fclose($fh);
+        $filepath = $this->export_db('dbdumb.zip');
+        api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
 
-        api::upload_backup_file($this->backupkey, $filepath, 'text/plain');
+        $filepath = $this->export_dataroot('dataroot.zip');
+        api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
 
         api::api_call("backups/{$this->backupkey}", 'PATCH', ['status' => 'finished']);
         self::update_backup($backup->id, ['status' => self::STATUS_FINISHED], 'Backup finished');
 
         // TODO notify user, register in our config.
+    }
+
+    /** @var \xmldb_table[] */
+    protected $alltables = null;
+
+    /**
+     * Retrieve the lisf of tables in this moodle instance
+     *
+     * @return \xmldb_table[]
+     */
+    public function get_all_tables() {
+        global $CFG;
+        require_once($CFG->dirroot.'/lib/adminlib.php');
+        if ($this->alltables !== null) {
+            return $this->alltables;
+        }
+
+        $this->alltables = [];
+        $dbdirs = get_db_directories();
+
+        foreach ($dbdirs as $dbdir) {
+            $xmldbfile = new \xmldb_file($dbdir.'/install.xml');
+            if ($xmldbfile->fileExists()) {
+                $loaded = $xmldbfile->loadXMLStructure();
+                $structure = $xmldbfile->getStructure();
+
+                if ($loaded && ($plugintables = $structure->getTables())) {
+                    foreach ($plugintables as $table) {
+                        $this->alltables[strtolower($table->getName())] = $table;
+                    }
+                }
+            }
+        }
+
+        return $this->alltables;
+    }
+
+    /**
+     * Exports one database table
+     *
+     * @param \xmldb_table $table
+     * @param string $filepath
+     * @return void
+     */
+    public function export_table(\xmldb_table $table, string $filepath) {
+        global $DB;
+        $fields = array_map(function(\xmldb_field $f) {
+            return $f->getName();
+        }, $table->getFields());
+        $sortby = in_array('id', $fields) ? 'id' : reset($fields);
+        $fieldslist = join(',', $fields);
+
+        $fp = fopen($filepath, 'w');
+        fwrite($fp, "[\n" . json_encode($fields));
+        $rs = $DB->get_recordset($table->getName(), [], $sortby, $fieldslist);
+        foreach ($rs as $record) {
+            fwrite($fp, ",\n".json_encode(array_values((array)$record)));
+        }
+        $rs->close();
+        fwrite($fp, "\n]");
+        fclose($fp);
+    }
+
+    /**
+     * Exports the whole moodle database
+     *
+     * @param string $exportfilename
+     * @return string path to the zip file with the export
+     */
+    public function export_db(string $exportfilename) {
+        $dir = make_temp_directory('dbdump');
+        $tables = $this->get_all_tables();
+        $tables = array_filter($tables, function($table) {
+            return !$this->is_table_skipped($table);
+        });
+
+        foreach ($tables as $table => $tableobj) {
+            $filepath = $dir.DIRECTORY_SEPARATOR.$table.'.json';
+            $this->export_table($tableobj, $filepath);
+        }
+
+        $zipfilepath = $dir.DIRECTORY_SEPARATOR.$exportfilename;
+        $ziparchive = new \zip_archive();
+        if ($ziparchive->open($zipfilepath, \file_archive::CREATE)) {
+            foreach ($tables as $table => $tableobj) {
+                $ziparchive->add_file_from_pathname($table.'.json', $dir.DIRECTORY_SEPARATOR.$table.'.json');
+            }
+            $ziparchive->close();
+        } else {
+            // TODO?
+            throw new \moodle_exception('Can not create ZIP file');
+        }
+
+        foreach ($tables as $table => $tableobj) {
+            $filepath = $dir . DIRECTORY_SEPARATOR . $table . '.json';
+            unlink($filepath);
+        }
+
+        return $zipfilepath;
+    }
+
+    /**
+     * Export $CFG->dataroot
+     *
+     * @param string $exportfilename
+     * @return string path to the zip file with the export
+     */
+    public function export_dataroot(string $exportfilename) {
+        global $CFG;
+        $handle = opendir($CFG->dataroot);
+        $files = [];
+        while (($file = readdir($handle)) !== false) {
+            if (!$this->is_dir_skipped($file)) {
+                $files[$file] = $CFG->dataroot . DIRECTORY_SEPARATOR . $file;
+            }
+        }
+        closedir($handle);
+
+        $zipfilepath = make_temp_directory('datarootdump').DIRECTORY_SEPARATOR.$exportfilename;
+        $zippacker = new \zip_packer();
+        // TODO use progress somehow?
+        if (!$zippacker->archive_to_pathname($files, $zipfilepath)) {
+            // TODO?
+            throw new \moodle_exception('Failed to create dataroot archive');
+        }
+        return $zipfilepath;
     }
 }

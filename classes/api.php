@@ -66,7 +66,7 @@ class api {
      * @param string $value
      * @return void
      */
-    public static function store_config(string $name, string $value) {
+    public static function store_config(string $name, ?string $value) {
         global $DB;
         if ($record = $DB->get_record('tool_vault_config', ['name' => $name])) {
             $DB->update_record('tool_vault_config', ['id' => $record->id, 'value' => $value]);
