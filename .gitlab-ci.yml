@@ -1,7 +1,7 @@
 image: moodlehq/moodle-php-apache:7.4
 
 services:
-  - postgres:9.6
+  - postgres:10
   #- mysql:5.7.26
   - name: selenium/standalone-chrome:3
     alias: selenium-standalone-chrome
@@ -77,6 +77,5 @@ lms:
     - vendor/bin/phpunit --fail-on-risky --disallow-test-output --testsuite tool_dataprivacy_testsuite --filter metadata_registry_test
     - vendor/bin/phpunit --fail-on-risky --disallow-test-output --testsuite core_testsuite --filter test_all_external_info
     #- vendor/bin/phpunit --fail-on-risky --disallow-test-output --testsuite core_privacy_testsuite --filter provider_test
-    - moodle-plugin-ci phpunit --coverage-text
     - moodle-plugin-ci phpunit
     - moodle-plugin-ci behat --suite default --profile chrome

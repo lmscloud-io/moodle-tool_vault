@@ -50,6 +50,18 @@ class site_restore {
     }
 
     /**
+     * Should the datadir subfolder be skipped and not deleted during restore
+     *
+     * @param string $path relative path under $CFG->datadir
+     * @return bool
+     */
+    public function is_dir_skipped(string $path): bool {
+        return in_array($path, [
+                '__vault_restore__'
+            ]) || preg_match('/^\\./', $path);
+    }
+
+    /**
      * Schedule restore
      *
      * @param string $backupkey
@@ -124,21 +136,190 @@ class site_restore {
 
         // Download files.
         $tempdir = make_request_directory();
-        $filename = 'dbdump.sql';
-        $filepath = $tempdir.DIRECTORY_SEPARATOR.$filename;
+        $filename1 = 'dbdump.zip';
+        $filename2 = 'dataroot.zip';
+        $filepath1 = $tempdir.DIRECTORY_SEPARATOR.$filename1;
+        $filepath2 = $tempdir.DIRECTORY_SEPARATOR.$filename2;
 
         try {
-            mtrace("Downloading file $filename ...");
-            api::download_backup_file($this->restore->backupkey, $filepath);
-            mtrace(file_get_contents($filepath));
+            mtrace("Downloading file $filename1 ...");
+            api::download_backup_file($this->restore->backupkey, $filepath1);
         } catch (\Throwable $t) {
             mtrace($t->getMessage());
-            $this->update_restore(['status' => self::STATUS_FAILED], 'Could not download file '.basename($filepath));
+            $this->update_restore(['status' => self::STATUS_FAILED], 'Could not download file '.$filename1);
             return;
         }
 
-        // TODO.
+        try {
+            mtrace("Downloading file $filename2 ...");
+            api::download_backup_file($this->restore->backupkey, $filepath2);
+        } catch (\Throwable $t) {
+            mtrace($t->getMessage());
+            $this->update_restore(['status' => self::STATUS_FAILED], 'Could not download file '.$filename2);
+            return;
+        }
+
+        $dbfiles = $this->prepare_restore_db($filepath1);
+        $datarootfiles = $this->prepare_restore_dataroot($filepath2);
+        unlink($filepath1);
+        unlink($filepath2);
+
+        $this->restore_db($dbfiles);
+        $this->restore_dataroot($datarootfiles);
+        // TODO more logging.
 
         $this->update_restore(['status' => self::STATUS_FINISHED], 'Restore finished');
+
+        $this->post_restore();
+    }
+
+    /**
+     * Prepare to restore db
+     *
+     * @param string $filepath
+     * @return array
+     */
+    public function prepare_restore_db(string $filepath) {
+        $temppath = make_temp_directory('dbdump');
+        $zippacker = new \zip_packer();
+        $zippacker->extract_to_pathname($filepath, $temppath);
+
+        $handle = opendir($temppath);
+        $files = [];
+        while (($file = readdir($handle)) !== false) {
+            if (!preg_match('/^\\./', $file)) {
+                $p = pathinfo($file);
+                $files[$p['filename']] = $temppath.DIRECTORY_SEPARATOR.$file;
+            }
+        }
+        closedir($handle);
+
+        // TODO do all the checks that all tables exist and have necessary fields.
+
+        return $files;
+    }
+
+    /**
+     * Prepare to restore dataroot
+     *
+     * @param string $filepath
+     * @return array
+     */
+    public function prepare_restore_dataroot(string $filepath) {
+        global $CFG;
+        $temppath = $CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__';
+        $this->remove_recursively($temppath);
+        make_writable_directory($temppath);
+        $zippacker = new \zip_packer();
+        $zippacker->extract_to_pathname($filepath, $temppath);
+
+        $handle = opendir($temppath);
+        $files = [];
+        while (($file = readdir($handle)) !== false) {
+            if (!preg_match('/^\\./', $file)) {
+                $files[$file] = $temppath.DIRECTORY_SEPARATOR.$file;
+            }
+        }
+        closedir($handle);
+        return $files;
+    }
+
+    /**
+     * Restore db
+     *
+     * @param array $files
+     * @return void
+     */
+    public function restore_db(array $files) {
+        global $DB;
+        foreach ($files as $tablename => $path) {
+            $data = json_decode(file_get_contents($path));
+            $DB->execute('TRUNCATE TABLE {'.$tablename.'}');
+            if ($data) {
+                $fields = array_shift($data);
+                foreach ($data as $row) {
+                    $DB->insert_record_raw($tablename, array_combine($fields, $row), false, true, true);
+                }
+                $this->seq($tablename);
+            }
+        }
+    }
+
+    /**
+     * Fix sequence on db table
+     *
+     * for postgres: https://stackoverflow.com/questions/244243/how-to-reset-postgres-primary-key-sequence-when-it-falls-out-of-sync
+     *
+     * @param string $tablename
+     * @return void
+     */
+    public function seq(string $tablename) {
+        global $DB;
+        $prefix = $DB->get_prefix();
+        try {
+            $DB->execute("SELECT setval('{$prefix}{$tablename}_id_seq', ".
+                "COALESCE((SELECT MAX(id)+1 FROM {$prefix}{$tablename}), 1), false)");
+        } catch (\Throwable $t) {
+            mtrace("- failed to set seq for table $tablename: ".$t->getMessage());
+        }
+    }
+
+    /**
+     * Restore dataroot
+     *
+     * @param array $files
+     * @return void
+     */
+    public function restore_dataroot(array $files) {
+        global $CFG;
+        $handle = opendir($CFG->dataroot);
+        while (($file = readdir($handle)) !== false) {
+            if (!$this->is_dir_skipped($file)) {
+                $this->remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.$file);
+            }
+        }
+        closedir($handle);
+
+        foreach ($files as $file => $path) {
+            rename($path, $CFG->dataroot.DIRECTORY_SEPARATOR.$file);
+        }
+
+        $this->remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__');
+    }
+
+    /**
+     * Post restore
+     *
+     * @return void
+     */
+    public function post_restore() {
+        purge_all_caches();
+    }
+
+    /**
+     * Remove directory recursively
+     *
+     * @param string $dir
+     * @return void
+     */
+    public function remove_recursively(string $dir) {
+        if (!file_exists($dir)) {
+            return;
+        }
+        if (!is_dir($dir)) {
+            unlink($dir);
+            return;
+        }
+        $it = new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS);
+        $files = new \RecursiveIteratorIterator($it,
+            \RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($files as $file) {
+            if ($file->isDir()) {
+                rmdir($file->getRealPath());
+            } else {
+                unlink($file->getRealPath());
+            }
+        }
+        rmdir($dir);
     }
 }

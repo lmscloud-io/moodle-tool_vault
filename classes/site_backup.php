@@ -67,12 +67,13 @@ class site_backup {
      */
     public function is_dir_skipped(string $path): bool {
         return in_array($path, [
-            'cache',
-            'localcache',
-            'temp',
-            'sessions',
-            'trashdir',
-        ]) || preg_match('/^\\./', $path);
+                'cache',
+                'localcache',
+                'temp',
+                'sessions',
+                'trashdir',
+                '__vault_restore__'
+            ]) || preg_match('/^\\./', $path);
     }
 
     /**
@@ -230,7 +231,7 @@ class site_backup {
         $backup = $DB->get_record('tool_vault_backups',
             ['backupkey' => $this->backupkey, 'status' => self::STATUS_INPROGRESS], '*', MUST_EXIST);
 
-        $filepath = $this->export_db('dbdumb.zip');
+        $filepath = $this->export_db('dbdump.zip');
         api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
 
         $filepath = $this->export_dataroot('dataroot.zip');
