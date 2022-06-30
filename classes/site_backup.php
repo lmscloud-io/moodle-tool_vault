@@ -16,6 +16,8 @@
 
 namespace tool_vault;
 
+use tool_vault\local\xmldb\dbstructure;
+use tool_vault\local\xmldb\dbtable;
 use tool_vault\task\backup_task;
 
 /**
@@ -52,11 +54,11 @@ class site_backup {
     /**
      * Should the table be skipped from the backup
      *
-     * @param \xmldb_table $table
+     * @param dbtable $table
      * @return bool
      */
-    public function is_table_skipped(\xmldb_table $table): bool {
-        return preg_match('/^tool_vault[$_]/', strtolower($table->getName()));
+    public function is_table_skipped(dbtable $table): bool {
+        return preg_match('/^tool_vault[$_]/', strtolower($table->get_xmldb_table()->getName()));
     }
 
     /**
@@ -243,59 +245,39 @@ class site_backup {
         // TODO notify user, register in our config.
     }
 
-    /** @var \xmldb_table[] */
-    protected $alltables = null;
+    /** @var dbstructure */
+    protected $dbstructure = null;
 
     /**
      * Retrieve the lisf of tables in this moodle instance
      *
-     * @return \xmldb_table[]
+     * @return dbtable[]
      */
     public function get_all_tables() {
-        global $CFG;
-        require_once($CFG->dirroot.'/lib/adminlib.php');
-        if ($this->alltables !== null) {
-            return $this->alltables;
+        if ($this->dbstructure === null) {
+            $this->dbstructure = dbstructure::create_from_actual_db();
         }
-
-        $this->alltables = [];
-        $dbdirs = get_db_directories();
-
-        foreach ($dbdirs as $dbdir) {
-            $xmldbfile = new \xmldb_file($dbdir.'/install.xml');
-            if ($xmldbfile->fileExists()) {
-                $loaded = $xmldbfile->loadXMLStructure();
-                $structure = $xmldbfile->getStructure();
-
-                if ($loaded && ($plugintables = $structure->getTables())) {
-                    foreach ($plugintables as $table) {
-                        $this->alltables[strtolower($table->getName())] = $table;
-                    }
-                }
-            }
-        }
-
-        return $this->alltables;
+        return $this->dbstructure->get_tables();
     }
 
     /**
      * Exports one database table
      *
-     * @param \xmldb_table $table
+     * @param dbtable $table
      * @param string $filepath
      * @return void
      */
-    public function export_table(\xmldb_table $table, string $filepath) {
+    public function export_table(dbtable $table, string $filepath) {
         global $DB;
         $fields = array_map(function(\xmldb_field $f) {
             return $f->getName();
-        }, $table->getFields());
+        }, $table->get_xmldb_table()->getFields());
         $sortby = in_array('id', $fields) ? 'id' : reset($fields);
         $fieldslist = join(',', $fields);
 
         $fp = fopen($filepath, 'w');
         fwrite($fp, "[\n" . json_encode($fields));
-        $rs = $DB->get_recordset($table->getName(), [], $sortby, $fieldslist);
+        $rs = $DB->get_recordset($table->get_xmldb_table()->getName(), [], $sortby, $fieldslist);
         foreach ($rs as $record) {
             fwrite($fp, ",\n".json_encode(array_values((array)$record)));
         }

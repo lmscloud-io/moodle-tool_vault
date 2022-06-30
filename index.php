@@ -51,7 +51,7 @@ if (!$isregistered) {
 echo $OUTPUT->header();
 
 if ($isregistered) {
-    echo html_writer::div("Your API key: ..." . substr(\tool_vault\api::get_api_key(), -8));
+    echo html_writer::div("Your API key: " . \tool_vault\api::get_api_key());
     // TODO allow to ditch the old API key and create/enter a new one.
 } else {
     $form->display();

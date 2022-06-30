@@ -16,8 +16,6 @@
 
 namespace tool_vault;
 
-use core_admin\local\settings\filesize;
-
 /**
  * The site_backup_test test class.
  *
