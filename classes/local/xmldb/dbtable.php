@@ -16,7 +16,9 @@
 
 namespace tool_vault\local\xmldb;
 
-use core\check\performance\debugging;
+use xmldb_index;
+use xmldb_key;
+use xmldb_table;
 
 /**
  * Stores information about one DB table - either from definitions or from actual db
@@ -28,14 +30,18 @@ use core\check\performance\debugging;
 class dbtable {
     /** @var \xmldb_table */
     protected $xmldbtable;
+    /** @var dbstructure */
+    protected $structure;
 
     /**
      * Constructor
      *
      * @param \xmldb_table $table
+     * @param dbstructure $structure
      */
-    public function __construct(\xmldb_table $table) {
+    public function __construct(\xmldb_table $table, dbstructure $structure) {
         $this->xmldbtable = $table;
+        $this->structure = $structure;
     }
 
     /**
@@ -43,7 +49,7 @@ class dbtable {
      *
      * @return \xmldb_table
      */
-    public function get_xmldb_table() {
+    public function get_xmldb_table(): xmldb_table {
         return $this->xmldbtable;
     }
 
@@ -54,7 +60,7 @@ class dbtable {
      * @param \xmldb_field $field
      * @return string
      */
-    protected function get_field_sql(\xmldb_table $table, \xmldb_field $field) {
+    public function get_field_sql(\xmldb_table $table, \xmldb_field $field) {
         global $DB;
         if ($error = $field->validateDefinition($table)) {
             // TODO do something here, otherwise getFieldSQL throws an exception.
@@ -122,5 +128,298 @@ class dbtable {
         }
         sort($sqls, SORT_STRING);
         return array_values(array_unique($sqls));
+    }
+
+    /**
+     * Removes all comments from the table, fields, indexes and keys
+     *
+     * @return void
+     */
+    public function remove_all_comments() {
+        $this->get_xmldb_table()->setComment(null);
+        foreach ($this->get_xmldb_table()->getFields() as $field) {
+            $field->setComment(null);
+        }
+        foreach ($this->get_xmldb_table()->getIndexes() as $index) {
+            $index->setComment(null);
+            $index->setHints([]);
+        }
+        foreach ($this->get_xmldb_table()->getKeys() as $key) {
+            $key->setComment(null);
+        }
+    }
+
+    /**
+     * Fixes fields sort order
+     */
+    public function lookup_fields() {
+        if (!$deftable = $this->structure->find_table_definition($this->get_xmldb_table()->getName())) {
+            return;
+        }
+        $actualfields = $this->get_xmldb_table()->getFields();
+        $deffields = $deftable->get_xmldb_table()->getFields();
+        $newfields = [];
+        // Fix fields order.
+        foreach ($deffields as $i => $deffield) {
+            foreach ($actualfields as $f => $afield) {
+                if ($deffield->getName() === $afield->getName()) {
+                    $newfields[] = $afield;
+                    unset($actualfields[$f]);
+                    unset($deffields[$i]);
+                }
+            }
+        }
+        $this->replace_in_table(array_merge($newfields, array_values($actualfields)));
+    }
+
+    /**
+     * Fixes indexes/keys and their sortorder
+     *
+     * DB scanning mixes up keys and indexes, for example, the index is created from a foreign key definition
+     * and also in mysql a key is created if there was a unique index.
+     */
+    public function lookup_indexes() {
+        if (!$deftable = $this->structure->find_table_definition($this->get_xmldb_table()->getName())) {
+            return;
+        }
+        $defindexes = $deftable->get_xmldb_table()->getIndexes();
+        $defkeys = $deftable->get_xmldb_table()->getKeys();
+        $actualindexes = $this->get_xmldb_table()->getIndexes();
+        $actualkeys = $this->get_xmldb_table()->getKeys();
+        $newkeys = [];
+        $newindexes = [];
+
+        foreach ($defkeys as $k => $defkey) {
+            foreach ($actualkeys as $i => $key) {
+                if ($this->compare_keys_and_indexes($key, $defkey)) {
+                    $newkeys[] = $defkey;
+                    unset($defkeys[$k]);
+                    unset($actualkeys[$i]);
+                    continue 2;
+                }
+            }
+            foreach ($actualindexes as $i => $index) {
+                if ($this->compare_keys_and_indexes($index, $defkey)) {
+                    $newkeys[] = $defkey;
+                    unset($defkeys[$k]);
+                    unset($actualindexes[$i]);
+                    continue 2;
+                }
+            }
+            // TODO def key not found.
+        }
+
+        foreach ($defindexes as $k => $defindex) {
+            foreach ($actualindexes as $i => $index) {
+                if ($this->compare_keys_and_indexes($index, $defindex)) {
+                    $newindexes[] = $defindex;
+                    unset($defindexes[$k]);
+                    unset($actualindexes[$i]);
+                    continue 2;
+                }
+            }
+            foreach ($actualkeys as $i => $key) {
+                if ($this->compare_keys_and_indexes($key, $defindex)) {
+                    $newindexes[] = $defindex;
+                    unset($defindexes[$k]);
+                    unset($actualkeys[$i]);
+                    continue 2;
+                }
+            }
+            // TODO def index not found.
+        }
+
+        // Remove duplicates.
+        foreach ($actualkeys as $k => $actualkey) {
+            foreach (array_merge($newkeys, $newindexes) as $obj) {
+                if ($this->compare_keys_and_indexes($obj, $actualkey)) {
+                    unset($actualkeys[$k]);
+                    continue 2;
+                }
+            }
+        }
+        foreach ($actualindexes as $k => $actualindex) {
+            foreach (array_merge($newkeys, $newindexes) as $obj) {
+                if ($this->compare_keys_and_indexes($obj, $actualindex)) {
+                    unset($actualindexes[$k]);
+                    continue 2;
+                }
+            }
+        }
+
+        $this->replace_in_table(null,
+            array_merge($newkeys, array_values($actualkeys)),
+            array_merge($newindexes, array_values($actualindexes)));
+    }
+
+    /**
+     * Returns if two objects (xmldb_index/xmldb_key) are identical
+     *
+     * Compares the list of fields and uniqueness. Moodle does not have foreign keys, it creates
+     * indexes instead.
+     *
+     * @param \xmldb_object $o1
+     * @param \xmldb_object $o2
+     * @return bool
+     */
+    protected function compare_keys_and_indexes(\xmldb_object $o1, \xmldb_object $o2): bool {
+        if (!in_array(get_class($o1), [xmldb_index::class, xmldb_key::class]) ||
+            !in_array(get_class($o2), [xmldb_index::class, xmldb_key::class])) {
+            throw new \coding_exception('Each argument must be either xmldb_index or xmldb_key');
+        }
+        $f1 = join(',', $o1->getFields());
+        $f2 = join(',', $o1->getFields());
+        if ($f1 !== $f2) {
+            return false;
+        }
+        $isunique = function(\xmldb_object $o) {
+            return ($o instanceof xmldb_key && (
+                $o->getType() == XMLDB_KEY_FOREIGN_UNIQUE || $o->getType() == XMLDB_KEY_UNIQUE
+                )) ||
+                ($o instanceof xmldb_index && $o->getUnique());
+        };
+        if ($isunique($o1) != $isunique($o2)) {
+            return false;
+        }
+        $isprimary = function(\xmldb_object $o) {
+            return $o instanceof xmldb_key && $o->getType() == XMLDB_KEY_PRIMARY;
+        };
+        if ($isprimary($o1) != $isprimary($o2)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Replace fields, keys and/or indexes in this table.
+     *
+     * @param \xmldb_field[] $fields
+     * @param \xmldb_key[] $keys
+     * @param \xmldb_index[] $indexes
+     * @return void
+     */
+    protected function replace_in_table(?array $fields = null, ?array $keys = null, ?array $indexes = null) {
+        if ($fields === null) {
+            $fields = $this->get_xmldb_table()->getFields();
+        }
+        if ($keys === null) {
+            $keys = $this->get_xmldb_table()->getKeys();
+        }
+        if ($indexes === null) {
+            $indexes = $this->get_xmldb_table()->getIndexes();
+        }
+        $table = new \xmldb_table($this->get_xmldb_table()->getName());
+        foreach ($fields as $field) {
+            $field->setPrevious(null);
+            $field->setNext(null);
+            $table->addField($field);
+        }
+        foreach ($keys as $key) {
+            $key->setPrevious(null);
+            $key->setNext(null);
+            $table->addKey($key);
+        }
+        foreach ($indexes as $index) {
+            $index->setPrevious(null);
+            $index->setNext(null);
+            $table->addIndex($index);
+        }
+        $this->xmldbtable = $table;
+    }
+
+    /**
+     * Loads the table from the actual table in the db
+     *
+     * @param string $tablename
+     * @param dbstructure $structure
+     * @return static
+     */
+    public static function create_from_actual_db(string $tablename, dbstructure $structure): self {
+        global $DB;
+        $xmldbtable = new \xmldb_table($tablename);
+        // Get fields info from ADODb.
+        $dbfields = $DB->get_columns($tablename);
+        if ($dbfields) {
+            foreach ($dbfields as $dbfield) {
+                $deftable = $structure->find_table_definition($tablename);
+                $xmldbtable->addField(database_column_info::clone_from($dbfield)->to_xmldb_field($deftable));
+            }
+        }
+        $table = new self($xmldbtable, $structure);
+        if ($DB->get_dbfamily() === 'postgres') {
+            $table->retrieve_keys_and_indexes_postgres();
+        } else {
+            $table->retrieve_keys_and_indexes_mysql();
+        }
+        return $table;
+    }
+
+    /**
+     * Retrieves all keys and indexes defined in the current MySQL database
+     */
+    protected function retrieve_keys_and_indexes_mysql() {
+        global $DB, $CFG;
+        $table = $this->get_xmldb_table();
+        $tableparam = $table->getName();
+        // Get PK, UK and indexes info from ADODb.
+        $result = $DB->get_recordset_sql('SHOW INDEXES FROM '.$CFG->prefix.$tableparam);
+        $dbindexes = [];
+        foreach ($result as $res) {
+            if (!isset($dbindexes[$res->key_name])) {
+                $dbindexes[$res->key_name] = ['unique' => empty($res->non_unique), 'columns' => []];
+            }
+            $dbindexes[$res->key_name]['columns'][$res->seq_in_index - 1] = $res->column_name;
+        }
+        $result->close();
+        if ($dbindexes) {
+            foreach ($dbindexes as $indexname => $dbindex) {
+                // Add the indexname to the array.
+                $dbindex['name'] = $indexname;
+                // We are handling one xmldb_key (primaries + uniques).
+                if ($dbindex['unique']) {
+                    $key = new xmldb_key(strtolower($dbindex['name']));
+                    // Set key with info retrofitted.
+                    $key->setFromADOKey($dbindex);
+                    // Add key to the table.
+                    $table->addKey($key);
+
+                    // We are handling one xmldb_index (non-uniques).
+                } else {
+                    $index = new xmldb_index(strtolower($dbindex['name']));
+                    // Set index with info retrofitted.
+                    $index->setFromADOIndex($dbindex);
+                    // Add index to the table.
+                    $table->addIndex($index);
+                }
+            }
+        }
+    }
+
+    /**
+     * Retrieves all keys and indexes defined in the current Postgres database
+     */
+    protected function retrieve_keys_and_indexes_postgres() {
+        global $DB;
+        $table = $this->get_xmldb_table();
+        $tableparam = $table->getName();
+        // Get PK, UK and indexes info from ADODb.
+        $dbindexes = $DB->get_indexes($tableparam);
+        if ($dbindexes) {
+            foreach ($dbindexes as $indexname => $dbindex) {
+                // Add the indexname to the array.
+                $dbindex['name'] = $indexname;
+                $index = new xmldb_index(strtolower($dbindex['name']));
+                // Set index with info retrofitted.
+                $index->setFromADOIndex($dbindex);
+                $index->setUnique((bool)$dbindex['unique']);
+                // Add index to the table.
+                $table->addIndex($index);
+            }
+        }
+
+        if ($primarykey = $this->structure->retrieve_primary_keys_postgres()[$tableparam] ?? null) {
+            $table->addKey(new xmldb_key($primarykey->keyname, XMLDB_KEY_PRIMARY, [$primarykey->columnname]));
+        }
     }
 }

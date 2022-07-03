@@ -19,28 +19,31 @@ namespace tool_vault\local\xmldb;
 /**
  * The site_backup_test test class.
  *
- * @covers      \tool_vault\site_backup
+ * @covers      \tool_vault\local\xmldb\dbstructure
  * @package     tool_vault
  * @category    test
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class site_backup_test extends \advanced_testcase {
+class dbstructure_test extends \advanced_testcase {
 
-    public function test_get_tables() {
-        $actualtables = dbstructure::create_from_actual_db()->get_tables();
-        $definitions = dbstructure::create_from_tables_definitions()->get_tables();
+    /**
+     * Test for loading structure
+     */
+    public function test_dbstructure() {
+        $definitions = dbstructure::load();
         // Loop through all tables and compare definitions with actual.
-        foreach (array_keys($actualtables) as $table) {
-            if ($table === 'search_simpledb_index') {
+        foreach ($definitions->get_tables_actual() as $tablename => $actualtable) {
+            if ($tablename === 'search_simpledb_index') {
                 // TODO.
                 // This table has some weird indexes created after installation.
                 continue;
             }
 
-            $actual = $actualtables[$table];
-            $definition = $definitions[$table];
-            $this->assertEquals($actual->get_sqls_for_comparison(), $definition->get_sqls_for_comparison());
+            $definition = $definitions->find_table_definition($tablename);
+            $this->assertEquals($definition->get_xmldb_table()->xmlOutput(),
+                $actualtable->get_xmldb_table()->xmlOutput(),
+            'Output does not match for the table "'.$tablename.'"');
         }
 
         // TODO add test when definition is different from actual.

@@ -28,7 +28,7 @@ class database_column_info extends \database_column_info {
     /**
      * Creates an instance of this class from \database_column_info
      *
-     * @param \database_column_info $obj
+     * @param  \database_column_info $obj
      * @return database_column_info
      */
     public static function clone_from(\database_column_info $obj): self {
@@ -36,24 +36,97 @@ class database_column_info extends \database_column_info {
     }
 
     /**
-     * Magic get function.
+     * Create xmldb_field from this object
      *
-     * @param string $variablename variable name to return the value of.
-     * @return mixed The variable contents.
+     * {@see \pgsql_native_moodle_database::fetch_columns()}
+     * {@see \mysqli_native_moodle_database::fetch_columns()}
+     *
+     * @param dbtable|null $deftable
+     * @return \xmldb_field
      */
-    public function __get($variablename) {
+    public function to_xmldb_field(?dbtable $deftable): \xmldb_field {
         global $DB;
+
         if ($DB->get_dbfamily() === 'mysql') {
-            if ($variablename === 'type' && $this->data[$variablename] === 'mediumint') {
+            if ($this->data['type'] === 'mediumint') {
                 // There is an error in setFromADOField() function, type 'mediumint' is missing.
-                return 'smallint';
+                $this->data['type'] = 'smallint';
             }
-            if ($variablename === 'max_length' && $this->data['type'] === 'double') {
+            if ($this->data['type'] === 'double') {
                 // Function xmldb_field::validateDefinition() is outdated, it thinks 20 is the max for the
                 // length of float/double field.
-                return min($this->data[$variablename], \xmldb_field::FLOAT_MAX_LENGTH);
+                $this->data['max_length'] = min($this->data['max_length'], \xmldb_field::FLOAT_MAX_LENGTH);
             }
         }
-        return parent::__get($variablename);
+
+        $field = new \xmldb_field($this->name);
+        $field->setFromADOField($this);
+
+        if ($DB->get_dbfamily() === 'postgres') {
+            if ($this->type === 'float') {
+                // There is some code in pgsql_native_moodle_database::fetch_columns() that returns very weird small
+                // field size and precision for float type.
+                if ($deftable && ($deffield = $deftable->get_xmldb_table()->getField($this->name))) {
+                    $field->setDecimals($deffield->getDecimals());
+                    $field->setLength($deffield->getLength());
+                } else if ($field->getLength() == 4) {
+                    $field->setDecimals(4);
+                    $field->setLength(11);
+                } else {
+                    // TODO find examples.
+                    $field->setDecimals(8);
+                    $field->setLength(20);
+                }
+            }
+        }
+
+        if ($deftable) {
+            $this->fix_field_precision($field, $deftable);
+        }
+        return $field;
+    }
+
+    /**
+     * Fix precision
+     *
+     * @param \xmldb_field $actualfield
+     * @param dbtable $deftable
+     * @return void
+     */
+    protected function fix_field_precision(\xmldb_field $actualfield, dbtable $deftable) {
+        global $DB;
+        if (!($deffield = $deftable->get_xmldb_table()->getField($this->name))) {
+            return;
+        }
+        $checksql = false;
+        if ($actualfield->getType() === XMLDB_TYPE_CHAR && $deffield->getType() === XMLDB_TYPE_CHAR &&
+            $deffield->getNotNull() === $actualfield->getNotNull() && $deffield->getNotNull() &&
+            $deffield->getDefault() === null && $actualfield->getDefault() === '') {
+            $checksql = true;
+        }
+
+        if ($actualfield->getType() == XMLDB_TYPE_INTEGER) {
+            $actualfield->setLength($deffield->getLength());
+        }
+
+        if (in_array($actualfield->getType(), [XMLDB_TYPE_NUMBER, XMLDB_TYPE_FLOAT]) &&
+            (float)$actualfield->getDefault() == (float)$deffield->getDefault()) {
+            // Sometimes default value comes through as '0.0000' instead of '0'.
+            $actualfield->setDefault($deffield->getDefault());
+        }
+
+        if ($DB->get_dbfamily() === 'mysql' && $actualfield->getType() == XMLDB_TYPE_FLOAT && !$deffield->getLength()) {
+            // There are couple of fields that miss length.
+            $checksql = true;
+        }
+
+        if ($checksql) {
+            if ($deftable->get_field_sql($deftable->get_xmldb_table(), $actualfield) ===
+                    $deftable->get_field_sql($deftable->get_xmldb_table(), $deffield)) {
+                $actualfield->setDefault($deffield->getDefault());
+                $actualfield->setLength($deffield->getLength());
+                $actualfield->setDecimals($deffield->getDecimals());
+            }
+        }
     }
 }

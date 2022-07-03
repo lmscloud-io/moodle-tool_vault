@@ -255,9 +255,9 @@ class site_backup {
      */
     public function get_all_tables() {
         if ($this->dbstructure === null) {
-            $this->dbstructure = dbstructure::create_from_actual_db();
+            $this->dbstructure = dbstructure::load();
         }
-        return $this->dbstructure->get_tables();
+        return $this->dbstructure->get_tables_actual();
     }
 
     /**

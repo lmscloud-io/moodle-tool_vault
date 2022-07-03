@@ -31,31 +31,54 @@ use xmldb_table;
 class dbstructure {
 
     /** @var dbtable[] */
-    protected $alltables = null;
-    /** @var bool */
-    protected $isdefinitions = false;
+    protected $deftables = null;
+    /** @var dbtable[] */
+    protected $actualtables = null;
 
     /**
-     * Get all DB tables
+     * Constructor, not accessible, use load()
+     */
+    protected function __construct() {
+    }
+
+    /**
+     * Get all actual DB tables
      *
      * @return dbtable[]
      */
-    public function get_tables() {
-        return $this->alltables;
+    public function get_tables_actual() {
+        return $this->actualtables;
+    }
+
+    /**
+     * Get table definitions
+     *
+     * @return dbtable[]|null
+     */
+    public function get_tables_definitions() {
+        return $this->deftables;
+    }
+
+    /**
+     * Load structure
+     *
+     * @return static
+     */
+    public static function load(): self {
+        $s = new self();
+        $s->load_definitions();
+        $s->load_actual_tables();
+        return $s;
     }
 
     /**
      * Retrieve the list of tables defined in this moodle version and all plugins
-     *
-     * @return self
      */
-    public static function create_from_tables_definitions() {
+    protected function load_definitions() {
         global $CFG;
         require_once($CFG->dirroot.'/lib/adminlib.php');
-        $s = new self();
-        $s->isdefinitions = true;
 
-        $s->alltables = [];
+        $this->deftables = [];
         $dbdirs = get_db_directories();
 
         foreach ($dbdirs as $dbdir) {
@@ -66,133 +89,48 @@ class dbstructure {
 
                 if ($loaded && ($plugintables = $structure->getTables())) {
                     foreach ($plugintables as $table) {
-                        $s->alltables[strtolower($table->getName())] = new dbtable($table);
+                        $this->deftables[strtolower($table->getName())] = new dbtable($table, $this);
                     }
                 }
             }
         }
 
-        return $s;
+        // We ignore all comments in tables definitions.
+        foreach ($this->deftables as $table) {
+            $table->remove_all_comments();
+        }
+    }
+
+    /**
+     * Find table by name
+     *
+     * @param string $tablename
+     * @return dbtable|null
+     */
+    public function find_table_definition(string $tablename): ?dbtable {
+        foreach ($this->get_tables_definitions() as $table) {
+            if ($table->get_xmldb_table()->getName() === $tablename) {
+                return $table;
+            }
+        }
+        return null;
     }
 
     /**
      * Retrieve the list of tables in the current database
-     *
-     * @return self
      */
-    public static function create_from_actual_db() {
+    protected function load_actual_tables() {
         global $DB;
-        $s = new self();
         $tablesnames = $DB->get_tables();
-        $s->alltables = [];
+        $this->actualtables = [];
         foreach ($tablesnames as $tablename) {
-            $s->alltables[$tablename] = $s->load_actual_table($tablename);
+            $table = dbtable::create_from_actual_db(strtolower(trim($tablename)), $this);
+            $this->actualtables[$tablename] = $table;
         }
-        return $s;
-    }
-
-    /**
-     * Load a table from the current database
-     *
-     * @param string $tablename
-     * @return dbtable
-     */
-    protected function load_actual_table(string $tablename): dbtable {
-        global $DB;
-
-        // Create one new xmldb_table.
-        $table = new xmldb_table(strtolower(trim($tablename)));
-        // Get fields info from ADODb.
-        $dbfields = $DB->get_columns($tablename);
-        if ($dbfields) {
-            foreach ($dbfields as $dbfield) {
-                // Wrap the field definition in our class to fix some problems with it.
-                $dbfield = database_column_info::clone_from($dbfield);
-                // Create new XMLDB field.
-                $field = new xmldb_field($dbfield->name);
-                // Set field with info retrofitted.
-                $field->setFromADOField($dbfield);
-                // Add field to the table.
-                $table->addField($field);
-            }
-        }
-        if ($DB->get_dbfamily() === 'postgres') {
-            self::retrieve_keys_and_indexes_postgres($table);
-        } else {
-            self::retrieve_keys_and_indexes_mysql($table);
-        }
-        return new dbtable($table);
-    }
-
-    /**
-     * Retrieves all keys and indexes defined in the current MySQL database
-     *
-     * @param xmldb_table $table
-     * @return void
-     */
-    protected function retrieve_keys_and_indexes_mysql(xmldb_table $table) {
-        global $DB, $CFG;
-        $tableparam = $table->getName();
-        // Get PK, UK and indexes info from ADODb.
-        $result = $DB->get_recordset_sql('SHOW INDEXES FROM '.$CFG->prefix.$tableparam);
-        $dbindexes = [];
-        foreach ($result as $res) {
-            if (!isset($dbindexes[$res->key_name])) {
-                $dbindexes[$res->key_name] = ['unique' => empty($res->non_unique), 'columns' => []];
-            }
-            $dbindexes[$res->key_name]['columns'][$res->seq_in_index - 1] = $res->column_name;
-        }
-        $result->close();
-        if ($dbindexes) {
-            foreach ($dbindexes as $indexname => $dbindex) {
-                // Add the indexname to the array.
-                $dbindex['name'] = $indexname;
-                // We are handling one xmldb_key (primaries + uniques).
-                if ($dbindex['unique']) {
-                    $key = new xmldb_key(strtolower($dbindex['name']));
-                    // Set key with info retrofitted.
-                    $key->setFromADOKey($dbindex);
-                    // Add key to the table.
-                    $table->addKey($key);
-
-                    // We are handling one xmldb_index (non-uniques).
-                } else {
-                    $index = new xmldb_index(strtolower($dbindex['name']));
-                    // Set index with info retrofitted.
-                    $index->setFromADOIndex($dbindex);
-                    // Add index to the table.
-                    $table->addIndex($index);
-                }
-            }
-        }
-    }
-
-    /**
-     * Retrieves all keys and indexes defined in the current Postgres database
-     *
-     * @param xmldb_table $table
-     * @return void
-     */
-    private function retrieve_keys_and_indexes_postgres(xmldb_table $table) {
-        global $DB;
-        $tableparam = $table->getName();
-        // Get PK, UK and indexes info from ADODb.
-        $dbindexes = $DB->get_indexes($tableparam);
-        if ($dbindexes) {
-            foreach ($dbindexes as $indexname => $dbindex) {
-                // Add the indexname to the array.
-                $dbindex['name'] = $indexname;
-                $index = new xmldb_index(strtolower($dbindex['name']));
-                // Set index with info retrofitted.
-                $index->setFromADOIndex($dbindex);
-                $index->setUnique((bool)$dbindex['unique']);
-                // Add index to the table.
-                $table->addIndex($index);
-            }
-        }
-
-        if ($primarykey = static::retrieve_primary_keys_postgres()[$tableparam] ?? null) {
-            $table->addKey(new xmldb_key($primarykey->keyname, XMLDB_KEY_PRIMARY, [$primarykey->columnname]));
+        // Fix indexes/keys and order of elements.
+        foreach ($this->get_tables_actual() as $table) {
+            $table->lookup_fields();
+            $table->lookup_indexes();
         }
     }
 
@@ -204,7 +142,7 @@ class dbstructure {
      *
      * @return \stdClass[]
      */
-    protected function retrieve_primary_keys_postgres() {
+    public function retrieve_primary_keys_postgres() {
         global $DB, $CFG;
         if ($this->primarykeys !== null) {
             return $this->primarykeys;
@@ -235,5 +173,36 @@ class dbstructure {
     protected function retrieve_sequences_postgres() {
         // TODO: SELECT (CASE WHEN is_called THEN last_value ELSE 0 END ) FROM mdl_assign_grades_id_seq .
         return [];
+    }
+
+    /**
+     * Output structure
+     *
+     * @param array|null $onlytables
+     * @param bool $showdefinitions
+     * @return string
+     */
+    public function output(?array $onlytables = null, bool $showdefinitions = false) {
+        $o = '<?xml version="1.0" encoding="UTF-8" ?>' . "\n";
+        $o .= '<XMLDB ';
+        $rel = '../../../..';
+        $o .= '    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'."\n";
+        $o .= '    xsi:noNamespaceSchemaLocation="'.$rel.'/lib/xmldb/xmldb.xsd"'."\n";
+        $o .= '>' . "\n";
+        // Now the tables.
+        $tables = $showdefinitions ? $this->get_tables_definitions() : $this->get_tables_actual();
+        if ($tables) {
+            $o .= '  <TABLES>' . "\n";
+            foreach ($tables as $table) {
+                if (!$onlytables || in_array($table->get_xmldb_table()->getName(), $onlytables)) {
+                    $o .= $table->get_xmldb_table()->xmlOutput();
+                }
+            }
+            $o .= '  </TABLES>' . "\n";
+        }
+        $o .= '</XMLDB>' . "\n";
+
+        return $o;
+
     }
 }
