@@ -30,3 +30,7 @@ $string['pluginname'] = 'Vault - site migration';
 $string['site restore'] = 'Site restore';
 $string['sitebackup'] = 'Site backup';
 $string['siterestore'] = 'Site restore';
+$string['tabbackup'] = 'Site backup';
+$string['taboverview'] = 'Overview';
+$string['tabrestore'] = 'Site restore';
+$string['tabsettings'] = 'Settings';

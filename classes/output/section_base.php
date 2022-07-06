@@ -14,29 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+namespace tool_vault\output;
+
 /**
- * Plugin version and other meta-data are defined here.
+ * Base class for tabs
  *
  * @package     tool_vault
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-require(__DIR__ . '/../../../config.php');
-require_once($CFG->libdir . '/adminlib.php');
-
-$tabtree = new tool_vault\output\tabtree();
-admin_externalpage_setup('tool_vault_index', '', null, $tabtree->get_url(), ['nosearch' => true]);
-$PAGE->set_heading(get_string('pluginname', 'tool_vault'));
-$PAGE->set_secondary_navigation(false);
-
-$section = $tabtree->get_section();
-$rv = $section->process();
-
-/** @var tool_vault\output\renderer $renderer */
-$renderer = $PAGE->get_renderer('tool_vault');
-
-echo $renderer->header();
-echo $renderer->render($tabtree);
-echo $renderer->render($section);
-echo $renderer->footer();
+abstract class section_base implements \renderable {
+    /**
+     * Process tab actions
+     */
+    abstract public function process();
+}
