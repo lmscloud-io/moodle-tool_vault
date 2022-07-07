@@ -249,15 +249,15 @@ class site_backup {
     protected $dbstructure = null;
 
     /**
-     * Retrieve the lisf of tables in this moodle instance
+     * Retrns DB structure
      *
-     * @return dbtable[]
+     * @return dbstructure
      */
-    public function get_all_tables() {
+    public function get_db_structure(): dbstructure {
         if ($this->dbstructure === null) {
             $this->dbstructure = dbstructure::load();
         }
-        return $this->dbstructure->get_tables_actual();
+        return $this->dbstructure;
     }
 
     /**
@@ -267,7 +267,7 @@ class site_backup {
      * @param string $filepath
      * @return void
      */
-    public function export_table(dbtable $table, string $filepath) {
+    public function export_table_data(dbtable $table, string $filepath) {
         global $DB;
         $fields = array_map(function(\xmldb_field $f) {
             return $f->getName();
@@ -293,20 +293,31 @@ class site_backup {
      * @return string path to the zip file with the export
      */
     public function export_db(string $exportfilename) {
+        global $CFG;
         $dir = make_temp_directory('dbdump');
-        $tables = $this->get_all_tables();
-        $tables = array_filter($tables, function($table) {
-            return !$this->is_table_skipped($table);
-        });
-
-        foreach ($tables as $table => $tableobj) {
-            $filepath = $dir.DIRECTORY_SEPARATOR.$table.'.json';
-            $this->export_table($tableobj, $filepath);
+        $structure = $this->get_db_structure();
+        $tables = [];
+        foreach ($structure->get_tables_actual() as $table => $tableobj) {
+            if (!$this->is_table_skipped($tableobj)) {
+                $filepath = $dir.DIRECTORY_SEPARATOR.$table.'.json';
+                $this->export_table_data($tableobj, $filepath);
+                $tables[$table] = $tableobj;
+            }
         }
+        $structurefilename = '__structure__.xml';
+        file_put_contents($dir.DIRECTORY_SEPARATOR.$structurefilename,
+            $this->dbstructure->output(array_keys($tables)));
+
+        $sequencesfilename = '__sequences__.json';
+        file_put_contents($dir.DIRECTORY_SEPARATOR.$sequencesfilename,
+            json_encode(array_intersect_key($structure->retrieve_sequences(), $tables)));
 
         $zipfilepath = $dir.DIRECTORY_SEPARATOR.$exportfilename;
         $ziparchive = new \zip_archive();
         if ($ziparchive->open($zipfilepath, \file_archive::CREATE)) {
+            $ziparchive->add_file_from_pathname('xmldb.xsd', $CFG->dirroot.'/lib/xmldb/xmldb.xsd');
+            $ziparchive->add_file_from_pathname($structurefilename, $dir.DIRECTORY_SEPARATOR.$structurefilename);
+            $ziparchive->add_file_from_pathname($sequencesfilename, $dir.DIRECTORY_SEPARATOR.$sequencesfilename);
             foreach ($tables as $table => $tableobj) {
                 $ziparchive->add_file_from_pathname($table.'.json', $dir.DIRECTORY_SEPARATOR.$table.'.json');
             }
@@ -316,9 +327,10 @@ class site_backup {
             throw new \moodle_exception('Can not create ZIP file');
         }
 
+        unlink($dir.DIRECTORY_SEPARATOR.$structurefilename);
+        unlink($dir.DIRECTORY_SEPARATOR.$sequencesfilename);
         foreach ($tables as $table => $tableobj) {
-            $filepath = $dir . DIRECTORY_SEPARATOR . $table . '.json';
-            unlink($filepath);
+            unlink($dir.DIRECTORY_SEPARATOR.$table.'.json');
         }
 
         return $zipfilepath;

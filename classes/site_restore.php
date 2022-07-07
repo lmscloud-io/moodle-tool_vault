@@ -16,6 +16,7 @@
 
 namespace tool_vault;
 
+use tool_vault\local\xmldb\dbstructure;
 use tool_vault\task\restore_task;
 
 /**
@@ -159,12 +160,12 @@ class site_restore {
             return;
         }
 
-        $dbfiles = $this->prepare_restore_db($filepath1);
+        $structure = $this->prepare_restore_db($filepath1);
         $datarootfiles = $this->prepare_restore_dataroot($filepath2);
-        unlink($filepath1);
         unlink($filepath2);
 
-        $this->restore_db($dbfiles);
+        $this->restore_db($structure, $filepath1);
+        unlink($filepath1);
         $this->restore_dataroot($datarootfiles);
         // TODO more logging.
 
@@ -177,26 +178,19 @@ class site_restore {
      * Prepare to restore db
      *
      * @param string $filepath
-     * @return array
+     * @return dbstructure
      */
     public function prepare_restore_db(string $filepath) {
+        $structurefilename = '__structure__.xml';
+
         $temppath = make_temp_directory('dbdump');
         $zippacker = new \zip_packer();
-        $zippacker->extract_to_pathname($filepath, $temppath);
-
-        $handle = opendir($temppath);
-        $files = [];
-        while (($file = readdir($handle)) !== false) {
-            if (!preg_match('/^\\./', $file)) {
-                $p = pathinfo($file);
-                $files[$p['filename']] = $temppath.DIRECTORY_SEPARATOR.$file;
-            }
-        }
-        closedir($handle);
+        $zippacker->extract_to_pathname($filepath, $temppath, [$structurefilename, 'xmldb.xsd']);
+        $structure = dbstructure::load_from_backup($temppath.DIRECTORY_SEPARATOR.$structurefilename);
 
         // TODO do all the checks that all tables exist and have necessary fields.
 
-        return $files;
+        return $structure;
     }
 
     /**
@@ -230,37 +224,39 @@ class site_restore {
      * @param array $files
      * @return void
      */
-    public function restore_db(array $files) {
+    public function restore_db(dbstructure $structure, string $zipfilepath) {
         global $DB;
-        foreach ($files as $tablename => $path) {
-            $data = json_decode(file_get_contents($path));
+        $temppath = make_temp_directory('dbdump');
+        $zippacker = new \zip_packer();
+
+        $sequencesfilename = '__sequences__.json';
+        $zippacker->extract_to_pathname($zipfilepath, $temppath, [$sequencesfilename]);
+        $filepath = $temppath.DIRECTORY_SEPARATOR.$sequencesfilename;
+        $sequences = json_decode(file_get_contents($filepath), true);
+        unlink($filepath);
+
+        foreach ($structure->get_tables_definitions() as $tablename => $table) {
+            $zippacker->extract_to_pathname($zipfilepath, $temppath, [$tablename.".json"]);
+            $filepath = $temppath.DIRECTORY_SEPARATOR.$tablename.".json";
+            $data = json_decode(file_get_contents($filepath));
+            if ($altersql = $table->get_alter_sql($structure->get_tables_actual()[$tablename] ?? null)) {
+                $DB->change_database_structure($altersql);
+            }
             $DB->execute('TRUNCATE TABLE {'.$tablename.'}');
             if ($data) {
                 $fields = array_shift($data);
                 foreach ($data as $row) {
                     $DB->insert_record_raw($tablename, array_combine($fields, $row), false, true, true);
                 }
-                $this->seq($tablename);
+                if ($altersql = $table->get_fix_sequence_sql($sequences[$tablename] ?? 0)) {
+                    try {
+                        $DB->change_database_structure($altersql);
+                    } catch (\Throwable $t) {
+                        mtrace("- failed to change sequence for table $tablename: ".$t->getMessage());
+                    }
+                }
             }
-        }
-    }
-
-    /**
-     * Fix sequence on db table
-     *
-     * for postgres: https://stackoverflow.com/questions/244243/how-to-reset-postgres-primary-key-sequence-when-it-falls-out-of-sync
-     *
-     * @param string $tablename
-     * @return void
-     */
-    public function seq(string $tablename) {
-        global $DB;
-        $prefix = $DB->get_prefix();
-        try {
-            $DB->execute("SELECT setval('{$prefix}{$tablename}_id_seq', ".
-                "COALESCE((SELECT MAX(id)+1 FROM {$prefix}{$tablename}), 1), false)");
-        } catch (\Throwable $t) {
-            mtrace("- failed to set seq for table $tablename: ".$t->getMessage());
+            unlink($filepath);
         }
     }
 

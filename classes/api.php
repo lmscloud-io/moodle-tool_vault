@@ -16,6 +16,7 @@
 
 namespace tool_vault;
 
+use tool_vault\local\models\remote_backup;
 use tool_vault\task\backup_task;
 
 /**
@@ -224,7 +225,7 @@ class api {
     /**
      * Get a list of all remote backups for this api key
      *
-     * @return array
+     * @return remote_backup[]
      */
     public static function get_remote_backups() {
         $backups = self::api_call('backups', 'GET', []);
@@ -236,10 +237,10 @@ class api {
                 }
             }
             unset($b['metadata']);
-            return $b;
+            return new remote_backup($b);
         }, $backups['backups']);
         usort($backups, function($a, $b) {
-            return - $a['timecreated'] + $b['timecreated'];
+            return - $a->timecreated + $b->timecreated;
         });
         return $backups;
     }

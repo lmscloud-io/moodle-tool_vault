@@ -19,6 +19,7 @@ namespace tool_vault\output;
 use html_writer;
 use moodle_url;
 use plugin_renderer_base;
+use tool_vault\local\models\remote_backup;
 
 /**
  * Plugin renderer
@@ -83,23 +84,33 @@ class renderer extends plugin_renderer_base {
         $output .= html_writer::tag('pre', s(print_r($records, true)), array('class' => 'notifytiny'));
 
         if ($section->get_is_registered()) {
+            $output .= $this->heading('Remote backups', 4); // TODO string.
             if ($action === 'findbackups' && confirm_sesskey()) {
                 $backups = \tool_vault\api::get_remote_backups();
-                foreach ($backups as $backup) {
-                    $output .= html_writer::div("Backup: {$backup['backupkey']} - {$backup['status']}");
-                    if ($backup['status'] === \tool_vault\site_backup::STATUS_FINISHED) {
-                        $output .= $this->single_button(new moodle_url($this->page->url,
-                            ['section' => 'restore', 'action' => 'restore',
-                                'backupkey' => $backup['backupkey'], 'sesskey' => sesskey()]),
-                            'Restore this backup', 'get');
-                    }
-                    // @codingStandardsIgnoreLine
-                    $output .= html_writer::tag('pre', s(print_r($backup, true)), array('class' => 'notifytiny'));
-                }
+                $output .= $this->display_remote_backups($backups);
             } else {
                 $link = new moodle_url($this->page->url,
                     ['section' => 'restore', 'action' => 'findbackups', 'sesskey' => sesskey()]);
                 $output .= html_writer::div(html_writer::link($link, 'Search for available backups'));
+            }
+        }
+        return $output;
+    }
+
+    /**
+     * @param remote_backup[] $backups
+     * @return string
+     */
+    protected function display_remote_backups(array $backups): string {
+        $output = '';
+        foreach ($backups as $backup) {
+            $started = userdate($backup->timecreated, get_string('strftimedatetimeshort', 'langconfig'));
+            $output .= html_writer::div("Backup: {$backup->backupkey} - {$backup->status} - $started - {$backup->info['wwwroot']}");
+            if ($backup->status === \tool_vault\site_backup::STATUS_FINISHED) {
+                $output .= $this->single_button(new moodle_url($this->page->url,
+                    ['section' => 'restore', 'action' => 'restore',
+                        'backupkey' => $backup->backupkey, 'sesskey' => sesskey()]),
+                    'Restore this backup', 'get');
             }
         }
         return $output;

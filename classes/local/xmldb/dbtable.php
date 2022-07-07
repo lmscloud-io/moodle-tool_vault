@@ -422,4 +422,45 @@ class dbtable {
             $table->addKey(new xmldb_key($primarykey->keyname, XMLDB_KEY_PRIMARY, [$primarykey->columnname]));
         }
     }
+
+    public function get_alter_sql(?dbtable $originaltable): array {
+        // TODO return list of queries that will transform original table into this table.
+        return [];
+    }
+
+    protected function has_sequence(): bool {
+        foreach ($this->get_xmldb_table()->getFields() as $field) {
+            if ($field->getSequence()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Fix sequence on db table
+     *
+     * for postgres: https://stackoverflow.com/questions/244243/how-to-reset-postgres-primary-key-sequence-when-it-falls-out-of-sync
+     *
+     * @param int $nextvalue
+     * @return array|string[]
+     */
+    public function get_fix_sequence_sql(int $nextvalue): array {
+        global $DB, $CFG;
+        if (!$this->has_sequence()) {
+            return [];
+        }
+        $tablename = $this->get_xmldb_table()->getName();
+        $maxid = $DB->get_field_sql("SELECT MAX(id) FROM {".$tablename."}");
+        if (!$maxid && !$nextvalue) {
+            return [];
+        }
+        $nextid = max($nextvalue, $maxid + 1);
+
+        if ($DB->get_dbfamily() === 'postgres') {
+            return ["ALTER SEQUENCE {$CFG->prefix}{$tablename}_id_seq RESTART WITH $nextid"];
+        } else {
+            return ["ALTER TABLE {$CFG->prefix}{$tablename} AUTO_INCREMENT = $nextid"];
+        }
+    }
 }

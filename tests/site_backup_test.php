@@ -31,7 +31,7 @@ class site_backup_test extends \advanced_testcase {
      * Testing get_all_tables()
      */
     public function test_get_all_tables() {
-        $tables = (new site_backup(""))->get_all_tables();
+        $tables = (new site_backup(""))->get_db_structure()->get_tables_actual();
         $this->assertTrue(array_key_exists('tool_vault_config', $tables));
         $this->assertTrue(array_key_exists('config', $tables));
     }
@@ -39,7 +39,7 @@ class site_backup_test extends \advanced_testcase {
     public function test_export_table() {
         $this->resetAfterTest();
         $sitebackup = new site_backup("");
-        $tables = $sitebackup->get_all_tables();
+        $tables = $sitebackup->get_db_structure()->get_tables_actual();
 
         // We will use table tool_vault_config as a temp table.
         api::store_config('n0', 'value');
@@ -53,7 +53,7 @@ class site_backup_test extends \advanced_testcase {
         $dir = make_temp_directory('dbdump');
         $table = 'tool_vault_config';
         $filepath = $dir.DIRECTORY_SEPARATOR.$table.'.json';
-        $sitebackup->export_table($tables[$table], $filepath);
+        $sitebackup->export_table_data($tables[$table], $filepath);
 
         $data = json_decode(file_get_contents($dir.DIRECTORY_SEPARATOR.'tool_vault_config.json'), true);
         $this->assertEquals(['name', 'n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6'], array_column($data, 1));
@@ -73,7 +73,7 @@ class site_backup_test extends \advanced_testcase {
         $handle = opendir($dir);
         $files = [];
         while (($file = readdir($handle)) !== false) {
-            if (!preg_match('/^\\./', $file) && $p = pathinfo($file)) {
+            if (!preg_match('/^[\\._]/', $file) && ($p = pathinfo($file)) && ($p['extension'] === 'json')) {
                 $files[] = $p['filename'];
             }
         }
@@ -81,6 +81,8 @@ class site_backup_test extends \advanced_testcase {
 
         $this->assertTrue(in_array('config', $files));
         $this->assertTrue(in_array('user', $files));
+        $this->assertTrue(file_exists($dir.DIRECTORY_SEPARATOR.'__structure__.xml'));
+        $this->assertTrue(file_exists($dir.DIRECTORY_SEPARATOR.'__sequences__.json'));
         $this->assertFalse(in_array('tool_vault_config', $files));
         $this->assertFalse(in_array('tool_vault_backups', $files));
         $this->assertFalse(in_array('tool_vault_restores', $files));

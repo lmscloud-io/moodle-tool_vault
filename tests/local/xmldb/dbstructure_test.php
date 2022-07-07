@@ -48,4 +48,22 @@ class dbstructure_test extends \advanced_testcase {
 
         // TODO add test when definition is different from actual.
     }
+
+    /**
+     * Test function retrieve_sequences()
+     */
+    public function test_sequences() {
+        $this->resetAfterTest();
+
+        $definitions = dbstructure::load();
+        $seqs = $definitions->retrieve_sequences();
+        $user1 = $this->getDataGenerator()->create_user();
+        $this->assertEquals($user1->id, $seqs['user']);
+
+        $definitions = dbstructure::load();
+        $seqs = $definitions->retrieve_sequences();
+        $userseq2 = $seqs['user'];
+        $user2 = $this->getDataGenerator()->create_user();
+        $this->assertEquals($user2->id, $userseq2);
+    }
 }

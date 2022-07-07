@@ -31,9 +31,9 @@ use xmldb_table;
 class dbstructure {
 
     /** @var dbtable[] */
-    protected $deftables = null;
+    protected $deftables = [];
     /** @var dbtable[] */
-    protected $actualtables = null;
+    protected $actualtables = [];
 
     /**
      * Constructor, not accessible, use load()
@@ -60,7 +60,19 @@ class dbstructure {
     }
 
     /**
-     * Load structure
+     * Get table definitions
+     */
+    public function set_tables_definitions($tables) {
+        // TODO For unittests only.
+        if ((defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
+            $this->deftables = $tables;
+        } else {
+            debugging('This function is for unittests only');
+        }
+    }
+
+    /**
+     * Load structure from actual tables and definitions in install.xml
      *
      * @return static
      */
@@ -72,13 +84,25 @@ class dbstructure {
     }
 
     /**
+     * Load structure from actual tables and definitions in the given file
+     *
+     * @param string $filepath path to __structure__.xml
+     * @return static
+     */
+    public static function load_from_backup(string $filepath): self {
+        $s = new self();
+        $s->load_definitions_from_backup_xml($filepath);
+        $s->load_actual_tables();
+        return $s;
+    }
+
+    /**
      * Retrieve the list of tables defined in this moodle version and all plugins
      */
     protected function load_definitions() {
         global $CFG;
         require_once($CFG->dirroot.'/lib/adminlib.php');
 
-        $this->deftables = [];
         $dbdirs = get_db_directories();
 
         foreach ($dbdirs as $dbdir) {
@@ -102,6 +126,31 @@ class dbstructure {
     }
 
     /**
+     * Load definitions from backup file
+     *
+     * We do not use $xmldbfile->loadXMLStructure() because this file is not in the dirroot
+     * and validation fails
+     *
+     * @param string $filepath
+     * @return void
+     */
+    protected function load_definitions_from_backup_xml(string $filepath) {
+        global $CFG;
+        $oldxmldb = $CFG->xmldbdisablecommentchecking ?? null;
+        $CFG->xmldbdisablecommentchecking = 1;
+        $xmlarr = xmlize(file_get_contents($filepath));
+        if (isset($xmlarr['XMLDB']['#']['TABLES']['0']['#']['TABLE'])) {
+            foreach ($xmlarr['XMLDB']['#']['TABLES']['0']['#']['TABLE'] as $xmltable) {
+                $name = strtolower(trim($xmltable['@']['NAME']));
+                $table = new xmldb_table($name);
+                $table->arr2xmldb_table($xmltable);
+                $this->deftables[$name] = new dbtable($table, $this);
+            }
+        }
+        set_config('xmldbdisablecommentchecking', $oldxmldb);
+    }
+
+    /**
      * Find table by name
      *
      * @param string $tablename
@@ -122,7 +171,6 @@ class dbstructure {
     protected function load_actual_tables() {
         global $DB;
         $tablesnames = $DB->get_tables();
-        $this->actualtables = [];
         foreach ($tablesnames as $tablename) {
             $table = dbtable::create_from_actual_db(strtolower(trim($tablename)), $this);
             $this->actualtables[$tablename] = $table;
@@ -165,14 +213,90 @@ class dbstructure {
         return $this->primarykeys;
     }
 
+    /** @var array */
+    protected $sequences = null;
+
     /**
-     * Retrieves last value in all sequences in postgres
+     * Retrieve next value in all sequences
+     *
+     * @return array array tablename=>nextseqval
+     */
+    public function retrieve_sequences() {
+        global $DB;
+        if ($this->sequences !== null) {
+            return $this->sequences;
+        }
+        if ($DB->get_dbfamily() === 'postgres') {
+            $this->sequences = $this->retrieve_sequences_postgres();
+        } else {
+            $this->sequences = $this->retrieve_sequences_mysql();
+        }
+        return $this->sequences;
+    }
+
+    /**
+     * Retrieve next value in sequences in mysql
+     *
+     * @return array
+     */
+    protected function retrieve_sequences_mysql() {
+        global $DB, $CFG;
+        $sequences = [];
+        $prefix = $CFG->prefix;
+        try {
+            // Mysql caches information schema. Remember old setting, set to 0 and then reset in the end.
+            $oldval = $DB->get_field_sql('select @@information_schema_stats_expiry');
+            if ($oldval) {
+                $DB->execute('set session information_schema_stats_expiry=0');
+            }
+        } catch (\Throwable $e) {
+            $oldval = null;
+        }
+        $rs = $DB->get_recordset_sql("SHOW TABLE STATUS LIKE ?", array($prefix.'%'));
+
+        foreach ($rs as $info) {
+            $table = strtolower($info->name);
+            if (strpos($table, $prefix) !== 0) {
+                // Incorrect table match caused by _ .
+                continue;
+            }
+            if (!is_null($info->auto_increment) && (int)$info->auto_increment) {
+                $table = preg_replace('/^'.preg_quote($prefix, '/').'/', '', $table);
+                $sequences[$table] = (int)$info->auto_increment;
+            }
+        }
+        $rs->close();
+        if ($oldval) {
+            $DB->execute('set session information_schema_stats_expiry='.$oldval);
+        }
+        return $sequences;
+    }
+
+    /**
+     * Retrieves next value in all sequences in postgres
      *
      * @return array
      */
     protected function retrieve_sequences_postgres() {
-        // TODO: SELECT (CASE WHEN is_called THEN last_value ELSE 0 END ) FROM mdl_assign_grades_id_seq .
-        return [];
+        global $DB;
+        $keys = $this->retrieve_primary_keys_postgres();
+        $sequences = [];
+        foreach ($keys as $key) {
+            if (preg_match("/^nextval\('([a-z|_]*)'::regclass\)$/", $key->columndefault, $matches)) {
+                $seqname = $matches[1];
+                try {
+                    $value = $DB->get_field_sql(
+                        'SELECT CASE when is_called then last_value + 1 else last_value END FROM '.$seqname);
+                    if ($value) {
+                        $sequences[$key->tablename] = $value;
+                    }
+                } catch (\dml_exception $e) {
+                    // Do nothing, just skip.
+                    null;
+                }
+            }
+        }
+        return $sequences;
     }
 
     /**
@@ -187,7 +311,7 @@ class dbstructure {
         $o .= '<XMLDB ';
         $rel = '../../../..';
         $o .= '    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'."\n";
-        $o .= '    xsi:noNamespaceSchemaLocation="'.$rel.'/lib/xmldb/xmldb.xsd"'."\n";
+        $o .= '    xsi:noNamespaceSchemaLocation="xmldb.xsd"'."\n";
         $o .= '>' . "\n";
         // Now the tables.
         $tables = $showdefinitions ? $this->get_tables_definitions() : $this->get_tables_actual();
