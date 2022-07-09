@@ -221,7 +221,8 @@ class site_restore {
     /**
      * Restore db
      *
-     * @param array $files
+     * @param dbstructure $structure
+     * @param string $zipfilepath
      * @return void
      */
     public function restore_db(dbstructure $structure, string $zipfilepath) {
@@ -235,7 +236,7 @@ class site_restore {
         $sequences = json_decode(file_get_contents($filepath), true);
         unlink($filepath);
 
-        foreach ($structure->get_tables_definitions() as $tablename => $table) {
+        foreach ($structure->get_backup_tables() as $tablename => $table) {
             $zippacker->extract_to_pathname($zipfilepath, $temppath, [$tablename.".json"]);
             $filepath = $temppath.DIRECTORY_SEPARATOR.$tablename.".json";
             $data = json_decode(file_get_contents($filepath));
@@ -248,12 +249,12 @@ class site_restore {
                 foreach ($data as $row) {
                     $DB->insert_record_raw($tablename, array_combine($fields, $row), false, true, true);
                 }
-                if ($altersql = $table->get_fix_sequence_sql($sequences[$tablename] ?? 0)) {
-                    try {
-                        $DB->change_database_structure($altersql);
-                    } catch (\Throwable $t) {
-                        mtrace("- failed to change sequence for table $tablename: ".$t->getMessage());
-                    }
+            }
+            if ($altersql = $table->get_fix_sequence_sql($sequences[$tablename] ?? 0)) {
+                try {
+                    $DB->change_database_structure($altersql);
+                } catch (\Throwable $t) {
+                    mtrace("- failed to change sequence for table $tablename: ".$t->getMessage());
                 }
             }
             unlink($filepath);

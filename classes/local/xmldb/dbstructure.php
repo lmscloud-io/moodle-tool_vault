@@ -34,12 +34,8 @@ class dbstructure {
     protected $deftables = [];
     /** @var dbtable[] */
     protected $actualtables = [];
-
-    /**
-     * Constructor, not accessible, use load()
-     */
-    protected function __construct() {
-    }
+    /** @var dbtable[] */
+    protected $backuptables = [];
 
     /**
      * Get all actual DB tables
@@ -61,13 +57,23 @@ class dbstructure {
 
     /**
      * Get table definitions
+     *
+     * @return dbtable[]|null
      */
-    public function set_tables_definitions($tables) {
-        // TODO For unittests only.
+    public function get_backup_tables() {
+        return $this->backuptables;
+    }
+
+    /**
+     * Get table definitions
+     *
+     * @param array $tables
+     */
+    public function set_tables_definitions(array $tables) {
         if ((defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
             $this->deftables = $tables;
         } else {
-            debugging('This function is for unittests only');
+            throw new \coding_exception('This function is for unittests only');
         }
     }
 
@@ -91,8 +97,9 @@ class dbstructure {
      */
     public static function load_from_backup(string $filepath): self {
         $s = new self();
-        $s->load_definitions_from_backup_xml($filepath);
+        $s->load_definitions();
         $s->load_actual_tables();
+        $s->load_definitions_from_backup_xml($filepath);
         return $s;
     }
 
@@ -144,10 +151,11 @@ class dbstructure {
                 $name = strtolower(trim($xmltable['@']['NAME']));
                 $table = new xmldb_table($name);
                 $table->arr2xmldb_table($xmltable);
-                $this->deftables[$name] = new dbtable($table, $this);
+                $this->backuptables[$name] = new dbtable($table, $this);
             }
         }
         set_config('xmldbdisablecommentchecking', $oldxmldb);
+        // TODO try to match indexes/keys with the actual tables.
     }
 
     /**

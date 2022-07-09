@@ -423,18 +423,74 @@ class dbtable {
         }
     }
 
+    /**
+     * Return list of queries that will transform original table into this table
+     *
+     * @param dbtable|null $originaltable
+     * @return array
+     */
     public function get_alter_sql(?dbtable $originaltable): array {
-        // TODO return list of queries that will transform original table into this table.
-        return [];
+        global $DB;
+        if (!$originaltable) {
+            return $DB->get_manager()->generator->getCreateTableSQL($this->get_xmldb_table());
+        }
+        if ($this->is_same_as($originaltable)) {
+            return [];
+        }
+        return array_merge(
+            $DB->get_manager()->generator->getDropTableSQL($originaltable->get_xmldb_table()),
+            $DB->get_manager()->generator->getCreateTableSQL($this->get_xmldb_table()),
+        );
     }
 
-    protected function has_sequence(): bool {
-        foreach ($this->get_xmldb_table()->getFields() as $field) {
-            if ($field->getSequence()) {
-                return true;
+    /**
+     * Is current table same as the other table
+     *
+     * TODO perform check similar to {@see \database_manager::check_database_schema()}, create SQL for changes.
+     *
+     * @param dbtable $originaltable
+     * @return bool
+     */
+    public function is_same_as(dbtable $originaltable): bool {
+        global $DB;
+        $generator = $DB->get_manager()->generator;
+        if ($this->get_xmldb_table()->getName() !== $originaltable->get_xmldb_table()->getName()) {
+            return false;
+        }
+        $fields = $this->get_xmldb_table()->getFields();
+        $origfields = $originaltable->get_xmldb_table()->getFields();
+        if (array_diff_key($fields, $origfields) || array_diff_key($origfields, $fields)) {
+            return false;
+        }
+        foreach ($fields as $fieldname => $field) {
+            $origfield = $origfields[$fieldname];
+            if ($field->getSequence() != $origfield->getSequence() || $field->getNotNull() != $origfield->getNotNull()
+                    || $field->getDefault() != $field->getDefault()) {
+                return false;
+            }
+            $stmt = $generator->getFieldSQL($this->get_xmldb_table(), $field, false, true, true, false);
+            $origstmt = $generator->getFieldSQL($originaltable->get_xmldb_table(), $origfield, false, true, true, false);
+            if ($stmt !== $origstmt) {
+                return false;
             }
         }
-        return false;
+
+        // TODO compare indexes and keys.
+        return true;
+    }
+
+    /**
+     * Returns the sequence field in the table (usually 'id') or null if table does not have sequence
+     *
+     * @return string
+     */
+    protected function get_sequence(): ?string {
+        foreach ($this->get_xmldb_table()->getFields() as $field) {
+            if ($field->getSequence()) {
+                return $field->getName();
+            }
+        }
+        return null;
     }
 
     /**
@@ -447,18 +503,18 @@ class dbtable {
      */
     public function get_fix_sequence_sql(int $nextvalue): array {
         global $DB, $CFG;
-        if (!$this->has_sequence()) {
+        if (!$field = $this->get_sequence()) {
             return [];
         }
         $tablename = $this->get_xmldb_table()->getName();
-        $maxid = $DB->get_field_sql("SELECT MAX(id) FROM {".$tablename."}");
+        $maxid = $DB->get_field_sql("SELECT MAX($field) FROM {".$tablename."}");
         if (!$maxid && !$nextvalue) {
             return [];
         }
         $nextid = max($nextvalue, $maxid + 1);
 
         if ($DB->get_dbfamily() === 'postgres') {
-            return ["ALTER SEQUENCE {$CFG->prefix}{$tablename}_id_seq RESTART WITH $nextid"];
+            return ["ALTER SEQUENCE {$CFG->prefix}{$tablename}_{$field}_seq RESTART WITH $nextid"];
         } else {
             return ["ALTER TABLE {$CFG->prefix}{$tablename} AUTO_INCREMENT = $nextid"];
         }

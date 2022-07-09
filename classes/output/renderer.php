@@ -98,6 +98,8 @@ class renderer extends plugin_renderer_base {
     }
 
     /**
+     * Display remote backups
+     *
      * @param remote_backup[] $backups
      * @return string
      */

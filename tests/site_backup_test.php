@@ -62,6 +62,7 @@ class site_backup_test extends \advanced_testcase {
     }
 
     public function test_export_db() {
+        $this->resetAfterTest();
         $sitebackup = new site_backup("");
         $filepath = $sitebackup->export_db('dbdump.zip');
         $this->assertGreaterThanOrEqual(150000, filesize($filepath));

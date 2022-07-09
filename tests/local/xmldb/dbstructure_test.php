@@ -17,7 +17,7 @@
 namespace tool_vault\local\xmldb;
 
 /**
- * The site_backup_test test class.
+ * The dbstructure_test test class.
  *
  * @covers      \tool_vault\local\xmldb\dbstructure
  * @package     tool_vault
