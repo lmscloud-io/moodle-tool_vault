@@ -337,4 +337,32 @@ class dbstructure {
         return $o;
 
     }
+
+    /**
+     * Calculate table sizes in the database
+     *
+     * @return array
+     */
+    public function get_actual_tables_sizes(): array {
+        global $CFG, $DB;
+        $sizes = [];
+        if ($DB->get_dbfamily() === 'postgres') {
+            foreach ($this->get_tables_actual() as $tablename => $table) {
+                $sizes[$tablename] =
+                    $DB->get_field_sql("SELECT pg_total_relation_size(?)",
+                        [$CFG->prefix . $tablename]);
+            }
+        } else {
+            $records = $DB->get_records_sql_menu("SELECT
+                    table_name AS tablename,
+                    data_length AS tablesize
+                FROM information_schema.TABLES
+                WHERE table_schema = ? AND table_name like ?",
+                [$CFG->dbname, $CFG->prefix . '%']);
+            foreach ($this->get_tables_actual() as $tablename => $table) {
+                $sizes[$tablename] = $records[$CFG->prefix . $tablename] ?? 0;
+            }
+        }
+        return $sizes;
+    }
 }

@@ -49,6 +49,7 @@ abstract class base implements \templatable {
     public static function get_all_checks(): array {
         return [
             dbstatus::get_last_check(),
+            diskspace::get_last_check(),
         ];
     }
 
