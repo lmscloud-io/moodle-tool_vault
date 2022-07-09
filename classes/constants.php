@@ -40,6 +40,8 @@ class constants {
     const DIFF_MISSINGINDEXES = 'missingindexes';
     /** @var string */
     const DIFF_EXTRAINDEXES = 'extraindexes';
+    /** @var string */
+    const DIFF_INVALIDTABLES = 'invalidtables';
 
     /** @var string */
     const FILE_STRUCTURE = '__structure__.xml';

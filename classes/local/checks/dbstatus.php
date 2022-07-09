@@ -38,6 +38,7 @@ class dbstatus extends base {
             constants::DIFF_EXTRATABLES => [],
             constants::DIFF_MISSINGTABLES => [],
             constants::DIFF_CHANGEDTABLES => [],
+            constants::DIFF_INVALIDTABLES => [],
         ];
         foreach (array_diff_key($s->get_tables_actual(), $s->get_tables_definitions()) as $tablename => $table) {
             $result[constants::DIFF_EXTRATABLES][$tablename] = [null, $table, null];
@@ -50,6 +51,13 @@ class dbstatus extends base {
             $diff = $table->compare_with_other_table($deftable);
             if ($diff) {
                 $result[constants::DIFF_CHANGEDTABLES][$tablename] = [$deftable, $table, $diff];
+            }
+        }
+        foreach ($s->get_tables_actual() as $tablename => $table) {
+            $errors = $table->validate_definition();
+            if ($errors) {
+                $deftable = $s->get_tables_definitions()[$tablename] ?? null;
+                $result[constants::DIFF_INVALIDTABLES][$tablename] = [$deftable, $table, $errors];
             }
         }
         $this->model->set_details($this->prepare_to_store($result))->save();
@@ -74,6 +82,8 @@ class dbstatus extends base {
             return trim($obj->get_xmldb_table()->xmlOutput());
         } else if ($obj instanceof \xmldb_field || $obj instanceof \xmldb_index || $obj instanceof \xmldb_key) {
             return trim($obj->xmlOutput());
+        } else if (is_string($obj)) {
+            return $obj;
         } else {
             throw new \coding_exception('Unknown type: '.get_class($obj));
         }
@@ -110,6 +120,7 @@ class dbstatus extends base {
                 '<li>Missing tables: '.count($report[constants::DIFF_MISSINGTABLES]).'</li>'.
                 '<li>Extra tables: '.count($report[constants::DIFF_EXTRATABLES]).'</li>'.
                 '<li>Changed tables: '.count($report[constants::DIFF_CHANGEDTABLES]).'</li>'.
+                '<li>Invalid tables: '.count($report[constants::DIFF_INVALIDTABLES]).'</li>'.
                 '</ul>';
         }
         return '';

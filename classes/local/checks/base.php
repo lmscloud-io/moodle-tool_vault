@@ -230,8 +230,8 @@ abstract class base implements \templatable {
         return [
             'title' => $this->get_display_name(),
             'overviewurl' => $overviewurl->out(false),
-            'subtitle' => userdate($this->get_model()->timecreated) .' : '.
-                $this->get_model()->status,
+            'subtitle' => 'Status: '.$this->get_model()->status.', '.
+                userdate($this->get_model()->timemodified, get_string('strftimedatetimeshort', 'langconfig')),
             'inprogress' => $this->is_in_progress(),
             'reschedulelink' => $rescheduleurl->out(false),
             'summary' => $this->summary(),

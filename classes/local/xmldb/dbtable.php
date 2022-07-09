@@ -355,6 +355,9 @@ class dbtable {
 
     /**
      * Retrieves all keys and indexes defined in the current MySQL database
+     *
+     * This is a copy of {@see mysqli_native_moodle_database::get_indexes()} however
+     * we do not want to ignore primary keys here
      */
     protected function retrieve_keys_and_indexes_mysql() {
         global $DB, $CFG;
@@ -372,6 +375,9 @@ class dbtable {
         $result->close();
         if ($dbindexes) {
             foreach ($dbindexes as $indexname => $dbindex) {
+                if (specialrules::is_actual_index_ignored($this->get_xmldb_table(), $dbindex)) {
+                    continue;
+                }
                 // Add the indexname to the array.
                 $dbindex['name'] = $indexname;
                 // We are handling one xmldb_key (primaries + uniques).
@@ -407,6 +413,9 @@ class dbtable {
         $dbindexes = $DB->get_indexes($tableparam);
         if ($dbindexes) {
             foreach ($dbindexes as $indexname => $dbindex) {
+                if (specialrules::is_actual_index_ignored($this->get_xmldb_table(), $dbindex)) {
+                    continue;
+                }
                 // Add the indexname to the array.
                 $dbindex['name'] = $indexname;
                 $index = new xmldb_index(strtolower($dbindex['name']));
@@ -505,5 +514,38 @@ class dbtable {
         } else {
             return ["ALTER TABLE {$CFG->prefix}{$tablename} AUTO_INCREMENT = $nextid"];
         }
+    }
+
+    /**
+     * Validate definitions
+     *
+     * @return array
+     */
+    public function validate_definition(): array {
+        $result = [];
+        $error = $this->get_xmldb_table()->validateDefinition();
+        if ($error !== null) {
+            $result[] = $error;
+        }
+        $objs = array_merge(
+            $this->get_xmldb_table()->getFields(),
+            $this->get_xmldb_table()->getKeys(),
+            $this->get_xmldb_table()->getIndexes(),
+        );
+        foreach ($objs as $obj) {
+            $error = $obj->validateDefinition($this->get_xmldb_table());
+            if ($error !== null) {
+                $result[] = $error;
+            }
+            if ($obj instanceof \xmldb_field) {
+                // Extra checks that are present in check_database_schema() but absent in validateDefinition().
+                if (empty($obj->getType()) || $obj->getType() == XMLDB_TYPE_DATETIME || $obj->getType() == XMLDB_TYPE_TIMESTAMP) {
+                    $result[] = 'Invalid field definition in table {'.$this->get_xmldb_table()->getName().'}: field "'.
+                        $obj->getName().'" has unsupported type';
+                }
+            }
+        }
+
+        return $result;
     }
 }

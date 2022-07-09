@@ -34,12 +34,6 @@ class dbstructure_test extends \advanced_testcase {
         $definitions = dbstructure::load();
         // Loop through all tables and compare definitions with actual.
         foreach ($definitions->get_tables_actual() as $tablename => $actualtable) {
-            if ($tablename === 'search_simpledb_index') {
-                // TODO.
-                // This table has some weird indexes created after installation.
-                continue;
-            }
-
             $definition = $definitions->find_table_definition($tablename);
             $this->assertEquals($definition->get_xmldb_table()->xmlOutput(),
                 $actualtable->get_xmldb_table()->xmlOutput(),

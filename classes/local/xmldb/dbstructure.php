@@ -120,7 +120,11 @@ class dbstructure {
 
                 if ($loaded && ($plugintables = $structure->getTables())) {
                     foreach ($plugintables as $table) {
-                        $this->deftables[strtolower($table->getName())] = new dbtable($table);
+                        $tablename = strtolower($table->getName());
+                        if (specialrules::is_definition_table_ignored($tablename)) {
+                            continue;
+                        }
+                        $this->deftables[$tablename] = new dbtable($table);
                     }
                 }
             }
@@ -180,6 +184,9 @@ class dbstructure {
         global $DB;
         $tablesnames = $DB->get_tables();
         foreach ($tablesnames as $tablename) {
+            if (specialrules::is_actual_table_ignored($tablename)) {
+                continue;
+            }
             $table = dbtable::create_from_actual_db(strtolower(trim($tablename)), $this);
             $this->actualtables[$tablename] = $table;
         }
