@@ -125,7 +125,10 @@ class renderer extends plugin_renderer_base {
      * @return string
      */
     public function render_section_settings(section_settings $section) {
-        return 'hi settings';
+        $output = '';
+        $output .= $this->heading('Backup settings', 3);
+        $output .= $section->get_form()->render();
+        return $output;
     }
 
     /**

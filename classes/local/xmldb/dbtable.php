@@ -375,7 +375,7 @@ class dbtable {
         $result->close();
         if ($dbindexes) {
             foreach ($dbindexes as $indexname => $dbindex) {
-                if (specialrules::is_actual_index_ignored($this->get_xmldb_table(), $dbindex)) {
+                if (specialrules::is_actual_index_ignored($this->get_xmldb_table(), $indexname, $dbindex)) {
                     continue;
                 }
                 // Add the indexname to the array.
@@ -413,7 +413,7 @@ class dbtable {
         $dbindexes = $DB->get_indexes($tableparam);
         if ($dbindexes) {
             foreach ($dbindexes as $indexname => $dbindex) {
-                if (specialrules::is_actual_index_ignored($this->get_xmldb_table(), $dbindex)) {
+                if (specialrules::is_actual_index_ignored($this->get_xmldb_table(), $indexname, $dbindex)) {
                     continue;
                 }
                 // Add the indexname to the array.

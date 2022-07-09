@@ -16,6 +16,8 @@
 
 namespace tool_vault\local\xmldb;
 
+use tool_vault\api;
+
 /**
  * Special rules when tables or indexes need to be excluded or modified
  *
@@ -28,10 +30,11 @@ class specialrules {
      * Ignore index in the actual table
      *
      * @param \xmldb_table $table
+     * @param string $dbindexname
      * @param array $dbindex
      * @return bool
      */
-    public static function is_actual_index_ignored(\xmldb_table $table, $dbindex) {
+    public static function is_actual_index_ignored(\xmldb_table $table, $dbindexname, $dbindex) {
         if ($table->getName() === 'search_simpledb_index') {
             // Hack - skip for table 'search_simpledb_index' as this plugin adds indexes dynamically on install
             // which are not included in install.xml. See search/engine/simpledb/db/install.php.
@@ -39,6 +42,13 @@ class specialrules {
                 return true;
             }
             if (in_array('description1', $dbindex['columns'])) {
+                return true;
+            }
+        }
+        $indexes = preg_split('/[\\s,]/', trim(strtolower(api::get_config('backupexcludeindexes'))), -1, PREG_SPLIT_NO_EMPTY);
+        foreach ($indexes as $exclindex) {
+            $parts = preg_split('/\\./', $exclindex);
+            if ($table->getName() === $parts[0] && $dbindexname === $parts[1]) {
                 return true;
             }
         }
@@ -54,6 +64,10 @@ class specialrules {
      */
     public static function is_actual_table_ignored(string $tablename): bool {
         if (preg_match('/^tool_vault_/', $tablename)) {
+            return true;
+        }
+        $tables = preg_split('/[\\s,]/', trim(strtolower(api::get_config('backupexcludetables'))), -1, PREG_SPLIT_NO_EMPTY);
+        if (in_array($tablename, $tables)) {
             return true;
         }
         return false;

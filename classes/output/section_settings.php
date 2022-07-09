@@ -16,6 +16,8 @@
 
 namespace tool_vault\output;
 
+use tool_vault\form\backup_settings;
+
 /**
  * Tab settings
  *
@@ -25,9 +27,27 @@ namespace tool_vault\output;
  */
 class section_settings extends section_base {
 
+    /** @var \moodleform */
+    protected $form;
+
     /**
      * Process tab actions
      */
     public function process() {
+        global $PAGE, $DB;
+        $this->form = new backup_settings($PAGE->url);
+        if ($this->form->get_data()) {
+            $this->form->process();
+            redirect($PAGE->url);
+        }
+    }
+
+    /**
+     * Form
+     *
+     * @return \moodleform
+     */
+    public function get_form(): \moodleform {
+        return $this->form;
     }
 }
