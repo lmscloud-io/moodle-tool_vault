@@ -120,7 +120,7 @@ class dbstructure {
 
                 if ($loaded && ($plugintables = $structure->getTables())) {
                     foreach ($plugintables as $table) {
-                        $this->deftables[strtolower($table->getName())] = new dbtable($table, $this);
+                        $this->deftables[strtolower($table->getName())] = new dbtable($table);
                     }
                 }
             }
@@ -151,7 +151,7 @@ class dbstructure {
                 $name = strtolower(trim($xmltable['@']['NAME']));
                 $table = new xmldb_table($name);
                 $table->arr2xmldb_table($xmltable);
-                $this->backuptables[$name] = new dbtable($table, $this);
+                $this->backuptables[$name] = new dbtable($table);
             }
         }
         set_config('xmldbdisablecommentchecking', $oldxmldb);
@@ -185,8 +185,8 @@ class dbstructure {
         }
         // Fix indexes/keys and order of elements.
         foreach ($this->get_tables_actual() as $table) {
-            $table->lookup_fields();
-            $table->lookup_indexes();
+            $deftable = $this->find_table_definition($table->get_xmldb_table()->getName());
+            $table->compare_with_other_table($deftable);
         }
     }
 

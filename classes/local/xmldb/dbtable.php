@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\xmldb;
 
+use tool_vault\constants;
 use xmldb_index;
 use xmldb_key;
 use xmldb_table;
@@ -30,18 +31,14 @@ use xmldb_table;
 class dbtable {
     /** @var \xmldb_table */
     protected $xmldbtable;
-    /** @var dbstructure */
-    protected $structure;
 
     /**
      * Constructor
      *
      * @param \xmldb_table $table
-     * @param dbstructure $structure
      */
-    public function __construct(\xmldb_table $table, dbstructure $structure) {
+    public function __construct(\xmldb_table $table) {
         $this->xmldbtable = $table;
-        $this->structure = $structure;
     }
 
     /**
@@ -105,10 +102,9 @@ class dbtable {
             if ($key->getType() == XMLDB_KEY_PRIMARY) {
                 $sqls[] = 'PRIMARY KEY (' . implode(', ', $gen->getEncQuoted($key->getFields())) . ')';
             } else {
-                // Create the interim index, copied from generator::getCreateTableSQL.
+                // Create the interim index, code copied from generator::getCreateTableSQL.
                 $index = new \xmldb_index('anyname');
                 $index->setFields($key->getFields());
-                // Tables do not exist yet, which means indexed can not exist yet.
                 switch ($key->getType()) {
                     case XMLDB_KEY_UNIQUE:
                     case XMLDB_KEY_FOREIGN_UNIQUE:
@@ -150,26 +146,57 @@ class dbtable {
     }
 
     /**
-     * Fixes fields sort order
+     * Check for differences with another table, fix things like order or indexes names
+     *
+     * @param dbtable|null $deftable model table
+     * @param bool $autofix automatically fix order of fields/keys/indexes and names of keys/indexes to match $deftable
+     * @return array array that may contain keys:
+     *        'extratables', 'extracolumns', 'missingcolumns', 'changedcolumns', 'missingindexes', 'extraindexes'
      */
-    public function lookup_fields() {
-        if (!$deftable = $this->structure->find_table_definition($this->get_xmldb_table()->getName())) {
-            return;
+    public function compare_with_other_table(?dbtable $deftable, bool $autofix = true): array {
+        if (!$deftable) {
+            return [constants::DIFF_EXTRATABLES => [$this->get_xmldb_table()]];
         }
+        $res = $this->align_fields_with_defintion($deftable, $autofix);
+        $res += $this->align_keys_and_indexes_with_definition($deftable, $autofix);
+        return array_filter($res);
+    }
+
+    /**
+     * Fixes fields sort order, detects extra/missing/changed fields
+     *
+     * @param dbtable $deftable model table with the correct sort order
+     * @param bool $autofix
+     * @return array
+     */
+    protected function align_fields_with_defintion(dbtable $deftable, bool $autofix): array {
         $actualfields = $this->get_xmldb_table()->getFields();
         $deffields = $deftable->get_xmldb_table()->getFields();
         $newfields = [];
-        // Fix fields order.
+        $changedcolumns = [];
         foreach ($deffields as $i => $deffield) {
             foreach ($actualfields as $f => $afield) {
                 if ($deffield->getName() === $afield->getName()) {
                     $newfields[] = $afield;
+                    if ($this->get_field_sql($deftable->get_xmldb_table(), $deffield) !==
+                                $this->get_field_sql($this->get_xmldb_table(), $afield)) {
+                        $changedcolumns[] = $afield;
+                    } else if ($autofix) {
+                        $newfields[count($newfields) - 1] = $deffield;
+                    }
                     unset($actualfields[$f]);
                     unset($deffields[$i]);
                 }
             }
         }
-        $this->replace_in_table(array_merge($newfields, array_values($actualfields)));
+        if ($autofix) {
+            $this->replace_in_table(array_merge($newfields, array_values($actualfields)));
+        }
+        return [
+            constants::DIFF_EXTRACOLUMNS => array_values($actualfields),
+            constants::DIFF_MISSINGCOLUMNS => array_values($deffields),
+            constants::DIFF_CHANGEDCOLUMNS => $changedcolumns,
+        ];
     }
 
     /**
@@ -177,79 +204,55 @@ class dbtable {
      *
      * DB scanning mixes up keys and indexes, for example, the index is created from a foreign key definition
      * and also in mysql a key is created if there was a unique index.
+     *
+     * @param dbtable $deftable
+     * @param bool $autofix
+     * @return array
      */
-    public function lookup_indexes() {
-        if (!$deftable = $this->structure->find_table_definition($this->get_xmldb_table()->getName())) {
-            return;
-        }
-        $defindexes = $deftable->get_xmldb_table()->getIndexes();
-        $defkeys = $deftable->get_xmldb_table()->getKeys();
-        $actualindexes = $this->get_xmldb_table()->getIndexes();
-        $actualkeys = $this->get_xmldb_table()->getKeys();
-        $newkeys = [];
-        $newindexes = [];
+    public function align_keys_and_indexes_with_definition(dbtable $deftable, bool $autofix): array {
+        $defobjs = array_merge($deftable->get_xmldb_table()->getKeys(), $deftable->get_xmldb_table()->getIndexes());
+        $actualobjs = array_merge($this->get_xmldb_table()->getKeys(), $this->get_xmldb_table()->getIndexes());
+        $matchingobjs = [];
 
-        foreach ($defkeys as $k => $defkey) {
-            foreach ($actualkeys as $i => $key) {
-                if ($this->compare_keys_and_indexes($key, $defkey)) {
-                    $newkeys[] = $defkey;
-                    unset($defkeys[$k]);
-                    unset($actualkeys[$i]);
-                    continue 2;
-                }
-            }
-            foreach ($actualindexes as $i => $index) {
-                if ($this->compare_keys_and_indexes($index, $defkey)) {
-                    $newkeys[] = $defkey;
-                    unset($defkeys[$k]);
-                    unset($actualindexes[$i]);
-                    continue 2;
-                }
-            }
-            // TODO def key not found.
-        }
-
-        foreach ($defindexes as $k => $defindex) {
-            foreach ($actualindexes as $i => $index) {
-                if ($this->compare_keys_and_indexes($index, $defindex)) {
-                    $newindexes[] = $defindex;
-                    unset($defindexes[$k]);
-                    unset($actualindexes[$i]);
-                    continue 2;
-                }
-            }
-            foreach ($actualkeys as $i => $key) {
-                if ($this->compare_keys_and_indexes($key, $defindex)) {
-                    $newindexes[] = $defindex;
-                    unset($defindexes[$k]);
-                    unset($actualkeys[$i]);
-                    continue 2;
-                }
-            }
-            // TODO def index not found.
-        }
-
-        // Remove duplicates.
-        foreach ($actualkeys as $k => $actualkey) {
-            foreach (array_merge($newkeys, $newindexes) as $obj) {
-                if ($this->compare_keys_and_indexes($obj, $actualkey)) {
-                    unset($actualkeys[$k]);
-                    continue 2;
-                }
-            }
-        }
-        foreach ($actualindexes as $k => $actualindex) {
-            foreach (array_merge($newkeys, $newindexes) as $obj) {
-                if ($this->compare_keys_and_indexes($obj, $actualindex)) {
-                    unset($actualindexes[$k]);
+        foreach ($defobjs as $k => $defobj) {
+            foreach ($actualobjs as $i => $key) {
+                if ($this->compare_key_or_index($key, $defobj)) {
+                    $matchingobjs[] = $defobj;
+                    unset($defobjs[$k]);
+                    unset($actualobjs[$i]);
                     continue 2;
                 }
             }
         }
 
-        $this->replace_in_table(null,
-            array_merge($newkeys, array_values($actualkeys)),
-            array_merge($newindexes, array_values($actualindexes)));
+        // Remove duplicates from actualkeys.
+        foreach ($actualobjs as $k => $actualobj) {
+            foreach ($matchingobjs as $obj) {
+                if ($this->compare_key_or_index($obj, $actualobj)) {
+                    unset($actualobjs[$k]);
+                    continue 2;
+                }
+            }
+        }
+
+        // Remove duplicates from remaining defkeys (keys and indexes that were not found in this table).
+        foreach ($defobjs as $k => $defobj) {
+            foreach ($matchingobjs as $obj) {
+                if ($this->compare_key_or_index($obj, $defobj)) {
+                    unset($defobjs[$k]);
+                    continue 2;
+                }
+            }
+        }
+
+        if ($autofix) {
+            $this->replace_in_table(null, array_merge($matchingobjs, array_values($actualobjs)));
+        }
+
+        return [
+            constants::DIFF_EXTRAINDEXES => array_values($actualobjs),
+            constants::DIFF_MISSINGINDEXES => array_values($defobjs),
+        ];
     }
 
     /**
@@ -260,15 +263,15 @@ class dbtable {
      *
      * @param \xmldb_object $o1
      * @param \xmldb_object $o2
-     * @return bool
+     * @return bool true if matches, false if not
      */
-    protected function compare_keys_and_indexes(\xmldb_object $o1, \xmldb_object $o2): bool {
+    protected function compare_key_or_index(\xmldb_object $o1, \xmldb_object $o2): bool {
         if (!in_array(get_class($o1), [xmldb_index::class, xmldb_key::class]) ||
             !in_array(get_class($o2), [xmldb_index::class, xmldb_key::class])) {
             throw new \coding_exception('Each argument must be either xmldb_index or xmldb_key');
         }
         $f1 = join(',', $o1->getFields());
-        $f2 = join(',', $o1->getFields());
+        $f2 = join(',', $o2->getFields());
         if ($f1 !== $f2) {
             return false;
         }
@@ -295,19 +298,15 @@ class dbtable {
      * Replace fields, keys and/or indexes in this table.
      *
      * @param \xmldb_field[] $fields
-     * @param \xmldb_key[] $keys
-     * @param \xmldb_index[] $indexes
+     * @param \xmldb_object[] $keysandindexes
      * @return void
      */
-    protected function replace_in_table(?array $fields = null, ?array $keys = null, ?array $indexes = null) {
+    protected function replace_in_table(?array $fields = null, ?array $keysandindexes = null) {
         if ($fields === null) {
             $fields = $this->get_xmldb_table()->getFields();
         }
-        if ($keys === null) {
-            $keys = $this->get_xmldb_table()->getKeys();
-        }
-        if ($indexes === null) {
-            $indexes = $this->get_xmldb_table()->getIndexes();
+        if ($keysandindexes === null) {
+            $keysandindexes = array_merge($this->get_xmldb_table()->getKeys(), $this->get_xmldb_table()->getIndexes());
         }
         $table = new \xmldb_table($this->get_xmldb_table()->getName());
         foreach ($fields as $field) {
@@ -315,15 +314,14 @@ class dbtable {
             $field->setNext(null);
             $table->addField($field);
         }
-        foreach ($keys as $key) {
-            $key->setPrevious(null);
-            $key->setNext(null);
-            $table->addKey($key);
-        }
-        foreach ($indexes as $index) {
-            $index->setPrevious(null);
-            $index->setNext(null);
-            $table->addIndex($index);
+        foreach ($keysandindexes as $obj) {
+            $obj->setPrevious(null);
+            $obj->setNext(null);
+            if ($obj instanceof xmldb_key) {
+                $table->addKey($obj);
+            } else if ($obj instanceof xmldb_index) {
+                $table->addIndex($obj);
+            }
         }
         $this->xmldbtable = $table;
     }
@@ -346,9 +344,9 @@ class dbtable {
                 $xmldbtable->addField(database_column_info::clone_from($dbfield)->to_xmldb_field($deftable));
             }
         }
-        $table = new self($xmldbtable, $structure);
+        $table = new self($xmldbtable);
         if ($DB->get_dbfamily() === 'postgres') {
-            $table->retrieve_keys_and_indexes_postgres();
+            $table->retrieve_keys_and_indexes_postgres($structure);
         } else {
             $table->retrieve_keys_and_indexes_mysql();
         }
@@ -398,8 +396,10 @@ class dbtable {
 
     /**
      * Retrieves all keys and indexes defined in the current Postgres database
+     *
+     * @param dbstructure $structure
      */
-    protected function retrieve_keys_and_indexes_postgres() {
+    protected function retrieve_keys_and_indexes_postgres(dbstructure $structure) {
         global $DB;
         $table = $this->get_xmldb_table();
         $tableparam = $table->getName();
@@ -418,7 +418,7 @@ class dbtable {
             }
         }
 
-        if ($primarykey = $this->structure->retrieve_primary_keys_postgres()[$tableparam] ?? null) {
+        if ($primarykey = $structure->retrieve_primary_keys_postgres()[$tableparam] ?? null) {
             $table->addKey(new xmldb_key($primarykey->keyname, XMLDB_KEY_PRIMARY, [$primarykey->columnname]));
         }
     }
@@ -431,52 +431,39 @@ class dbtable {
      */
     public function get_alter_sql(?dbtable $originaltable): array {
         global $DB;
+        $generator = $DB->get_manager()->generator;
         if (!$originaltable) {
-            return $DB->get_manager()->generator->getCreateTableSQL($this->get_xmldb_table());
+            // Table does not exist, return SQL to create table.
+            return $generator->getCreateTableSQL($this->get_xmldb_table());
         }
-        if ($this->is_same_as($originaltable)) {
+        $diff = $this->compare_with_other_table($originaltable);
+        if (!$diff) {
+            // Table is identical to the originaltable.
             return [];
         }
+        if (!array_diff_key($diff, [constants::DIFF_EXTRAINDEXES, constants::DIFF_EXTRACOLUMNS])) {
+            // Table only has extra fields and/or indexes - return queries to add fields/indexes.
+            // TODO dropping extra indexes should be a straightforward operation too.
+            $res = [];
+            foreach ($diff[constants::DIFF_EXTRACOLUMNS] ?? [] as $field) {
+                $res = array_merge($res, $generator->getAddFieldSQL($this->get_xmldb_table(), $field));
+            }
+            foreach ($diff[constants::DIFF_EXTRAINDEXES] ?? [] as $obj) {
+                if ($obj instanceof xmldb_key) {
+                    $res = array_merge($res, $generator->getAddKeySQL($this->get_xmldb_table(), $obj));
+                } else if ($obj instanceof xmldb_index) {
+                    $res = array_merge($res, $generator->getAddIndexSQL($this->get_xmldb_table(), $obj));
+                }
+            }
+            return $res;
+        }
+        // Anything that is more difficult than that - drop and create the table.
+        // We may not be able to simply delete columns or change their types because there might be indexes on
+        // such columns.
         return array_merge(
-            $DB->get_manager()->generator->getDropTableSQL($originaltable->get_xmldb_table()),
-            $DB->get_manager()->generator->getCreateTableSQL($this->get_xmldb_table()),
+            $generator->getDropTableSQL($originaltable->get_xmldb_table()),
+            $generator->getCreateTableSQL($this->get_xmldb_table()),
         );
-    }
-
-    /**
-     * Is current table same as the other table
-     *
-     * TODO perform check similar to {@see \database_manager::check_database_schema()}, create SQL for changes.
-     *
-     * @param dbtable $originaltable
-     * @return bool
-     */
-    public function is_same_as(dbtable $originaltable): bool {
-        global $DB;
-        $generator = $DB->get_manager()->generator;
-        if ($this->get_xmldb_table()->getName() !== $originaltable->get_xmldb_table()->getName()) {
-            return false;
-        }
-        $fields = $this->get_xmldb_table()->getFields();
-        $origfields = $originaltable->get_xmldb_table()->getFields();
-        if (array_diff_key($fields, $origfields) || array_diff_key($origfields, $fields)) {
-            return false;
-        }
-        foreach ($fields as $fieldname => $field) {
-            $origfield = $origfields[$fieldname];
-            if ($field->getSequence() != $origfield->getSequence() || $field->getNotNull() != $origfield->getNotNull()
-                    || $field->getDefault() != $field->getDefault()) {
-                return false;
-            }
-            $stmt = $generator->getFieldSQL($this->get_xmldb_table(), $field, false, true, true, false);
-            $origstmt = $generator->getFieldSQL($originaltable->get_xmldb_table(), $origfield, false, true, true, false);
-            if ($stmt !== $origstmt) {
-                return false;
-            }
-        }
-
-        // TODO compare indexes and keys.
-        return true;
     }
 
     /**

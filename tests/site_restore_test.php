@@ -40,7 +40,7 @@ class site_restore_test extends \advanced_testcase {
 
         // Perform backup.
         $sitebackup = new site_backup("");
-        $filepath = $sitebackup->export_db('dbdump.zip');
+        $filepath = $sitebackup->export_db(constants::FILENAME_DBDUMP . '.zip');
 
         // Add a second book instance.
         $book2 = $this->getDataGenerator()->create_module('book', ['course' => $course->id]);

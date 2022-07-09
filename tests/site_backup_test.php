@@ -50,7 +50,7 @@ class site_backup_test extends \advanced_testcase {
         api::store_config('n5', 'value "with" quotes');
         api::store_config('n6', "value\nwith\nnewlines");
 
-        $dir = make_temp_directory('dbdump');
+        $dir = make_temp_directory(constants::FILENAME_DBDUMP);
         $table = 'tool_vault_config';
         $filepath = $dir.DIRECTORY_SEPARATOR.$table.'.json';
         $sitebackup->export_table_data($tables[$table], $filepath);
@@ -64,7 +64,7 @@ class site_backup_test extends \advanced_testcase {
     public function test_export_db() {
         $this->resetAfterTest();
         $sitebackup = new site_backup("");
-        $filepath = $sitebackup->export_db('dbdump.zip');
+        $filepath = $sitebackup->export_db(constants::FILENAME_DBDUMP . '.zip');
         $this->assertGreaterThanOrEqual(150000, filesize($filepath));
 
         // Unpack and check contents.
@@ -82,8 +82,8 @@ class site_backup_test extends \advanced_testcase {
 
         $this->assertTrue(in_array('config', $files));
         $this->assertTrue(in_array('user', $files));
-        $this->assertTrue(file_exists($dir.DIRECTORY_SEPARATOR.'__structure__.xml'));
-        $this->assertTrue(file_exists($dir.DIRECTORY_SEPARATOR.'__sequences__.json'));
+        $this->assertTrue(file_exists($dir.DIRECTORY_SEPARATOR.constants::FILE_STRUCTURE));
+        $this->assertTrue(file_exists($dir.DIRECTORY_SEPARATOR.constants::FILE_SEQUENCE));
         $this->assertFalse(in_array('tool_vault_config', $files));
         $this->assertFalse(in_array('tool_vault_backups', $files));
         $this->assertFalse(in_array('tool_vault_restores', $files));
@@ -97,7 +97,7 @@ class site_backup_test extends \advanced_testcase {
         $this->resetAfterTest();
 
         $sitebackup = new site_backup("");
-        $filepath = $sitebackup->export_dataroot('datadir.zip');
+        $filepath = $sitebackup->export_dataroot(constants::FILENAME_DATAROOT . '.zip');
         $this->assertGreaterThanOrEqual(150000, filesize($filepath));
 
         // Unpack and check contents.

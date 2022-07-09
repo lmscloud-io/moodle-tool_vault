@@ -27,14 +27,6 @@ use tool_vault\task\restore_task;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class site_restore {
-    /** @var string */
-    const STATUS_INPROGRESS = 'inprogress';
-    /** @var string */
-    const STATUS_SCHEDULED = 'scheduled';
-    /** @var string */
-    const STATUS_FINISHED = 'finished';
-    /** @var string */
-    const STATUS_FAILED = 'failed';
 
     /** @var \stdClass */
     protected $restore;
@@ -46,14 +38,14 @@ class site_restore {
      */
     public static function get_scheduled_restore() {
         global $DB;
-        $records = $DB->get_records('tool_vault_restores', ['status' => self::STATUS_SCHEDULED]);
+        $records = $DB->get_records('tool_vault_restores', ['status' => constants::STATUS_SCHEDULED]);
         return $records ? reset($records) : null;
     }
 
     /**
-     * Should the datadir subfolder be skipped and not deleted during restore
+     * Should the dataroot subfolder be skipped and not deleted during restore
      *
-     * @param string $path relative path under $CFG->datadir
+     * @param string $path relative path under $CFG->dataroot
      * @return bool
      */
     public function is_dir_skipped(string $path): bool {
@@ -71,10 +63,10 @@ class site_restore {
     public static function schedule_restore(string $backupkey) {
         global $DB, $USER;
         $now = time();
-        $backupmetadata = api::get_remote_backup($backupkey, self::STATUS_FINISHED);
+        $backupmetadata = api::get_remote_backup($backupkey, constants::STATUS_FINISHED);
         $DB->insert_record('tool_vault_restores', [
             'backupkey' => $backupkey,
-            'status' => self::STATUS_SCHEDULED,
+            'status' => constants::STATUS_SCHEDULED,
             'timecreated' => $now,
             'timemodified' => $now,
             'backupmetadata' => json_encode($backupmetadata),
@@ -101,10 +93,10 @@ class site_restore {
         $restore = $DB->get_record('tool_vault_restores', ['id' => $this->restore->id]);
         $data['id'] = $this->restore->id;
         $now = time();
-        if ($data['status'] ?? '' === self::STATUS_INPROGRESS && $restore->status === self::STATUS_SCHEDULED) {
+        if ($data['status'] ?? '' === constants::STATUS_INPROGRESS && $restore->status === constants::STATUS_SCHEDULED) {
             $data['timestarted'] = $now;
         }
-        if ($data['status'] ?? '' === self::STATUS_FINISHED) {
+        if ($data['status'] ?? '' === constants::STATUS_FINISHED) {
             $data['timefinished'] = $now;
         }
         $data['timemodified'] = $now;
@@ -127,18 +119,18 @@ class site_restore {
         }
         $this->restore = $restore;
         try {
-            api::get_remote_backup($this->restore->backupkey, self::STATUS_FINISHED);
+            api::get_remote_backup($this->restore->backupkey, constants::STATUS_FINISHED);
         } catch (\moodle_exception $e) {
             $error = "Backup with the key {$restore->backupkey} is no longer avaialable";
-            $this->update_restore(['status' => self::STATUS_FAILED], $error);
+            $this->update_restore(['status' => constants::STATUS_FAILED], $error);
             throw new \moodle_exception($error);
         }
-        $this->update_restore(['status' => self::STATUS_INPROGRESS], 'Restore started');
+        $this->update_restore(['status' => constants::STATUS_INPROGRESS], 'Restore started');
 
         // Download files.
         $tempdir = make_request_directory();
-        $filename1 = 'dbdump.zip';
-        $filename2 = 'dataroot.zip';
+        $filename1 = constants::FILENAME_DBDUMP . '.zip';
+        $filename2 = constants::FILENAME_DATAROOT . '.zip';
         $filepath1 = $tempdir.DIRECTORY_SEPARATOR.$filename1;
         $filepath2 = $tempdir.DIRECTORY_SEPARATOR.$filename2;
 
@@ -147,7 +139,7 @@ class site_restore {
             api::download_backup_file($this->restore->backupkey, $filepath1);
         } catch (\Throwable $t) {
             mtrace($t->getMessage());
-            $this->update_restore(['status' => self::STATUS_FAILED], 'Could not download file '.$filename1);
+            $this->update_restore(['status' => constants::STATUS_FAILED], 'Could not download file '.$filename1);
             return;
         }
 
@@ -156,7 +148,7 @@ class site_restore {
             api::download_backup_file($this->restore->backupkey, $filepath2);
         } catch (\Throwable $t) {
             mtrace($t->getMessage());
-            $this->update_restore(['status' => self::STATUS_FAILED], 'Could not download file '.$filename2);
+            $this->update_restore(['status' => constants::STATUS_FAILED], 'Could not download file '.$filename2);
             return;
         }
 
@@ -169,7 +161,7 @@ class site_restore {
         $this->restore_dataroot($datarootfiles);
         // TODO more logging.
 
-        $this->update_restore(['status' => self::STATUS_FINISHED], 'Restore finished');
+        $this->update_restore(['status' => constants::STATUS_FINISHED], 'Restore finished');
 
         $this->post_restore();
     }
@@ -181,9 +173,9 @@ class site_restore {
      * @return dbstructure
      */
     public function prepare_restore_db(string $filepath) {
-        $structurefilename = '__structure__.xml';
+        $structurefilename = constants::FILE_STRUCTURE;
 
-        $temppath = make_temp_directory('dbdump');
+        $temppath = make_temp_directory(constants::FILENAME_DBDUMP);
         $zippacker = new \zip_packer();
         $zippacker->extract_to_pathname($filepath, $temppath, [$structurefilename, 'xmldb.xsd']);
         $structure = dbstructure::load_from_backup($temppath.DIRECTORY_SEPARATOR.$structurefilename);
@@ -227,10 +219,10 @@ class site_restore {
      */
     public function restore_db(dbstructure $structure, string $zipfilepath) {
         global $DB;
-        $temppath = make_temp_directory('dbdump');
+        $temppath = make_temp_directory(constants::FILENAME_DBDUMP);
         $zippacker = new \zip_packer();
 
-        $sequencesfilename = '__sequences__.json';
+        $sequencesfilename = constants::FILE_SEQUENCE;
         $zippacker->extract_to_pathname($zipfilepath, $temppath, [$sequencesfilename]);
         $filepath = $temppath.DIRECTORY_SEPARATOR.$sequencesfilename;
         $sequences = json_decode(file_get_contents($filepath), true);

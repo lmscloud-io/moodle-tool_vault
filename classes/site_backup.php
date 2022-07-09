@@ -31,17 +31,6 @@ class site_backup {
     /** @var string */
     protected $backupkey;
 
-    /** @var string */
-    const STATUS_INPROGRESS = 'inprogress';
-    /** @var string */
-    const STATUS_SCHEDULED = 'scheduled';
-    /** @var string */
-    const STATUS_FINISHED = 'finished';
-    /** @var string */
-    const STATUS_FAILED = 'failed';
-    /** @var string */
-    const STATUS_FAILEDTOSTART = 'failedtostart';
-
     /**
      * Constructor
      *
@@ -62,9 +51,9 @@ class site_backup {
     }
 
     /**
-     * Should the datadir subfolder be skipped from the backup
+     * Should the dataroot subfolder be skipped from the backup
      *
-     * @param string $path relative path under $CFG->datadir
+     * @param string $path relative path under $CFG->dataroot
      * @return bool
      */
     public function is_dir_skipped(string $path): bool {
@@ -102,14 +91,14 @@ class site_backup {
      */
     public static function schedule_backup() {
         global $DB, $USER;
-        if ($backups = self::get_backups([self::STATUS_SCHEDULED])) {
+        if ($backups = self::get_backups([constants::STATUS_SCHEDULED])) {
             // Pressed button twice maybe?
             return;
         }
-        if ($backups = self::get_backups([self::STATUS_INPROGRESS])) {
+        if ($backups = self::get_backups([constants::STATUS_INPROGRESS])) {
             throw new \moodle_exception('Another active backup found');
         }
-        self::insert_backup(['status' => self::STATUS_SCHEDULED, 'usercreated' => $USER->id], "Backup scheduled");
+        self::insert_backup(['status' => constants::STATUS_SCHEDULED, 'usercreated' => $USER->id], "Backup scheduled");
         backup_task::schedule();
     }
 
@@ -119,7 +108,7 @@ class site_backup {
      * @return false|mixed
      */
     public static function get_scheduled_backup(): ?\stdClass {
-        $backups = self::get_backups([self::STATUS_SCHEDULED]);
+        $backups = self::get_backups([constants::STATUS_SCHEDULED]);
         return $backups ? reset($backups) : null;
     }
 
@@ -129,7 +118,7 @@ class site_backup {
      * @return \stdClass|null
      */
     public static function get_backup_in_progress(): ?\stdClass {
-        $backups = self::get_backups([self::STATUS_INPROGRESS]);
+        $backups = self::get_backups([constants::STATUS_INPROGRESS]);
         return $backups ? reset($backups) : null;
     }
 
@@ -172,13 +161,13 @@ class site_backup {
         $backup = $DB->get_record('tool_vault_backups', ['id' => $id]);
         $data['id'] = $id;
         $now = time();
-        if ($data['status'] ?? '' === self::STATUS_INPROGRESS && $backup->status === self::STATUS_SCHEDULED) {
+        if ($data['status'] ?? '' === constants::STATUS_INPROGRESS && $backup->status === constants::STATUS_SCHEDULED) {
             $data['timestarted'] = $now;
         }
-        if ($data['status'] ?? '' === self::STATUS_FINISHED) {
+        if ($data['status'] ?? '' === constants::STATUS_FINISHED) {
             $data['timefinished'] = $now;
         }
-        if (in_array($data['statis'] ?? '', [self::STATUS_FAILEDTOSTART, self::STATUS_FAILED])) {
+        if (in_array($data['statis'] ?? '', [constants::STATUS_FAILEDTOSTART, constants::STATUS_FAILED])) {
             $data['timefailed'] = $now;
         }
         $data['timemodified'] = $now;
@@ -211,11 +200,11 @@ class site_backup {
         $metadata = json_encode($params);
         if (!empty($res['backupkey'])) {
             self::update_backup($backup->id,
-                ['status' => self::STATUS_INPROGRESS, 'backupkey' => $res['backupkey'], 'metadata' => $metadata],
+                ['status' => constants::STATUS_INPROGRESS, 'backupkey' => $res['backupkey'], 'metadata' => $metadata],
                 'Backup started');
         } else {
             // API rejected - aobve limit/quota. TODO store details of failure? how to notify user?
-            self::update_backup($backup->id, ['status' => self::STATUS_FAILEDTOSTART, 'metadata' => $metadata],
+            self::update_backup($backup->id, ['status' => constants::STATUS_FAILEDTOSTART, 'metadata' => $metadata],
                 'Failed to start the backup with the cloud service');
             // @codingStandardsIgnoreLine
             throw new \coding_exception('Unknown response: '.print_r($res, true));
@@ -231,16 +220,16 @@ class site_backup {
     public function execute() {
         global $DB;
         $backup = $DB->get_record('tool_vault_backups',
-            ['backupkey' => $this->backupkey, 'status' => self::STATUS_INPROGRESS], '*', MUST_EXIST);
+            ['backupkey' => $this->backupkey, 'status' => constants::STATUS_INPROGRESS], '*', MUST_EXIST);
 
-        $filepath = $this->export_db('dbdump.zip');
+        $filepath = $this->export_db(constants::FILENAME_DBDUMP . '.zip');
         api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
 
-        $filepath = $this->export_dataroot('dataroot.zip');
+        $filepath = $this->export_dataroot(constants::FILENAME_DATAROOT . '.zip');
         api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
 
         api::api_call("backups/{$this->backupkey}", 'PATCH', ['status' => 'finished']);
-        self::update_backup($backup->id, ['status' => self::STATUS_FINISHED], 'Backup finished');
+        self::update_backup($backup->id, ['status' => constants::STATUS_FINISHED], 'Backup finished');
 
         // TODO notify user, register in our config.
     }
@@ -294,7 +283,7 @@ class site_backup {
      */
     public function export_db(string $exportfilename) {
         global $CFG;
-        $dir = make_temp_directory('dbdump');
+        $dir = make_temp_directory(constants::FILENAME_DBDUMP);
         $structure = $this->get_db_structure();
         $tables = [];
         foreach ($structure->get_tables_actual() as $table => $tableobj) {
@@ -304,11 +293,11 @@ class site_backup {
                 $tables[$table] = $tableobj;
             }
         }
-        $structurefilename = '__structure__.xml';
+        $structurefilename = constants::FILE_STRUCTURE;
         file_put_contents($dir.DIRECTORY_SEPARATOR.$structurefilename,
             $this->dbstructure->output(array_keys($tables)));
 
-        $sequencesfilename = '__sequences__.json';
+        $sequencesfilename = constants::FILE_SEQUENCE;
         file_put_contents($dir.DIRECTORY_SEPARATOR.$sequencesfilename,
             json_encode(array_intersect_key($structure->retrieve_sequences(), $tables)));
 
@@ -353,7 +342,7 @@ class site_backup {
         }
         closedir($handle);
 
-        $zipfilepath = make_temp_directory('datarootdump').DIRECTORY_SEPARATOR.$exportfilename;
+        $zipfilepath = make_temp_directory(constants::FILENAME_DATAROOT).DIRECTORY_SEPARATOR.$exportfilename;
         $zippacker = new \zip_packer();
         // TODO use progress somehow?
         if (!$zippacker->archive_to_pathname($files, $zipfilepath)) {
