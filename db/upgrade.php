@@ -34,5 +34,30 @@ function xmldb_tool_vault_upgrade($oldversion) {
 
     $dbman = $DB->get_manager();
 
+    if ($oldversion < 2022070900) {
+
+        // Define table tool_vault_checks to be created.
+        $table = new xmldb_table('tool_vault_checks');
+
+        // Adding fields to table tool_vault_checks.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('type', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('status', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('details', XMLDB_TYPE_TEXT, null, null, null, null, null);
+
+        // Adding keys to table tool_vault_checks.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for tool_vault_checks.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Vault savepoint reached.
+        upgrade_plugin_savepoint(true, 2022070900, 'tool', 'vault');
+    }
+
     return true;
 }

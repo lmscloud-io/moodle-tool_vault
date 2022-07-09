@@ -28,5 +28,7 @@
  */
 function xmldb_tool_vault_install() {
 
+    \tool_vault\local\checks\base::get_all_checks();
+
     return true;
 }

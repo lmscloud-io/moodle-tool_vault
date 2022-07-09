@@ -29,6 +29,8 @@ class constants {
     /** @var string */
     const DIFF_MISSINGTABLES = 'missingtables';
     /** @var string */
+    const DIFF_CHANGEDTABLES = 'changedtables';
+    /** @var string */
     const DIFF_EXTRACOLUMNS = 'extracolumns';
     /** @var string */
     const DIFF_MISSINGCOLUMNS = 'missingcolumns';

@@ -16,6 +16,8 @@
 
 namespace tool_vault\output;
 
+use tool_vault\local\checks\base;
+
 /**
  * Tab overview
  *
@@ -29,5 +31,12 @@ class section_overview extends section_base {
      * Process tab actions
      */
     public function process() {
+        global $PAGE;
+        $action = optional_param('action', null, PARAM_ALPHANUMEXT);
+
+        if ($action === 'newcheck' && confirm_sesskey()) {
+            base::schedule_new(required_param('type', PARAM_ALPHANUMEXT));
+            redirect($PAGE->url);
+        }
     }
 }
