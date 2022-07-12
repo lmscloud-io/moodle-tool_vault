@@ -69,4 +69,55 @@ class section_backup extends section_base {
     public function get_form(): \moodleform {
         return $this->form;
     }
+
+    /**
+     * Export for output
+     *
+     * @param \tool_vault\output\renderer $output
+     * @return false[]
+     */
+    public function export_for_template($output): array {
+        global $PAGE;
+        $result = [
+            'canstartbackup' => false,
+        ];
+        if ($backup = \tool_vault\site_backup::get_scheduled_backup()) {
+            $result['lastbackup'] = [
+                'title' => $backup->get_title(),
+                'subtitle' => $backup->get_subtitle(),
+                'summary' => 'You backup is now scheduled and will be executed during the next cron run',
+            ];
+        } else if ($backup = \tool_vault\site_backup::get_backup_in_progress()) {
+            $result['lastbackup'] = [
+                'title' => $backup->get_title(),
+                'subtitle' => $backup->get_subtitle(),
+                'summary' => 'You have a backup in progress',
+                'logs' => $backup->get_logs_shortened(),
+            ];
+            $result['showdetailslink'] = 1;
+        } else if ($backup = \tool_vault\site_backup::get_last_backup()) {
+            $result['lastbackup'] = [
+                'title' => $backup->get_title(),
+                'subtitle' => $backup->get_subtitle(),
+                'logs' => $backup->get_logs_shortened(),
+            ];
+            $result['canstartbackup'] = true;
+            $result['showdetailslink'] = 1;
+        } else {
+            $result['canstartbackup'] = true;
+        }
+
+        $result['startbackupurl'] = (new \moodle_url($PAGE->url,
+            ['section' => 'backup', 'action' => 'startbackup', 'sesskey' => sesskey()]))->out(false);
+        $result['fullreporturl'] = (new \moodle_url($PAGE->url,
+            ['section' => 'backup', 'action' => 'details', 'id' => $backup->id ?? 0]))->out(false);
+
+        if ($this->get_is_registered()) {
+            $result['apikey'] = \tool_vault\api::get_api_key();
+            // TODO allow to ditch the old API key and create/enter a new one.
+        } else {
+            $result['apikeyform'] = $this->get_form()->render();
+        }
+        return $result;
+    }
 }

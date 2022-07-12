@@ -127,4 +127,14 @@ class backup_settings extends \moodleform {
         $indexes = preg_split('/[\\s,]/', trim($data->backupexcludeindexes), -1, PREG_SPLIT_NO_EMPTY);
         api::store_config('backupexcludeindexes', join(', ', $indexes));
     }
+
+    /**
+     * There are backup settings
+     *
+     * @return bool
+     */
+    public static function has_backup_settings(): bool {
+        return !empty(api::get_config('backupexcludetables')) ||
+            !empty(api::get_config('backupexcludeindexes'));
+    }
 }

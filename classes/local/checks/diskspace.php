@@ -63,6 +63,16 @@ class diskspace extends base {
     }
 
     /**
+     * Can backup be performed
+     *
+     * @return bool
+     */
+    public function success(): bool {
+        return $this->model->status === constants::STATUS_FINISHED
+            && $this->model->get_details()['enoughspace'];
+    }
+
+    /**
      * Get summary of the past check
      *
      * @return string
@@ -72,14 +82,18 @@ class diskspace extends base {
             return '';
         }
         $details = $this->model->get_details();
-        return '<ul>'.
+        $status = $details['enoughspace'] ?
+            'There is enough disk space to perform site backup' :
+            'There is not enough disk space to perform site backup';
+        return
+            $this->status_message($status).
+            '<ul>'.
             '<li>Total size of files: '.display_size($details['totalfilesize']).'</li>'.
-            '<li>Biggest file: '.display_size($details['maxfilesize']).'</li>'.
+            '<li>The largest file: '.display_size($details['maxfilesize']).'</li>'.
             '<li>Total number of rows in DB tables: '.number_format($details['dbrecords'], 0).'</li>'.
             '<li>Total size of DB tables (approx): '.display_size($details['dbtotalsize']).'</li>'.
-            '<li>Max DB table size (approx): '.display_size($details['dbmaxsize']).'</li>'.
+            '<li>The largest DB table size (approx): '.display_size($details['dbmaxsize']).'</li>'.
             '<li>Free space in temp dir: '.display_size($details['freespace']).'</li>'.
-            '<li>--Enough space to perform site backup--: '.($details['enoughspace'] ? 'YES' : 'NO').'</li>'.
             '</ul>';
     }
 

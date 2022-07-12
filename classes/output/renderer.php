@@ -37,34 +37,17 @@ class renderer extends plugin_renderer_base {
      * @return string
      */
     public function render_section_backup(section_backup $section) {
-        $output = '';
+        $action = optional_param('action', null, PARAM_ALPHANUMEXT);
+        $id = optional_param('id', null, PARAM_INT);
 
-        if ($section->get_is_registered()) {
-            $output .= html_writer::div("Your API key: " . \tool_vault\api::get_api_key());
-            // TODO allow to ditch the old API key and create/enter a new one.
-        } else {
-            $output .= $section->get_form()->render();
+        if ($action === 'details' && $id && ($backup = \tool_vault\site_backup::get_backup_by_id($id))) {
+            $data = (new backup_details($backup))->export_for_template($this);
+            return $this->render_from_template('tool_vault/backup_details', $data);
         }
 
-        $output .= $this->heading(get_string('sitebackup', 'tool_vault'), 3);
-
-        // TODO: this is just a POC, it needs templates, AJAX, strings, etc.
-        if ($section->get_is_registered()) {
-            if ($backup = \tool_vault\site_backup::get_scheduled_backup()) {
-                $output .= html_writer::div("You backup is now scheduled and will be executed during the next cron run");
-            } else if ($backup = \tool_vault\site_backup::get_backup_in_progress()) {
-                $output .= html_writer::div("You have a backup '{$backup->backupkey}' in progress");
-            } else {
-                if ($backup = \tool_vault\site_backup::get_last_backup()) {
-                    // @codingStandardsIgnoreLine
-                    $output .= html_writer::div("Your last backup: <pre>".print_r($backup, true)."</pre>");
-                }
-                $output .= $this->single_button(new moodle_url($this->page->url,
-                    ['section' => 'backup', 'action' => 'startbackup', 'sesskey' => sesskey()]), 'Start backup', 'get');
-            }
-        }
-
-        return $output;
+        return
+            $this->render_from_template('tool_vault/section_backup',
+                $section->export_for_template($this));
     }
 
     /**

@@ -158,6 +158,29 @@ abstract class base implements \templatable {
     }
 
     /**
+     * Run individual check from CLI
+     *
+     * @return static
+     */
+    public static function create_and_run(): self {
+        // TODO check - only to use from CLI.
+        // TODO make sure there is nothing else scheduled.
+        $model = new check((object)['type' => static::get_name(), 'status' => constants::STATUS_SCHEDULED]);
+        $obj = static::instance($model);
+        $model->save();
+
+        $obj->mark_as_inprogress();
+        try {
+            $obj->perform();
+            $obj->mark_as_finished();
+        } catch (\Throwable $t) {
+            $obj->mark_as_failed($t);
+        }
+
+        return $obj;
+    }
+
+    /**
      * Mark check as failed
      *
      * @param \Throwable $t
@@ -238,5 +261,27 @@ abstract class base implements \templatable {
             'showdetailslink' => $this->has_details(),
             'fullreporturl' => $this->has_details() ? $fullreporturl->out(false) : null,
         ];
+    }
+
+    /**
+     * Pre-check is successful (backup/restore can be performed)
+     *
+     * @return bool
+     */
+    abstract public function success(): bool;
+
+    /**
+     * Display a check status message
+     *
+     * @param string $status
+     * @param bool $iswarning
+     * @return string
+     */
+    protected function status_message(string $status, bool $iswarning = false): string {
+        global $OUTPUT;
+        return $OUTPUT->notification($status,
+            !$this->success() ? 'notifyproblem' :
+                ($iswarning ? 'notifywarning' : 'info'),
+            false);
     }
 }

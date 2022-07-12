@@ -16,6 +16,9 @@
 
 namespace tool_vault;
 
+use tool_vault\local\checks\dbstatus;
+use tool_vault\local\checks\diskspace;
+use tool_vault\local\models\backup;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\local\xmldb\dbtable;
 use tool_vault\task\backup_task;
@@ -71,9 +74,9 @@ class site_backup {
      * List of all backups performed on this server
      *
      * @param array|null $statuses
-     * @return array
+     * @return backup[]
      */
-    protected static function get_backups(?array $statuses = null) {
+    protected static function get_backups(?array $statuses = null): array {
         global $DB;
         if ($statuses) {
             [$sql, $params] = $DB->get_in_or_equal($statuses);
@@ -81,7 +84,10 @@ class site_backup {
         } else {
             $sql = '1=1';
         }
-        return $DB->get_records_select('tool_vault_backups', $sql, $params ?? [], 'timecreated DESC');
+        $records = $DB->get_records_select('tool_vault_backups', $sql, $params ?? [], 'timecreated DESC');
+        return array_map(function($b) {
+            return new backup($b);
+        }, $records);
     }
 
     /**
@@ -107,7 +113,7 @@ class site_backup {
      *
      * @return false|mixed
      */
-    public static function get_scheduled_backup(): ?\stdClass {
+    public static function get_scheduled_backup(): ?backup {
         $backups = self::get_backups([constants::STATUS_SCHEDULED]);
         return $backups ? reset($backups) : null;
     }
@@ -117,7 +123,7 @@ class site_backup {
      *
      * @return \stdClass|null
      */
-    public static function get_backup_in_progress(): ?\stdClass {
+    public static function get_backup_in_progress(): ?backup {
         $backups = self::get_backups([constants::STATUS_INPROGRESS]);
         return $backups ? reset($backups) : null;
     }
@@ -125,11 +131,22 @@ class site_backup {
     /**
      * Get the last backup scheduled on this server
      *
-     * @return false|mixed
+     * @return ?backup
      */
-    public static function get_last_backup(): ?\stdClass {
+    public static function get_last_backup(): ?backup {
         $backups = self::get_backups();
         return $backups ? reset($backups) : null;
+    }
+
+    /**
+     * Get a past backup
+     *
+     * @param int $id
+     * @return ?backup
+     */
+    public static function get_backup_by_id(int $id): ?backup {
+        $backups = self::get_backups();
+        return $backups[$id] ?? null;
     }
 
     /**
@@ -201,7 +218,7 @@ class site_backup {
         if (!empty($res['backupkey'])) {
             self::update_backup($backup->id,
                 ['status' => constants::STATUS_INPROGRESS, 'backupkey' => $res['backupkey'], 'metadata' => $metadata],
-                'Backup started');
+                'Backup started, backup key is '.$res['backupkey']);
         } else {
             // API rejected - aobve limit/quota. TODO store details of failure? how to notify user?
             self::update_backup($backup->id, ['status' => constants::STATUS_FAILEDTOSTART, 'metadata' => $metadata],
@@ -210,6 +227,21 @@ class site_backup {
             throw new \coding_exception('Unknown response: '.print_r($res, true));
         }
         return $res['backupkey'];
+    }
+
+    /**
+     * Mark backup as failed
+     *
+     * @param \Throwable $t
+     * @return void
+     */
+    public function mark_as_failed(\Throwable $t) {
+        global $DB;
+        $backup = $DB->get_record('tool_vault_backups',
+            ['backupkey' => $this->backupkey]);
+        if ($backup) {
+            self::update_backup($backup->id, ['status' => constants::STATUS_FAILED], 'Backup failed: '.$t->getMessage());
+        }
     }
 
     /**
@@ -222,13 +254,36 @@ class site_backup {
         $backup = $DB->get_record('tool_vault_backups',
             ['backupkey' => $this->backupkey, 'status' => constants::STATUS_INPROGRESS], '*', MUST_EXIST);
 
-        $filepath = $this->export_db(constants::FILENAME_DBDUMP . '.zip');
-        api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
+        self::update_backup($backup->id, [], 'Checking DB...');
+        if (dbstatus::create_and_run()->success()) {
+            self::update_backup($backup->id, [], '...OK');
+        } else {
+            throw new \moodle_exception('Database check failed');
+        }
 
-        $filepath = $this->export_dataroot(constants::FILENAME_DATAROOT . '.zip');
+        self::update_backup($backup->id, [], 'Checking disk space...');
+        if (diskspace::create_and_run()->success()) {
+            self::update_backup($backup->id, [], '...OK');
+        } else {
+            throw new \moodle_exception('Disk space check failed');
+        }
+
+        self::update_backup($backup->id, [], 'Exporting database...');
+        $filepath = $this->export_db(constants::FILENAME_DBDUMP . '.zip');
+        self::update_backup($backup->id, [], '...done');
+        self::update_backup($backup->id, [], 'Uploading database backup...');
         api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
+        self::update_backup($backup->id, [], '...done');
+
+        self::update_backup($backup->id, [], 'Exporting files...');
+        $filepath = $this->export_dataroot(constants::FILENAME_DATAROOT . '.zip');
+        self::update_backup($backup->id, [], '...done');
+        self::update_backup($backup->id, [], 'Uploading files backup...');
+        api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
+        self::update_backup($backup->id, [], '...done');
 
         api::api_call("backups/{$this->backupkey}", 'PATCH', ['status' => 'finished']);
+        // TODO log total size of uploaded files.
         self::update_backup($backup->id, ['status' => constants::STATUS_FINISHED], 'Backup finished');
 
         // TODO notify user, register in our config.

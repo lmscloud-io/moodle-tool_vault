@@ -45,6 +45,7 @@ class backup_task extends adhoc_task {
             $backup->execute();
         } catch (\Throwable $t) {
             // TODO analyse error, reschedule.
+            $backup->mark_as_failed($t);
             mtrace("Failed to execute backup: ".$t->getMessage()."\n".$t->getTraceAsString());
         }
     }

@@ -17,6 +17,7 @@
 namespace tool_vault\local\checks;
 
 use tool_vault\constants;
+use tool_vault\form\backup_settings;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\local\xmldb\dbtable;
 
@@ -28,6 +29,15 @@ use tool_vault\local\xmldb\dbtable;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class dbstatus extends base {
+
+    /** @var int */
+    const STATUS_CLEAN = 1;
+    /** @var int */
+    const STATUS_NOMODIFICATIONS = 2;
+    /** @var int */
+    const STATUS_MODIFIED = 3;
+    /** @var int */
+    const STATUS_INVALID = 4;
 
     /**
      * Evaluate check and store results in model details
@@ -61,6 +71,47 @@ class dbstatus extends base {
             }
         }
         $this->model->set_details($this->prepare_to_store($result))->save();
+    }
+
+    /**
+     * String explaining the status
+     *
+     * @param int $status
+     * @return string
+     */
+    protected function get_status_str(int $status) {
+        switch ($status) {
+            case self::STATUS_CLEAN:
+                return "Your database tables match descriptions in install.xml";
+            case self::STATUS_NOMODIFICATIONS:
+                return "Site backup can be performed without any database modifications";
+            case self::STATUS_MODIFIED:
+                return "Your database state does not match specifications in install.xml. The site can be backed up, ".
+                    "the modifications will be included in the backup";
+            case self::STATUS_INVALID:
+                return "Your database has modifications that can not be processed by Moodle. You need to adjust the ".
+                    "'Backup settings' and exclude some entities if you want to perform site backup";
+        }
+        return "Unknown";
+    }
+
+    /**
+     * Numeric status
+     *
+     * @param array $result
+     * @return int
+     */
+    protected function get_status(array $result): int {
+        if (!empty($result[constants::DIFF_INVALIDTABLES])) {
+            $status = self::STATUS_INVALID;
+        } else if (array_filter($result)) {
+            $status = self::STATUS_MODIFIED;
+        } else if (backup_settings::has_backup_settings()) {
+            $status = self::STATUS_NOMODIFICATIONS;
+        } else {
+            $status = self::STATUS_CLEAN;
+        }
+        return $status;
     }
 
     /**
@@ -102,6 +153,15 @@ class dbstatus extends base {
     }
 
     /**
+     * Can backup be performed
+     *
+     * @return bool
+     */
+    public function success(): bool {
+        return ($report = $this->get_report()) && $this->get_status($report) !== self::STATUS_INVALID;
+    }
+
+    /**
      * Summary
      *
      * @return string
@@ -116,7 +176,10 @@ class dbstatus extends base {
                 return '<p>Error:</p><pre>'.s(print_r($details['error'], true)).'</pre>';
             }
         } else {
-            return '<ul>'.
+            $status = $this->get_status($report);
+            return
+                $this->status_message($this->get_status_str($status), !empty(array_filter($report))).
+                '<ul>'.
                 '<li>Missing tables: '.count($report[constants::DIFF_MISSINGTABLES]).'</li>'.
                 '<li>Extra tables: '.count($report[constants::DIFF_EXTRATABLES]).'</li>'.
                 '<li>Changed tables: '.count($report[constants::DIFF_CHANGEDTABLES]).'</li>'.
