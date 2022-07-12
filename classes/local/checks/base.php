@@ -28,7 +28,7 @@ use tool_vault\task\check_task;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class base implements \templatable {
+abstract class base {
     /** @var check */
     protected $model;
 
@@ -237,31 +237,6 @@ abstract class base implements \templatable {
      * @return string
      */
     abstract public function get_display_name(): string;
-
-    /**
-     * Export for template
-     *
-     * @param renderer_base $output
-     * @return array
-     */
-    public function export_for_template(renderer_base $output) {
-        $overviewurl = new \moodle_url('/admin/tool/vault/index.php');
-        $rescheduleurl = new \moodle_url($overviewurl,
-            ['action' => 'newcheck', 'type' => static::get_name(), 'sesskey' => sesskey()]);
-        $fullreporturl = new \moodle_url($overviewurl,
-            ['action' => 'details', 'id' => $this->get_model()->id]);
-        return [
-            'title' => $this->get_display_name(),
-            'overviewurl' => $overviewurl->out(false),
-            'subtitle' => 'Status: '.$this->get_model()->status.', '.
-                userdate($this->get_model()->timemodified, get_string('strftimedatetimeshort', 'langconfig')),
-            'inprogress' => $this->is_in_progress(),
-            'reschedulelink' => $rescheduleurl->out(false),
-            'summary' => $this->summary(),
-            'showdetailslink' => $this->has_details(),
-            'fullreporturl' => $this->has_details() ? $fullreporturl->out(false) : null,
-        ];
-    }
 
     /**
      * Pre-check is successful (backup/restore can be performed)

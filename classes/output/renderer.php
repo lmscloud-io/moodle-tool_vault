@@ -126,13 +126,13 @@ class renderer extends plugin_renderer_base {
         $id = optional_param('id', null, PARAM_INT);
 
         if ($action === 'details' && $id && ($check = \tool_vault\local\checks\base::load($id)) && $check->has_details()) {
-            $data = $check->export_for_template($this);
+            $data = (new check_display($check, true))->export_for_template($this);
             $data['details'] = $check->detailed_report();
             return $this->render_from_template('tool_vault/check_details', $data);
         }
 
         foreach (\tool_vault\local\checks\base::get_all_checks() as $check) {
-            $data = $check->export_for_template($this);
+            $data = (new check_display($check))->export_for_template($this);
             $rv .= $this->render_from_template('tool_vault/check_summary', $data);
         }
 
