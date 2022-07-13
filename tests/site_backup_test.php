@@ -98,18 +98,42 @@ class site_backup_test extends \advanced_testcase {
     public function test_export_dataroot() {
         $this->resetAfterTest();
 
+        // Make a directory under dataroot and store a file there.
+        $hellodir = make_upload_directory('helloworld');
+        file_put_contents($hellodir.DIRECTORY_SEPARATOR.'hello.txt', 'Hello world!');
+
+        // Call export_dataroot() from site_backup.
         $sitebackup = new site_backup("");
         $filepath = $sitebackup->export_dataroot(constants::FILENAME_DATAROOT . '.zip');
-        $this->assertGreaterThanOrEqual(150000, filesize($filepath));
+        $this->assertTrue(file_exists($filepath));
 
         // Unpack and check contents.
         $x = new \zip_packer();
-        $dir = make_temp_directory('dbextracted');
+        $dir = make_temp_directory('datarootextracted');
+        $x->extract_to_pathname($filepath, $dir);
+
+        // Make sure a helloworld file was present in the archive.
+        $this->assertTrue(file_exists($dir . '/helloworld/hello.txt'));
+        $this->assertEquals('Hello world!', file_get_contents($dir . '/helloworld/hello.txt'));
+    }
+
+    public function test_export_filedir() {
+        $this->resetAfterTest();
+
+        $sitebackup = new site_backup("");
+        $filepaths = $sitebackup->export_filedir();
+        $this->assertEquals(1, count($filepaths));
+        $filepath = reset($filepaths);
+        $this->assertGreaterThanOrEqual(1000, filesize($filepath));
+
+        // Unpack and check contents.
+        $x = new \zip_packer();
+        $dir = make_temp_directory('filedirextracted');
         $x->extract_to_pathname($filepath, $dir);
 
         // Make sure a file for empty file was present in the archive.
         $emptyfile = sha1('');
-        $this->assertTrue(file_exists($dir . '/filedir/' .  substr($emptyfile, 0, 2) . '/' .
+        $this->assertTrue(file_exists($dir . '/' . substr($emptyfile, 0, 2) . '/' .
             substr($emptyfile, 2, 2) . '/' . $emptyfile));
     }
 }

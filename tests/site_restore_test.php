@@ -60,4 +60,91 @@ class site_restore_test extends \advanced_testcase {
         $book3 = $this->getDataGenerator()->create_module('book', ['course' => $course->id]);
         $this->assertEquals($book2->id, $book3->id);
     }
+
+    public function test_restore_dataroot() {
+        $this->resetAfterTest();
+
+        // Make a directory under dataroot and store a file there.
+        $hellodir = make_upload_directory('helloworld');
+        $hellofilepath = $hellodir.DIRECTORY_SEPARATOR.'hello.txt';
+        file_put_contents($hellofilepath, 'Hello world!');
+        $this->assertTrue(file_exists($hellofilepath));
+
+        // Call export_dataroot() from site_backup.
+        $sitebackup = new site_backup("");
+        $filepath = $sitebackup->export_dataroot(constants::FILENAME_DATAROOT . '.zip');
+
+        // Remove file.
+        unlink($hellofilepath);
+        $this->assertFalse(file_exists($hellofilepath));
+
+        // Restore.
+        $siterestore = new site_restore();
+        $files = $siterestore->prepare_restore_dataroot($filepath);
+        $siterestore->restore_dataroot($files);
+
+        // File is now present.
+        $this->assertTrue(file_exists($hellofilepath));
+        $this->assertEquals('Hello world!', file_get_contents($hellofilepath));
+    }
+
+    public function test_site_restore_filedir() {
+        global $CFG;
+        $this->resetAfterTest();
+
+        // Create a file in filedir.
+        $file = $this->create_file();
+        $chash = $file->get_contenthash();
+        $filepathondisk = $CFG->dataroot.'/filedir/'.substr($chash, 0, 2).'/'.substr($chash, 2, 2).'/'.$chash;
+        $this->assertTrue(file_exists($filepathondisk));
+
+        // Perform backup.
+        $sitebackup = new site_backup("");
+        $filepaths = $sitebackup->export_filedir();
+
+        // Remove the file.
+        $this->delete_file();
+        $this->assertFalse(file_exists($filepathondisk));
+
+        // Run restore, file is now back.
+        $siterestore = new site_restore();
+        $restoreddir = $siterestore->prepare_restore_filedir($filepaths[0]);
+        $siterestore->restore_filedir($restoreddir);
+        $this->assertTrue(file_exists($filepathondisk));
+        $this->assertEquals('helloworld', file_get_contents($filepathondisk));
+    }
+
+    /**
+     * Create a file in filedir
+     *
+     * @return \stored_file
+     * @throws \file_exception
+     * @throws \moodle_exception
+     */
+    protected function create_file() {
+        global $CFG;
+        $CFG->numsections = 1;
+        course_create_sections_if_missing(SITEID, 1);
+        $sectionid = get_fast_modinfo(SITEID)->get_section_info_all()[1]->id;
+
+        return get_file_storage()->create_file_from_string([
+            'contextid' => \context_course::instance(SITEID)->id,
+            'component' => 'course',
+            'filearea' => 'section',
+            'itemid' => $sectionid,
+            'filepath' => '/',
+            'filename' => 'hello.txt',
+        ], 'helloworld');
+    }
+
+    /**
+     * Delete testing stored file from db and filedir
+     *
+     * @return void
+     */
+    protected function delete_file() {
+        $sectionid = get_fast_modinfo(SITEID)->get_section_info_all()[1]->id;
+        get_file_storage()->delete_area_files(\context_course::instance(SITEID)->id,
+            'course', 'section', $sectionid);
+    }
 }

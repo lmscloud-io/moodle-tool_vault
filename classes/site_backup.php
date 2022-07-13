@@ -59,13 +59,19 @@ class site_backup {
      * @param string $path relative path under $CFG->dataroot
      * @return bool
      */
-    public function is_dir_skipped(string $path): bool {
+    public static function is_dir_skipped(string $path): bool {
         return in_array($path, [
+                'filedir', // Files are retrieved separately.
                 'cache',
                 'localcache',
                 'temp',
                 'sessions',
                 'trashdir',
+                // For phpunit.
+                'phpunit',
+                'phpunittestdir.txt',
+                'originaldatafiles.json',
+                // Vault temp dir.
                 '__vault_restore__'
             ]) || preg_match('/^\\./', $path);
     }
@@ -270,20 +276,35 @@ class site_backup {
 
         self::update_backup($backup->id, [], 'Exporting database...');
         $filepath = $this->export_db(constants::FILENAME_DBDUMP . '.zip');
+        $size1 = filesize($filepath);
         self::update_backup($backup->id, [], '...done');
-        self::update_backup($backup->id, [], 'Uploading database backup...');
+        self::update_backup($backup->id, [], 'Uploading database backup ('.display_size($size1).')...');
+        api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
+        self::update_backup($backup->id, [], '...done');
+
+        self::update_backup($backup->id, [], 'Exporting dataroot...');
+        $filepath = $this->export_dataroot(constants::FILENAME_DATAROOT . '.zip');
+        $size2 = filesize($filepath);
+        self::update_backup($backup->id, [], '...done');
+        self::update_backup($backup->id, [], 'Uploading dataroot backup ('.display_size($size2).')...');
         api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
         self::update_backup($backup->id, [], '...done');
 
         self::update_backup($backup->id, [], 'Exporting files...');
-        $filepath = $this->export_dataroot(constants::FILENAME_DATAROOT . '.zip');
+        $filepaths = $this->export_filedir();
+        $size3 = 0;
+        foreach ($filepaths as $filepath) {
+            $size3 += filesize($filepath);
+        }
         self::update_backup($backup->id, [], '...done');
-        self::update_backup($backup->id, [], 'Uploading files backup...');
-        api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
+        self::update_backup($backup->id, [], 'Uploading files backup ('.display_size($size3).')...');
+        foreach ($filepaths as $filepath) {
+            api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
+        }
         self::update_backup($backup->id, [], '...done');
 
+        self::update_backup($backup->id, [], 'Total size of backup: '.display_size($size1 + $size2 + $size3));
         api::api_call("backups/{$this->backupkey}", 'PATCH', ['status' => 'finished']);
-        // TODO log total size of uploaded files.
         self::update_backup($backup->id, ['status' => constants::STATUS_FINISHED], 'Backup finished');
 
         // TODO notify user, register in our config.
@@ -405,5 +426,85 @@ class site_backup {
             throw new \moodle_exception('Failed to create dataroot archive');
         }
         return $zipfilepath;
+    }
+
+    /**
+     * Export filedir
+     *
+     * This function works with any file storage (local or remote)
+     *
+     * @return string[]
+     */
+    public function export_filedir(): array {
+        global $DB, $CFG;
+        $fs = get_file_storage();
+        $dir = make_temp_directory(constants::FILENAME_FILEDIR);
+        $zippacker = new \zip_packer();
+
+        $records = $DB->get_records_sql('SELECT '.self::instance_sql_fields('f', 'r').'
+            FROM (SELECT contenthash, min(id) AS id
+                from {files}
+                GROUP BY contenthash) filehash
+            JOIN {files} f ON f.id = filehash.id
+            LEFT JOIN {files_reference} r
+                       ON f.referencefileid = r.id',
+            []);
+        $toarchive = [];
+        foreach ($records as $filerecord) {
+            $file = $fs->get_file_instance($filerecord);
+            $chash = $filerecord->contenthash;
+            $filename = substr($chash, 0, 2) .
+                DIRECTORY_SEPARATOR . substr($chash, 2, 2) .
+                DIRECTORY_SEPARATOR . $chash;
+            mkdir($dir . DIRECTORY_SEPARATOR . dirname($filename), $CFG->directorypermissions, true);
+            $file->copy_content_to($dir . DIRECTORY_SEPARATOR . $filename);
+            $toarchive[$filename] = $dir . DIRECTORY_SEPARATOR . $filename;
+        }
+
+        $exportfilename = constants::FILENAME_FILEDIR . '.zip';
+        $zipfilepath = make_temp_directory(constants::FILENAME_FILEDIR . 'zip') .
+            DIRECTORY_SEPARATOR . $exportfilename;
+        if (!$zippacker->archive_to_pathname($toarchive, $zipfilepath)) {
+            // TODO?
+            throw new \moodle_exception('Failed to create filedir archive');
+        }
+        foreach ($toarchive as $filepath) {
+            unlink($filepath);
+        }
+
+        return [$zipfilepath];
+    }
+
+    /**
+     * Get the sql formated fields for a file instance to be created from a
+     * {files} and {files_refernece} join.
+     *
+     * @param string $filesprefix the table prefix for the {files} table
+     * @param string $filesreferenceprefix the table prefix for the {files_reference} table
+     * @return string the sql to go after a SELECT
+     */
+    private static function instance_sql_fields($filesprefix, $filesreferenceprefix) {
+        // Note, these fieldnames MUST NOT overlap between the two tables,
+        // else problems like MDL-33172 occur.
+        $filefields = array('contenthash', 'pathnamehash', 'contextid', 'component', 'filearea',
+            'itemid', 'filepath', 'filename', 'userid', 'filesize', 'mimetype', 'status', 'source',
+            'author', 'license', 'timecreated', 'timemodified', 'sortorder', 'referencefileid');
+
+        $referencefields = array('repositoryid' => 'repositoryid',
+            'reference' => 'reference',
+            'lastsync' => 'referencelastsync');
+
+        // Id is specifically named to prevent overlaping between the two tables.
+        $fields = array();
+        $fields[] = $filesprefix.'.id AS id';
+        foreach ($filefields as $field) {
+            $fields[] = "{$filesprefix}.{$field}";
+        }
+
+        foreach ($referencefields as $field => $alias) {
+            $fields[] = "{$filesreferenceprefix}.{$field} AS {$alias}";
+        }
+
+        return implode(', ', $fields);
     }
 }

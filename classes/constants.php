@@ -51,6 +51,8 @@ class constants {
     const FILENAME_DBDUMP = 'dbdump';
     /** @var string */
     const FILENAME_DATAROOT = 'dataroot';
+    /** @var string */
+    const FILENAME_FILEDIR = 'filedir';
 
     /** @var string */
     const STATUS_INPROGRESS = 'inprogress';

@@ -16,6 +16,7 @@
 
 namespace tool_vault;
 
+use tool_monitor\output\managesubs\subs;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\task\restore_task;
 
@@ -48,10 +49,8 @@ class site_restore {
      * @param string $path relative path under $CFG->dataroot
      * @return bool
      */
-    public function is_dir_skipped(string $path): bool {
-        return in_array($path, [
-                '__vault_restore__'
-            ]) || preg_match('/^\\./', $path);
+    public static function is_dir_skipped(string $path): bool {
+        return site_backup::is_dir_skipped($path);
     }
 
     /**
@@ -131,8 +130,10 @@ class site_restore {
         $tempdir = make_request_directory();
         $filename1 = constants::FILENAME_DBDUMP . '.zip';
         $filename2 = constants::FILENAME_DATAROOT . '.zip';
+        $filename3 = constants::FILENAME_FILEDIR . '.zip';
         $filepath1 = $tempdir.DIRECTORY_SEPARATOR.$filename1;
         $filepath2 = $tempdir.DIRECTORY_SEPARATOR.$filename2;
+        $filepath3 = $tempdir.DIRECTORY_SEPARATOR.$filename3;
 
         try {
             mtrace("Downloading file $filename1 ...");
@@ -152,13 +153,25 @@ class site_restore {
             return;
         }
 
+        try {
+            mtrace("Downloading file $filename3 ...");
+            api::download_backup_file($this->restore->backupkey, $filepath3);
+        } catch (\Throwable $t) {
+            mtrace($t->getMessage());
+            $this->update_restore(['status' => constants::STATUS_FAILED], 'Could not download file '.$filename3);
+            return;
+        }
+
         $structure = $this->prepare_restore_db($filepath1);
         $datarootfiles = $this->prepare_restore_dataroot($filepath2);
+        $filedirpath = $this->prepare_restore_filedir($filepath3);
         unlink($filepath2);
+        unlink($filepath3);
 
         $this->restore_db($structure, $filepath1);
         unlink($filepath1);
         $this->restore_dataroot($datarootfiles);
+        $this->restore_filedir($filedirpath);
         // TODO more logging.
 
         $this->update_restore(['status' => constants::STATUS_FINISHED], 'Restore finished');
@@ -208,6 +221,20 @@ class site_restore {
         }
         closedir($handle);
         return $files;
+    }
+
+    /**
+     * Prepare restore filedir
+     *
+     * @param string $filepath
+     * @return string
+     */
+    public function prepare_restore_filedir(string $filepath): string {
+        $temppath = make_temp_directory(constants::FILENAME_FILEDIR);
+        $zippacker = new \zip_packer();
+        $zippacker->extract_to_pathname($filepath, $temppath);
+
+        return $temppath;
     }
 
     /**
@@ -274,6 +301,55 @@ class site_restore {
         }
 
         $this->remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__');
+    }
+
+    /**
+     * List all files in a directory recursively
+     *
+     * @param string $pathtodir
+     * @param string $prefix
+     * @return array
+     */
+    public static function dirlist_recursive(string $pathtodir, string $prefix = ''): array {
+        $files = [];
+        if ($handle = opendir($pathtodir)) {
+            while (false !== ($entry = readdir($handle))) {
+                if (substr($entry, 0, 1) === '.') {
+                    continue;
+                } else if (is_dir($pathtodir . DIRECTORY_SEPARATOR . $entry)) {
+                    $thisfiles = self::dirlist_recursive($pathtodir . DIRECTORY_SEPARATOR . $entry,
+                        $prefix . $entry . DIRECTORY_SEPARATOR);
+                    $files += $thisfiles;
+                } else {
+                    $files[$prefix . $entry] = $pathtodir . DIRECTORY_SEPARATOR . $entry;
+                }
+            }
+            closedir($handle);
+        }
+        return $files;
+    }
+
+    /**
+     * Restore filedir
+     *
+     * This function works with any file storage (local or remote)
+     *
+     * @param string $restoredir
+     * @return void
+     */
+    public function restore_filedir(string $restoredir) {
+        $fs = get_file_storage();
+        $files = self::dirlist_recursive($restoredir);
+        foreach ($files as $subpath => $filepath) {
+            $file = basename($filepath);
+            if ($subpath !== substr($file, 0, 2) . DIRECTORY_SEPARATOR . substr($file, 2, 2) . DIRECTORY_SEPARATOR . $file) {
+                // Integrity check.
+                debugging("Skipping unrecognised file detected in the filedir archive: ".$subpath);
+                continue;
+            }
+            $fs->add_file_to_pool($filepath, $file);
+            unlink($filepath);
+        }
     }
 
     /**
