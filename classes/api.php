@@ -227,16 +227,9 @@ class api {
      *
      * @return remote_backup[]
      */
-    public static function get_remote_backups() {
+    public static function get_remote_backups(): array {
         $backups = self::api_call('backups', 'GET', []);
-        // TODO change API to return data in different format.
         $backups = array_map(function($b) {
-            if (!empty($b['metadata'])) {
-                foreach ($b['metadata'] as $k => $v) {
-                    $b[$k] = $v;
-                }
-            }
-            unset($b['metadata']);
             return new remote_backup($b);
         }, $backups['backups']);
         usort($backups, function($a, $b) {
@@ -250,14 +243,14 @@ class api {
      *
      * @param string $backupkey
      * @param string|null $withstatus
-     * @return mixed
+     * @return remote_backup
      */
-    public static function get_remote_backup(string $backupkey, ?string $withstatus = null) {
+    public static function get_remote_backup(string $backupkey, ?string $withstatus = null): remote_backup {
         $result = self::api_call("backups/{$backupkey}", 'GET');
         if (isset($withstatus) && $result['status'] !== $withstatus) {
             throw new \moodle_exception('Backup has a wrong status');
         }
-        return $result;
+        return new remote_backup($result);
     }
 
     /**

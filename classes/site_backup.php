@@ -359,7 +359,7 @@ class site_backup {
      */
     public function export_db(string $exportfilename) {
         global $CFG;
-        $dir = make_temp_directory(constants::FILENAME_DBDUMP);
+        $dir = make_request_directory();
         $structure = $this->get_db_structure();
         $tables = [];
         foreach ($structure->get_tables_actual() as $table => $tableobj) {
@@ -418,7 +418,7 @@ class site_backup {
         }
         closedir($handle);
 
-        $zipfilepath = make_temp_directory(constants::FILENAME_DATAROOT).DIRECTORY_SEPARATOR.$exportfilename;
+        $zipfilepath = make_request_directory().DIRECTORY_SEPARATOR.$exportfilename;
         $zippacker = new \zip_packer();
         // TODO use progress somehow?
         if (!$zippacker->archive_to_pathname($files, $zipfilepath)) {
@@ -438,7 +438,7 @@ class site_backup {
     public function export_filedir(): array {
         global $DB, $CFG;
         $fs = get_file_storage();
-        $dir = make_temp_directory(constants::FILENAME_FILEDIR);
+        $dir = make_request_directory();
         $zippacker = new \zip_packer();
 
         $records = $DB->get_records_sql('SELECT '.self::instance_sql_fields('f', 'r').'
@@ -462,7 +462,7 @@ class site_backup {
         }
 
         $exportfilename = constants::FILENAME_FILEDIR . '.zip';
-        $zipfilepath = make_temp_directory(constants::FILENAME_FILEDIR . 'zip') .
+        $zipfilepath = make_request_directory() .
             DIRECTORY_SEPARATOR . $exportfilename;
         if (!$zippacker->archive_to_pathname($toarchive, $zipfilepath)) {
             // TODO?

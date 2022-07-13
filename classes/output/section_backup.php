@@ -16,6 +16,8 @@
 
 namespace tool_vault\output;
 
+use tool_vault\api;
+
 /**
  * Tab backup
  *
@@ -39,6 +41,11 @@ class section_backup extends section_base {
 
         if ($action === 'startbackup' && confirm_sesskey()) {
             \tool_vault\site_backup::schedule_backup();
+            redirect($PAGE->url);
+        }
+
+        if ($action === 'forgetapikey' && confirm_sesskey()) {
+            api::store_config('apikey', null);
             redirect($PAGE->url);
         }
 
@@ -114,6 +121,9 @@ class section_backup extends section_base {
 
         if ($this->get_is_registered()) {
             $result['apikey'] = \tool_vault\api::get_api_key();
+            $forgeturl = new \moodle_url('/admin/tool/vault/index.php',
+                ['section' => 'backup', 'sesskey' => sesskey(), 'action' => 'forgetapikey']);
+            $result['forgetapikeyurl'] = $forgeturl->out(false);
             // TODO allow to ditch the old API key and create/enter a new one.
         } else {
             $result['apikeyform'] = $this->get_form()->render();

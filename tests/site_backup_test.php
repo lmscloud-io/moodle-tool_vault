@@ -52,7 +52,7 @@ class site_backup_test extends \advanced_testcase {
         api::store_config('n5', 'value "with" quotes');
         api::store_config('n6', "value\nwith\nnewlines");
 
-        $dir = make_temp_directory(constants::FILENAME_DBDUMP);
+        $dir = make_request_directory();
         $table = 'tool_vault_config';
         $filepath = $dir.DIRECTORY_SEPARATOR.$table.'.json';
         $sitebackup->export_table_data($tableobj, $filepath);
@@ -71,7 +71,7 @@ class site_backup_test extends \advanced_testcase {
 
         // Unpack and check contents.
         $x = new \zip_packer();
-        $dir = make_temp_directory('dbextracted');
+        $dir = make_request_directory();
         $x->extract_to_pathname($filepath, $dir);
         $handle = opendir($dir);
         $files = [];
@@ -109,7 +109,7 @@ class site_backup_test extends \advanced_testcase {
 
         // Unpack and check contents.
         $x = new \zip_packer();
-        $dir = make_temp_directory('datarootextracted');
+        $dir = make_request_directory();
         $x->extract_to_pathname($filepath, $dir);
 
         // Make sure a helloworld file was present in the archive.
@@ -128,7 +128,7 @@ class site_backup_test extends \advanced_testcase {
 
         // Unpack and check contents.
         $x = new \zip_packer();
-        $dir = make_temp_directory('filedirextracted');
+        $dir = make_request_directory();
         $x->extract_to_pathname($filepath, $dir);
 
         // Make sure a file for empty file was present in the archive.

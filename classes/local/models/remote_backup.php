@@ -16,6 +16,8 @@
 
 namespace tool_vault\local\models;
 
+use tool_vault\constants;
+
 /**
  * Model for remote backup
  *
@@ -27,6 +29,7 @@ namespace tool_vault\local\models;
  * @property-read int $timefinished
  * @property-read string $status
  * @property-read array $info
+ * @property-read array $files
  */
 class remote_backup {
     /** @var array */
@@ -38,12 +41,6 @@ class remote_backup {
      * @param array $b
      */
     public function __construct(array $b) {
-        if (!empty($b['metadata'])) {
-            foreach ($b['metadata'] as $k => $v) {
-                $b[$k] = $v;
-            }
-        }
-        unset($b['metadata']);
         $this->data = $b;
     }
 
@@ -55,5 +52,60 @@ class remote_backup {
      */
     public function __get(string $name) {
         return $this->data[$name] ?? null;
+    }
+
+    /**
+     * Convert to object
+     *
+     * @return \stdClass
+     */
+    public function to_object(): \stdClass {
+        return (object)$this->data;
+    }
+
+    /**
+     * Get the list of dbdump files in this backup
+     *
+     * @return remote_backup_file[]
+     */
+    public function get_dbdump_files(): array {
+        return $this->get_files_with_prefix(constants::FILENAME_DBDUMP);
+    }
+
+    /**
+     * Get the list of datadir files in this backup
+     *
+     * @return remote_backup_file[]
+     */
+    public function get_dataroot_files(): array {
+        return $this->get_files_with_prefix(constants::FILENAME_DATAROOT);
+    }
+
+    /**
+     * Get the list of filedir files in this backup
+     *
+     * @return remote_backup_file[]
+     */
+    public function get_filedir_files(): array {
+        return $this->get_files_with_prefix(constants::FILENAME_FILEDIR);
+    }
+
+    /**
+     * Returns the list of backup files that have given prefix, ordered by the number after the prefix
+     *
+     * @param string $prefix
+     * @return remote_backup_file[]
+     */
+    protected function get_files_with_prefix(string $prefix): array {
+        $res = [];
+        foreach ($this->files ?? [] as $file) {
+            if (preg_match('/^' . preg_quote($prefix, '/') . '([\d]*)\.zip$/', $file['name'], $matches)) {
+                $res[] = new remote_backup_file($file + ['ord' => (int)$matches[1]]);
+            }
+        }
+        usort($res, function($a, $b) {
+            return $a->ord - $b->ord;
+        });
+        return $res;
     }
 }

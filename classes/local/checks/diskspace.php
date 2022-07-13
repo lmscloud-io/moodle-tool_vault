@@ -40,7 +40,7 @@ class diskspace extends base {
             ['user', 'draft']);
         $totalsize = $record->sumfilesize;
         $maxfilesize = $record->maxfilesize;
-        $freespace = disk_free_space(make_temp_directory('test'));
+        $freespace = disk_free_space(make_request_directory());
         $dbrecords = 0;
         $structure = dbstructure::load();
         foreach ($structure->get_tables_actual() as $tablename => $table) {

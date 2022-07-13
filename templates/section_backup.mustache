@@ -23,7 +23,8 @@
             "title": "Title",
             "details": "Details"
         },
-        "apikey": "abcdef"
+        "apikey": "abcdef",
+        "forgetapikeyurl": "#"
     }
 
 }}
@@ -32,6 +33,7 @@
 
 {{#apikey}}
     Your API key: {{apikey}}
+    <a href="{{forgetapikeyurl}}">Forget</a>
 {{/apikey}}
 {{^apikey}}
     {{{apikeyform}}}

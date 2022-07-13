@@ -16,7 +16,7 @@
 
 namespace tool_vault;
 
-use tool_monitor\output\managesubs\subs;
+use tool_vault\local\models\remote_backup;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\task\restore_task;
 
@@ -31,6 +31,8 @@ class site_restore {
 
     /** @var \stdClass */
     protected $restore;
+    /** @var remote_backup */
+    protected $remotebackup;
 
     /**
      * Get scheduled restore
@@ -68,7 +70,7 @@ class site_restore {
             'status' => constants::STATUS_SCHEDULED,
             'timecreated' => $now,
             'timemodified' => $now,
-            'backupmetadata' => json_encode($backupmetadata),
+            'backupmetadata' => json_encode($backupmetadata->to_object()),
             'userdata' => json_encode([
                 'id' => $USER->id,
                 'username' => $USER->username,
@@ -118,13 +120,16 @@ class site_restore {
         }
         $this->restore = $restore;
         try {
-            api::get_remote_backup($this->restore->backupkey, constants::STATUS_FINISHED);
+            $this->remotebackup = api::get_remote_backup($this->restore->backupkey, constants::STATUS_FINISHED);
         } catch (\moodle_exception $e) {
             $error = "Backup with the key {$restore->backupkey} is no longer avaialable";
             $this->update_restore(['status' => constants::STATUS_FAILED], $error);
             throw new \moodle_exception($error);
         }
-        $this->update_restore(['status' => constants::STATUS_INPROGRESS], 'Restore started');
+        $this->update_restore([
+            'status' => constants::STATUS_INPROGRESS,
+            'backupmetadata' => json_encode($this->remotebackup->to_object()),
+        ], 'Restore started');
 
         // Download files.
         $tempdir = make_request_directory();
@@ -188,7 +193,7 @@ class site_restore {
     public function prepare_restore_db(string $filepath) {
         $structurefilename = constants::FILE_STRUCTURE;
 
-        $temppath = make_temp_directory(constants::FILENAME_DBDUMP);
+        $temppath = make_request_directory();
         $zippacker = new \zip_packer();
         $zippacker->extract_to_pathname($filepath, $temppath, [$structurefilename, 'xmldb.xsd']);
         $structure = dbstructure::load_from_backup($temppath.DIRECTORY_SEPARATOR.$structurefilename);
@@ -230,7 +235,7 @@ class site_restore {
      * @return string
      */
     public function prepare_restore_filedir(string $filepath): string {
-        $temppath = make_temp_directory(constants::FILENAME_FILEDIR);
+        $temppath = make_request_directory();
         $zippacker = new \zip_packer();
         $zippacker->extract_to_pathname($filepath, $temppath);
 
@@ -246,7 +251,7 @@ class site_restore {
      */
     public function restore_db(dbstructure $structure, string $zipfilepath) {
         global $DB;
-        $temppath = make_temp_directory(constants::FILENAME_DBDUMP);
+        $temppath = make_request_directory();
         $zippacker = new \zip_packer();
 
         $sequencesfilename = constants::FILE_SEQUENCE;
