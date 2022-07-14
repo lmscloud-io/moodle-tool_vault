@@ -63,6 +63,10 @@ class site_restore {
      */
     public static function schedule_restore(string $backupkey) {
         global $DB, $USER;
+        if (!api::are_restores_allowed()) {
+            return;
+        }
+
         $now = time();
         $backupmetadata = api::get_remote_backup($backupkey, constants::STATUS_FINISHED);
         $DB->insert_record('tool_vault_restores', [
@@ -112,8 +116,12 @@ class site_restore {
      * Perform restore
      *
      * @return void
+     * @throws \moodle_exception
      */
     public function execute() {
+        if (!api::are_restores_allowed()) {
+            throw new \moodle_exception('Restores are not allowed on this site');
+        }
         $restore = self::get_scheduled_restore();
         if (!$restore) {
             throw new \moodle_exception('No restores scheduled');

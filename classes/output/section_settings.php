@@ -16,7 +16,11 @@
 
 namespace tool_vault\output;
 
-use tool_vault\form\backup_settings;
+use core\notification;
+use tool_vault\api;
+use tool_vault\form\backup_settings_form;
+use tool_vault\form\general_settings_form;
+use tool_vault\form\restore_settings_form;
 
 /**
  * Tab settings
@@ -27,27 +31,94 @@ use tool_vault\form\backup_settings;
  */
 class section_settings extends section_base {
 
-    /** @var \moodleform */
-    protected $form;
+    /** @var general_settings_form */
+    protected $generalform;
+    /** @var backup_settings_form */
+    protected $backupform;
+    /** @var restore_settings_form */
+    protected $restoreform;
+
+    /**
+     * Requested action
+     *
+     * @return string|null
+     */
+    protected function get_action(): ?string {
+        return optional_param('action', null, PARAM_ALPHANUMEXT);
+    }
 
     /**
      * Process tab actions
      */
     public function process() {
-        global $PAGE, $DB;
-        $this->form = new backup_settings($PAGE->url);
-        if ($this->form->get_data()) {
-            $this->form->process();
-            redirect($PAGE->url);
+        global $PAGE;
+
+        $returnurl = optional_param('returnurl', null, PARAM_LOCALURL);
+        $returnurl = $returnurl ? new \moodle_url($returnurl) : $PAGE->url;
+        if ($this->get_action() === 'forgetapikey' && confirm_sesskey()) {
+            api::store_config('apikey', null);
+            redirect($returnurl);
+        } else if ($this->get_action() === 'register' && confirm_sesskey()) {
+            \tool_vault\api::register();
+            notification::add('You are now registered. You can find your API key under the Settings tab',
+                \core\output\notification::NOTIFY_SUCCESS);
+            redirect($returnurl);
+        }
+
+        $form = $this->get_general_form() ?: ($this->get_backup_form() ?: $this->get_restore_form());
+
+        if ($form && $form->is_cancelled()) {
+            redirect($returnurl);
+        } else if ($form && $form->get_data()) {
+            $form->process();
+            redirect($returnurl);
         }
     }
 
     /**
-     * Form
+     * Backup settings form
      *
-     * @return \moodleform
+     * @return general_settings_form
      */
-    public function get_form(): \moodleform {
-        return $this->form;
+    public function get_general_form(): ?general_settings_form {
+        $editable = $this->get_action() === 'general';
+        if ($this->get_action() && !$editable) {
+            return null;
+        } else if ($this->generalform === null) {
+            $this->generalform = new general_settings_form($editable);
+        }
+        return $this->generalform;
+    }
+
+    /**
+     * Backup settings form
+     *
+     * @return backup_settings_form
+     */
+    public function get_backup_form(): ?backup_settings_form {
+        global $PAGE;
+        $editable = $this->get_action() === 'backup';
+        if ($this->get_action() && !$editable) {
+            return null;
+        } else if ($this->backupform === null) {
+            $this->backupform = new backup_settings_form($PAGE->url, $editable);
+        }
+        return $this->backupform;
+    }
+
+    /**
+     * Restore settings form
+     *
+     * @return restore_settings_form
+     */
+    public function get_restore_form(): ?restore_settings_form {
+        global $PAGE;
+        $editable = $this->get_action() === 'restore';
+        if ($this->get_action() && !$editable) {
+            return null;
+        } else if ($this->restoreform === null) {
+            $this->restoreform = new restore_settings_form($PAGE->url, $editable);
+        }
+        return $this->restoreform;
     }
 }

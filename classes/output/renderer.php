@@ -19,6 +19,8 @@ namespace tool_vault\output;
 use html_writer;
 use moodle_url;
 use plugin_renderer_base;
+use tool_vault\api;
+use tool_vault\form\general_settings_form;
 use tool_vault\local\models\remote_backup;
 
 /**
@@ -62,11 +64,15 @@ class renderer extends plugin_renderer_base {
         $action = optional_param('action', null, PARAM_ALPHANUMEXT);
         $output .= $this->heading(get_string('siterestore', 'tool_vault'), 3);
 
+        if (!api::is_registered()) {
+            $output .= (new general_settings_form(false, false))->render();
+        }
+
         $records = $DB->get_records('tool_vault_restores', [], 'timecreated desc');
         // @codingStandardsIgnoreLine
         $output .= html_writer::tag('pre', s(print_r($records, true)), array('class' => 'notifytiny'));
 
-        if ($section->get_is_registered()) {
+        if (api::is_registered()) {
             $output .= $this->heading('Remote backups', 4); // TODO string.
             if ($action === 'findbackups' && confirm_sesskey()) {
                 $backups = \tool_vault\api::get_remote_backups();
@@ -109,8 +115,18 @@ class renderer extends plugin_renderer_base {
      */
     public function render_section_settings(section_settings $section) {
         $output = '';
-        $output .= $this->heading('Backup settings', 3);
-        $output .= $section->get_form()->render();
+        if ($form = $section->get_general_form()) {
+            $output .= $this->heading('General', 3);
+            $output .= $form->render();
+        }
+        if ($form = $section->get_backup_form()) {
+            $output .= $this->heading('Backup settings', 3);
+            $output .= $form->render();
+        }
+        if ($form = $section->get_restore_form()) {
+            $output .= $this->heading('Restore settings', 3);
+            $output .= $form->render();
+        }
         return $output;
     }
 

@@ -30,7 +30,24 @@ require_once($CFG->libdir . '/formslib.php');
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class backup_settings extends \moodleform {
+class backup_settings_form extends \moodleform {
+
+    /** @var bool */
+    protected $editable = true;
+    /** @var \moodle_url */
+    protected $action = null;
+
+    /**
+     * Constructor
+     *
+     * @param \moodle_url $action
+     * @param bool $editable
+     */
+    public function __construct(\moodle_url $action, bool $editable = true) {
+        $this->editable = $editable;
+        $this->action = new \moodle_url($action, ['action' => 'backup']);
+        parent::__construct(new \moodle_url($this->action), null, 'post', '', null, $this->editable);
+    }
 
     /**
      * Form definition
@@ -38,20 +55,27 @@ class backup_settings extends \moodleform {
     protected function definition() {
         $mform = $this->_form;
 
-        $mform->addElement('textarea', 'backupexcludetables', 'Exclude tables');
+        $mform->addElement($this->editable ? 'textarea' : 'static', 'backupexcludetables',
+            'Exclude tables');
         $mform->setType('backupexcludetables', PARAM_RAW);
         // TODO Help: List of tables that will not be included in the backup. Do not include prefix.
 
-        $mform->addElement('textarea', 'backupexcludeindexes', 'Exclude indexes');
+        $mform->addElement($this->editable ? 'textarea' : 'static', 'backupexcludeindexes',
+            'Exclude indexes');
         $mform->setType('backupexcludeindexes', PARAM_RAW);
         // TODO Help: List of tables that will not be included in the backup. Do not include prefix.
-
-        $this->add_action_buttons(false);
 
         $this->set_data([
             'backupexcludetables' => api::get_config('backupexcludetables'),
             'backupexcludeindexes' => api::get_config('backupexcludeindexes'),
         ]);
+        if (!$this->editable) {
+            $mform->addElement('html',
+                \html_writer::div(\html_writer::link($this->action, 'Edit backup settings', ['class' => 'btn btn-secondary']),
+                'pb-3'));
+        } else {
+            $this->add_action_buttons();
+        }
     }
 
     /**

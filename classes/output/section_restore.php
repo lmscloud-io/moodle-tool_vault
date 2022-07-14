@@ -25,11 +25,6 @@ namespace tool_vault\output;
  */
 class section_restore extends section_base {
 
-    /** @var bool */
-    protected $isregistered;
-    /** @var \moodleform */
-    protected $form;
-
     /**
      * Process tab actions
      */
@@ -42,32 +37,5 @@ class section_restore extends section_base {
             \tool_vault\site_restore::schedule_restore($backupkey);
             redirect($PAGE->url);
         }
-
-        $this->isregistered = \tool_vault\api::is_registered();
-        if (!$this->isregistered) {
-            $this->form = new \tool_vault\form\register_form($PAGE->url);
-            if ($this->form->get_data()) {
-                $this->form->process();
-                redirect($PAGE->url);
-            }
-        }
-    }
-
-    /**
-     * Is registered
-     *
-     * @return bool
-     */
-    public function get_is_registered() {
-        return $this->isregistered;
-    }
-
-    /**
-     * Form
-     *
-     * @return \moodleform
-     */
-    public function get_form(): \moodleform {
-        return $this->form;
     }
 }

@@ -22,22 +22,14 @@
         "lastbackup": {
             "title": "Title",
             "details": "Details"
-        },
-        "apikey": "abcdef",
-        "forgetapikeyurl": "#"
+        }
     }
 
 }}
 
 <h3>{{#str}}sitebackup, tool_vault{{/str}}</h3>
 
-{{#apikey}}
-    Your API key: {{apikey}}
-    <a href="{{forgetapikeyurl}}">Forget</a>
-{{/apikey}}
-{{^apikey}}
-    {{{apikeyform}}}
-{{/apikey}}
+{{{registrationform}}}
 
 {{#lastbackup}}
     <div class="card mt-2">

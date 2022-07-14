@@ -61,6 +61,15 @@ class api {
     }
 
     /**
+     * Are restores allowed on this site
+     *
+     * @return bool
+     */
+    public static function are_restores_allowed(): bool {
+        return (bool)self::get_config('allowrestore');
+    }
+
+    /**
      * Store a value in the special plugin config (not included in backups)
      *
      * @param string $name
