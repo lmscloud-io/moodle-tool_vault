@@ -83,17 +83,7 @@ class site_backup {
      * @return backup[]
      */
     protected static function get_backups(?array $statuses = null): array {
-        global $DB;
-        if ($statuses) {
-            [$sql, $params] = $DB->get_in_or_equal($statuses);
-            $sql = 'status '.$sql;
-        } else {
-            $sql = '1=1';
-        }
-        $records = $DB->get_records_select('tool_vault_backups', $sql, $params ?? [], 'timecreated DESC');
-        return array_map(function($b) {
-            return new backup($b);
-        }, $records);
+        return backup::get_records($statuses);
     }
 
     /**
@@ -102,7 +92,7 @@ class site_backup {
      * @return void
      */
     public static function schedule_backup() {
-        global $DB, $USER;
+        global $USER;
         if ($backups = self::get_backups([constants::STATUS_SCHEDULED])) {
             // Pressed button twice maybe?
             return;
@@ -110,7 +100,10 @@ class site_backup {
         if ($backups = self::get_backups([constants::STATUS_INPROGRESS])) {
             throw new \moodle_exception('Another active backup found');
         }
-        self::insert_backup(['status' => constants::STATUS_SCHEDULED, 'usercreated' => $USER->id], "Backup scheduled");
+
+        $backup = new backup((object)[]);
+        $backup->set_status(constants::STATUS_SCHEDULED)->set_details(['usercreated' => $USER->id])->save();
+        $backup->add_log("Backup scheduled");
         backup_task::schedule();
     }
 
@@ -156,49 +149,6 @@ class site_backup {
     }
 
     /**
-     * Insert a record in a backups DB table
-     *
-     * @param array $data
-     * @param string $log
-     * @return void
-     */
-    protected static function insert_backup(array $data, string $log) {
-        global $DB;
-        $now = time();
-        $data['timecreated'] = $now;
-        $data['timemodified'] = $now;
-        $data['logs'] = api::format_date_for_logs($now)." ".$log."\n";
-        $DB->insert_record('tool_vault_backups', (object)$data);
-    }
-
-    /**
-     * Update a record in a backups DB table
-     *
-     * @param int $id
-     * @param array $data
-     * @param string $log
-     * @return void
-     */
-    protected static function update_backup(int $id, array $data, string $log) {
-        global $DB;
-        $backup = $DB->get_record('tool_vault_backups', ['id' => $id]);
-        $data['id'] = $id;
-        $now = time();
-        if ($data['status'] ?? '' === constants::STATUS_INPROGRESS && $backup->status === constants::STATUS_SCHEDULED) {
-            $data['timestarted'] = $now;
-        }
-        if ($data['status'] ?? '' === constants::STATUS_FINISHED) {
-            $data['timefinished'] = $now;
-        }
-        if (in_array($data['statis'] ?? '', [constants::STATUS_FAILEDTOSTART, constants::STATUS_FAILED])) {
-            $data['timefailed'] = $now;
-        }
-        $data['timemodified'] = $now;
-        $data['logs'] = $backup->logs."[".userdate($now, get_string('strftimedatetimeaccurate', 'core_langconfig'))."] ".$log."\n";
-        $DB->update_record('tool_vault_backups', (object)$data);
-    }
-
-    /**
      * Obtain backupkey
      *
      * @return mixed
@@ -220,15 +170,20 @@ class site_backup {
             'name' => fullname($USER),
         ];
         $res = api::api_call('backups', 'PUT', $params);
-        $metadata = json_encode($params);
         if (!empty($res['backupkey'])) {
-            self::update_backup($backup->id,
-                ['status' => constants::STATUS_INPROGRESS, 'backupkey' => $res['backupkey'], 'metadata' => $metadata],
-                'Backup started, backup key is '.$res['backupkey']);
+            $backup
+                ->set_backupkey($res['backupkey'])
+                ->set_status(constants::STATUS_INPROGRESS)
+                ->set_details($params)
+                ->save();
+            $backup->add_log('Backup started, backup key is '.$res['backupkey']);
         } else {
             // API rejected - aobve limit/quota. TODO store details of failure? how to notify user?
-            self::update_backup($backup->id, ['status' => constants::STATUS_FAILEDTOSTART, 'metadata' => $metadata],
-                'Failed to start the backup with the cloud service');
+            $backup
+                ->set_status(constants::STATUS_FAILEDTOSTART)
+                ->set_details($params)
+                ->save();
+            $backup->add_log('Failed to start the backup with the cloud service');
             // @codingStandardsIgnoreLine
             throw new \coding_exception('Unknown response: '.print_r($res, true));
         }
@@ -242,11 +197,9 @@ class site_backup {
      * @return void
      */
     public function mark_as_failed(\Throwable $t) {
-        global $DB;
-        $backup = $DB->get_record('tool_vault_backups',
-            ['backupkey' => $this->backupkey]);
-        if ($backup) {
-            self::update_backup($backup->id, ['status' => constants::STATUS_FAILED], 'Backup failed: '.$t->getMessage());
+        if ($backup = backup::get_by_backup_key($this->backupkey)) {
+            $backup->set_status(constants::STATUS_FAILED)->save();
+            $backup->add_log('Backup failed: '.$t->getMessage());
         }
     }
 
@@ -256,56 +209,58 @@ class site_backup {
      * @return void
      */
     public function execute() {
-        global $DB;
-        $backup = $DB->get_record('tool_vault_backups',
-            ['backupkey' => $this->backupkey, 'status' => constants::STATUS_INPROGRESS], '*', MUST_EXIST);
+        $backup = backup::get_by_backup_key($this->backupkey);
+        if (!$backup || $backup->status !== constants::STATUS_INPROGRESS) {
+            throw new \moodle_exception('Backup in progress not found');
+        }
 
-        self::update_backup($backup->id, [], 'Checking DB...');
+        $backup->add_log('Checking DB...');
         if (dbstatus::create_and_run()->success()) {
-            self::update_backup($backup->id, [], '...OK');
+            $backup->add_log('...OK');
         } else {
             throw new \moodle_exception('Database check failed');
         }
 
-        self::update_backup($backup->id, [], 'Checking disk space...');
+        $backup->add_log('Checking disk space...');
         if (diskspace::create_and_run()->success()) {
-            self::update_backup($backup->id, [], '...OK');
+            $backup->add_log('...OK');
         } else {
             throw new \moodle_exception('Disk space check failed');
         }
 
-        self::update_backup($backup->id, [], 'Exporting database...');
+        $backup->add_log('Exporting database...');
         $filepath = $this->export_db(constants::FILENAME_DBDUMP . '.zip');
         $size1 = filesize($filepath);
-        self::update_backup($backup->id, [], '...done');
-        self::update_backup($backup->id, [], 'Uploading database backup ('.display_size($size1).')...');
+        $backup->add_log('...done');
+        $backup->add_log('Uploading database backup ('.display_size($size1).')...');
         api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
-        self::update_backup($backup->id, [], '...done');
+        $backup->add_log('...done');
 
-        self::update_backup($backup->id, [], 'Exporting dataroot...');
+        $backup->add_log('Exporting dataroot...');
         $filepath = $this->export_dataroot(constants::FILENAME_DATAROOT . '.zip');
         $size2 = filesize($filepath);
-        self::update_backup($backup->id, [], '...done');
-        self::update_backup($backup->id, [], 'Uploading dataroot backup ('.display_size($size2).')...');
+        $backup->add_log('...done');
+        $backup->add_log('Uploading dataroot backup ('.display_size($size2).')...');
         api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
-        self::update_backup($backup->id, [], '...done');
+        $backup->add_log('...done');
 
-        self::update_backup($backup->id, [], 'Exporting files...');
+        $backup->add_log('Exporting files...');
         $filepaths = $this->export_filedir();
         $size3 = 0;
         foreach ($filepaths as $filepath) {
             $size3 += filesize($filepath);
         }
-        self::update_backup($backup->id, [], '...done');
-        self::update_backup($backup->id, [], 'Uploading files backup ('.display_size($size3).')...');
+        $backup->add_log('...done');
+        $backup->add_log('Uploading files backup ('.display_size($size3).')...');
         foreach ($filepaths as $filepath) {
             api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
         }
-        self::update_backup($backup->id, [], '...done');
+        $backup->add_log('...done');
 
-        self::update_backup($backup->id, [], 'Total size of backup: '.display_size($size1 + $size2 + $size3));
+        $backup->add_log('Total size of backup: '.display_size($size1 + $size2 + $size3));
         api::api_call("backups/{$this->backupkey}", 'PATCH', ['status' => 'finished']);
-        self::update_backup($backup->id, ['status' => constants::STATUS_FINISHED], 'Backup finished');
+        $backup->set_status(constants::STATUS_FINISHED)->save();
+        $backup->add_log('Backup finished');
 
         // TODO notify user, register in our config.
     }

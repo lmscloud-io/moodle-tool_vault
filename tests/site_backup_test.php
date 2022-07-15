@@ -87,8 +87,8 @@ class site_backup_test extends \advanced_testcase {
         $this->assertTrue(file_exists($dir.DIRECTORY_SEPARATOR.constants::FILE_STRUCTURE));
         $this->assertTrue(file_exists($dir.DIRECTORY_SEPARATOR.constants::FILE_SEQUENCE));
         $this->assertFalse(in_array('tool_vault_config', $files));
-        $this->assertFalse(in_array('tool_vault_backups', $files));
-        $this->assertFalse(in_array('tool_vault_restores', $files));
+        $this->assertFalse(in_array('tool_vault_operation', $files));
+        $this->assertFalse(in_array('tool_vault_log', $files));
 
         // Retrieve user file, just for checks.
         $userlist = json_decode(file_get_contents($dir.'/'.'user.json'), true);

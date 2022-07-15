@@ -24,62 +24,10 @@ use tool_vault\constants;
  * @package     tool_vault
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @property-read string $backupkey
- * @property-read string $status
- * @property-read int $timecreated
- * @property-read int $timemodified
- * @property-read string $metadata
- * @property-read string $logs
  */
-class backup {
-    /** @var array */
-    protected $data;
-
-    /**
-     * Constructor
-     *
-     * @param \stdClass $b
-     */
-    public function __construct(\stdClass $b) {
-        $this->data = (array)$b;
-    }
-
-    /**
-     * Magic getter
-     *
-     * @param string $name
-     * @return mixed|null
-     */
-    public function __get(string $name) {
-        return $this->data[$name] ?? null;
-    }
-
-    /**
-     * Metadata
-     *
-     * @return array|mixed
-     */
-    public function get_metadata() {
-        return !empty($this->data['metadata']) ? json_decode($this->data['metadata'], true) : [];
-    }
-
-    /**
-     * Get logs, no more than 4 lines
-     *
-     * @return string
-     */
-    public function get_logs_shortened() {
-        $lines = preg_split('/\\n/', trim((string)$this->logs));
-        if (count($lines) > 4) {
-            return
-                $lines[0]."\n".
-                $lines[1]."\n".
-                "...\n".
-                $lines[count($lines) - 2]."\n".
-                $lines[count($lines) - 1];
-        }
-        return trim((string)$this->logs);
-    }
+class backup extends operation {
+    /** @var string */
+    protected static $defaulttype = 'backup';
 
     /**
      * Get display title
@@ -104,5 +52,18 @@ class backup {
      */
     public function get_subtitle() {
         return 'Status '.$this->status.' : '.userdate($this->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
+    }
+
+    /**
+     * Get backup by backupkey
+     * 
+     * @param string $backupkey
+     * @return static|null
+     */
+    public static function get_by_backup_key(string $backupkey): ?self {
+        $records = self::get_records_select(
+            "type = :type AND backupkey = :backupkey",
+            ['type' => self::$defaulttype, 'backupkey' => $backupkey]);
+        return $records ? reset($records) : null;
     }
 }

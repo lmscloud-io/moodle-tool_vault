@@ -60,12 +60,10 @@ abstract class base {
      * @return static|null
      */
     public static function load(int $id): ?self {
-        global $DB;
-        $record = $DB->get_record('tool_vault_checks', ['id' => $id]);
-        if (!$record) {
+        $model = check::get_record_by_id($id);
+        if (!$model) {
             return null;
         }
-        $model = new check($record);
         try {
             $instance = static::instance($model);
             return $instance;
@@ -125,7 +123,7 @@ abstract class base {
      */
     public static function get_last_check(): self {
         global $DB;
-        $records = $DB->get_records('tool_vault_checks', ['type' => static::get_name()], 'timecreated DESC');
+        $records = $DB->get_records(check::TABLE, ['type' => static::get_name()], 'timecreated DESC');
         if (!$records) {
             return self::schedule_new(static::get_name());
         } else {

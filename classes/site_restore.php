@@ -17,6 +17,7 @@
 namespace tool_vault;
 
 use tool_vault\local\models\remote_backup;
+use tool_vault\local\models\restore;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\task\restore_task;
 
@@ -29,7 +30,7 @@ use tool_vault\task\restore_task;
  */
 class site_restore {
 
-    /** @var \stdClass */
+    /** @var restore */
     protected $restore;
     /** @var remote_backup */
     protected $remotebackup;
@@ -37,11 +38,10 @@ class site_restore {
     /**
      * Get scheduled restore
      *
-     * @return false|mixed|null
+     * @return restore
      */
-    public static function get_scheduled_restore() {
-        global $DB;
-        $records = $DB->get_records('tool_vault_restores', ['status' => constants::STATUS_SCHEDULED]);
+    public static function get_scheduled_restore(): ?restore {
+        $records = restore::get_records([constants::STATUS_SCHEDULED]);
         return $records ? reset($records) : null;
     }
 
@@ -62,54 +62,26 @@ class site_restore {
      * @return void
      */
     public static function schedule_restore(string $backupkey) {
-        global $DB, $USER;
+        global $USER;
         if (!api::are_restores_allowed()) {
             return;
         }
 
-        $now = time();
         $backupmetadata = api::get_remote_backup($backupkey, constants::STATUS_FINISHED);
-        $DB->insert_record('tool_vault_restores', [
-            'backupkey' => $backupkey,
-            'status' => constants::STATUS_SCHEDULED,
-            'timecreated' => $now,
-            'timemodified' => $now,
-            'backupmetadata' => json_encode($backupmetadata->to_object()),
-            'userdata' => json_encode([
+        $restore = new restore();
+        $restore
+            ->set_status( constants::STATUS_SCHEDULED)
+            ->set_backupkey($backupkey)
+            ->set_details([
                 'id' => $USER->id,
                 'username' => $USER->username,
                 'fullname' => fullname($USER),
                 'email' => $USER->email,
-            ]),
-            'logs' => api::format_date_for_logs($now)." "."Restore scheduled",
-        ]);
+            ])
+            ->set_remote_details((array)$backupmetadata->to_object())
+            ->save();
+        $restore->add_log("Restore scheduled");
         restore_task::schedule();
-    }
-
-    /**
-     * Update record in restores table
-     *
-     * @param array $data
-     * @param string $log
-     * @return void
-     */
-    protected function update_restore(array $data, string $log) {
-        global $DB;
-        $restore = $DB->get_record('tool_vault_restores', ['id' => $this->restore->id]);
-        $data['id'] = $this->restore->id;
-        $now = time();
-        if ($data['status'] ?? '' === constants::STATUS_INPROGRESS && $restore->status === constants::STATUS_SCHEDULED) {
-            $data['timestarted'] = $now;
-        }
-        if ($data['status'] ?? '' === constants::STATUS_FINISHED) {
-            $data['timefinished'] = $now;
-        }
-        $data['timemodified'] = $now;
-        if (strlen($log)) {
-            $data['logs'] = $restore->logs.api::format_date_for_logs($now)." ".$log."\n";
-        }
-        $DB->update_record('tool_vault_restores', (object)$data);
-
     }
 
     /**
@@ -131,13 +103,15 @@ class site_restore {
             $this->remotebackup = api::get_remote_backup($this->restore->backupkey, constants::STATUS_FINISHED);
         } catch (\moodle_exception $e) {
             $error = "Backup with the key {$restore->backupkey} is no longer avaialable";
-            $this->update_restore(['status' => constants::STATUS_FAILED], $error);
+            $restore->set_status(constants::STATUS_FAILED)->save();
+            $restore->add_log($error);
             throw new \moodle_exception($error);
         }
-        $this->update_restore([
-            'status' => constants::STATUS_INPROGRESS,
-            'backupmetadata' => json_encode($this->remotebackup->to_object()),
-        ], 'Restore started');
+        $restore
+            ->set_status(constants::STATUS_INPROGRESS)
+            ->set_remote_details((array)$this->remotebackup->to_object())
+            ->save();
+        $restore->add_log('Restore started');
 
         // Download files.
         $tempdir = make_request_directory();
@@ -153,7 +127,8 @@ class site_restore {
             api::download_backup_file($this->restore->backupkey, $filepath1);
         } catch (\Throwable $t) {
             mtrace($t->getMessage());
-            $this->update_restore(['status' => constants::STATUS_FAILED], 'Could not download file '.$filename1);
+            $this->restore->set_status(constants::STATUS_FAILED)->save();
+            $this->restore->add_log('Could not download file '.$filename1);
             return;
         }
 
@@ -162,7 +137,8 @@ class site_restore {
             api::download_backup_file($this->restore->backupkey, $filepath2);
         } catch (\Throwable $t) {
             mtrace($t->getMessage());
-            $this->update_restore(['status' => constants::STATUS_FAILED], 'Could not download file '.$filename2);
+            $this->restore->set_status(constants::STATUS_FAILED)->save();
+            $this->restore->add_log('Could not download file '.$filename2);
             return;
         }
 
@@ -171,7 +147,8 @@ class site_restore {
             api::download_backup_file($this->restore->backupkey, $filepath3);
         } catch (\Throwable $t) {
             mtrace($t->getMessage());
-            $this->update_restore(['status' => constants::STATUS_FAILED], 'Could not download file '.$filename3);
+            $this->restore->set_status(constants::STATUS_FAILED)->save();
+            $this->restore->add_log('Could not download file '.$filename3);
             return;
         }
 
@@ -187,7 +164,8 @@ class site_restore {
         $this->restore_filedir($filedirpath);
         // TODO more logging.
 
-        $this->update_restore(['status' => constants::STATUS_FINISHED], 'Restore finished');
+        $this->restore->set_status(constants::STATUS_FINISHED)->save();
+        $this->restore->add_log('Restore finished');
 
         $this->post_restore();
     }

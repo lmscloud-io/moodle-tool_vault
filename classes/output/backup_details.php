@@ -54,10 +54,10 @@ class backup_details implements \templatable {
             'details' =>
                 '<h4>Metadata</h4>'.
                 // @codingStandardsIgnoreLine
-                '<pre>'.print_r($this->backup->get_metadata(), true).'</pre>' .
+                '<pre>'.print_r($this->backup->get_details(), true).'</pre>' .
                 '<h4>Logs</h4>'.
                 // @codingStandardsIgnoreLine
-                '<pre>'.print_r($this->backup->logs, true).'</pre>',
+                '<pre>'.print_r($this->backup->get_logs(), true).'</pre>',
         ];
     }
 }

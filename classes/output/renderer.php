@@ -22,6 +22,7 @@ use plugin_renderer_base;
 use tool_vault\api;
 use tool_vault\form\general_settings_form;
 use tool_vault\local\models\remote_backup;
+use tool_vault\local\models\restore;
 
 /**
  * Plugin renderer
@@ -68,7 +69,7 @@ class renderer extends plugin_renderer_base {
             $output .= (new general_settings_form(false, false))->render();
         }
 
-        $records = $DB->get_records('tool_vault_restores', [], 'timecreated desc');
+        $records = restore::get_records();
         // @codingStandardsIgnoreLine
         $output .= html_writer::tag('pre', s(print_r($records, true)), array('class' => 'notifytiny'));
 
