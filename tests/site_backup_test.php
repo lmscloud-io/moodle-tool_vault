@@ -16,6 +16,7 @@
 
 namespace tool_vault;
 
+use tool_vault\local\models\backup;
 use tool_vault\local\xmldb\dbtable;
 
 /**
@@ -30,17 +31,29 @@ use tool_vault\local\xmldb\dbtable;
 class site_backup_test extends \advanced_testcase {
 
     /**
+     * Create mock site backup instance
+     *
+     * @return site_backup
+     */
+    protected function create_site_backup() {
+        $backup = new backup((object)['status' => constants::STATUS_INPROGRESS]);
+        $backup->save();
+        return new site_backup($backup);
+    }
+
+    /**
      * Testing get_all_tables()
      */
     public function test_get_all_tables() {
-        $tables = (new site_backup(""))->get_db_structure()->get_tables_actual();
+        $this->resetAfterTest();
+        $tables = $this->create_site_backup()->get_db_structure()->get_tables_actual();
         $this->assertFalse(array_key_exists('tool_vault_config', $tables));
         $this->assertTrue(array_key_exists('config', $tables));
     }
 
     public function test_export_table() {
         $this->resetAfterTest();
-        $sitebackup = new site_backup("");
+        $sitebackup = $this->create_site_backup();
         $tableobj = dbtable::create_from_actual_db('tool_vault_config', $sitebackup->get_db_structure());
 
         // We will use table tool_vault_config as a temp table.
@@ -65,7 +78,7 @@ class site_backup_test extends \advanced_testcase {
 
     public function test_export_db() {
         $this->resetAfterTest();
-        $sitebackup = new site_backup("");
+        $sitebackup = $this->create_site_backup();
         $filepath = $sitebackup->export_db(constants::FILENAME_DBDUMP . '.zip');
         $this->assertGreaterThanOrEqual(150000, filesize($filepath));
 
@@ -103,7 +116,7 @@ class site_backup_test extends \advanced_testcase {
         file_put_contents($hellodir.DIRECTORY_SEPARATOR.'hello.txt', 'Hello world!');
 
         // Call export_dataroot() from site_backup.
-        $sitebackup = new site_backup("");
+        $sitebackup = $this->create_site_backup();
         $filepath = $sitebackup->export_dataroot(constants::FILENAME_DATAROOT . '.zip');
         $this->assertTrue(file_exists($filepath));
 
@@ -120,7 +133,7 @@ class site_backup_test extends \advanced_testcase {
     public function test_export_filedir() {
         $this->resetAfterTest();
 
-        $sitebackup = new site_backup("");
+        $sitebackup = $this->create_site_backup();
         $filepaths = $sitebackup->export_filedir();
         $this->assertEquals(1, count($filepaths));
         $filepath = reset($filepaths);

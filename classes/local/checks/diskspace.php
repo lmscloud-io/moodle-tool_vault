@@ -35,13 +35,14 @@ class diskspace extends base {
      */
     public function perform(): void {
         global $DB;
-        $record = $DB->get_record_sql('SELECT sum(filesize) AS sumfilesize, max(filesize) AS maxfilesize
+        $record = $DB->get_record_sql('SELECT sum(filesize) AS sumfilesize, max(filesize) AS maxfilesize, count(1) AS countfiles
             FROM (SELECT distinct contenthash, filesize
                 from {files}
                 WHERE not (component=? AND filearea = ?)) a',
             ['user', 'draft']);
         $totalsize = $record->sumfilesize;
         $maxfilesize = $record->maxfilesize;
+        $countfiles = $record->countfiles;
         $freespace = disk_free_space(make_request_directory());
         $dbrecords = 0;
         $structure = dbstructure::load();
@@ -57,6 +58,7 @@ class diskspace extends base {
         $this->model->set_details([
             'totalfilesize' => $totalsize,
             'maxfilesize' => $maxfilesize,
+            'countfiles' => $countfiles,
             'freespace' => $freespace,
             'dbrecords' => $dbrecords,
             'dbtotalsize' => $dbtotalsize,
@@ -76,7 +78,7 @@ class diskspace extends base {
         $handle = opendir($CFG->dataroot);
         $size = 0;
         while (($file = readdir($handle)) !== false) {
-            if (!site_backup::is_dir_skipped($file)) {
+            if (!site_backup::is_dataroot_path_skipped($file)) {
                 if (is_dir($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
                     $filelist = site_restore::dirlist_recursive($CFG->dataroot.DIRECTORY_SEPARATOR.$file);
                 } else {
@@ -121,10 +123,11 @@ class diskspace extends base {
             '<ul>'.
             '<li>Total size of files: '.display_size($details['totalfilesize']).'</li>'.
             '<li>The largest file: '.display_size($details['maxfilesize']).'</li>'.
+            '<li>Number of files: '.display_size($details['countfiles']).'</li>'.
             '<li>Total number of rows in DB tables: '.number_format($details['dbrecords'], 0).'</li>'.
             '<li>Total size of DB tables (approx): '.display_size($details['dbtotalsize']).'</li>'.
             '<li>The largest DB table size (approx): '.display_size($details['dbmaxsize']).'</li>'.
-            '<li>Total size of dataroot: '.display_size($details['datarootsize']).'</li>'.
+            '<li>Total size of dataroot (excl. caches and filedir): '.display_size($details['datarootsize']).'</li>'.
             '<li>Free space in temp dir: '.display_size($details['freespace']).'</li>'.
             '</ul>';
     }

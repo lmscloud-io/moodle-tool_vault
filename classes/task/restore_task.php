@@ -18,6 +18,7 @@ namespace tool_vault\task;
 
 use core\task\adhoc_task;
 use tool_vault\api;
+use tool_vault\constants;
 use tool_vault\site_backup;
 use tool_vault\site_restore;
 
@@ -36,11 +37,17 @@ class restore_task extends adhoc_task {
      */
     public function execute() {
         try {
-            $restore = new site_restore();
+            $restore = site_restore::start_restore();
+        } catch (\Throwable $t) {
+            mtrace("Failed to start restore: ".$t->getMessage()."\n".$t->getTraceAsString());
+        }
+
+        try {
             $restore->execute();
         } catch (\Throwable $t) {
             // TODO analyse error, reschedule.
-            mtrace("Failed to restore: ".$t->getMessage()."\n".$t->getTraceAsString());
+            $restore->mark_as_failed($t);
+            mtrace("Failed to execute restore: ".$t->getMessage()."\n".$t->getTraceAsString());
         }
     }
 

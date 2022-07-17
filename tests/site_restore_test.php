@@ -16,6 +16,9 @@
 
 namespace tool_vault;
 
+use tool_vault\local\models\backup;
+use tool_vault\local\models\restore;
+
 /**
  * The site_restore_test test class.
  *
@@ -26,6 +29,30 @@ namespace tool_vault;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class site_restore_test extends \advanced_testcase {
+
+    /**
+     * Create mock site backup instance
+     *
+     * @return site_backup
+     */
+    protected function create_site_backup() {
+        $backup = new backup((object)['status' => constants::STATUS_INPROGRESS]);
+        $backup->save();
+        return new site_backup($backup);
+    }
+
+    /**
+     * Create mock site restore instance
+     *
+     * @return site_restore
+     * @throws \coding_exception
+     */
+    protected function create_site_restore() {
+        $restore = new restore((object)['status' => constants::STATUS_INPROGRESS]);
+        $restore->save();
+        return new site_restore($restore);
+    }
+
     public function test_restore_db() {
         global $DB;
         $this->resetAfterTest();
@@ -39,7 +66,7 @@ class site_restore_test extends \advanced_testcase {
         $this->assertCount(1, $DB->get_records('book'));
 
         // Perform backup.
-        $sitebackup = new site_backup("");
+        $sitebackup = $this->create_site_backup();
         $filepath = $sitebackup->export_db(constants::FILENAME_DBDUMP . '.zip');
 
         // Add a second book instance.
@@ -47,7 +74,7 @@ class site_restore_test extends \advanced_testcase {
         $this->assertCount(2, $DB->get_records('book'));
 
         // Prepare restore, only 'book' table.
-        $siterestore = new site_restore();
+        $siterestore = $this->create_site_restore();
         $structure = $siterestore->prepare_restore_db($filepath);
         $tables = array_intersect_key($structure->get_tables_definitions(), ['book' => 1]);
         $structure->set_tables_definitions($tables);
@@ -71,7 +98,7 @@ class site_restore_test extends \advanced_testcase {
         $this->assertTrue(file_exists($hellofilepath));
 
         // Call export_dataroot() from site_backup.
-        $sitebackup = new site_backup("");
+        $sitebackup = $this->create_site_backup();
         $filepath = $sitebackup->export_dataroot(constants::FILENAME_DATAROOT . '.zip');
 
         // Remove file.
@@ -79,7 +106,7 @@ class site_restore_test extends \advanced_testcase {
         $this->assertFalse(file_exists($hellofilepath));
 
         // Restore.
-        $siterestore = new site_restore();
+        $siterestore = $this->create_site_restore();
         $files = $siterestore->prepare_restore_dataroot($filepath);
         $siterestore->restore_dataroot($files);
 
@@ -99,7 +126,7 @@ class site_restore_test extends \advanced_testcase {
         $this->assertTrue(file_exists($filepathondisk));
 
         // Perform backup.
-        $sitebackup = new site_backup("");
+        $sitebackup = $this->create_site_backup();
         $filepaths = $sitebackup->export_filedir();
 
         // Remove the file.
@@ -107,7 +134,7 @@ class site_restore_test extends \advanced_testcase {
         $this->assertFalse(file_exists($filepathondisk));
 
         // Run restore, file is now back.
-        $siterestore = new site_restore();
+        $siterestore = $this->create_site_restore();
         $restoreddir = $siterestore->prepare_restore_filedir($filepaths[0]);
         $siterestore->restore_filedir($restoreddir);
         $this->assertTrue(file_exists($filepathondisk));

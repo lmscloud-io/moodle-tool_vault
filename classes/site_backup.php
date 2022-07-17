@@ -31,16 +31,16 @@ use tool_vault\task\backup_task;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class site_backup {
-    /** @var string */
-    protected $backupkey;
+    /** @var backup */
+    protected $backup;
 
     /**
      * Constructor
      *
-     * @param string $backupkey
+     * @param backup $backup
      */
-    public function __construct(string $backupkey) {
-        $this->backupkey = $backupkey;
+    public function __construct(backup $backup) {
+        $this->backup = $backup;
     }
 
     /**
@@ -54,13 +54,13 @@ class site_backup {
     }
 
     /**
-     * Should the dataroot subfolder be skipped from the backup
+     * Should the dataroot subfolder/file be skipped from the backup
      *
      * @param string $path relative path under $CFG->dataroot
      * @return bool
      */
-    public static function is_dir_skipped(string $path): bool {
-        return in_array($path, [
+    public static function is_dataroot_path_skipped(string $path): bool {
+        $defaultexcluded = in_array($path, [
                 'filedir', // Files are retrieved separately.
                 'cache',
                 'localcache',
@@ -74,6 +74,11 @@ class site_backup {
                 // Vault temp dir.
                 '__vault_restore__'
             ]) || preg_match('/^\\./', $path);
+        if ($defaultexcluded) {
+            return true;
+        }
+        $paths = preg_split('/[\\s,]/', api::get_config('backupexcludedataroot'), -1, PREG_SPLIT_NO_EMPTY);
+        return in_array($path, $paths);
     }
 
     /**
@@ -98,12 +103,15 @@ class site_backup {
     }
 
     /**
-     * Obtain backupkey
+     * Start backup
      *
-     * @return mixed
+     * @return self
      */
-    public static function start_backup() {
+    public static function start_backup(): self {
         global $CFG, $USER, $DB;
+        if (!api::is_registered()) {
+            throw new \moodle_exception('API key not found');
+        }
         $backup = backup::get_scheduled_backup();
         if (!$backup) {
             throw new \moodle_exception('No scheduled backup');
@@ -136,7 +144,8 @@ class site_backup {
             // @codingStandardsIgnoreLine
             throw new \coding_exception('Unknown response: '.print_r($res, true));
         }
-        return $res['backupkey'];
+        $instance = new static($backup);
+        return $instance;
     }
 
     /**
@@ -146,10 +155,8 @@ class site_backup {
      * @return void
      */
     public function mark_as_failed(\Throwable $t) {
-        if ($backup = backup::get_by_backup_key($this->backupkey)) {
-            $backup->set_status(constants::STATUS_FAILED)->save();
-            $backup->add_log('Backup failed: '.$t->getMessage());
-        }
+        $this->backup->set_status(constants::STATUS_FAILED)->save();
+        $this->backup->add_log('Backup failed: '.$t->getMessage());
     }
 
     /**
@@ -158,7 +165,7 @@ class site_backup {
      * @return void
      */
     public function execute() {
-        $backup = backup::get_by_backup_key($this->backupkey);
+        $backup = $this->backup;
         if (!$backup || $backup->status !== constants::STATUS_INPROGRESS) {
             throw new \moodle_exception('Backup in progress not found');
         }
@@ -182,7 +189,7 @@ class site_backup {
         $size1 = filesize($filepath);
         $backup->add_log('...done');
         $backup->add_log('Uploading database backup ('.display_size($size1).')...');
-        api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
+        api::upload_backup_file($this->backup->backupkey, $filepath, 'application/zip');
         $backup->add_log('...done');
 
         $backup->add_log('Exporting dataroot...');
@@ -190,7 +197,7 @@ class site_backup {
         $size2 = filesize($filepath);
         $backup->add_log('...done');
         $backup->add_log('Uploading dataroot backup ('.display_size($size2).')...');
-        api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
+        api::upload_backup_file($this->backup->backupkey, $filepath, 'application/zip');
         $backup->add_log('...done');
 
         $backup->add_log('Exporting files...');
@@ -202,12 +209,12 @@ class site_backup {
         $backup->add_log('...done');
         $backup->add_log('Uploading files backup ('.display_size($size3).')...');
         foreach ($filepaths as $filepath) {
-            api::upload_backup_file($this->backupkey, $filepath, 'application/zip');
+            api::upload_backup_file($this->backup->backupkey, $filepath, 'application/zip');
         }
         $backup->add_log('...done');
 
         $backup->add_log('Total size of backup: '.display_size($size1 + $size2 + $size3));
-        api::api_call("backups/{$this->backupkey}", 'PATCH', ['status' => 'finished']);
+        api::api_call("backups/{$this->backup->backupkey}", 'PATCH', ['status' => 'finished']);
         $backup->set_status(constants::STATUS_FINISHED)->save();
         $backup->add_log('Backup finished');
 
@@ -316,7 +323,7 @@ class site_backup {
         $handle = opendir($CFG->dataroot);
         $files = [];
         while (($file = readdir($handle)) !== false) {
-            if (!$this->is_dir_skipped($file)) {
+            if (!$this->is_dataroot_path_skipped($file)) {
                 $files[$file] = $CFG->dataroot . DIRECTORY_SEPARATOR . $file;
             }
         }
@@ -360,9 +367,15 @@ class site_backup {
             $filename = substr($chash, 0, 2) .
                 DIRECTORY_SEPARATOR . substr($chash, 2, 2) .
                 DIRECTORY_SEPARATOR . $chash;
-            mkdir($dir . DIRECTORY_SEPARATOR . dirname($filename), $CFG->directorypermissions, true);
-            $file->copy_content_to($dir . DIRECTORY_SEPARATOR . $filename);
-            $toarchive[$filename] = $dir . DIRECTORY_SEPARATOR . $filename;
+            $fullpath = $dir . DIRECTORY_SEPARATOR . $filename;
+            if (!file_exists(dirname($fullpath))) {
+                mkdir(dirname($fullpath), $CFG->directorypermissions, true);
+            }
+            if (!$file->copy_content_to($fullpath)) {
+                $this->backup->add_log('- can not back up file with contenthash '.$chash.' - skipping');
+                continue;
+            }
+            $toarchive[$filename] = $fullpath;
         }
 
         $exportfilename = constants::FILENAME_FILEDIR . '.zip';

@@ -251,7 +251,7 @@ abstract class operation {
      */
     protected function format_log_line(?\stdClass $log): string {
         return $log ?
-            "[".userdate($log->timecreated, get_string('strftimedatetimeaccurate', 'core_langconfig'))."] " . $log->message :
+            "[".userdate($log->timecreated, get_string('strftimedatetimeshort', 'core_langconfig'))."] " . $log->message :
             '...';
     }
 

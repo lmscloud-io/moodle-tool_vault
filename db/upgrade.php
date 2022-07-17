@@ -172,5 +172,13 @@ function xmldb_tool_vault_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2022071510, 'tool', 'vault');
     }
 
+    if ($oldversion < 2022071702) {
+
+        \tool_vault\api::insert_default_config();
+
+        // Vault savepoint reached.
+        upgrade_plugin_savepoint(true, 2022071702, 'tool', 'vault');
+    }
+
     return true;
 }

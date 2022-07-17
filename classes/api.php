@@ -52,6 +52,15 @@ class api {
     }
 
     /**
+     * Default config on installation
+     *
+     * @return void
+     */
+    public static function insert_default_config() {
+        self::store_config('backupexcludedataroot', 'muc, antivirus_quarantine');
+    }
+
+    /**
      * Get currently stored API key
      *
      * @return null
@@ -301,7 +310,7 @@ class api {
      * @return string
      */
     public static function format_date_for_logs(int $timestamp) {
-        return "[".userdate($timestamp, get_string('strftimedatetimeaccurate', 'core_langconfig'))."]";
+        return "[".userdate($timestamp, get_string('strftimedatetimeshort', 'core_langconfig'))."]";
     }
 
     /**
@@ -316,12 +325,12 @@ class api {
         $result = self::api_call("backups/$backupkey/download/$filename", 'get', []);
         if (empty($result['downloadurl'])) {
             // TODO string?
-            throw new \moodle_exception('Unable to download backup file');
+            throw new \moodle_exception('Unable to download backup file '.$filename);
         }
         $curl = new \curl();
         $result = $curl->download_one($result['downloadurl'], [], ['filepath' => $filepath]);
         if (!$result) {
-            throw new \moodle_exception('Unable to download backup file');
+            throw new \moodle_exception('Unable to download backup file '.$filename);
         }
     }
 }

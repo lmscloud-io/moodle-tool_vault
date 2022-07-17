@@ -36,13 +36,12 @@ class site_restore {
     protected $remotebackup;
 
     /**
-     * Get scheduled restore
+     * Constructor
      *
-     * @return restore
+     * @param restore $restore
      */
-    public static function get_scheduled_restore(): ?restore {
-        $records = restore::get_records([constants::STATUS_SCHEDULED]);
-        return $records ? reset($records) : null;
+    public function __construct(restore $restore) {
+        $this->restore = $restore;
     }
 
     /**
@@ -53,16 +52,6 @@ class site_restore {
     public static function get_last_restore(): ?restore {
         $records = restore::get_records();
         return $records ? reset($records) : null;
-    }
-
-    /**
-     * Should the dataroot subfolder be skipped and not deleted during restore
-     *
-     * @param string $path relative path under $CFG->dataroot
-     * @return bool
-     */
-    public static function is_dir_skipped(string $path): bool {
-        return site_backup::is_dir_skipped($path);
     }
 
     /**
@@ -95,33 +84,56 @@ class site_restore {
     }
 
     /**
+     * Start scheduled restore
+     *
+     * @return static
+     * @throws \moodle_exception
+     */
+    public static function start_restore() {
+        if (!api::is_registered()) {
+            throw new \moodle_exception('API key not found');
+        }
+        if (!api::are_restores_allowed()) {
+            throw new \moodle_exception('Restores are not allowed on this site');
+        }
+        $records = restore::get_records([constants::STATUS_SCHEDULED]);
+        if (!$records) {
+            throw new \moodle_exception('No restores scheduled');
+        }
+        return new static(reset($records));
+    }
+
+    /**
+     * Mark backup as failed
+     *
+     * @param \Throwable $t
+     * @return void
+     */
+    public function mark_as_failed(\Throwable $t) {
+        $this->restore->set_status(constants::STATUS_FAILED)->save();
+        $this->restore->add_log('Backup failed: '.$t->getMessage());
+    }
+
+    /**
      * Perform restore
      *
      * @return void
      * @throws \moodle_exception
      */
     public function execute() {
-        if (!api::are_restores_allowed()) {
-            throw new \moodle_exception('Restores are not allowed on this site');
-        }
-        $restore = self::get_scheduled_restore();
-        if (!$restore) {
-            throw new \moodle_exception('No restores scheduled');
-        }
-        $this->restore = $restore;
+        $this->restore
+            ->set_status(constants::STATUS_INPROGRESS)
+            ->save();
+        $this->restore->add_log('Restore started');
         try {
             $this->remotebackup = api::get_remote_backup($this->restore->backupkey, constants::STATUS_FINISHED);
         } catch (\moodle_exception $e) {
-            $error = "Backup with the key {$restore->backupkey} is no longer avaialable";
-            $restore->set_status(constants::STATUS_FAILED)->save();
-            $restore->add_log($error);
+            $error = "Backup with the key {$this->restore->backupkey} is no longer avaialable";
             throw new \moodle_exception($error);
         }
-        $restore
-            ->set_status(constants::STATUS_INPROGRESS)
+        $this->restore
             ->set_remote_details((array)$this->remotebackup->to_object())
             ->save();
-        $restore->add_log('Restore started');
 
         // Download files.
         $tempdir = make_request_directory();
@@ -132,41 +144,25 @@ class site_restore {
         $filepath2 = $tempdir.DIRECTORY_SEPARATOR.$filename2;
         $filepath3 = $tempdir.DIRECTORY_SEPARATOR.$filename3;
 
-        try {
-            $this->restore->add_log("Downloading file $filename1 ...");
-            api::download_backup_file($this->restore->backupkey, $filepath1);
-            $this->restore->add_log('...done');
-        } catch (\Throwable $t) {
-            $this->restore->set_status(constants::STATUS_FAILED)->save();
-            $this->restore->add_log('Could not download file '.$filename1.' - '.$t->getMessage());
-            return;
-        }
+        $this->restore->add_log("Downloading file $filename1 ...");
+        api::download_backup_file($this->restore->backupkey, $filepath1);
+        $this->restore->add_log('...done');
 
-        try {
-            $this->restore->add_log("Downloading file $filename2 ...");
-            api::download_backup_file($this->restore->backupkey, $filepath2);
-            $this->restore->add_log('...done');
-        } catch (\Throwable $t) {
-            $this->restore->set_status(constants::STATUS_FAILED)->save();
-            $this->restore->add_log('Could not download file '.$filename2.' - '.$t->getMessage());
-            return;
-        }
+        $this->restore->add_log("Downloading file $filename2 ...");
+        api::download_backup_file($this->restore->backupkey, $filepath2);
+        $this->restore->add_log('...done');
 
-        try {
-            $this->restore->add_log("Downloading file $filename3 ...");
-            api::download_backup_file($this->restore->backupkey, $filepath3);
-            $this->restore->add_log('...done');
-        } catch (\Throwable $t) {
-            $this->restore->set_status(constants::STATUS_FAILED)->save();
-            $this->restore->add_log('Could not download file '.$filename3.' - '.$t->getMessage());
-            return;
-        }
+        $this->restore->add_log("Downloading file $filename3 ...");
+        api::download_backup_file($this->restore->backupkey, $filepath3);
+        $this->restore->add_log('...done');
 
         $structure = $this->prepare_restore_db($filepath1);
         $datarootfiles = $this->prepare_restore_dataroot($filepath2);
         $filedirpath = $this->prepare_restore_filedir($filepath3);
         unlink($filepath2);
         unlink($filepath3);
+
+        // From this moment on we can not throw any exceptions, we have to try to restore as much as possible.
 
         $this->restore_db($structure, $filepath1);
         unlink($filepath1);
@@ -266,16 +262,26 @@ class site_restore {
         foreach ($tables as $tablename => $table) {
             $zippacker->extract_to_pathname($zipfilepath, $temppath, [$tablename.".json"]);
             $filepath = $temppath.DIRECTORY_SEPARATOR.$tablename.".json";
-            $data = json_decode(file_get_contents($filepath));
+            $data = json_decode(file_get_contents($filepath), true);
             if ($altersql = $table->get_alter_sql($structure->get_tables_actual()[$tablename] ?? null)) {
-                $this->restore->add_log('- table '.$tablename.' structure is modified');
-                $DB->change_database_structure($altersql);
+                try {
+                    $DB->change_database_structure($altersql);
+                    $this->restore->add_log('- table '.$tablename.' structure is modified');
+                } catch (\Throwable $t) {
+                    $this->restore->add_log('- table '.$tablename.' structure is modified, failed to apply modifications: '.
+                        $t->getMessage());
+                }
             }
             $DB->execute('TRUNCATE TABLE {'.$tablename.'}');
             if ($data) {
                 $fields = array_shift($data);
                 foreach ($data as $row) {
-                    $DB->insert_record_raw($tablename, array_combine($fields, $row), false, true, true);
+                    try {
+                        $DB->insert_record_raw($tablename, array_combine($fields, $row), false, true, true);
+                    } catch (\Throwable $t) {
+                        $this->restore->add_log("- failed to insert record with id {$row['id']} into table $tablename: ".
+                            $t->getMessage());
+                    }
                 }
             }
             if ($altersql = $table->get_fix_sequence_sql($sequences[$tablename] ?? 0)) {
@@ -299,21 +305,20 @@ class site_restore {
     public function restore_dataroot(array $files) {
         global $CFG;
         $this->restore->add_log('Restoring datadir...');
-        $handle = opendir($CFG->dataroot);
-        while (($file = readdir($handle)) !== false) {
-            if (!$this->is_dir_skipped($file)) {
-                $this->restore->add_log("- removed ".$file);
-                self::remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.$file);
-            }
-        }
-        closedir($handle);
-
         foreach ($files as $file => $path) {
-            rename($path, $CFG->dataroot.DIRECTORY_SEPARATOR.$file);
-            $this->restore->add_log("- added ".$file);
+            // TODO what if we can not delete some files?
+            self::remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.$file);
+            if (file_exists($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
+                $this->restore->add_log('- existing path '.$file.' in dataroot could not be removed');
+                // TODO try to move files one by one.
+            } else {
+                rename($path, $CFG->dataroot.DIRECTORY_SEPARATOR.$file);
+                $this->restore->add_log("- added ".$file);
+            }
         }
 
         self::remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__');
+        $this->restore->add_log('...datadir restore completed');
     }
 
     /**
@@ -361,10 +366,14 @@ class site_restore {
                 debugging("Skipping unrecognised file detected in the filedir archive: ".$subpath);
                 continue;
             }
-            $fs->add_file_to_pool($filepath, $file);
+            try {
+                $fs->add_file_to_pool($filepath, $file);
+            } catch (\Throwable $t) {
+                $this->restore->add_log('- could not add file with contenthash '.$file.' to file system: '.$t->getMessage());
+            }
             unlink($filepath);
         }
-        $this->restore->add_log('...done');
+        $this->restore->add_log('...files restore completed');
     }
 
     /**

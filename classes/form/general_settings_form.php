@@ -74,7 +74,7 @@ class general_settings_form extends \moodleform {
         $mform = $this->_form;
 
         if ($this->editable) {
-            $mform->addElement('passwordunmask', 'apikey', 'API key', ['size' => 70]);
+            $mform->addElement('passwordunmask', 'apikey', 'API key');
             $mform->setType('apikey', PARAM_RAW);
         } else if (api::is_registered()) {
             $forgeturl = new \moodle_url('/admin/tool/vault/index.php',

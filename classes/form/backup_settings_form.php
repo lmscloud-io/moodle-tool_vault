@@ -65,9 +65,15 @@ class backup_settings_form extends \moodleform {
         $mform->setType('backupexcludeindexes', PARAM_RAW);
         // TODO Help: List of tables that will not be included in the backup. Do not include prefix.
 
+        $mform->addElement($this->editable ? 'textarea' : 'static', 'backupexcludedataroot',
+            'Exclude paths in dataroot');
+        $mform->setType('backupexcludedataroot', PARAM_RAW);
+        // TODO Help: Show the list of paths that are already excluded.
+
         $this->set_data([
             'backupexcludetables' => api::get_config('backupexcludetables'),
             'backupexcludeindexes' => api::get_config('backupexcludeindexes'),
+            'backupexcludedataroot' => api::get_config('backupexcludedataroot'),
         ]);
         if (!$this->editable) {
             $mform->addElement('html',
@@ -136,6 +142,16 @@ class backup_settings_form extends \moodleform {
             }
         }
 
+        $paths = preg_split('/[\\s,]/', trim($data['backupexcludedataroot']), -1, PREG_SPLIT_NO_EMPTY);
+        if ($paths) {
+            foreach ($paths as $path) {
+                if (preg_replace("#[/\\\\]#", '', clean_param($path, PARAM_FILE)) !== $path) {
+                    $errors['backupexcludedataroot'] = "Path '".s($path)."' is not a valid file path";
+                    break;
+                }
+            }
+        }
+
         return $errors;
     }
 
@@ -150,6 +166,8 @@ class backup_settings_form extends \moodleform {
         api::store_config('backupexcludetables', join(', ', $tables));
         $indexes = preg_split('/[\\s,]/', trim($data->backupexcludeindexes), -1, PREG_SPLIT_NO_EMPTY);
         api::store_config('backupexcludeindexes', join(', ', $indexes));
+        $paths = preg_split('/[\\s,]/', trim($data->backupexcludedataroot), -1, PREG_SPLIT_NO_EMPTY);
+        api::store_config('backupexcludedataroot', join(', ', $paths));
     }
 
     /**

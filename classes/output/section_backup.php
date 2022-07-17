@@ -92,6 +92,7 @@ class section_backup extends section_base implements \templatable {
         if (!api::is_registered()) {
             $form = new general_settings_form(false);
             $result['registrationform'] = $form->render();
+            $result['canstartbackup'] = false;
         }
         return $result;
     }

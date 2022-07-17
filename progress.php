@@ -32,7 +32,9 @@ $operation = \tool_vault\local\models\operation::get_by_access_key($accesskey);
 
 $PAGE->set_pagelayout('embedded');
 $PAGE->set_heading(get_string('pluginname', 'tool_vault'));
-$PAGE->set_secondary_navigation(false);
+if (method_exists($PAGE, 'set_secondary_navigation')) {
+    $PAGE->set_secondary_navigation(false);
+}
 
 /** @var tool_vault\output\renderer $renderer */
 $renderer = $PAGE->get_renderer('tool_vault');
