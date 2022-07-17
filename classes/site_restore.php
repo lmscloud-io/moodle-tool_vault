@@ -46,6 +46,16 @@ class site_restore {
     }
 
     /**
+     * Get the last restore performed on this server
+     *
+     * @return ?restore
+     */
+    public static function get_last_restore(): ?restore {
+        $records = restore::get_records();
+        return $records ? reset($records) : null;
+    }
+
+    /**
      * Should the dataroot subfolder be skipped and not deleted during restore
      *
      * @param string $path relative path under $CFG->dataroot

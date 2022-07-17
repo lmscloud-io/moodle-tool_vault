@@ -199,7 +199,7 @@ abstract class operation {
      * @param int $id
      * @return static|null
      */
-    public static function get_record_by_id(int $id): ?self {
+    public static function get_by_id(int $id): ?self {
         global $DB;
         $record = $DB->get_record(self::TABLE, ['id' => $id]);
         return $record && (!self::$defaulttype || $record->type === self::$defaulttype) ? new static($record) : null;
@@ -300,5 +300,27 @@ abstract class operation {
             $sql .= ' AND status '.$sqls;
         }
         return static::get_records_select($sql, ($params ?? []) + ['type' => static::$defaulttype]);
+    }
+
+    /**
+     * Returns an instance by access key
+     *
+     * @param string $accesskey
+     * @return static|null
+     */
+    public static function get_by_access_key(string $accesskey): ?self {
+        global $DB;
+        if (empty($accesskey)) {
+            return null;
+        }
+        $record = $DB->get_record(self::TABLE, ['accesskey' => $accesskey]);
+        if ($record) {
+            if ($record->type === 'backup') {
+                return new backup($record);
+            } else if ($record->type === 'restore') {
+                return new restore($record);
+            }
+        }
+        return null;
     }
 }

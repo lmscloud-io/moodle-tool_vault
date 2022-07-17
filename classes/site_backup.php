@@ -77,28 +77,18 @@ class site_backup {
     }
 
     /**
-     * List of all backups performed on this server
-     *
-     * @param array|null $statuses
-     * @return backup[]
-     */
-    protected static function get_backups(?array $statuses = null): array {
-        return backup::get_records($statuses);
-    }
-
-    /**
      * Schedules new backup
      *
      * @return void
      */
     public static function schedule_backup() {
         global $USER;
-        if ($backups = self::get_backups([constants::STATUS_SCHEDULED])) {
+        if (backup::get_records([constants::STATUS_SCHEDULED])) {
             // Pressed button twice maybe?
             return;
         }
-        if ($backups = self::get_backups([constants::STATUS_INPROGRESS])) {
-            throw new \moodle_exception('Another active backup found');
+        if (backup::get_records([constants::STATUS_INPROGRESS])) {
+            throw new \moodle_exception('Another backup is in progress');
         }
 
         $backup = new backup((object)[]);
@@ -108,54 +98,13 @@ class site_backup {
     }
 
     /**
-     * If there is a scheduled backup, return it
-     *
-     * @return false|mixed
-     */
-    public static function get_scheduled_backup(): ?backup {
-        $backups = self::get_backups([constants::STATUS_SCHEDULED]);
-        return $backups ? reset($backups) : null;
-    }
-
-    /**
-     * If there is a backup in progress, return it
-     *
-     * @return \stdClass|null
-     */
-    public static function get_backup_in_progress(): ?backup {
-        $backups = self::get_backups([constants::STATUS_INPROGRESS]);
-        return $backups ? reset($backups) : null;
-    }
-
-    /**
-     * Get the last backup scheduled on this server
-     *
-     * @return ?backup
-     */
-    public static function get_last_backup(): ?backup {
-        $backups = self::get_backups();
-        return $backups ? reset($backups) : null;
-    }
-
-    /**
-     * Get a past backup
-     *
-     * @param int $id
-     * @return ?backup
-     */
-    public static function get_backup_by_id(int $id): ?backup {
-        $backups = self::get_backups();
-        return $backups[$id] ?? null;
-    }
-
-    /**
      * Obtain backupkey
      *
      * @return mixed
      */
     public static function start_backup() {
         global $CFG, $USER, $DB;
-        $backup = self::get_scheduled_backup();
+        $backup = backup::get_scheduled_backup();
         if (!$backup) {
             throw new \moodle_exception('No scheduled backup');
         }

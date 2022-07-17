@@ -16,6 +16,8 @@
 
 namespace tool_vault\local\models;
 
+use tool_vault\constants;
+
 /**
  * Model for local restore
  *
@@ -27,4 +29,38 @@ class restore extends operation {
     /** @var string */
     protected static $defaulttype = 'restore';
 
+    /**
+     * Get display title
+     *
+     * @return string
+     */
+    public function get_title() {
+        $title = 'Restore from backup ' . $this->backupkey;
+        if ($this->status === constants::STATUS_SCHEDULED) {
+            $title .= ' (scheduled)';
+        }
+        return $title;
+    }
+
+    /**
+     * Get status and time modified
+     *
+     * @return string
+     * @throws \coding_exception
+     */
+    public function get_subtitle() {
+        return 'Status '.$this->status.' : '.userdate($this->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
+    }
+
+    /**
+     * Save record
+     *
+     * @return operation
+     */
+    public function save(): operation {
+        if (!$this->accesskey) {
+            $this->generate_access_key();
+        }
+        return parent::save();
+    }
 }

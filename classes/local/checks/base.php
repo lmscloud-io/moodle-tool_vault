@@ -60,7 +60,7 @@ abstract class base {
      * @return static|null
      */
     public static function load(int $id): ?self {
-        $model = check::get_record_by_id($id);
+        $model = check::get_by_id($id);
         if (!$model) {
             return null;
         }

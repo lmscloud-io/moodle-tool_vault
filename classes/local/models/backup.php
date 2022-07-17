@@ -56,14 +56,48 @@ class backup extends operation {
 
     /**
      * Get backup by backupkey
-     * 
+     *
      * @param string $backupkey
      * @return static|null
      */
     public static function get_by_backup_key(string $backupkey): ?self {
+        /** @var backup[] $records */
         $records = self::get_records_select(
             "type = :type AND backupkey = :backupkey",
             ['type' => self::$defaulttype, 'backupkey' => $backupkey]);
         return $records ? reset($records) : null;
+    }
+
+    /**
+     * If there is a scheduled backup, return it
+     *
+     * @return false|mixed
+     */
+    public static function get_scheduled_backup(): ?backup {
+        /** @var backup[] $backups */
+        $backups = self::get_records([constants::STATUS_SCHEDULED]);
+        return $backups ? reset($backups) : null;
+    }
+
+    /**
+     * If there is a backup in progress, return it
+     *
+     * @return \stdClass|null
+     */
+    public static function get_backup_in_progress(): ?backup {
+        /** @var backup[] $backups */
+        $backups = self::get_records([constants::STATUS_INPROGRESS]);
+        return $backups ? reset($backups) : null;
+    }
+
+    /**
+     * Get the last backup scheduled on this server
+     *
+     * @return ?backup
+     */
+    public static function get_last_backup(): ?backup {
+        /** @var backup[] $backups */
+        $backups = self::get_records();
+        return $backups ? reset($backups) : null;
     }
 }

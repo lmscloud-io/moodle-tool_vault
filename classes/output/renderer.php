@@ -19,10 +19,9 @@ namespace tool_vault\output;
 use html_writer;
 use moodle_url;
 use plugin_renderer_base;
-use tool_vault\api;
-use tool_vault\form\general_settings_form;
 use tool_vault\local\models\remote_backup;
 use tool_vault\local\models\restore;
+use tool_vault\local\models\backup;
 
 /**
  * Plugin renderer
@@ -43,7 +42,7 @@ class renderer extends plugin_renderer_base {
         $action = optional_param('action', null, PARAM_ALPHANUMEXT);
         $id = optional_param('id', null, PARAM_INT);
 
-        if ($action === 'details' && $id && ($backup = \tool_vault\site_backup::get_backup_by_id($id))) {
+        if ($action === 'details' && $id && ($backup = backup::get_by_id($id))) {
             $data = (new backup_details($backup))->export_for_template($this);
             return $this->render_from_template('tool_vault/backup_details', $data);
         }
@@ -60,31 +59,17 @@ class renderer extends plugin_renderer_base {
      * @return string
      */
     public function render_section_restore(section_restore $section) {
-        global $DB;
-        $output = '';
         $action = optional_param('action', null, PARAM_ALPHANUMEXT);
-        $output .= $this->heading(get_string('siterestore', 'tool_vault'), 3);
+        $id = optional_param('id', null, PARAM_INT);
 
-        if (!api::is_registered()) {
-            $output .= (new general_settings_form(false, false))->render();
+        if ($action === 'details' && $id && ($restore = restore::get_by_id($id))) {
+            $data = (new restore_details($restore))->export_for_template($this);
+            return $this->render_from_template('tool_vault/restore_details', $data);
         }
 
-        $records = restore::get_records();
-        // @codingStandardsIgnoreLine
-        $output .= html_writer::tag('pre', s(print_r($records, true)), array('class' => 'notifytiny'));
-
-        if (api::is_registered()) {
-            $output .= $this->heading('Remote backups', 4); // TODO string.
-            if ($action === 'findbackups' && confirm_sesskey()) {
-                $backups = \tool_vault\api::get_remote_backups();
-                $output .= $this->display_remote_backups($backups);
-            } else {
-                $link = new moodle_url($this->page->url,
-                    ['section' => 'restore', 'action' => 'findbackups', 'sesskey' => sesskey()]);
-                $output .= html_writer::div(html_writer::link($link, 'Search for available backups'));
-            }
-        }
-        return $output;
+        return
+            $this->render_from_template('tool_vault/section_restore',
+                $section->export_for_template($this));
     }
 
     /**

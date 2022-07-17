@@ -16,6 +16,8 @@
 
 namespace tool_vault\output;
 
+use renderer_base;
+use stdClass;
 use tool_vault\local\checks\base;
 
 /**

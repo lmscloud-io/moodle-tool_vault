@@ -65,7 +65,7 @@ class restore_settings_form extends \moodleform {
         ]);
         if (!$this->editable) {
             $mform->addElement('html',
-                \html_writer::div(\html_writer::link($this->action, 'Edit general settings', ['class' => 'btn btn-secondary']),
+                \html_writer::div(\html_writer::link($this->action, 'Edit restore settings', ['class' => 'btn btn-secondary']),
                     'pb-3'));
         } else {
             $this->add_action_buttons();

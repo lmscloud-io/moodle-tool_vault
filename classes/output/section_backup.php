@@ -18,6 +18,7 @@ namespace tool_vault\output;
 
 use tool_vault\api;
 use tool_vault\form\general_settings_form;
+use tool_vault\local\models\backup;
 
 /**
  * Tab backup
@@ -26,7 +27,7 @@ use tool_vault\form\general_settings_form;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class section_backup extends section_base {
+class section_backup extends section_base implements \templatable {
 
     /**
      * Process tab actions
@@ -57,13 +58,13 @@ class section_backup extends section_base {
         $result = [
             'canstartbackup' => false,
         ];
-        if ($backup = \tool_vault\site_backup::get_scheduled_backup()) {
+        if ($backup = backup::get_scheduled_backup()) {
             $result['lastbackup'] = [
                 'title' => $backup->get_title(),
                 'subtitle' => $backup->get_subtitle(),
                 'summary' => 'You backup is now scheduled and will be executed during the next cron run',
             ];
-        } else if ($backup = \tool_vault\site_backup::get_backup_in_progress()) {
+        } else if ($backup = backup::get_backup_in_progress()) {
             $result['lastbackup'] = [
                 'title' => $backup->get_title(),
                 'subtitle' => $backup->get_subtitle(),
@@ -71,7 +72,7 @@ class section_backup extends section_base {
                 'logs' => $backup->get_logs_shortened(),
             ];
             $result['showdetailslink'] = 1;
-        } else if ($backup = \tool_vault\site_backup::get_last_backup()) {
+        } else if ($backup = backup::get_last_backup()) {
             $result['lastbackup'] = [
                 'title' => $backup->get_title(),
                 'subtitle' => $backup->get_subtitle(),
