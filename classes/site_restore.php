@@ -133,32 +133,32 @@ class site_restore {
         $filepath3 = $tempdir.DIRECTORY_SEPARATOR.$filename3;
 
         try {
-            mtrace("Downloading file $filename1 ...");
+            $this->restore->add_log("Downloading file $filename1 ...");
             api::download_backup_file($this->restore->backupkey, $filepath1);
+            $this->restore->add_log('...done');
         } catch (\Throwable $t) {
-            mtrace($t->getMessage());
             $this->restore->set_status(constants::STATUS_FAILED)->save();
-            $this->restore->add_log('Could not download file '.$filename1);
+            $this->restore->add_log('Could not download file '.$filename1.' - '.$t->getMessage());
             return;
         }
 
         try {
-            mtrace("Downloading file $filename2 ...");
+            $this->restore->add_log("Downloading file $filename2 ...");
             api::download_backup_file($this->restore->backupkey, $filepath2);
+            $this->restore->add_log('...done');
         } catch (\Throwable $t) {
-            mtrace($t->getMessage());
             $this->restore->set_status(constants::STATUS_FAILED)->save();
-            $this->restore->add_log('Could not download file '.$filename2);
+            $this->restore->add_log('Could not download file '.$filename2.' - '.$t->getMessage());
             return;
         }
 
         try {
-            mtrace("Downloading file $filename3 ...");
+            $this->restore->add_log("Downloading file $filename3 ...");
             api::download_backup_file($this->restore->backupkey, $filepath3);
+            $this->restore->add_log('...done');
         } catch (\Throwable $t) {
-            mtrace($t->getMessage());
             $this->restore->set_status(constants::STATUS_FAILED)->save();
-            $this->restore->add_log('Could not download file '.$filename3);
+            $this->restore->add_log('Could not download file '.$filename3.' - '.$t->getMessage());
             return;
         }
 
@@ -172,12 +172,11 @@ class site_restore {
         unlink($filepath1);
         $this->restore_dataroot($datarootfiles);
         $this->restore_filedir($filedirpath);
-        // TODO more logging.
 
         $this->restore->set_status(constants::STATUS_FINISHED)->save();
-        $this->restore->add_log('Restore finished');
 
         $this->post_restore();
+        $this->restore->add_log('Restore finished');
     }
 
     /**
@@ -188,6 +187,7 @@ class site_restore {
      */
     public function prepare_restore_db(string $filepath) {
         $structurefilename = constants::FILE_STRUCTURE;
+        $this->restore->add_log('Extracting database structure...');
 
         $temppath = make_request_directory();
         $zippacker = new \zip_packer();
@@ -196,6 +196,7 @@ class site_restore {
 
         // TODO do all the checks that all tables exist and have necessary fields.
 
+        $this->restore->add_log('...done');
         return $structure;
     }
 
@@ -207,6 +208,7 @@ class site_restore {
      */
     public function prepare_restore_dataroot(string $filepath) {
         global $CFG;
+        $this->restore->add_log('Extracting dataroot files...');
         $temppath = $CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__';
         $this->remove_recursively($temppath);
         make_writable_directory($temppath);
@@ -221,6 +223,7 @@ class site_restore {
             }
         }
         closedir($handle);
+        $this->restore->add_log('...done');
         return $files;
     }
 
@@ -231,10 +234,12 @@ class site_restore {
      * @return string
      */
     public function prepare_restore_filedir(string $filepath): string {
+        $this->restore->add_log('Extracting filedir files...');
         $temppath = make_request_directory();
         $zippacker = new \zip_packer();
         $zippacker->extract_to_pathname($filepath, $temppath);
 
+        $this->restore->add_log('...done');
         return $temppath;
     }
 
@@ -247,6 +252,8 @@ class site_restore {
      */
     public function restore_db(dbstructure $structure, string $zipfilepath) {
         global $DB;
+        $tables = $structure->get_backup_tables();
+        $this->restore->add_log('Restoring database ('.count($tables).' tables)...');
         $temppath = make_request_directory();
         $zippacker = new \zip_packer();
 
@@ -256,11 +263,12 @@ class site_restore {
         $sequences = json_decode(file_get_contents($filepath), true);
         unlink($filepath);
 
-        foreach ($structure->get_backup_tables() as $tablename => $table) {
+        foreach ($tables as $tablename => $table) {
             $zippacker->extract_to_pathname($zipfilepath, $temppath, [$tablename.".json"]);
             $filepath = $temppath.DIRECTORY_SEPARATOR.$tablename.".json";
             $data = json_decode(file_get_contents($filepath));
             if ($altersql = $table->get_alter_sql($structure->get_tables_actual()[$tablename] ?? null)) {
+                $this->restore->add_log('- table '.$tablename.' structure is modified');
                 $DB->change_database_structure($altersql);
             }
             $DB->execute('TRUNCATE TABLE {'.$tablename.'}');
@@ -274,11 +282,12 @@ class site_restore {
                 try {
                     $DB->change_database_structure($altersql);
                 } catch (\Throwable $t) {
-                    mtrace("- failed to change sequence for table $tablename: ".$t->getMessage());
+                    $this->restore->add_log("- failed to change sequence for table $tablename: ".$t->getMessage());
                 }
             }
             unlink($filepath);
         }
+        $this->restore->add_log('...database restore completed');
     }
 
     /**
@@ -289,19 +298,22 @@ class site_restore {
      */
     public function restore_dataroot(array $files) {
         global $CFG;
+        $this->restore->add_log('Restoring datadir...');
         $handle = opendir($CFG->dataroot);
         while (($file = readdir($handle)) !== false) {
             if (!$this->is_dir_skipped($file)) {
-                $this->remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.$file);
+                $this->restore->add_log("- removed ".$file);
+                self::remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.$file);
             }
         }
         closedir($handle);
 
         foreach ($files as $file => $path) {
             rename($path, $CFG->dataroot.DIRECTORY_SEPARATOR.$file);
+            $this->restore->add_log("- added ".$file);
         }
 
-        $this->remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__');
+        self::remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__');
     }
 
     /**
@@ -339,6 +351,7 @@ class site_restore {
      * @return void
      */
     public function restore_filedir(string $restoredir) {
+        $this->restore->add_log('Moving files to file storage...');
         $fs = get_file_storage();
         $files = self::dirlist_recursive($restoredir);
         foreach ($files as $subpath => $filepath) {
@@ -351,6 +364,7 @@ class site_restore {
             $fs->add_file_to_pool($filepath, $file);
             unlink($filepath);
         }
+        $this->restore->add_log('...done');
     }
 
     /**
@@ -359,7 +373,9 @@ class site_restore {
      * @return void
      */
     public function post_restore() {
+        $this->restore->add_log('Starting post-restore actions');
         purge_all_caches();
+        $this->restore->add_log('Purged all caches');
     }
 
     /**
