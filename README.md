@@ -1,4 +1,4 @@
-# Vault - site migration #
+# Vault - Site migration #
 
 TODO Describe the plugin shortly here.
 

@@ -62,7 +62,7 @@ class remote_backup implements \templatable {
         $restoreurl = new \moodle_url($PAGE->url,
             ['section' => 'restore', 'action' => 'restore',
                 'backupkey' => $this->backup->backupkey, 'sesskey' => sesskey()]);
-        return [
+        $rv = [
             'sectionurl' => $PAGE->url->out(false),
             'showdetails' => $this->extradetails,
             'status' => $this->backup->status,
@@ -74,7 +74,21 @@ class remote_backup implements \templatable {
             'restoreurl' => $restoreurl->out(false),
             // @codingStandardsIgnoreLine
             'details' => $this->extradetails ? print_r($this->backup->to_object(), true) : '',
-            'restoreallowed' => api::are_restores_allowed(),
         ];
+        if (!api::are_restores_allowed()) {
+            $error = get_string('restoresnotallowed', 'tool_vault');
+        } else {
+            try {
+                $this->backup->ensure_version_compatibility();
+            } catch (\moodle_exception $e) {
+                $error = $e->getMessage();
+            }
+        }
+        if (isset($error)) {
+            $rv['restorenotallowedreason'] = (new \core\output\notification($error, null, false))->export_for_template($output);
+        } else {
+            $rv['restoreallowed'] = true;
+        }
+        return $rv;
     }
 }

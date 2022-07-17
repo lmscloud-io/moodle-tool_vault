@@ -94,7 +94,7 @@ class site_restore {
             throw new \moodle_exception('API key not found');
         }
         if (!api::are_restores_allowed()) {
-            throw new \moodle_exception('Restores are not allowed on this site');
+            throw new \moodle_exception('restoresnotallowed', 'tool_vault');
         }
         $records = restore::get_records([constants::STATUS_SCHEDULED]);
         if (!$records) {
@@ -124,7 +124,7 @@ class site_restore {
         $this->restore
             ->set_status(constants::STATUS_INPROGRESS)
             ->save();
-        $this->restore->add_log('Restore started');
+        $this->restore->add_log('Preparing to restore');
         try {
             $this->remotebackup = api::get_remote_backup($this->restore->backupkey, constants::STATUS_FINISHED);
         } catch (\moodle_exception $e) {
@@ -134,6 +134,7 @@ class site_restore {
         $this->restore
             ->set_remote_details((array)$this->remotebackup->to_object())
             ->save();
+        $this->remotebackup->ensure_version_compatibility();
 
         // Download files.
         $tempdir = make_request_directory();
@@ -162,7 +163,10 @@ class site_restore {
         unlink($filepath2);
         unlink($filepath3);
 
-        // From this moment on we can not throw any exceptions, we have to try to restore as much as possible.
+        // From this moment on we can not throw any exceptions, we have to try to restore as much as possible skipping problems.
+        $this->restore->add_log('Restore started');
+
+        $this->before_restore();
 
         $this->restore_db($structure, $filepath1);
         unlink($filepath1);
@@ -381,10 +385,25 @@ class site_restore {
      *
      * @return void
      */
+    public function before_restore() {
+        $this->restore->add_log('Killing all sessions');
+        \core\session\manager::kill_all_sessions();
+        $this->restore->add_log('...done');
+    }
+
+    /**
+     * Post restore
+     *
+     * @return void
+     */
     public function post_restore() {
         $this->restore->add_log('Starting post-restore actions');
+        $this->restore->add_log('Purging all caches...');
         purge_all_caches();
-        $this->restore->add_log('Purged all caches');
+        $this->restore->add_log('...done');
+        $this->restore->add_log('Killing all sessions');
+        \core\session\manager::kill_all_sessions();
+        $this->restore->add_log('...done');
     }
 
     /**

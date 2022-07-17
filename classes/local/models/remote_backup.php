@@ -108,4 +108,27 @@ class remote_backup {
         });
         return $res;
     }
+
+    /**
+     * Throws exception if the version of this site is not compatible with the version of the remote backup
+     *
+     * @throws \moodle_exception
+     */
+    public function ensure_version_compatibility() {
+        global $CFG;
+        $branch = $this->info['branch'] ?? null;
+
+        if ("{$branch}" !== "{$CFG->branch}") {
+            $branch = $this->backup->info['branch'] ?? '';
+            $error = "Can not restore backup made on a different branch (major version) of Moodle. ".
+                "This backup branch is '{$branch}' and this site branch is '{$CFG->branch}'";
+        } else if ((int)$this->info['version'] > (int)$CFG->version) {
+            $error = "Site version number has to be not lower than the version in the backup. ".
+                "This backup is {$this->backup->info['version']} and this site is {$CFG->version}";
+        } else {
+            return;
+        }
+
+        throw new \moodle_exception($error);
+    }
 }

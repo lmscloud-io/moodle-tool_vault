@@ -122,6 +122,7 @@ class site_backup {
             'wwwroot' => $CFG->wwwroot,
             'dbengine' => $DB->get_dbfamily(),
             'version' => $CFG->version,
+            'branch' => $CFG->branch,
             'tool_vault_version' => get_config('tool_vault', 'version'),
             'email' => $USER->email,
             'name' => fullname($USER),

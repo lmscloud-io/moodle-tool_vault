@@ -42,6 +42,9 @@
     <pre>
         {{{details}}}
     </pre>
+    {{#restorenotallowedreason}}
+        {{> core/notification_error}}
+    {{/restorenotallowedreason}}
 {{/showdetails}}
 <p>
     {{^showdetails}}

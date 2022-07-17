@@ -17,7 +17,6 @@
 namespace tool_vault;
 
 use tool_vault\local\models\remote_backup;
-use tool_vault\task\backup_task;
 
 /**
  * Main api
@@ -57,7 +56,9 @@ class api {
      * @return void
      */
     public static function insert_default_config() {
-        self::store_config('backupexcludedataroot', 'muc, antivirus_quarantine');
+        if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
+            self::store_config('backupexcludedataroot', 'muc, antivirus_quarantine');
+        }
     }
 
     /**
