@@ -19,6 +19,7 @@ namespace tool_vault\output;
 use html_writer;
 use moodle_url;
 use plugin_renderer_base;
+use tool_vault\api;
 use tool_vault\local\models\remote_backup;
 use tool_vault\local\models\restore;
 use tool_vault\local\models\backup;
@@ -61,10 +62,16 @@ class renderer extends plugin_renderer_base {
     public function render_section_restore(section_restore $section) {
         $action = optional_param('action', null, PARAM_ALPHANUMEXT);
         $id = optional_param('id', null, PARAM_INT);
+        $backupkey = optional_param('backupkey', null, PARAM_ALPHANUMEXT);
 
         if ($action === 'details' && $id && ($restore = restore::get_by_id($id))) {
             $data = (new restore_details($restore))->export_for_template($this);
             return $this->render_from_template('tool_vault/restore_details', $data);
+        }
+
+        if ($action === 'remotedetails' && $backupkey && ($backup = api::get_remote_backup($backupkey))) {
+            $data = (new \tool_vault\output\remote_backup($backup, true))->export_for_template($this);
+            return $this->render_from_template('tool_vault/remote_backup_details', $data);
         }
 
         return

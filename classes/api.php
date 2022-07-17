@@ -61,6 +61,20 @@ class api {
     }
 
     /**
+     * Set or forget API key
+     *
+     * @param string|null $apikey
+     * @return void
+     */
+    public static function set_api_key(?string $apikey) {
+        if ($apikey !== self::get_api_key()) {
+            self::store_config('apikey', $apikey);
+            self::store_config('cachedremotebackupstime', null);
+            self::store_config('cachedremotebackups', null);
+        }
+    }
+
+    /**
      * Are restores allowed on this site
      *
      * @return bool
@@ -163,7 +177,7 @@ class api {
         ];
         $result = self::api_call('register', 'POST', $params, false);
         if (!empty($result['apikey'])) {
-            self::store_config('apikey', $result['apikey']);
+            self::set_api_key($result['apikey']);
         } else {
             // TODO string? special treatment?
             // @codingStandardsIgnoreLine
@@ -237,14 +251,31 @@ class api {
      * @return remote_backup[]
      */
     public static function get_remote_backups(): array {
-        $backups = self::api_call('backups', 'GET', []);
+        $conf = self::get_config('cachedremotebackups');
+        if ($conf !== null) {
+            $records = json_decode($conf, true);
+        } else {
+            $apiresult = self::api_call('backups', 'GET', []);
+            self::store_config('cachedremotebackupstime', time());
+            $records = $apiresult['backups'];
+            self::store_config('cachedremotebackups', json_encode($apiresult['backups']));
+        }
         $backups = array_map(function($b) {
             return new remote_backup($b);
-        }, $backups['backups']);
+        }, $records);
         usort($backups, function($a, $b) {
             return - $a->timecreated + $b->timecreated;
         });
         return $backups;
+    }
+
+    /**
+     * Last time we fetched remote backups
+     *
+     * @return int
+     */
+    public static function get_remote_backups_time(): int {
+        return self::get_config('cachedremotebackupstime');
     }
 
     /**
@@ -259,6 +290,7 @@ class api {
         if (isset($withstatus) && $result['status'] !== $withstatus) {
             throw new \moodle_exception('Backup has a wrong status');
         }
+        $result['backupkey'] = $backupkey;
         return new remote_backup($result);
     }
 

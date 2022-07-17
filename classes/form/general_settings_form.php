@@ -105,12 +105,27 @@ class general_settings_form extends \moodleform {
     }
 
     /**
+     * Validation
+     *
+     * @param array $data
+     * @param array $files
+     * @return array
+     */
+    public function validation($data, $files) {
+        $errors = [];
+        if ($this->editable && strlen($data['apikey']) && !api::validate_api_key($data['apikey'])) {
+            $errors['apikey'] = 'API key not valid';
+        }
+        return $errors;
+    }
+
+    /**
      * Process form
      *
      * @return void
      */
     public function process() {
         $data = $this->get_data();
-        api::store_config('apikey', $data->apikey);
+        api::set_api_key($data->apikey);
     }
 }

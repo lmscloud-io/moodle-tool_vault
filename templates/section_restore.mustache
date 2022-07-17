@@ -59,5 +59,11 @@
 
 {{#isregistered}}
     <h4>Remote backups</h4>
-    {{{remotebackups}}}
+    <p>Last updated: {{remotebackupstime}} <a href="{{remotebackupsupdateurl}}">{{#pix}} i/reload, core, Refresh {{/pix}}</a></p>
+    {{#remotebackups}}
+        {{> tool_vault/remote_backup_details }}
+    {{/remotebackups}}
+    {{^remotebackups}}
+        <p><em>You don't have any remote backups yet</em></p>
+    {{/remotebackups}}
 {{/isregistered}}

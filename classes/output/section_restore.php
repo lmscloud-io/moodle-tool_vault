@@ -44,6 +44,11 @@ class section_restore extends section_base implements \templatable {
             \tool_vault\site_restore::schedule_restore($backupkey);
             redirect($PAGE->url);
         }
+
+        if ($action === 'updateremote' && confirm_sesskey()) {
+            api::store_config('cachedremotebackups', null);
+            redirect($PAGE->url);
+        }
     }
 
     /**
@@ -82,19 +87,16 @@ class section_restore extends section_base implements \templatable {
             $result['registrationform'] = $form->render();
         } else {
             $backups = \tool_vault\api::get_remote_backups();
+            $backupstime = \tool_vault\api::get_remote_backups_time();
 
-            $s = '';
+            $result['remotebackups'] = [];
             foreach ($backups as $backup) {
-                $started = userdate($backup->timecreated, get_string('strftimedatetimeshort', 'langconfig'));
-                $s .= \html_writer::div("Backup: {$backup->backupkey} - {$backup->status} - $started - {$backup->info['wwwroot']}");
-                if ($backup->status === \tool_vault\constants::STATUS_FINISHED) {
-                    $s .= $output->single_button(new \moodle_url($PAGE->url,
-                        ['section' => 'restore', 'action' => 'restore',
-                            'backupkey' => $backup->backupkey, 'sesskey' => sesskey()]),
-                        'Restore this backup', 'get');
-                }
+                $result['remotebackups'][] = (new remote_backup($backup))->export_for_template($output);
             }
-            $result['remotebackups'] = $s;
+            $result['remotebackupstime'] = userdate($backupstime, get_string('strftimedatetimeshort', 'langconfig'));
+            $url = new \moodle_url('/admin/tool/vault/index.php',
+                ['section' => 'restore', 'action' => 'updateremote', 'sesskey' => sesskey()]);
+            $result['remotebackupsupdateurl'] = $url->out(false);
         }
         return $result;
     }

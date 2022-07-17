@@ -42,7 +42,7 @@ class section_backup extends section_base implements \templatable {
         }
 
         if ($action === 'forgetapikey' && confirm_sesskey()) {
-            api::store_config('apikey', null);
+            api::set_api_key(null);
             redirect($PAGE->url);
         }
     }

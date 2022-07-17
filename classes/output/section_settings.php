@@ -56,7 +56,7 @@ class section_settings extends section_base {
         $returnurl = optional_param('returnurl', null, PARAM_LOCALURL);
         $returnurl = $returnurl ? new \moodle_url($returnurl) : $PAGE->url;
         if ($this->get_action() === 'forgetapikey' && confirm_sesskey()) {
-            api::store_config('apikey', null);
+            api::set_api_key(null);
             redirect($returnurl);
         } else if ($this->get_action() === 'register' && confirm_sesskey()) {
             \tool_vault\api::register();
