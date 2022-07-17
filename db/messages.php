@@ -25,12 +25,18 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+if (defined('MESSAGE_DEFAULT_ENABLED')) {
+    $defaultperm = MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED;
+} else {
+    $defaultperm = MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF;
+}
+
 $messageproviders = [
 
     'statusupdate' => [
         'defaults' => [
-            'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
-            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+            'popup' => $defaultperm,
+            'email' => $defaultperm,
         ],
         'capability'  => 'moodle/site:config',
     ],
