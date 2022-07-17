@@ -17,7 +17,9 @@
 namespace tool_vault\task;
 
 use core\task\adhoc_task;
+use tool_vault\constants;
 use tool_vault\local\checks\base;
+use tool_vault\local\models\check;
 
 /**
  * Ad-hoc task for scheduling checks
@@ -33,39 +35,37 @@ class check_task extends adhoc_task {
      * Throw exceptions on errors (the job will be retried).
      */
     public function execute() {
-        $customdata = (array)$this->get_custom_data();
-        $id = $customdata['id'] ?? null;
-        if (!$id) {
-            mtrace('Parameter id is not found');
-            return;
+
+        $models = check::get_records([constants::STATUS_INPROGRESS]);
+        if ($models) {
+            // This task should not run if another task is in progress. This can only mean that other task
+            // aborted. Mark the stalled check as failed.
+            foreach ($models as $model) {
+                $model->set_status(constants::STATUS_FAILED)->save();
+            }
         }
 
-        if (!$check = base::load($id)) {
-            mtrace("Failed to load check with id $id");
-            return;
+        $checks = base::get_scheduled();
+        foreach ($checks as $check) {
+            $check->mark_as_inprogress();
+            try {
+                $check->perform();
+                $check->mark_as_finished();
+            } catch (\Throwable $t) {
+                // TODO analyse error, reschedule.
+                mtrace("Failed to execute check: ".$t->getMessage()."\n".$t->getTraceAsString());
+                $check->mark_as_failed($t);
+            }
         }
-
-        $check->mark_as_inprogress();
-        try {
-            $check->perform();
-        } catch (\Throwable $t) {
-            // TODO analyse error, reschedule.
-            mtrace("Failed to execute check: ".$t->getMessage()."\n".$t->getTraceAsString());
-            $check->mark_as_failed($t);
-            return;
-        }
-        $check->mark_as_finished();
     }
 
     /**
      * Schedule this task
      *
-     * @param int $id
      * @return void
      */
-    public static function schedule(int $id) {
+    public static function schedule() {
         $task = new static();
-        $task->set_custom_data(['id' => $id]);
         \core\task\manager::queue_adhoc_task($task, true);
     }
 }

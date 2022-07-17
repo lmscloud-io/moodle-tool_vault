@@ -41,6 +41,8 @@ abstract class operation {
     const LOGTABLE = 'tool_vault_log';
     /** @var string */
     protected static $defaulttype;
+    /** @var string */
+    protected static $defaulttypeprefix;
     /** @var string[] */
     protected static $fields = [
         'type',
@@ -287,19 +289,24 @@ abstract class operation {
      * Get records with specified statuses
      *
      * @param array|null $statuses
-     * @return operation[]
+     * @return static[]
      */
     public static function get_records(?array $statuses = null): array {
         global $DB;
-        if (!static::$defaulttype) {
+        if (static::$defaulttype) {
+            $sql = 'type = :type';
+            $params = ['type' => static::$defaulttype];
+        } else if (static::$defaulttypeprefix) {
+            $sql = 'type LIKE :type';
+            $params = ['type' => static::$defaulttypeprefix.'%'];
+        } else {
             throw new \coding_exception('Method can not be used in this class');
         }
-        $sql = 'type = :type';
         if ($statuses) {
-            [$sqls, $params] = $DB->get_in_or_equal($statuses, SQL_PARAMS_NAMED);
-            $sql .= ' AND status '.$sqls;
+            [$sql2, $params2] = $DB->get_in_or_equal($statuses, SQL_PARAMS_NAMED);
+            $sql .= ' AND status '.$sql2;
         }
-        return static::get_records_select($sql, ($params ?? []) + ['type' => static::$defaulttype]);
+        return static::get_records_select($sql, ($params2 ?? []) + $params);
     }
 
     /**

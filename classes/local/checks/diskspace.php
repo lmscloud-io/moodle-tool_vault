@@ -18,6 +18,8 @@ namespace tool_vault\local\checks;
 
 use tool_vault\constants;
 use tool_vault\local\xmldb\dbstructure;
+use tool_vault\site_backup;
+use tool_vault\site_restore;
 
 /**
  * Check disk space
@@ -50,7 +52,8 @@ class diskspace extends base {
         $tablesizes = $structure->get_actual_tables_sizes();
         $dbtotalsize = array_sum($tablesizes);
         $dbmaxsize = max($tablesizes);
-        $enoughspace = ($totalsize + $dbtotalsize) * 2 < $freespace;
+        $datarootsize = $this->get_dataroot_size();
+        $enoughspace = ($totalsize + $dbtotalsize) * 2 + $datarootsize < $freespace;
         $this->model->set_details([
             'totalfilesize' => $totalsize,
             'maxfilesize' => $maxfilesize,
@@ -58,8 +61,36 @@ class diskspace extends base {
             'dbrecords' => $dbrecords,
             'dbtotalsize' => $dbtotalsize,
             'dbmaxsize' => $dbmaxsize,
+            'datarootsize' => $datarootsize,
             'enoughspace' => $enoughspace,
         ])->save();
+    }
+
+    /**
+     * Calculate total size of files in dataroot
+     *
+     * @return int
+     */
+    protected function get_dataroot_size() {
+        global $CFG;
+        $handle = opendir($CFG->dataroot);
+        $size = 0;
+        while (($file = readdir($handle)) !== false) {
+            if (!site_backup::is_dir_skipped($file)) {
+                if (is_dir($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
+                    $filelist = site_restore::dirlist_recursive($CFG->dataroot.DIRECTORY_SEPARATOR.$file);
+                } else {
+                    $filelist = [$file => $CFG->dataroot.DIRECTORY_SEPARATOR.$file];
+                }
+                foreach ($filelist as $filepath) {
+                    if (is_file($filepath) && is_readable($filepath)) {
+                        $size += filesize($filepath);
+                    }
+                }
+            }
+        }
+        closedir($handle);
+        return $size;
     }
 
     /**
@@ -93,6 +124,7 @@ class diskspace extends base {
             '<li>Total number of rows in DB tables: '.number_format($details['dbrecords'], 0).'</li>'.
             '<li>Total size of DB tables (approx): '.display_size($details['dbtotalsize']).'</li>'.
             '<li>The largest DB table size (approx): '.display_size($details['dbmaxsize']).'</li>'.
+            '<li>Total size of dataroot: '.display_size($details['datarootsize']).'</li>'.
             '<li>Free space in temp dir: '.display_size($details['freespace']).'</li>'.
             '</ul>';
     }

@@ -24,4 +24,65 @@ namespace tool_vault\local\models;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class check extends operation {
+    /** @var string */
+    protected static $defaulttypeprefix = 'check:';
+
+    /**
+     * Constructor
+     *
+     * @param \stdClass|null $record
+     * @param string|null $type
+     */
+    public function __construct(?\stdClass $record = null, ?string $type = null) {
+        if ($record && isset($record->type) && !self::validate_type($record->type)) {
+            throw new \coding_exception('Type '.$record->type.' is invalid for a check');
+        }
+        if ($type) {
+            $record = $record ?? new \stdClass();
+            $record->type = self::$defaulttypeprefix . $type;
+        }
+        parent::__construct($record);
+    }
+
+    /**
+     * Validate type
+     *
+     * @param string $type
+     * @return bool
+     */
+    protected static function validate_type(string $type) {
+        return substr($type, 0, strlen(self::$defaulttypeprefix)) === self::$defaulttypeprefix;
+    }
+
+    /**
+     * Get checks by type
+     *
+     * @param string $type
+     * @return array
+     */
+    public static function get_checks_by_type(string $type): array {
+        return static::get_records_select('type=:type', ['type' => self::$defaulttypeprefix.$type]);
+    }
+
+    /**
+     * Retrieve record by id
+     *
+     * @param int $id
+     * @return static|null
+     */
+    public static function get_by_id(int $id): ?operation {
+        if (($model = parent::get_by_id($id)) && self::validate_type($model->type)) {
+            return $model;
+        }
+        return null;
+    }
+
+    /**
+     * Get class name of the corresponding check
+     *
+     * @return string
+     */
+    public function get_check_name(): string {
+        return substr($this->type, strlen(self::$defaulttypeprefix));
+    }
 }

@@ -83,7 +83,7 @@ abstract class base {
      * @throws \coding_exception
      */
     protected static function instance(check $model): self {
-        $checkname = $model->type;
+        $checkname = $model->get_check_name();
         if (clean_param($checkname, PARAM_ALPHANUMEXT) !== $checkname || !strlen($checkname)) {
             throw new \coding_exception('Check name is not valid');
         }
@@ -95,6 +95,25 @@ abstract class base {
             }
         }
         throw new \coding_exception('Check with the name '.$checkname.' does not exist -- '.$classname);
+    }
+
+    /**
+     * Get all scheduled checks
+     *
+     * @return self[]
+     */
+    public static function get_scheduled(): array {
+        /** @var check[] $models */
+        $models = check::get_records([constants::STATUS_SCHEDULED]);
+        $res = [];
+        foreach ($models as $model) {
+            try {
+                $res[] = self::instance($model);
+            } catch (\Throwable $e) {
+                $model->set_status(constants::STATUS_FAILEDTOSTART)->save();
+            }
+        }
+        return $res;
     }
 
     /**
@@ -123,11 +142,15 @@ abstract class base {
      */
     public static function get_last_check(): self {
         global $DB;
-        $records = $DB->get_records(check::TABLE, ['type' => static::get_name()], 'timecreated DESC');
+        $records = check::get_checks_by_type(static::get_name());
         if (!$records) {
             return self::schedule_new(static::get_name());
         } else {
-            $model = new check(reset($records));
+            $model = reset($records);
+            if ($model->status == constants::STATUS_SCHEDULED || $model->status == constants::STATUS_INPROGRESS) {
+                // Make sure there is a scheduled ad-hoc task in case previous one failed (this will not schedule a duplicate).
+                check_task::schedule();
+            }
             return new static($model);
         }
     }
@@ -148,10 +171,10 @@ abstract class base {
      * @return static
      */
     public static function schedule_new(string $type): self {
-        $model = new check((object)['type' => $type, 'status' => constants::STATUS_SCHEDULED]);
+        $model = new check((object)['status' => constants::STATUS_SCHEDULED], $type);
         $obj = self::instance($model);
         $model->save();
-        check_task::schedule($model->id);
+        check_task::schedule();
         return $obj;
     }
 
@@ -163,11 +186,10 @@ abstract class base {
     public static function create_and_run(): self {
         // TODO check - only to use from CLI.
         // TODO make sure there is nothing else scheduled.
-        $model = new check((object)['type' => static::get_name(), 'status' => constants::STATUS_SCHEDULED]);
+        $model = new check((object)['status' => constants::STATUS_INPROGRESS], self::get_name());
         $obj = static::instance($model);
         $model->save();
 
-        $obj->mark_as_inprogress();
         try {
             $obj->perform();
             $obj->mark_as_finished();

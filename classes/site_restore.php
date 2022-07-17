@@ -309,7 +309,7 @@ class site_restore {
      *
      * @param string $pathtodir
      * @param string $prefix
-     * @return array
+     * @return array array [filepathlocal => filepathfull] (filepathfull == $pathtodir.'/'/filepathlocal)
      */
     public static function dirlist_recursive(string $pathtodir, string $prefix = ''): array {
         $files = [];
