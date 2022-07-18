@@ -297,6 +297,18 @@ class site_restore {
             }
             unlink($filepath);
         }
+
+        // Extract config overrides.
+        $zippacker->extract_to_pathname($zipfilepath, $temppath, [constants::FILE_CONFIGOVERRIDE]);
+        $filepath = $temppath.DIRECTORY_SEPARATOR.constants::FILE_CONFIGOVERRIDE;
+        if (file_exists($filepath)) {
+            $confs = json_decode(file_get_contents($filepath), true);
+            foreach ($confs as $conf) {
+                set_config($conf['name'], $conf['value'], $conf['plugin']);
+            }
+            unlink($filepath);
+        }
+
         $this->restore->add_log('...database restore completed');
     }
 

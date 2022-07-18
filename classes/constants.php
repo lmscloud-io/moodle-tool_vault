@@ -48,6 +48,8 @@ class constants {
     /** @var string */
     const FILE_SEQUENCE = '__sequences__.json';
     /** @var string */
+    const FILE_CONFIGOVERRIDE = '__configoverride__.json';
+    /** @var string */
     const FILENAME_DBDUMP = 'dbdump';
     /** @var string */
     const FILENAME_DATAROOT = 'dataroot';

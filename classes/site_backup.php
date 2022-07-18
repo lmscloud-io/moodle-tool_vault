@@ -16,6 +16,8 @@
 
 namespace tool_vault;
 
+use tool_vault\local\checks\base;
+use tool_vault\local\checks\configoverride;
 use tool_vault\local\checks\dbstatus;
 use tool_vault\local\checks\diskspace;
 use tool_vault\local\models\backup;
@@ -33,6 +35,8 @@ use tool_vault\task\backup_task;
 class site_backup {
     /** @var backup */
     protected $backup;
+    /** @var \tool_vault\local\checks\base[] */
+    protected $prechecks = [];
 
     /**
      * Constructor
@@ -171,18 +175,20 @@ class site_backup {
             throw new \moodle_exception('Backup in progress not found');
         }
 
-        $backup->add_log('Checking DB...');
-        if (dbstatus::create_and_run()->success()) {
-            $backup->add_log('...OK');
-        } else {
-            throw new \moodle_exception('Database check failed');
-        }
-
-        $backup->add_log('Checking disk space...');
-        if (diskspace::create_and_run()->success()) {
-            $backup->add_log('...OK');
-        } else {
-            throw new \moodle_exception('Disk space check failed');
+        /** @var base[] $prechecks */
+        $prechecks = [
+            dbstatus::class,
+            diskspace::class,
+            configoverride::class,
+        ];
+        foreach ($prechecks as $classname) {
+            $backup->add_log('Checking: '.$classname::get_display_name().'...');
+            if (($chk = dbstatus::create_and_run()) && $chk->success()) {
+                $this->prechecks[$chk->get_name()] = $chk;
+                $backup->add_log('...OK');
+            } else {
+                throw new \moodle_exception('...'.$classname::get_display_name().' failed');
+            }
         }
 
         $backup->add_log('Exporting database...');
@@ -297,6 +303,11 @@ class site_backup {
             $ziparchive->add_file_from_pathname($sequencesfilename, $dir.DIRECTORY_SEPARATOR.$sequencesfilename);
             foreach ($tables as $table => $tableobj) {
                 $ziparchive->add_file_from_pathname($table.'.json', $dir.DIRECTORY_SEPARATOR.$table.'.json');
+            }
+            if ($precheck = $this->prechecks[configoverride::get_name()] ?? null) {
+                if ($confs = $precheck->get_config_overrides_for_backup()) {
+                    $ziparchive->add_file_from_string(constants::FILE_CONFIGOVERRIDE, json_encode($confs));
+                }
             }
             $ziparchive->close();
         } else {

@@ -50,6 +50,7 @@ abstract class base {
         return [
             dbstatus::get_last_check(),
             diskspace::get_last_check(),
+            configoverride::get_last_check(),
         ];
     }
 
@@ -256,7 +257,7 @@ abstract class base {
      *
      * @return string
      */
-    abstract public function get_display_name(): string;
+    abstract public static function get_display_name(): string;
 
     /**
      * Pre-check is successful (backup/restore can be performed)

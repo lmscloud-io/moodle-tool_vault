@@ -219,7 +219,7 @@ class dbstatus extends base {
      *
      * @return string
      */
-    public function get_display_name(): string {
+    public static function get_display_name(): string {
         return 'Database modifications'; // TODO string.
     }
 }
