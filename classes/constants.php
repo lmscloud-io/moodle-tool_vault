@@ -50,6 +50,8 @@ class constants {
     /** @var string */
     const FILE_CONFIGOVERRIDE = '__configoverride__.json';
     /** @var string */
+    const FILENAME_DBSTRUCTURE = 'dbstructure';
+    /** @var string */
     const FILENAME_DBDUMP = 'dbdump';
     /** @var string */
     const FILENAME_DATAROOT = 'dataroot';

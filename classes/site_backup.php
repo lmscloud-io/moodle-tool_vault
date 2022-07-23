@@ -131,24 +131,23 @@ class site_backup {
             'email' => $USER->email,
             'name' => fullname($USER),
         ];
-        $res = api::api_call('backups', 'PUT', $params);
-        if (!empty($res['backupkey'])) {
-            $backup
-                ->set_backupkey($res['backupkey'])
-                ->set_status(constants::STATUS_INPROGRESS)
-                ->set_details($params)
-                ->save();
-            $backup->add_log('Backup started, backup key is '.$res['backupkey']);
-        } else {
-            // API rejected - aobve limit/quota. TODO store details of failure? how to notify user?
+        try {
+            $backupkey = api::request_new_backup_key($params);
+        } catch (\Throwable $t) {
+            // API rejected - above limit/quota. TODO store details of failure? how to notify user?
             $backup
                 ->set_status(constants::STATUS_FAILEDTOSTART)
                 ->set_details($params)
                 ->save();
-            $backup->add_log('Failed to start the backup with the cloud service');
-            // @codingStandardsIgnoreLine
-            throw new \coding_exception('Unknown response: '.print_r($res, true));
+            $backup->add_log('Failed to start the backup with the cloud service: '.$t->getMessage());
+            throw $t;
         }
+        $backup
+            ->set_backupkey($backupkey)
+            ->set_status(constants::STATUS_INPROGRESS)
+            ->set_details($params)
+            ->save();
+        $backup->add_log('Backup started, backup key is '.$backupkey);
         $instance = new static($backup);
         return $instance;
     }
@@ -162,6 +161,13 @@ class site_backup {
     public function mark_as_failed(\Throwable $t) {
         $this->backup->set_status(constants::STATUS_FAILED)->save();
         $this->backup->add_log('Backup failed: '.$t->getMessage());
+        try {
+            api::update_backup($this->backup->backupkey, ['faileddetails' => $t->getMessage()], 'failed');
+        } catch (\Throwable $tapi) {
+            // One of the reason for the failed backup - impossible to communicate with the API,
+            // in which case this request will also fail.
+            $this->backup->add_log('Could not mark remote backup as failed: '.$tapi->getMessage());
+        }
     }
 
     /**
@@ -182,7 +188,7 @@ class site_backup {
             configoverride::class,
         ];
         foreach ($prechecks as $classname) {
-            $backup->add_log('Checking: '.$classname::get_display_name().'...');
+            $backup->add_log('Backup pre-check: '.$classname::get_display_name().'...');
             if (($chk = dbstatus::create_and_run()) && $chk->success()) {
                 $this->prechecks[$chk->get_name()] = $chk;
                 $backup->add_log('...OK');
@@ -192,15 +198,17 @@ class site_backup {
         }
 
         $backup->add_log('Exporting database...');
-        $filepath = $this->export_db(constants::FILENAME_DBDUMP . '.zip');
-        $size1 = filesize($filepath);
+        $filepaths = $this->export_db();
+        $size1 = $this->get_total_files_size($filepaths);
         $backup->add_log('...done');
         $backup->add_log('Uploading database backup ('.display_size($size1).')...');
-        api::upload_backup_file($this->backup->backupkey, $filepath, 'application/zip');
+        foreach ($filepaths as $filepath) {
+            api::upload_backup_file($this->backup->backupkey, $filepath, 'application/zip');
+        }
         $backup->add_log('...done');
 
         $backup->add_log('Exporting dataroot...');
-        $filepath = $this->export_dataroot(constants::FILENAME_DATAROOT . '.zip');
+        $filepath = $this->export_dataroot();
         $size2 = filesize($filepath);
         $backup->add_log('...done');
         $backup->add_log('Uploading dataroot backup ('.display_size($size2).')...');
@@ -209,10 +217,7 @@ class site_backup {
 
         $backup->add_log('Exporting files...');
         $filepaths = $this->export_filedir();
-        $size3 = 0;
-        foreach ($filepaths as $filepath) {
-            $size3 += filesize($filepath);
-        }
+        $size3 = $this->get_total_files_size($filepaths);
         $backup->add_log('...done');
         $backup->add_log('Uploading files backup ('.display_size($size3).')...');
         foreach ($filepaths as $filepath) {
@@ -220,12 +225,27 @@ class site_backup {
         }
         $backup->add_log('...done');
 
-        $backup->add_log('Total size of backup: '.display_size($size1 + $size2 + $size3));
-        api::api_call("backups/{$this->backup->backupkey}", 'PATCH', ['status' => 'finished']);
+        $totalsize = $size1 + $size2 + $size3;
+        $backup->add_log('Total size of backup: '.display_size($totalsize));
+        api::update_backup($this->backup->backupkey, ['totalsize' => $totalsize], constants::STATUS_FINISHED);
         $backup->set_status(constants::STATUS_FINISHED)->save();
         $backup->add_log('Backup finished');
 
-        // TODO notify user, register in our config.
+        // TODO notify user.
+    }
+
+    /**
+     * Get total file size of several files
+     *
+     * @param array $filepaths
+     * @return int
+     */
+    protected function get_total_files_size(array $filepaths) {
+        $size3 = 0;
+        foreach ($filepaths as $filepath) {
+            $size3 += filesize($filepath);
+        }
+        return $size3;
     }
 
     /** @var dbstructure */
@@ -272,10 +292,9 @@ class site_backup {
     /**
      * Exports the whole moodle database
      *
-     * @param string $exportfilename
-     * @return string path to the zip file with the export
+     * @return array paths to the zip file with the export
      */
-    public function export_db(string $exportfilename) {
+    public function export_db(): array {
         global $CFG;
         $dir = make_request_directory();
         $structure = $this->get_db_structure();
@@ -295,11 +314,20 @@ class site_backup {
         file_put_contents($dir.DIRECTORY_SEPARATOR.$sequencesfilename,
             json_encode(array_intersect_key($structure->retrieve_sequences(), $tables)));
 
-        $zipfilepath = $dir.DIRECTORY_SEPARATOR.$exportfilename;
+        $zipfilepathstruct = $dir.DIRECTORY_SEPARATOR.constants::FILENAME_DBSTRUCTURE.'.zip';
+        $ziparchivestruct = new \zip_archive();
+        if ($ziparchivestruct->open($zipfilepathstruct, \file_archive::CREATE)) {
+            $ziparchivestruct->add_file_from_pathname('xmldb.xsd', $CFG->dirroot.'/lib/xmldb/xmldb.xsd');
+            $ziparchivestruct->add_file_from_pathname($structurefilename, $dir.DIRECTORY_SEPARATOR.$structurefilename);
+            $ziparchivestruct->close();
+        } else {
+            // TODO?
+            throw new \moodle_exception('Can not create ZIP file');
+        }
+
+        $zipfilepath = $dir.DIRECTORY_SEPARATOR.constants::FILENAME_DBDUMP.'.zip';
         $ziparchive = new \zip_archive();
         if ($ziparchive->open($zipfilepath, \file_archive::CREATE)) {
-            $ziparchive->add_file_from_pathname('xmldb.xsd', $CFG->dirroot.'/lib/xmldb/xmldb.xsd');
-            $ziparchive->add_file_from_pathname($structurefilename, $dir.DIRECTORY_SEPARATOR.$structurefilename);
             $ziparchive->add_file_from_pathname($sequencesfilename, $dir.DIRECTORY_SEPARATOR.$sequencesfilename);
             foreach ($tables as $table => $tableobj) {
                 $ziparchive->add_file_from_pathname($table.'.json', $dir.DIRECTORY_SEPARATOR.$table.'.json');
@@ -321,17 +349,17 @@ class site_backup {
             unlink($dir.DIRECTORY_SEPARATOR.$table.'.json');
         }
 
-        return $zipfilepath;
+        return [$zipfilepathstruct, $zipfilepath];
     }
 
     /**
      * Export $CFG->dataroot
      *
-     * @param string $exportfilename
      * @return string path to the zip file with the export
      */
-    public function export_dataroot(string $exportfilename) {
+    public function export_dataroot() {
         global $CFG;
+        $exportfilename = constants::FILENAME_DATAROOT . '.zip';
         $handle = opendir($CFG->dataroot);
         $files = [];
         while (($file = readdir($handle)) !== false) {

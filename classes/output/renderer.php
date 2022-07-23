@@ -80,27 +80,6 @@ class renderer extends plugin_renderer_base {
     }
 
     /**
-     * Display remote backups
-     *
-     * @param remote_backup[] $backups
-     * @return string
-     */
-    protected function display_remote_backups(array $backups): string {
-        $output = '';
-        foreach ($backups as $backup) {
-            $started = userdate($backup->timecreated, get_string('strftimedatetimeshort', 'langconfig'));
-            $output .= html_writer::div("Backup: {$backup->backupkey} - {$backup->status} - $started - {$backup->info['wwwroot']}");
-            if ($backup->status === \tool_vault\constants::STATUS_FINISHED) {
-                $output .= $this->single_button(new moodle_url($this->page->url,
-                    ['section' => 'restore', 'action' => 'restore',
-                        'backupkey' => $backup->backupkey, 'sesskey' => sesskey()]),
-                    'Restore this backup', 'get');
-            }
-        }
-        return $output;
-    }
-
-    /**
      * Renderer for tab settings
      *
      * @param section_settings $section

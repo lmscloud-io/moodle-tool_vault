@@ -79,12 +79,14 @@ class site_backup_test extends \advanced_testcase {
     public function test_export_db() {
         $this->resetAfterTest();
         $sitebackup = $this->create_site_backup();
-        $filepath = $sitebackup->export_db(constants::FILENAME_DBDUMP . '.zip');
+        [$filepathstructure, $filepath] = $sitebackup->export_db();
         $this->assertGreaterThanOrEqual(150000, filesize($filepath));
 
         // Unpack and check contents.
         $x = new \zip_packer();
+        $dirstruct = make_request_directory();
         $dir = make_request_directory();
+        $x->extract_to_pathname($filepathstructure, $dirstruct);
         $x->extract_to_pathname($filepath, $dir);
         $handle = opendir($dir);
         $files = [];
@@ -97,7 +99,7 @@ class site_backup_test extends \advanced_testcase {
 
         $this->assertTrue(in_array('config', $files));
         $this->assertTrue(in_array('user', $files));
-        $this->assertTrue(file_exists($dir.DIRECTORY_SEPARATOR.constants::FILE_STRUCTURE));
+        $this->assertTrue(file_exists($dirstruct.DIRECTORY_SEPARATOR.constants::FILE_STRUCTURE));
         $this->assertTrue(file_exists($dir.DIRECTORY_SEPARATOR.constants::FILE_SEQUENCE));
         $this->assertFalse(in_array('tool_vault_config', $files));
         $this->assertFalse(in_array('tool_vault_operation', $files));
@@ -117,7 +119,7 @@ class site_backup_test extends \advanced_testcase {
 
         // Call export_dataroot() from site_backup.
         $sitebackup = $this->create_site_backup();
-        $filepath = $sitebackup->export_dataroot(constants::FILENAME_DATAROOT . '.zip');
+        $filepath = $sitebackup->export_dataroot();
         $this->assertTrue(file_exists($filepath));
 
         // Unpack and check contents.

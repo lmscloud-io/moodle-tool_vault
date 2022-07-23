@@ -67,7 +67,7 @@ class site_restore_test extends \advanced_testcase {
 
         // Perform backup.
         $sitebackup = $this->create_site_backup();
-        $filepath = $sitebackup->export_db(constants::FILENAME_DBDUMP . '.zip');
+        [$filepathstructure, $filepath] = $sitebackup->export_db();
 
         // Add a second book instance.
         $book2 = $this->getDataGenerator()->create_module('book', ['course' => $course->id]);
@@ -75,7 +75,7 @@ class site_restore_test extends \advanced_testcase {
 
         // Prepare restore, only 'book' table.
         $siterestore = $this->create_site_restore();
-        $structure = $siterestore->prepare_restore_db($filepath);
+        $structure = $siterestore->prepare_restore_db($filepathstructure);
         $tables = array_intersect_key($structure->get_tables_definitions(), ['book' => 1]);
         $structure->set_tables_definitions($tables);
 
@@ -99,7 +99,7 @@ class site_restore_test extends \advanced_testcase {
 
         // Call export_dataroot() from site_backup.
         $sitebackup = $this->create_site_backup();
-        $filepath = $sitebackup->export_dataroot(constants::FILENAME_DATAROOT . '.zip');
+        $filepath = $sitebackup->export_dataroot();
 
         // Remove file.
         unlink($hellofilepath);

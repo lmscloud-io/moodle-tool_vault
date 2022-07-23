@@ -45,7 +45,10 @@ class api {
      * @return null
      */
     public static function get_config(string $name) {
-        global $DB;
+        global $DB, $CFG;
+        if (isset($CFG->forced_plugin_settings['tool_vault'][$name])) {
+            return $CFG->forced_plugin_settings['tool_vault'][$name];
+        }
         $record = $DB->get_record('tool_vault_config', ['name' => $name]);
         return $record ? $record->value : null;
     }
@@ -129,7 +132,7 @@ class api {
      * @param string|null $apikey override current api key (used in the validation function)
      * @return mixed
      */
-    public static function api_call(string $endpoint, string $method, array $params = [],
+    protected static function api_call(string $endpoint, string $method, array $params = [],
                                     bool $authheader = true, ?string $apikey = null) {
         $curl = new \curl();
         if ($authheader) {
@@ -238,6 +241,8 @@ class api {
             // @codingStandardsIgnoreLine
             throw new \moodle_exception('Could not upload file to backup: '.$res."\n".print_r($info, true));
         }
+
+        self::api_call("backups/$backupkey/uploadcompleted/$filename", 'get');
     }
 
     /**
@@ -333,5 +338,38 @@ class api {
         if (!$result) {
             throw new \moodle_exception('Unable to download backup file '.$filename);
         }
+    }
+
+    /**
+     * Request backup key
+     *
+     * @param array $info
+     * @return string
+     * @throws \moodle_exception
+     */
+    public static function request_new_backup_key(array $info): string {
+        $res = self::api_call('backups', 'PUT', $info);
+        if (empty($res['backupkey'])) {
+            throw new \moodle_exception('Server returned no data');
+        }
+        return $res['backupkey'];
+    }
+
+    /**
+     * Update backup status and/or add info
+     *
+     * @param string $backupkey
+     * @param array|null $info
+     * @param string|null $status
+     * @return void
+     * @throws \coding_exception
+     * @throws \moodle_exception
+     */
+    public static function update_backup(string $backupkey, ?array $info = [], ?string $status = null) {
+        $params = ($status ? ['status' => $status] : []) + ($info ? ['info' => $info] : []);
+        if (!$params) {
+            return;
+        }
+        self::api_call("backups/{$backupkey}", 'PATCH', $params);
     }
 }

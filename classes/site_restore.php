@@ -138,12 +138,18 @@ class site_restore {
 
         // Download files.
         $tempdir = make_request_directory();
+        $filename0 = constants::FILENAME_DBSTRUCTURE . '.zip';
         $filename1 = constants::FILENAME_DBDUMP . '.zip';
         $filename2 = constants::FILENAME_DATAROOT . '.zip';
         $filename3 = constants::FILENAME_FILEDIR . '.zip';
+        $filepath0 = $tempdir.DIRECTORY_SEPARATOR.$filename0;
         $filepath1 = $tempdir.DIRECTORY_SEPARATOR.$filename1;
         $filepath2 = $tempdir.DIRECTORY_SEPARATOR.$filename2;
         $filepath3 = $tempdir.DIRECTORY_SEPARATOR.$filename3;
+
+        $this->restore->add_log("Downloading file $filename0 ...");
+        api::download_backup_file($this->restore->backupkey, $filepath0);
+        $this->restore->add_log('...done');
 
         $this->restore->add_log("Downloading file $filename1 ...");
         api::download_backup_file($this->restore->backupkey, $filepath1);
@@ -157,7 +163,7 @@ class site_restore {
         api::download_backup_file($this->restore->backupkey, $filepath3);
         $this->restore->add_log('...done');
 
-        $structure = $this->prepare_restore_db($filepath1);
+        $structure = $this->prepare_restore_db($filepath0);
         $datarootfiles = $this->prepare_restore_dataroot($filepath2);
         $filedirpath = $this->prepare_restore_filedir($filepath3);
         unlink($filepath2);
