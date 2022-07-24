@@ -220,7 +220,17 @@ class api {
 
         curl_setopt($ch, CURLOPT_URL, $result['uploadurl']);
         curl_setopt($ch, CURLOPT_PUT, 1);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-type: $contenttype"]);
+
+        $passphrase = 'password'; // TODO do not hardcode.
+        $key = hash('sha256', $passphrase, true);
+        $encodedkey = base64_encode($key);
+        $encodedmd5 = base64_encode(md5($key, true));
+        $headers = array(
+            "x-amz-server-side-encryption-customer-algorithm: AES256",
+            "x-amz-server-side-encryption-customer-key: ". $encodedkey,
+            "x-amz-server-side-encryption-customer-key-MD5: ". $encodedmd5,
+        );
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array_merge($headers, ["Content-type: $contenttype"]));
 
         $fh = fopen($filepath, 'r');
 
@@ -333,10 +343,27 @@ class api {
             // TODO string?
             throw new \moodle_exception('Unable to download backup file '.$filename);
         }
+
+        $passphrase = 'password'; // TODO do not hardcode.
+        $key = hash('sha256', $passphrase, true);
+        $encodedkey = base64_encode($key);
+        $encodedmd5 = base64_encode(md5($key, true));
+        $headers = array(
+            "x-amz-server-side-encryption-customer-algorithm: AES256",
+            "x-amz-server-side-encryption-customer-key: ". $encodedkey,
+            "x-amz-server-side-encryption-customer-key-MD5: ". $encodedmd5,
+        );
+
         $curl = new \curl();
-        $result = $curl->download_one($result['downloadurl'], [], ['filepath' => $filepath]);
-        if (!$result) {
-            throw new \moodle_exception('Unable to download backup file '.$filename);
+        $curl->setHeader($headers);
+        $curl->download_one($result['downloadurl'], [], ['filepath' => $filepath]);
+        $info = $curl->get_info();
+        $errno = $curl->get_errno();
+
+        if ($errno || !is_array($info) || $info['http_code'] != 200) {
+            // TODO process error properly.
+            // @codingStandardsIgnoreLine
+            throw new \moodle_exception('Unable to download backup file '.$filename.': '."\n".print_r($info, true));
         }
     }
 
