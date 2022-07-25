@@ -68,4 +68,25 @@ class constants {
     const STATUS_FAILED = 'failed';
     /** @var string */
     const STATUS_FAILEDTOSTART = 'failedtostart';
+
+    /** @var string */
+    const LOGLEVEL_INFO = 'info';
+    /** @var string */
+    const LOGLEVEL_ERROR = 'error';
+    /** @var string */
+    const LOGLEVEL_WARNING = 'warning';
+    /** @var string */
+    const LOGLEVEL_PROGRESS = 'progress';
+
+    /** @var int */
+    const REQUEST_API_TIMEOUT = 10; // 10 seconds.
+    /** @var int */
+    const REQUEST_S3_TIMEOUT = 20 * 60; // 20 minutes.
+    /** @var int */
+    const REQUEST_API_RETRIES = 4;
+    /** @var int */
+    const REQUEST_S3_RETRIES = 4;
+
+    /** @var int */
+    const LOCK_TIMEOUT = 60 * 60; // 1 hour.
 }

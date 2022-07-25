@@ -34,7 +34,7 @@ class backup_task extends adhoc_task {
      */
     public function execute() {
         try {
-            $backup = site_backup::start_backup();
+            $backup = site_backup::start_backup($this->get_pid());
         } catch (\Throwable $t) {
             mtrace("Failed to start backup: ".$t->getMessage());
             return;

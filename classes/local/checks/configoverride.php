@@ -173,13 +173,13 @@ class configoverride extends base {
         $details = $this->model->get_details();
         return
             '<ul>'.
-            '<li>Settings from config.php that will be inlucluded in backup: '.
+            '<li>Settings from config.php that will be included in backup: '.
             count($details['config_php_settings_included']).'</li>'.
-            '<li>Settings from config.php that will NOT be inlucluded in backup: '.
+            '<li>Settings from config.php that will NOT be included in backup: '.
             count($details['config_php_settings_notincluded']).'</li>'.
-            '<li>Plugin settings from config.php that will be inlucluded in backup: '.
+            '<li>Plugin settings from config.php that will be included in backup: '.
             count($details['forced_plugin_settings_included']).'</li>'.
-            '<li>Plugin settings from config.php that will NOT be inlucluded in backup: '.
+            '<li>Plugin settings from config.php that will NOT be included in backup: '.
             count($details['forced_plugin_settings_notincluded']).'</li>'.
             '</ul>';
     }

@@ -180,5 +180,66 @@ function xmldb_tool_vault_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2022071702, 'tool', 'vault');
     }
 
+    if ($oldversion < 2022072303) {
+
+        // Define table tool_vault_backup_files to be dropped.
+        $table = new xmldb_table('tool_vault_backup_files');
+
+        // Conditionally launch drop table for tool_vault_backup_files.
+        if ($dbman->table_exists($table)) {
+            $dbman->drop_table($table);
+        }
+
+        // Define table tool_vault_backup_file to be created.
+        $table = new xmldb_table('tool_vault_backup_file');
+
+        // Adding fields to table tool_vault_backup_file.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('operationid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('filetype', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('seq', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('status', XMLDB_TYPE_CHAR, '20', null, null, null, null);
+        $table->add_field('filesize', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('origsize', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('details', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('etag', XMLDB_TYPE_CHAR, '40', null, null, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table tool_vault_backup_file.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('operation', XMLDB_KEY_FOREIGN, ['operationid'], 'tool_vault_operation', ['id']);
+
+        // Conditionally launch create table for tool_vault_backup_file.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Vault savepoint reached.
+        upgrade_plugin_savepoint(true, 2022072303, 'tool', 'vault');
+    }
+
+    if ($oldversion < 2022072304) {
+
+        // Changing type of field loglevel on table tool_vault_log to char.
+        $table = new xmldb_table('tool_vault_log');
+        $field = new xmldb_field('loglevel', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, 'info', 'timecreated');
+
+        // Launch change of type for field loglevel.
+        $dbman->change_field_type($table, $field);
+
+        // Define field pid to be added to tool_vault_log.
+        $table = new xmldb_table('tool_vault_log');
+        $field = new xmldb_field('pid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'message');
+
+        // Conditionally launch add field pid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Vault savepoint reached.
+        upgrade_plugin_savepoint(true, 2022072304, 'tool', 'vault');
+    }
+
     return true;
 }

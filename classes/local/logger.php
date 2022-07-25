@@ -14,19 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+namespace tool_vault\local;
+
+use tool_vault\constants;
+
 /**
- * Plugin version and other meta-data are defined here.
+ * Logger
  *
  * @package     tool_vault
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-/** @var stdClass $plugin */
-$plugin->component = 'tool_vault';
-$plugin->release = '0.1.0';
-$plugin->version = 2022072304;
-$plugin->requires = 2020061500;
-$plugin->maturity = MATURITY_ALPHA;
+interface logger {
+    /**
+     * Log action
+     *
+     * @package tool_vault
+     * @param string $message
+     * @param string $loglevel
+     * @return void
+     */
+    public function add_to_log(string $message, string $loglevel = constants::LOGLEVEL_INFO);
+}

@@ -20,6 +20,7 @@ use tool_vault\local\checks\base;
 use tool_vault\local\checks\configoverride;
 use tool_vault\local\checks\dbstatus;
 use tool_vault\local\checks\diskspace;
+use tool_vault\local\logger;
 use tool_vault\local\models\backup;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\local\xmldb\dbtable;
@@ -32,7 +33,7 @@ use tool_vault\task\backup_task;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class site_backup {
+class site_backup implements logger {
     /** @var backup */
     protected $backup;
     /** @var \tool_vault\local\checks\base[] */
@@ -109,9 +110,10 @@ class site_backup {
     /**
      * Start backup
      *
+     * @param int $pid
      * @return self
      */
-    public static function start_backup(): self {
+    public static function start_backup(int $pid): self {
         global $CFG, $USER, $DB;
         if (!api::is_registered()) {
             throw new \moodle_exception('API key not found');
@@ -120,6 +122,8 @@ class site_backup {
         if (!$backup) {
             throw new \moodle_exception('No scheduled backup');
         }
+        $backup->set_pid_for_logging($pid);
+        $instance = new static($backup);
 
         $params = [
             // TODO - what other metadata do we want - languages, installed plugins, estimated size?
@@ -139,7 +143,8 @@ class site_backup {
                 ->set_status(constants::STATUS_FAILEDTOSTART)
                 ->set_details($params)
                 ->save();
-            $backup->add_log('Failed to start the backup with the cloud service: '.$t->getMessage());
+            $instance->add_to_log('Failed to start the backup with the cloud service: '.$t->getMessage(),
+                constants::LOGLEVEL_ERROR);
             throw $t;
         }
         $backup
@@ -147,8 +152,7 @@ class site_backup {
             ->set_status(constants::STATUS_INPROGRESS)
             ->set_details($params)
             ->save();
-        $backup->add_log('Backup started, backup key is '.$backupkey);
-        $instance = new static($backup);
+        $instance->add_to_log('Backup started, backup key is '.$backupkey);
         return $instance;
     }
 
@@ -160,13 +164,36 @@ class site_backup {
      */
     public function mark_as_failed(\Throwable $t) {
         $this->backup->set_status(constants::STATUS_FAILED)->save();
-        $this->backup->add_log('Backup failed: '.$t->getMessage());
+        $this->add_to_log('Backup failed: '.$t->getMessage(), constants::LOGLEVEL_ERROR);
         try {
             api::update_backup($this->backup->backupkey, ['faileddetails' => $t->getMessage()], 'failed');
         } catch (\Throwable $tapi) {
             // One of the reason for the failed backup - impossible to communicate with the API,
             // in which case this request will also fail.
-            $this->backup->add_log('Could not mark remote backup as failed: '.$tapi->getMessage());
+            $this->add_to_log('Could not mark remote backup as failed: '.$tapi->getMessage(), constants::LOGLEVEL_ERROR);
+        }
+    }
+
+    /**
+     * Prepare backup
+     *
+     * @return void
+     */
+    protected function prepare() {
+        /** @var base[] $prechecks */
+        $prechecks = [
+            dbstatus::class,
+            diskspace::class,
+            configoverride::class,
+        ];
+        foreach ($prechecks as $classname) {
+            $this->add_to_log('Backup pre-check: '.$classname::get_display_name().'...');
+            if (($chk = dbstatus::create_and_run()) && $chk->success()) {
+                $this->prechecks[$chk->get_name()] = $chk;
+                $this->add_to_log('...OK');
+            } else {
+                throw new \moodle_exception('...'.$classname::get_display_name().' failed');
+            }
         }
     }
 
@@ -181,55 +208,33 @@ class site_backup {
             throw new \moodle_exception('Backup in progress not found');
         }
 
-        /** @var base[] $prechecks */
-        $prechecks = [
-            dbstatus::class,
-            diskspace::class,
-            configoverride::class,
-        ];
-        foreach ($prechecks as $classname) {
-            $backup->add_log('Backup pre-check: '.$classname::get_display_name().'...');
-            if (($chk = dbstatus::create_and_run()) && $chk->success()) {
-                $this->prechecks[$chk->get_name()] = $chk;
-                $backup->add_log('...OK');
-            } else {
-                throw new \moodle_exception('...'.$classname::get_display_name().' failed');
-            }
-        }
+        $this->prepare();
+        $totalsize = 0;
 
-        $backup->add_log('Exporting database...');
+        $this->add_to_log('Exporting database...');
         $filepaths = $this->export_db();
         $size1 = $this->get_total_files_size($filepaths);
-        $backup->add_log('...done');
-        $backup->add_log('Uploading database backup ('.display_size($size1).')...');
+        $this->add_to_log('...done');
         foreach ($filepaths as $filepath) {
-            api::upload_backup_file($this->backup->backupkey, $filepath, 'application/zip');
+            $totalsize += api::upload_backup_file($this->backup->backupkey, $filepath, 'application/zip', $this);
         }
-        $backup->add_log('...done');
 
-        $backup->add_log('Exporting dataroot...');
+        $this->add_to_log('Exporting dataroot...');
         $filepath = $this->export_dataroot();
-        $size2 = filesize($filepath);
-        $backup->add_log('...done');
-        $backup->add_log('Uploading dataroot backup ('.display_size($size2).')...');
-        api::upload_backup_file($this->backup->backupkey, $filepath, 'application/zip');
-        $backup->add_log('...done');
+        $this->add_to_log('...done');
+        $totalsize += api::upload_backup_file($this->backup->backupkey, $filepath, 'application/zip', $this);
 
-        $backup->add_log('Exporting files...');
+        $this->add_to_log('Exporting files...');
         $filepaths = $this->export_filedir();
-        $size3 = $this->get_total_files_size($filepaths);
-        $backup->add_log('...done');
-        $backup->add_log('Uploading files backup ('.display_size($size3).')...');
+        $this->add_to_log('...done');
         foreach ($filepaths as $filepath) {
-            api::upload_backup_file($this->backup->backupkey, $filepath, 'application/zip');
+            $totalsize += api::upload_backup_file($this->backup->backupkey, $filepath, 'application/zip', $this);
         }
-        $backup->add_log('...done');
 
-        $totalsize = $size1 + $size2 + $size3;
-        $backup->add_log('Total size of backup: '.display_size($totalsize));
+        $this->add_to_log('Total size of backup: '.display_size($totalsize));
         api::update_backup($this->backup->backupkey, ['totalsize' => $totalsize], constants::STATUS_FINISHED);
         $backup->set_status(constants::STATUS_FINISHED)->save();
-        $backup->add_log('Backup finished');
+        $this->add_to_log('Backup finished');
 
         // TODO notify user.
     }
@@ -412,7 +417,7 @@ class site_backup {
                 mkdir(dirname($fullpath), $CFG->directorypermissions, true);
             }
             if (!$file->copy_content_to($fullpath)) {
-                $this->backup->add_log('- can not back up file with contenthash '.$chash.' - skipping');
+                $this->add_to_log('- can not back up file with contenthash '.$chash.' - skipping', constants::LOGLEVEL_WARNING);
                 continue;
             }
             $toarchive[$filename] = $fullpath;
@@ -463,5 +468,21 @@ class site_backup {
         }
 
         return implode(', ', $fields);
+    }
+
+    /**
+     * Log action
+     *
+     * @param string $message
+     * @param string $loglevel
+     * @return void
+     */
+    public function add_to_log(string $message, string $loglevel = constants::LOGLEVEL_INFO) {
+        if ($this->backup && $this->backup->id) {
+            $logrecord = $this->backup->add_log($message, $loglevel);
+            if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
+                mtrace($this->backup->format_log_line($logrecord, false));
+            }
+        }
     }
 }

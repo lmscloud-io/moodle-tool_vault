@@ -100,7 +100,7 @@ class remote_backup {
         $res = [];
         foreach ($this->files ?? [] as $file) {
             if (preg_match('/^' . preg_quote($prefix, '/') . '([\d]*)\.zip$/', $file['name'], $matches)) {
-                $res[] = new remote_backup_file($file + ['ord' => (int)$matches[1]]);
+                $res[] = new remote_backup_file($file + ['ord' => (int)$matches[1]]); // TODO ord->seq.
             }
         }
         usort($res, function($a, $b) {

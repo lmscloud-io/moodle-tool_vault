@@ -16,6 +16,7 @@
 
 namespace tool_vault;
 
+use tool_vault\local\logger;
 use tool_vault\local\models\remote_backup;
 
 /**
@@ -128,12 +129,13 @@ class api {
      * @param string $endpoint
      * @param string $method
      * @param array $params
+     * @param logger|null $logger
      * @param bool $authheader include authentication header
      * @param string|null $apikey override current api key (used in the validation function)
      * @return mixed
      */
     protected static function api_call(string $endpoint, string $method, array $params = [],
-                                    bool $authheader = true, ?string $apikey = null) {
+                                    ?logger $logger = null, bool $authheader = true, ?string $apikey = null) {
         $curl = new \curl();
         if ($authheader) {
             $curl->setHeader(['X-Api-Key: ' . ($apikey ?? self::get_api_key())]);
@@ -142,7 +144,7 @@ class api {
 
         $options = [
             'CURLOPT_RETURNTRANSFER' => true,
-            'CURLOPT_TIMEOUT' => 30,
+            'CURLOPT_TIMEOUT' => constants::REQUEST_API_TIMEOUT,
             'CURLOPT_MAXREDIRS' => 3,
         ];
 
@@ -169,6 +171,7 @@ class api {
         $error = $curl->error;
         $errno = $curl->get_errno();
         if ($errno || !is_array($info) || $info['http_code'] != 200) {
+            // TODO retry up to REQUEST_API_RETRIES (unless unauthorized).
             // TODO string, display error, etc.
             // @codingStandardsIgnoreLine
             throw new \moodle_exception("Can not connect to API, errno $errno, error '$error': ". $rv."\n". print_r($info, true));
@@ -188,7 +191,7 @@ class api {
             'email' => $USER->email,
             'name' => fullname($USER),
         ];
-        $result = self::api_call('register', 'POST', $params, false);
+        $result = self::api_call('register', 'POST', $params, null, false);
         if (!empty($result['apikey'])) {
             self::set_api_key($result['apikey']);
         } else {
@@ -204,55 +207,58 @@ class api {
      * @param string $backupkey
      * @param string $filepath
      * @param string $contenttype
-     * @return void
+     * @param logger|null $logger
+     * @return int size of uploaded file
      */
-    public static function upload_backup_file(string $backupkey, string $filepath, string $contenttype) {
+    public static function upload_backup_file(string $backupkey, string $filepath, string $contenttype,
+                                              ?logger $logger = null): int {
         $filename = basename($filepath);
-        $result = self::api_call("backups/$backupkey/upload/$filename", 'post', ['contenttype' => $contenttype]);
-        if (empty($result['uploadurl'])) {
-            // TODO string?
-            throw new \moodle_exception('Could not upload file to backup');
+        $filesize = filesize($filepath);
+        if ($logger) {
+            $logger->add_to_log('Uploading file '.$filename.' ('.display_size($filesize).')...');
         }
+        $result = self::api_call("backups/$backupkey/upload/$filename", 'post', ['contenttype' => $contenttype], $logger);
+        $s3url = $result['uploadurl'] ?? null;
 
-        $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_TIMEOUT, 300);
-
-        curl_setopt($ch, CURLOPT_URL, $result['uploadurl']);
-        curl_setopt($ch, CURLOPT_PUT, 1);
+        // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
+        if (!preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
+            // TODO string?
+            throw new \moodle_exception('Vault API did not return a valid upload link '.$filename);
+        }
 
         $passphrase = 'password'; // TODO do not hardcode.
-        $key = hash('sha256', $passphrase, true);
-        $encodedkey = base64_encode($key);
-        $encodedmd5 = base64_encode(md5($key, true));
-        $headers = array(
-            "x-amz-server-side-encryption-customer-algorithm: AES256",
-            "x-amz-server-side-encryption-customer-key: ". $encodedkey,
-            "x-amz-server-side-encryption-customer-key-MD5: ". $encodedmd5,
-        );
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array_merge($headers, ["Content-type: $contenttype"]));
+        $options = [
+            'CURLOPT_TIMEOUT' => constants::REQUEST_S3_TIMEOUT,
+            'CURLOPT_HTTPHEADER' => array_merge(self::prepare_s3_headers($passphrase), ["Content-type: $contenttype"]),
+            'CURLOPT_RETURNTRANSFER' => 1,
+            'CURLOPT_USERPWD' => '',
+        ];
 
-        $fh = fopen($filepath, 'r');
+        for ($i = 0; $i < constants::REQUEST_S3_RETRIES; $i++) {
+            $curl = new \curl();
+            $res = $curl->put($s3url, ['file' => $filepath], $options);
 
-        curl_setopt($ch, CURLOPT_INFILE, $fh);
-        curl_setopt($ch, CURLOPT_INFILESIZE, filesize($filepath));
-
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        $res = curl_exec ($ch);
-
-        $info  = curl_getinfo($ch);
-        $error = curl_error($ch);
-        $errno = curl_errno($ch);
-
-        fclose($fh);
-
-        if ($errno || !is_array($info) || $info['http_code'] != 200) {
-            // TODO process error properly.
-            // @codingStandardsIgnoreLine
-            throw new \moodle_exception('Could not upload file to backup: '.$res."\n".print_r($info, true));
+            $info  = $curl->get_info();
+            if ($curl->get_errno() || !is_array($info) || $info['http_code'] != 200) {
+                if ($i < constants::REQUEST_S3_RETRIES - 1) {
+                    if ($logger) {
+                        $logger->add_to_log('Could not upload file '.$filename.', trying again', constants::LOGLEVEL_WARNING);
+                    }
+                } else {
+                    // TODO process error properly.
+                    // @codingStandardsIgnoreLine
+                    throw new \moodle_exception('Could not upload file '.$filename.': '.$res."\n".print_r($info, true));
+                }
+            } else {
+                break;
+            }
         }
 
-        self::api_call("backups/$backupkey/uploadcompleted/$filename", 'get');
+        self::api_call("backups/$backupkey/uploadcompleted/$filename", 'get', [], $logger);
+        if ($logger) {
+            $logger->add_to_log('...done');
+        }
+        return $filesize;
     }
 
     /**
@@ -263,7 +269,7 @@ class api {
      */
     public static function validate_api_key(string $apikey) {
         try {
-            $result = self::api_call('backups', 'GET', [], true, $apikey);
+            $result = self::api_call('backups', 'GET', [], null, true, $apikey);
         } catch (\moodle_exception $e) {
             return false;
         }
@@ -334,37 +340,69 @@ class api {
      *
      * @param string $backupkey
      * @param string $filepath
+     * @param logger|null $logger
      * @return void
      */
-    public static function download_backup_file(string $backupkey, string $filepath) {
+    public static function download_backup_file(string $backupkey, string $filepath, ?logger $logger = null) {
         $filename = basename($filepath);
-        $result = self::api_call("backups/$backupkey/download/$filename", 'get', []);
-        if (empty($result['downloadurl'])) {
+        if ($logger) {
+            $logger->add_to_log("Downloading file $filename ...");
+        }
+        $result = self::api_call("backups/$backupkey/download/$filename", 'get', [], $logger);
+        $s3url = $result['downloadurl'] ?? null;
+
+        // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
+        if (!preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
             // TODO string?
-            throw new \moodle_exception('Unable to download backup file '.$filename);
+            throw new \moodle_exception('Vault API did not return a valid download link '.$filename);
         }
 
         $passphrase = 'password'; // TODO do not hardcode.
+        $options = [
+            'CURLOPT_TIMEOUT' => constants::REQUEST_S3_TIMEOUT,
+            'CURLOPT_HTTPHEADER' => self::prepare_s3_headers($passphrase),
+            'CURLOPT_RETURNTRANSFER' => 1,
+        ];
+
+        for ($i = 0; $i < constants::REQUEST_S3_RETRIES; $i++) {
+            $curl = new \curl();
+            $res = $curl->download_one($s3url, [], $options + ['filepath' => $filepath]);
+            $info = $curl->get_info();
+            if ($curl->get_errno() || !is_array($info) || $info['http_code'] != 200) {
+                if ($i < constants::REQUEST_S3_RETRIES - 1) {
+                    if ($logger) {
+                        $logger->add_to_log('Could not download file '.$filename.', trying again', constants::LOGLEVEL_WARNING);
+                    }
+                } else {
+                    // TODO process error properly.
+                    // @codingStandardsIgnoreLine
+                    throw new \moodle_exception('Could not download file '.$filename.': '.$res."\n".print_r($info, true));
+                }
+            } else {
+                break;
+            }
+        }
+
+        if ($logger) {
+            $logger->add_to_log('...done');
+        }
+    }
+
+    /**
+     * Prepare encryption headers for S3
+     *
+     * @param string $passphrase
+     * @return array
+     */
+    protected static function prepare_s3_headers(string $passphrase): array {
         $key = hash('sha256', $passphrase, true);
         $encodedkey = base64_encode($key);
         $encodedmd5 = base64_encode(md5($key, true));
-        $headers = array(
+        return [
             "x-amz-server-side-encryption-customer-algorithm: AES256",
             "x-amz-server-side-encryption-customer-key: ". $encodedkey,
             "x-amz-server-side-encryption-customer-key-MD5: ". $encodedmd5,
-        );
-
-        $curl = new \curl();
-        $curl->setHeader($headers);
-        $curl->download_one($result['downloadurl'], [], ['filepath' => $filepath]);
-        $info = $curl->get_info();
-        $errno = $curl->get_errno();
-
-        if ($errno || !is_array($info) || $info['http_code'] != 200) {
-            // TODO process error properly.
-            // @codingStandardsIgnoreLine
-            throw new \moodle_exception('Unable to download backup file '.$filename.': '."\n".print_r($info, true));
-        }
+        ];
     }
 
     /**

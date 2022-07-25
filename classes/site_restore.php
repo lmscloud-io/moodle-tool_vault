@@ -16,6 +16,7 @@
 
 namespace tool_vault;
 
+use tool_vault\local\logger;
 use tool_vault\local\models\remote_backup;
 use tool_vault\local\models\restore;
 use tool_vault\local\xmldb\dbstructure;
@@ -28,7 +29,7 @@ use tool_vault\task\restore_task;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class site_restore {
+class site_restore implements logger {
 
     /** @var restore */
     protected $restore;
@@ -86,10 +87,10 @@ class site_restore {
     /**
      * Start scheduled restore
      *
+     * @param int $pid
      * @return static
-     * @throws \moodle_exception
      */
-    public static function start_restore() {
+    public static function start_restore(int $pid): self {
         if (!api::is_registered()) {
             throw new \moodle_exception('API key not found');
         }
@@ -100,7 +101,9 @@ class site_restore {
         if (!$records) {
             throw new \moodle_exception('No restores scheduled');
         }
-        return new static(reset($records));
+        $restore = reset($records);
+        $restore->set_pid_for_logging($pid);
+        return new static($restore);
     }
 
     /**
@@ -111,7 +114,7 @@ class site_restore {
      */
     public function mark_as_failed(\Throwable $t) {
         $this->restore->set_status(constants::STATUS_FAILED)->save();
-        $this->restore->add_log('Backup failed: '.$t->getMessage());
+        $this->add_to_log('Backup failed: '.$t->getMessage(), constants::LOGLEVEL_ERROR);
     }
 
     /**
@@ -124,7 +127,7 @@ class site_restore {
         $this->restore
             ->set_status(constants::STATUS_INPROGRESS)
             ->save();
-        $this->restore->add_log('Preparing to restore');
+        $this->add_to_log('Preparing to restore');
         try {
             $this->remotebackup = api::get_remote_backup($this->restore->backupkey, constants::STATUS_FINISHED);
         } catch (\moodle_exception $e) {
@@ -147,21 +150,10 @@ class site_restore {
         $filepath2 = $tempdir.DIRECTORY_SEPARATOR.$filename2;
         $filepath3 = $tempdir.DIRECTORY_SEPARATOR.$filename3;
 
-        $this->restore->add_log("Downloading file $filename0 ...");
-        api::download_backup_file($this->restore->backupkey, $filepath0);
-        $this->restore->add_log('...done');
-
-        $this->restore->add_log("Downloading file $filename1 ...");
-        api::download_backup_file($this->restore->backupkey, $filepath1);
-        $this->restore->add_log('...done');
-
-        $this->restore->add_log("Downloading file $filename2 ...");
-        api::download_backup_file($this->restore->backupkey, $filepath2);
-        $this->restore->add_log('...done');
-
-        $this->restore->add_log("Downloading file $filename3 ...");
-        api::download_backup_file($this->restore->backupkey, $filepath3);
-        $this->restore->add_log('...done');
+        api::download_backup_file($this->restore->backupkey, $filepath0, $this);
+        api::download_backup_file($this->restore->backupkey, $filepath1, $this);
+        api::download_backup_file($this->restore->backupkey, $filepath2, $this);
+        api::download_backup_file($this->restore->backupkey, $filepath3, $this);
 
         $structure = $this->prepare_restore_db($filepath0);
         $datarootfiles = $this->prepare_restore_dataroot($filepath2);
@@ -170,7 +162,7 @@ class site_restore {
         unlink($filepath3);
 
         // From this moment on we can not throw any exceptions, we have to try to restore as much as possible skipping problems.
-        $this->restore->add_log('Restore started');
+        $this->add_to_log('Restore started');
 
         $this->before_restore();
 
@@ -182,7 +174,7 @@ class site_restore {
         $this->restore->set_status(constants::STATUS_FINISHED)->save();
 
         $this->post_restore();
-        $this->restore->add_log('Restore finished');
+        $this->add_to_log('Restore finished');
     }
 
     /**
@@ -191,9 +183,9 @@ class site_restore {
      * @param string $filepath
      * @return dbstructure
      */
-    public function prepare_restore_db(string $filepath) {
+    public function prepare_restore_db(string $filepath): dbstructure {
         $structurefilename = constants::FILE_STRUCTURE;
-        $this->restore->add_log('Extracting database structure...');
+        $this->add_to_log('Extracting database structure...');
 
         $temppath = make_request_directory();
         $zippacker = new \zip_packer();
@@ -202,7 +194,7 @@ class site_restore {
 
         // TODO do all the checks that all tables exist and have necessary fields.
 
-        $this->restore->add_log('...done');
+        $this->add_to_log('...done');
         return $structure;
     }
 
@@ -214,7 +206,7 @@ class site_restore {
      */
     public function prepare_restore_dataroot(string $filepath) {
         global $CFG;
-        $this->restore->add_log('Extracting dataroot files...');
+        $this->add_to_log('Extracting dataroot files...');
         $temppath = $CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__';
         $this->remove_recursively($temppath);
         make_writable_directory($temppath);
@@ -229,7 +221,7 @@ class site_restore {
             }
         }
         closedir($handle);
-        $this->restore->add_log('...done');
+        $this->add_to_log('...done');
         return $files;
     }
 
@@ -240,12 +232,12 @@ class site_restore {
      * @return string
      */
     public function prepare_restore_filedir(string $filepath): string {
-        $this->restore->add_log('Extracting filedir files...');
+        $this->add_to_log('Extracting filedir files...');
         $temppath = make_request_directory();
         $zippacker = new \zip_packer();
         $zippacker->extract_to_pathname($filepath, $temppath);
 
-        $this->restore->add_log('...done');
+        $this->add_to_log('...done');
         return $temppath;
     }
 
@@ -259,7 +251,7 @@ class site_restore {
     public function restore_db(dbstructure $structure, string $zipfilepath) {
         global $DB;
         $tables = $structure->get_backup_tables();
-        $this->restore->add_log('Restoring database ('.count($tables).' tables)...');
+        $this->add_to_log('Restoring database ('.count($tables).' tables)...');
         $temppath = make_request_directory();
         $zippacker = new \zip_packer();
 
@@ -276,10 +268,10 @@ class site_restore {
             if ($altersql = $table->get_alter_sql($structure->get_tables_actual()[$tablename] ?? null)) {
                 try {
                     $DB->change_database_structure($altersql);
-                    $this->restore->add_log('- table '.$tablename.' structure is modified');
+                    $this->add_to_log('- table '.$tablename.' structure is modified');
                 } catch (\Throwable $t) {
-                    $this->restore->add_log('- table '.$tablename.' structure is modified, failed to apply modifications: '.
-                        $t->getMessage());
+                    $this->add_to_log('- table '.$tablename.' structure is modified, failed to apply modifications: '.
+                        $t->getMessage(), constants::LOGLEVEL_WARNING);
                 }
             }
             $DB->execute('TRUNCATE TABLE {'.$tablename.'}');
@@ -289,8 +281,8 @@ class site_restore {
                     try {
                         $DB->insert_record_raw($tablename, array_combine($fields, $row), false, true, true);
                     } catch (\Throwable $t) {
-                        $this->restore->add_log("- failed to insert record with id {$row['id']} into table $tablename: ".
-                            $t->getMessage());
+                        $this->add_to_log("- failed to insert record with id {$row['id']} into table $tablename: ".
+                            $t->getMessage(), constants::LOGLEVEL_WARNING);
                     }
                 }
             }
@@ -298,7 +290,8 @@ class site_restore {
                 try {
                     $DB->change_database_structure($altersql);
                 } catch (\Throwable $t) {
-                    $this->restore->add_log("- failed to change sequence for table $tablename: ".$t->getMessage());
+                    $this->add_to_log("- failed to change sequence for table $tablename: ".$t->getMessage(),
+                        constants::LOGLEVEL_WARNING);
                 }
             }
             unlink($filepath);
@@ -315,7 +308,7 @@ class site_restore {
             unlink($filepath);
         }
 
-        $this->restore->add_log('...database restore completed');
+        $this->add_to_log('...database restore completed');
     }
 
     /**
@@ -326,21 +319,22 @@ class site_restore {
      */
     public function restore_dataroot(array $files) {
         global $CFG;
-        $this->restore->add_log('Restoring datadir...');
+        $this->add_to_log('Restoring datadir...');
         foreach ($files as $file => $path) {
             // TODO what if we can not delete some files?
             self::remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.$file);
             if (file_exists($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
-                $this->restore->add_log('- existing path '.$file.' in dataroot could not be removed');
+                $this->add_to_log('- existing path '.$file.' in dataroot could not be removed',
+                    constants::LOGLEVEL_WARNING);
                 // TODO try to move files one by one.
             } else {
                 rename($path, $CFG->dataroot.DIRECTORY_SEPARATOR.$file);
-                $this->restore->add_log("- added ".$file);
+                $this->add_to_log("- added ".$file);
             }
         }
 
         self::remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__');
-        $this->restore->add_log('...datadir restore completed');
+        $this->add_to_log('...datadir restore completed');
     }
 
     /**
@@ -378,7 +372,7 @@ class site_restore {
      * @return void
      */
     public function restore_filedir(string $restoredir) {
-        $this->restore->add_log('Moving files to file storage...');
+        $this->add_to_log('Moving files to file storage...');
         $fs = get_file_storage();
         $files = self::dirlist_recursive($restoredir);
         foreach ($files as $subpath => $filepath) {
@@ -391,11 +385,12 @@ class site_restore {
             try {
                 $fs->add_file_to_pool($filepath, $file);
             } catch (\Throwable $t) {
-                $this->restore->add_log('- could not add file with contenthash '.$file.' to file system: '.$t->getMessage());
+                $this->add_to_log('- could not add file with contenthash '.$file.' to file system: '.$t->getMessage(),
+                    constants::LOGLEVEL_WARNING);
             }
             unlink($filepath);
         }
-        $this->restore->add_log('...files restore completed');
+        $this->add_to_log('...files restore completed');
     }
 
     /**
@@ -404,9 +399,9 @@ class site_restore {
      * @return void
      */
     public function before_restore() {
-        $this->restore->add_log('Killing all sessions');
+        $this->add_to_log('Killing all sessions');
         \core\session\manager::kill_all_sessions();
-        $this->restore->add_log('...done');
+        $this->add_to_log('...done');
     }
 
     /**
@@ -415,13 +410,13 @@ class site_restore {
      * @return void
      */
     public function post_restore() {
-        $this->restore->add_log('Starting post-restore actions');
-        $this->restore->add_log('Purging all caches...');
+        $this->add_to_log('Starting post-restore actions');
+        $this->add_to_log('Purging all caches...');
         purge_all_caches();
-        $this->restore->add_log('...done');
-        $this->restore->add_log('Killing all sessions');
+        $this->add_to_log('...done');
+        $this->add_to_log('Killing all sessions');
         \core\session\manager::kill_all_sessions();
-        $this->restore->add_log('...done');
+        $this->add_to_log('...done');
     }
 
     /**
@@ -449,5 +444,21 @@ class site_restore {
             }
         }
         rmdir($dir);
+    }
+
+    /**
+     * Log action
+     *
+     * @param string $message
+     * @param string $loglevel
+     * @return void
+     */
+    public function add_to_log(string $message, string $loglevel = constants::LOGLEVEL_INFO) {
+        if ($this->restore && $this->restore->id) {
+            $logrecord = $this->restore->add_log($message, $loglevel);
+            if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
+                mtrace($this->restore->format_log_line($logrecord, false));
+            }
+        }
     }
 }

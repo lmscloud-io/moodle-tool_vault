@@ -37,7 +37,7 @@ class restore_task extends adhoc_task {
      */
     public function execute() {
         try {
-            $restore = site_restore::start_restore();
+            $restore = site_restore::start_restore($this->get_pid());
         } catch (\Throwable $t) {
             mtrace("Failed to start restore: ".$t->getMessage()."\n".$t->getTraceAsString());
         }

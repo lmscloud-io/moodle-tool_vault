@@ -16,6 +16,8 @@
 
 namespace tool_vault\local\models;
 
+use tool_vault\constants;
+
 /**
  * Base model for operation
  *
@@ -35,6 +37,8 @@ namespace tool_vault\local\models;
 abstract class operation {
     /** @var array */
     protected $data;
+    /** @var int process id, not stored in DB but used for logging */
+    protected $pid = 0;
     /** @var string */
     const TABLE = 'tool_vault_operation';
     /** @var string */
@@ -208,23 +212,36 @@ abstract class operation {
     }
 
     /**
+     * Set pid for logging
+     *
+     * @param int $pid
+     * @return void
+     */
+    public function set_pid_for_logging(int $pid) {
+        $this->pid = $pid;
+    }
+
+    /**
      * Add log line to this operation
      *
      * @param string $message
-     * @param int $loglevel
-     * @return void
+     * @param string $loglevel
+     * @return \stdClass
      */
-    public function add_log(string $message, int $loglevel = 0) {
+    public function add_log(string $message, string $loglevel = constants::LOGLEVEL_INFO): \stdClass {
         if (!$this->id) {
             throw new \coding_exception('Can not add logs, save the record first');
         }
         global $DB;
-        $DB->insert_record(self::LOGTABLE, [
+        $record = (object)[
             'operationid' => $this->id,
             'timecreated' => time(),
             'loglevel' => $loglevel,
-            'message' => $message
-        ]);
+            'message' => substr($message, 0, 1333),
+            'pid' => $this->pid,
+        ];
+        $record->id = $DB->insert_record(self::LOGTABLE, $record);
+        return $record;
     }
 
     /**
@@ -247,12 +264,21 @@ abstract class operation {
      * Format log line
      *
      * @param \stdClass|null $log
+     * @param bool $usehtml
      * @return string
      */
-    protected function format_log_line(?\stdClass $log): string {
-        return $log ?
-            "[".userdate($log->timecreated, get_string('strftimedatetimeshort', 'core_langconfig'))."] " . $log->message :
-            '...';
+    public function format_log_line(?\stdClass $log, bool $usehtml = true): string {
+        if (!$log) {
+            $class = 'tool_vault-log tool_vault-log-level-skipped';
+            return $usehtml ? \html_writer::span('...', $class) : '...';
+        }
+        $class = 'tool_vault-log tool_vault-log-level-'.($log->loglevel ?: constants::LOGLEVEL_INFO);
+        $message =
+            "[".userdate($log->timecreated, get_string('strftimedatetimeshort', 'core_langconfig'))."] ".
+            ($log->loglevel ? "[{$log->loglevel}] " : '') .
+            ($log->pid ? "[pid {$log->pid}] " : '') .
+            $log->message;
+        return $usehtml ? \html_writer::span($message, $class) : $message;
     }
 
     /**
