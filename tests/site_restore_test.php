@@ -55,6 +55,9 @@ class site_restore_test extends \advanced_testcase {
 
     public function test_restore_db() {
         global $DB;
+        if (!PHPUNIT_LONGTEST) {
+            $this->markTestSkipped('PHPUNIT_LONGTEST is not defined');
+        }
         $this->resetAfterTest();
         // Create a course and an instance of book module.
         $course = $this->getDataGenerator()->create_course();

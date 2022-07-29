@@ -29,6 +29,10 @@ use tool_vault\site_restore;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class diskspace extends base {
+    /** @var array  */
+    protected $tablesizes = [];
+    /** @var array  */
+    protected $tablerowscnt = [];
 
     /**
      * Evaluate check and store results in model details
@@ -44,15 +48,16 @@ class diskspace extends base {
         $maxfilesize = $record->maxfilesize;
         $countfiles = $record->countfiles;
         $freespace = disk_free_space(make_request_directory());
-        $dbrecords = 0;
         $structure = dbstructure::load();
         foreach ($structure->get_tables_actual() as $tablename => $table) {
-            $cnt = $DB->count_records_select($tablename, '1=1');
-            $dbrecords += $cnt;
+            if (!site_backup::is_table_skipped($table)) {
+                $this->tablerowscnt[$tablename] = $DB->count_records_select($tablename, '1=1');
+            }
         }
-        $tablesizes = $structure->get_actual_tables_sizes();
-        $dbtotalsize = array_sum($tablesizes);
-        $dbmaxsize = max($tablesizes);
+        $dbrecords = array_sum($this->tablerowscnt);
+        $this->tablesizes = array_intersect_key($structure->get_actual_tables_sizes(), $this->tablerowscnt);
+        $dbtotalsize = array_sum($this->tablesizes);
+        $dbmaxsize = max($this->tablesizes);
         $datarootsize = $this->get_dataroot_size();
         $enoughspace = ($totalsize + $dbtotalsize) * 2 + $datarootsize < $freespace;
         $this->model->set_details([
@@ -157,5 +162,18 @@ class diskspace extends base {
      */
     public static function get_display_name(): string {
         return "Disk space";
+    }
+
+    /**
+     * Get number of rows in the table and the table size
+     *
+     * @param string $tablename
+     * @return array
+     */
+    public function get_table_size(string $tablename) {
+        return [
+            $this->tablerowscnt[$tablename] ?? 0,
+            $this->tablesizes[$tablename] ?? 0,
+        ];
     }
 }

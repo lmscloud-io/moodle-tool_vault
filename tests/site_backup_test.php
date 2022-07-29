@@ -66,21 +66,27 @@ class site_backup_test extends \advanced_testcase {
         api::store_config('n6', "value\nwith\nnewlines");
 
         $dir = make_request_directory();
-        $table = 'tool_vault_config';
-        $filepath = $dir.DIRECTORY_SEPARATOR.$table.'.json';
-        $sitebackup->export_table_data($tableobj, $filepath);
+        $ziparchive = new \zip_archive();
+        $ziparchive->open($dir.DIRECTORY_SEPARATOR.'temp.zip', \file_archive::CREATE);
+        $sitebackup->export_table_data($tableobj, $ziparchive, $dir);
+        $ziparchive->close();
 
-        $data = json_decode(file_get_contents($dir.DIRECTORY_SEPARATOR.'tool_vault_config.json'), true);
+        $data = json_decode(file_get_contents($dir.DIRECTORY_SEPARATOR.'tool_vault_config.0.json'), true);
         $this->assertEquals(['name', 'n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6'], array_column($data, 1));
         $this->assertEquals(['value', 'value', null, '', 'null', 'NULL', 'value "with" quotes', "value\nwith\nnewlines"],
             array_column($data, 2));
     }
 
     public function test_export_db() {
+        if (!PHPUNIT_LONGTEST) {
+            $this->markTestSkipped('PHPUNIT_LONGTEST is not defined');
+        }
+
         $this->resetAfterTest();
         $sitebackup = $this->create_site_backup();
+        $sitebackup->prepare();
         [$filepathstructure, $filepath] = $sitebackup->export_db();
-        $this->assertGreaterThanOrEqual(150000, filesize($filepath));
+        $this->assertGreaterThanOrEqual(100000, filesize($filepath));
 
         // Unpack and check contents.
         $x = new \zip_packer();
@@ -97,16 +103,16 @@ class site_backup_test extends \advanced_testcase {
         }
         closedir($handle);
 
-        $this->assertTrue(in_array('config', $files));
-        $this->assertTrue(in_array('user', $files));
+        $this->assertTrue(in_array('config.0', $files));
+        $this->assertTrue(in_array('user.0', $files));
         $this->assertTrue(file_exists($dirstruct.DIRECTORY_SEPARATOR.constants::FILE_STRUCTURE));
         $this->assertTrue(file_exists($dir.DIRECTORY_SEPARATOR.constants::FILE_SEQUENCE));
-        $this->assertFalse(in_array('tool_vault_config', $files));
-        $this->assertFalse(in_array('tool_vault_operation', $files));
-        $this->assertFalse(in_array('tool_vault_log', $files));
+        $this->assertFalse(in_array('tool_vault_config.0', $files));
+        $this->assertFalse(in_array('tool_vault_operation.0', $files));
+        $this->assertFalse(in_array('tool_vault_log.0', $files));
 
         // Retrieve user file, just for checks.
-        $userlist = json_decode(file_get_contents($dir.'/'.'user.json'), true);
+        $userlist = json_decode(file_get_contents($dir.'/'.'user.0.json'), true);
         $this->assertEquals('admin', $userlist[2][7]);
     }
 

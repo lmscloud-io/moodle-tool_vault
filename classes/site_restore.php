@@ -255,6 +255,8 @@ class site_restore implements logger {
         $temppath = make_request_directory();
         $zippacker = new \zip_packer();
 
+        $allfiles = array_column($zippacker->list_files($zipfilepath), 'pathname');
+
         $sequencesfilename = constants::FILE_SEQUENCE;
         $zippacker->extract_to_pathname($zipfilepath, $temppath, [$sequencesfilename]);
         $filepath = $temppath.DIRECTORY_SEPARATOR.$sequencesfilename;
@@ -262,9 +264,6 @@ class site_restore implements logger {
         unlink($filepath);
 
         foreach ($tables as $tablename => $table) {
-            $zippacker->extract_to_pathname($zipfilepath, $temppath, [$tablename.".json"]);
-            $filepath = $temppath.DIRECTORY_SEPARATOR.$tablename.".json";
-            $data = json_decode(file_get_contents($filepath), true);
             if ($altersql = $table->get_alter_sql($structure->get_tables_actual()[$tablename] ?? null)) {
                 try {
                     $DB->change_database_structure($altersql);
@@ -274,17 +273,32 @@ class site_restore implements logger {
                         $t->getMessage(), constants::LOGLEVEL_WARNING);
                 }
             }
+
             $DB->execute('TRUNCATE TABLE {'.$tablename.'}');
-            if ($data) {
-                $fields = array_shift($data);
-                foreach ($data as $row) {
-                    try {
-                        $DB->insert_record_raw($tablename, array_combine($fields, $row), false, true, true);
-                    } catch (\Throwable $t) {
-                        $this->add_to_log("- failed to insert record with id {$row['id']} into table $tablename: ".
-                            $t->getMessage(), constants::LOGLEVEL_WARNING);
+
+            $filesfortable = [];
+            foreach ($allfiles as $filename) {
+                if (preg_match('/^'.preg_quote($tablename, '/').'\\.([\\d]+)\\.json$/', $filename, $matches)) {
+                    $filesfortable[(int)$matches[1]] = $filename;
+                }
+            }
+            ksort($filesfortable);
+            foreach ($filesfortable as $filename) {
+                $zippacker->extract_to_pathname($zipfilepath, $temppath, [$filename]);
+                $filepath = $temppath.DIRECTORY_SEPARATOR.$filename;
+                $data = json_decode(file_get_contents($filepath), true);
+                if ($data) {
+                    $fields = array_shift($data);
+                    foreach ($data as $row) {
+                        try {
+                            $DB->insert_record_raw($tablename, array_combine($fields, $row), false, true, true);
+                        } catch (\Throwable $t) {
+                            $this->add_to_log("- failed to insert record with id {$row['id']} into table $tablename: ".
+                                $t->getMessage(), constants::LOGLEVEL_WARNING);
+                        }
                     }
                 }
+                unlink($filepath);
             }
             if ($altersql = $table->get_fix_sequence_sql($sequences[$tablename] ?? 0)) {
                 try {
@@ -294,7 +308,6 @@ class site_restore implements logger {
                         constants::LOGLEVEL_WARNING);
                 }
             }
-            unlink($filepath);
         }
 
         // Extract config overrides.
@@ -425,7 +438,7 @@ class site_restore implements logger {
      * @param string $dir
      * @return void
      */
-    public function remove_recursively(string $dir) {
+    public static function remove_recursively(string $dir) {
         if (!file_exists($dir)) {
             return;
         }

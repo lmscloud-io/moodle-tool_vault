@@ -54,7 +54,7 @@ class site_backup implements logger {
      * @param dbtable $table
      * @return bool
      */
-    public function is_table_skipped(dbtable $table): bool {
+    public static function is_table_skipped(dbtable $table): bool {
         return preg_match('/^tool_vault[$_]/', strtolower($table->get_xmldb_table()->getName()));
     }
 
@@ -108,6 +108,25 @@ class site_backup implements logger {
     }
 
     /**
+     * Backup metadata
+     *
+     * @return array
+     */
+    protected function get_metadata() {
+        global $CFG, $USER, $DB;
+        return [
+            // TODO - what other metadata do we want - languages, installed plugins, estimated size?
+            'wwwroot' => $CFG->wwwroot,
+            'dbengine' => $DB->get_dbfamily(),
+            'version' => $CFG->version,
+            'branch' => $CFG->branch,
+            'tool_vault_version' => get_config('tool_vault', 'version'),
+            'email' => $USER->email,
+            'name' => fullname($USER),
+        ];
+    }
+
+    /**
      * Start backup
      *
      * @param int $pid
@@ -126,14 +145,9 @@ class site_backup implements logger {
         $instance = new static($backup);
 
         $params = [
-            // TODO - what other metadata do we want - languages, installed plugins, estimated size?
-            'wwwroot' => $CFG->wwwroot,
-            'dbengine' => $DB->get_dbfamily(),
+            'description' => $CFG->wwwroot.' by '.fullname($USER), // TODO from the form.
             'version' => $CFG->version,
             'branch' => $CFG->branch,
-            'tool_vault_version' => get_config('tool_vault', 'version'),
-            'email' => $USER->email,
-            'name' => fullname($USER),
         ];
         try {
             $backupkey = api::request_new_backup_key($params);
@@ -179,7 +193,7 @@ class site_backup implements logger {
      *
      * @return void
      */
-    protected function prepare() {
+    public function prepare() {
         /** @var base[] $prechecks */
         $prechecks = [
             dbstatus::class,
@@ -188,7 +202,7 @@ class site_backup implements logger {
         ];
         foreach ($prechecks as $classname) {
             $this->add_to_log('Backup pre-check: '.$classname::get_display_name().'...');
-            if (($chk = dbstatus::create_and_run()) && $chk->success()) {
+            if (($chk = $classname::create_and_run()) && $chk->success()) {
                 $this->prechecks[$chk->get_name()] = $chk;
                 $this->add_to_log('...OK');
             } else {
@@ -213,7 +227,6 @@ class site_backup implements logger {
 
         $this->add_to_log('Exporting database...');
         $filepaths = $this->export_db();
-        $size1 = $this->get_total_files_size($filepaths);
         $this->add_to_log('...done');
         foreach ($filepaths as $filepath) {
             $totalsize += api::upload_backup_file($this->backup->backupkey, $filepath, 'application/zip', $this);
@@ -269,29 +282,95 @@ class site_backup implements logger {
     }
 
     /**
+     * Helper function, how many rows should we add to one chunk of the db table export
+     *
+     * @param string $tablename
+     * @return int
+     */
+    protected function get_chunk_size(string $tablename) {
+        /** @var diskspace $precheck */
+        $precheck = $this->prechecks[diskspace::get_name()] ?? null;
+        if ($precheck) {
+            [$rowscnt, $size] = $precheck->get_table_size($tablename);
+            $chunkscnt = ceil($size / constants::DBFILE_SIZE);
+            $res = (!$rowscnt || !$chunkscnt) ? 0 : (int)($rowscnt / $chunkscnt);
+            return (!$rowscnt || !$chunkscnt) ? 0 : (int)($rowscnt / $chunkscnt);
+        } else {
+            return 0;
+        }
+    }
+
+    /**
      * Exports one database table
      *
      * @param dbtable $table
-     * @param string $filepath
-     * @return void
+     * @param \zip_archive $ziparchive
+     * @param string $dir
+     * @return array list of added filepaths
      */
-    public function export_table_data(dbtable $table, string $filepath) {
+    public function export_table_data(dbtable $table, \zip_archive $ziparchive, string $dir): array {
         global $DB;
+        $filepaths = [];
+
         $fields = array_map(function(\xmldb_field $f) {
             return $f->getName();
         }, $table->get_xmldb_table()->getFields());
         $sortby = in_array('id', $fields) ? 'id' : reset($fields);
         $fieldslist = join(',', $fields);
 
-        $fp = fopen($filepath, 'w');
-        fwrite($fp, "[\n" . json_encode($fields));
-        $rs = $DB->get_recordset($table->get_xmldb_table()->getName(), [], $sortby, $fieldslist);
-        foreach ($rs as $record) {
-            fwrite($fp, ",\n".json_encode(array_values((array)$record)));
+        $chunksize = $this->get_chunk_size($table->get_xmldb_table()->getName());
+        $lastvalue = null;
+        for ($cnt = 0; true; $cnt++) {
+            $rs = $DB->get_recordset_select($table->get_xmldb_table()->getName(),
+                ($lastvalue !== null) ? $sortby. ' > ?' : '', [$lastvalue],
+                $sortby, $fieldslist, 0, $chunksize);
+            if (!$rs->valid()) {
+                $rs->close();
+                break;
+            }
+            $filename = $table->get_xmldb_table()->getName().'.'.$cnt.'.json';
+            $filepath = $dir.DIRECTORY_SEPARATOR.$filename;
+            $fp = fopen($filepath, 'w');
+            fwrite($fp, "[\n" . json_encode($fields));
+            foreach ($rs as $record) {
+                fwrite($fp, ",\n".json_encode(array_values((array)$record)));
+                $lastvalue = $record->$sortby;
+            }
+            $rs->close();
+            fwrite($fp, "\n]");
+            $ziparchive->add_file_from_pathname($filename, $filepath);
+            $filepaths[] = $filepath;
+            if (!$chunksize) {
+                break;
+            }
         }
-        $rs->close();
-        fwrite($fp, "\n]");
-        fclose($fp);
+        return $filepaths;
+    }
+
+    /**
+     * Export db structure and metadata
+     *
+     * @param array $tablenames
+     * @param string $zipdir
+     * @return string path to the zip archive
+     */
+    protected function export_dbstructure(array $tablenames, string $zipdir): string {
+        global $CFG;
+
+        $zipfilepathstruct = $zipdir.DIRECTORY_SEPARATOR.constants::FILENAME_DBSTRUCTURE.'.zip';
+        $ziparchivestruct = new \zip_archive();
+        if ($ziparchivestruct->open($zipfilepathstruct, \file_archive::CREATE)) {
+            $ziparchivestruct->add_file_from_pathname('xmldb.xsd', $CFG->dirroot.'/lib/xmldb/xmldb.xsd');
+            $ziparchivestruct->add_file_from_string(constants::FILE_STRUCTURE, $this->dbstructure->output($tablenames));
+            $ziparchivestruct->add_file_from_string(constants::FILE_METADATA, json_encode($this->get_metadata()));
+            // TODO add backup metadata.
+            $ziparchivestruct->close();
+        } else {
+            // TODO?
+            throw new \moodle_exception('Can not create ZIP file');
+        }
+
+        return $zipfilepathstruct;
     }
 
     /**
@@ -300,59 +379,41 @@ class site_backup implements logger {
      * @return array paths to the zip file with the export
      */
     public function export_db(): array {
-        global $CFG;
+
         $dir = make_request_directory();
+        $zipdir = make_request_directory();
+
         $structure = $this->get_db_structure();
         $tables = [];
         foreach ($structure->get_tables_actual() as $table => $tableobj) {
             if (!$this->is_table_skipped($tableobj)) {
-                $filepath = $dir.DIRECTORY_SEPARATOR.$table.'.json';
-                $this->export_table_data($tableobj, $filepath);
                 $tables[$table] = $tableobj;
             }
         }
-        $structurefilename = constants::FILE_STRUCTURE;
-        file_put_contents($dir.DIRECTORY_SEPARATOR.$structurefilename,
-            $this->dbstructure->output(array_keys($tables)));
+        $zipfilepathstruct = $this->export_dbstructure(array_keys($tables), $zipdir);
 
-        $sequencesfilename = constants::FILE_SEQUENCE;
-        file_put_contents($dir.DIRECTORY_SEPARATOR.$sequencesfilename,
+        $zipfilepath = $zipdir.DIRECTORY_SEPARATOR.constants::FILENAME_DBDUMP.'.zip';
+        $ziparchive = new \zip_archive();
+        if (!$ziparchive->open($zipfilepath, \file_archive::CREATE)) {
+            // TODO?
+            throw new \moodle_exception('Can not create ZIP file');
+        }
+
+        foreach ($tables as $tableobj) {
+            $this->export_table_data($tableobj, $ziparchive, $dir);
+        }
+
+        $ziparchive->add_file_from_string(constants::FILE_SEQUENCE,
             json_encode(array_intersect_key($structure->retrieve_sequences(), $tables)));
 
-        $zipfilepathstruct = $dir.DIRECTORY_SEPARATOR.constants::FILENAME_DBSTRUCTURE.'.zip';
-        $ziparchivestruct = new \zip_archive();
-        if ($ziparchivestruct->open($zipfilepathstruct, \file_archive::CREATE)) {
-            $ziparchivestruct->add_file_from_pathname('xmldb.xsd', $CFG->dirroot.'/lib/xmldb/xmldb.xsd');
-            $ziparchivestruct->add_file_from_pathname($structurefilename, $dir.DIRECTORY_SEPARATOR.$structurefilename);
-            $ziparchivestruct->close();
-        } else {
-            // TODO?
-            throw new \moodle_exception('Can not create ZIP file');
+        if ($precheck = $this->prechecks[configoverride::get_name()] ?? null) {
+            if ($confs = $precheck->get_config_overrides_for_backup()) {
+                $ziparchive->add_file_from_string(constants::FILE_CONFIGOVERRIDE, json_encode($confs));
+            }
         }
 
-        $zipfilepath = $dir.DIRECTORY_SEPARATOR.constants::FILENAME_DBDUMP.'.zip';
-        $ziparchive = new \zip_archive();
-        if ($ziparchive->open($zipfilepath, \file_archive::CREATE)) {
-            $ziparchive->add_file_from_pathname($sequencesfilename, $dir.DIRECTORY_SEPARATOR.$sequencesfilename);
-            foreach ($tables as $table => $tableobj) {
-                $ziparchive->add_file_from_pathname($table.'.json', $dir.DIRECTORY_SEPARATOR.$table.'.json');
-            }
-            if ($precheck = $this->prechecks[configoverride::get_name()] ?? null) {
-                if ($confs = $precheck->get_config_overrides_for_backup()) {
-                    $ziparchive->add_file_from_string(constants::FILE_CONFIGOVERRIDE, json_encode($confs));
-                }
-            }
-            $ziparchive->close();
-        } else {
-            // TODO?
-            throw new \moodle_exception('Can not create ZIP file');
-        }
-
-        unlink($dir.DIRECTORY_SEPARATOR.$structurefilename);
-        unlink($dir.DIRECTORY_SEPARATOR.$sequencesfilename);
-        foreach ($tables as $table => $tableobj) {
-            unlink($dir.DIRECTORY_SEPARATOR.$table.'.json');
-        }
+        $ziparchive->close();
+        site_restore::remove_recursively($dir);
 
         return [$zipfilepathstruct, $zipfilepath];
     }

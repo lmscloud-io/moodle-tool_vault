@@ -46,6 +46,8 @@ class constants {
     /** @var string */
     const FILE_STRUCTURE = '__structure__.xml';
     /** @var string */
+    const FILE_METADATA = '__metadata__.json';
+    /** @var string */
     const FILE_SEQUENCE = '__sequences__.json';
     /** @var string */
     const FILE_CONFIGOVERRIDE = '__configoverride__.json';
@@ -89,4 +91,7 @@ class constants {
 
     /** @var int */
     const LOCK_TIMEOUT = 60 * 60; // 1 hour.
+
+    /** @var int */
+    const DBFILE_SIZE = 1024 * 1024 * 2; // 2 Mb.
 }
