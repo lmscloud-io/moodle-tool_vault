@@ -202,7 +202,7 @@ class site_backup implements logger {
         ];
         foreach ($prechecks as $classname) {
             $this->add_to_log('Backup pre-check: '.$classname::get_display_name().'...');
-            if (($chk = $classname::create_and_run()) && $chk->success()) {
+            if (($chk = $classname::create_and_run($this->backup)) && $chk->success()) {
                 $this->prechecks[$chk->get_name()] = $chk;
                 $this->add_to_log('...OK');
             } else {

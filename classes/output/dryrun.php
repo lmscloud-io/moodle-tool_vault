@@ -17,8 +17,8 @@
 namespace tool_vault\output;
 
 use renderer_base;
-use stdClass;
 use tool_vault\constants;
+use tool_vault\local\checks\base;
 use tool_vault\site_restore_dryrun;
 
 /**
@@ -52,6 +52,10 @@ class dryrun implements \templatable {
      */
     public function export_for_template(renderer_base $output) {
         $isfinished = $this->model->status === constants::STATUS_FINISHED;
+        $prechecks = [];
+        foreach ($this->dryrun->get_prechecks() as $check) {
+            $prechecks[] = (new check_display($check))->export_for_template($output);
+        }
         return [
             'title' => $this->model->get_title(),
             'subtitle' => $this->model->get_subtitle(),
@@ -62,6 +66,7 @@ class dryrun implements \templatable {
                 print_r($this->model->get_files(), true).
                 '</pre>',
             'logs' => $isfinished ? '' : $this->model->get_logs(),
+            'prechecks' => $prechecks,
         ];
     }
 }

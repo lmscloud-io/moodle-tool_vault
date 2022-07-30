@@ -19,6 +19,7 @@ namespace tool_vault\local\checks;
 use renderer_base;
 use tool_vault\constants;
 use tool_vault\local\models\check;
+use tool_vault\local\models\operation;
 use tool_vault\task\check_task;
 
 /**
@@ -31,6 +32,8 @@ use tool_vault\task\check_task;
 abstract class base {
     /** @var check */
     protected $model;
+    /** @var operation */
+    protected $parent;
 
     /**
      * Constructor
@@ -96,6 +99,21 @@ abstract class base {
             }
         }
         throw new \coding_exception('Check with the name '.$checkname.' does not exist -- '.$classname);
+    }
+
+    /**
+     * Get all checks for given parentid
+     *
+     * @param int $operationid
+     * @return self[]
+     */
+    public static function get_all_checks_for_operation(int $operationid): array {
+        $checks = check::get_all_checks_for_operation($operationid);
+        $res = [];
+        foreach ($checks as $check) {
+            $res[] = self::instance($check);
+        }
+        return $res;
     }
 
     /**
@@ -182,13 +200,16 @@ abstract class base {
     /**
      * Run individual check from CLI
      *
+     * @param operation|null $parent
      * @return static
      */
-    public static function create_and_run(): self {
+    public static function create_and_run(?operation $parent = null): self {
         // TODO check - only to use from CLI.
         // TODO make sure there is nothing else scheduled.
-        $model = new check((object)['status' => constants::STATUS_INPROGRESS], self::get_name());
+        $model = new check((object)['status' => constants::STATUS_INPROGRESS, 'parentid' => $parent ? $parent->id : null],
+            self::get_name());
         $obj = static::instance($model);
+        $obj->parent = $parent;
         $model->save();
 
         try {
@@ -279,5 +300,38 @@ abstract class base {
             !$this->success() ? 'notifyproblem' :
                 ($iswarning ? 'notifywarning' : 'info'),
             false);
+    }
+
+    /**
+     * URL to reschedule this check (if applicable)
+     *
+     * @return \moodle_url|null
+     */
+    public function get_reschedule_url(): ?\moodle_url {
+        if ($this->get_model()->parentid) {
+            return null;
+        }
+        return new \moodle_url('/admin/tool/vault/index.php',
+            ['action' => 'newcheck', 'type' => $this->get_name(), 'sesskey' => sesskey()]);
+    }
+
+    /**
+     * Link to this check full review (if applicable)
+     *
+     * @return \moodle_url|null
+     */
+    public function get_fullreport_url(): ?\moodle_url {
+        // TODO link for the restore checks.
+        return new \moodle_url('/admin/tool/vault/index.php',
+            ['action' => 'details', 'id' => $this->get_model()->id]);
+    }
+
+    /**
+     * Get parent
+     *
+     * @return operation|null
+     */
+    public function get_parent(): ?operation {
+        return $this->parent;
     }
 }

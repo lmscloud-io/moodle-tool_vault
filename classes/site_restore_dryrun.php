@@ -16,6 +16,9 @@
 
 namespace tool_vault;
 
+use tool_vault\local\checks\base;
+use tool_vault\local\checks\diskspace_restore;
+use tool_vault\local\checks\version_restore;
 use tool_vault\local\models\dryrun;
 use tool_vault\local\models\remote_backup;
 use tool_vault\local\models\restore;
@@ -34,6 +37,8 @@ class site_restore_dryrun implements local\logger {
     protected $dryrun;
     /** @var remote_backup */
     protected $remotebackup;
+    /** @var base[] */
+    protected $prechecks = null;
 
     /**
      * Constructor
@@ -47,12 +52,14 @@ class site_restore_dryrun implements local\logger {
     /**
      * Last dryrun
      *
-     * @param remote_backup $backup
+     * @param string $backupkey
      * @return static|null
      */
-    public static function get_last_dryrun(remote_backup $backup): ?self {
-        $records = dryrun::get_records();
-        return $records ? new static(reset($records)) : null;
+    public static function get_last_dryrun(string $backupkey): ?self {
+        if ($model = dryrun::get_last_dry_run($backupkey)) {
+            return new static($model);
+        }
+        return null;
     }
 
     /**
@@ -62,7 +69,6 @@ class site_restore_dryrun implements local\logger {
      * @return void
      */
     public static function schedule_dryrun(string $backupkey) {
-        global $USER;
         $backupmetadata = api::get_remote_backup($backupkey, constants::STATUS_FINISHED);
         $dryrun = new dryrun();
         $dryrun
@@ -122,6 +128,22 @@ class site_restore_dryrun implements local\logger {
 
         // TODO...
 
+        /** @var base[] $precheckclasses */
+        $precheckclasses = [
+            version_restore::class,
+            diskspace_restore::class,
+        ];
+        $this->prechecks = [];
+        foreach ($precheckclasses as $classname) {
+            $this->add_to_log('Running pre-check: '.$classname::get_display_name().'...');
+            if (($chk = $classname::create_and_run($this->dryrun)) && $chk->success()) {
+                $this->prechecks[$chk->get_name()] = $chk;
+                $this->add_to_log('...OK');
+            } else {
+                throw new \moodle_exception('...'.$classname::get_display_name().' failed');
+            }
+        }
+
         $this->dryrun->set_status(constants::STATUS_FINISHED)->save();
         $this->add_to_log('Finished');
     }
@@ -161,5 +183,31 @@ class site_restore_dryrun implements local\logger {
      */
     public function get_model(): dryrun {
         return $this->dryrun;
+    }
+
+    /**
+     * Get all prechecks
+     *
+     * @return base[]
+     */
+    public function get_prechecks(): array {
+        if ($this->prechecks === null) {
+            $this->prechecks = base::get_all_checks_for_operation($this->get_model()->id);
+        }
+        return $this->prechecks;
+    }
+
+    /**
+     * All precheckes have passed
+     *
+     * @return bool
+     */
+    public function prechecks_succeeded(): bool {
+        foreach ($this->get_prechecks() as $precheck) {
+            if (!$precheck->success()) {
+                return false;
+            }
+        }
+        return true;
     }
 }

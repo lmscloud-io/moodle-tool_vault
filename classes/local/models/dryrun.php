@@ -35,7 +35,7 @@ class dryrun extends operation {
      * @return string
      */
     public function get_title() {
-        $title = 'Pre-check ' . $this->backupkey;
+        $title = 'Remote backup pre-check ' . $this->backupkey;
         if ($this->status === constants::STATUS_SCHEDULED) {
             $title .= ' (scheduled)';
         }
@@ -77,5 +77,17 @@ class dryrun extends operation {
      */
     public function get_dbstructure_xml(): string {
         return ($this->get_remote_details()['dbstructure'] ?? '');
+    }
+
+    /**
+     * Get last record for a given backupkey, if exists
+     *
+     * @param string $backupkey
+     * @return static|null
+     */
+    public static function get_last_dry_run(string $backupkey): ?self {
+        $records = self::get_records_select('type = ? AND backupkey = ? AND status = ?',
+            [static::$defaulttype, $backupkey, constants::STATUS_FINISHED]);
+        return $records ? reset($records) : null;
     }
 }

@@ -85,4 +85,14 @@ class check extends operation {
     public function get_check_name(): string {
         return substr($this->type, strlen(self::$defaulttypeprefix));
     }
+
+    /**
+     * Get all checks with specific parentid
+     *
+     * @param int $operationid
+     * @return static[]
+     */
+    public static function get_all_checks_for_operation(int $operationid): array {
+        return self::get_records_select('parentid = ? AND type LIKE ?', [$operationid, 'check:%'], 'id');
+    }
 }

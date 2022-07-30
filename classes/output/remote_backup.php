@@ -82,21 +82,17 @@ class remote_backup implements \templatable {
         ];
         if (!api::are_restores_allowed()) {
             $error = get_string('restoresnotallowed', 'tool_vault');
-        } else {
-            try {
-                $this->backup->ensure_version_compatibility();
-            } catch (\moodle_exception $e) {
-                $error = $e->getMessage();
+        }
+        if ($dryrun = site_restore_dryrun::get_last_dryrun($this->backup->backupkey)) {
+            $rv['lastdryrun'] = (new dryrun($dryrun))->export_for_template($output);
+            if (!isset($error) && !$dryrun->prechecks_succeeded()) {
+                $error = 'Restore can not be performed until all pre-checkes have passed';
             }
         }
         if (isset($error)) {
             $rv['restorenotallowedreason'] = (new \core\output\notification($error, null, false))->export_for_template($output);
         } else {
             $rv['restoreallowed'] = true;
-        }
-
-        if ($dryrun = site_restore_dryrun::get_last_dryrun($this->backup)) {
-            $rv['lastdryrun'] = (new dryrun($dryrun))->export_for_template($output);
         }
         return $rv;
     }
