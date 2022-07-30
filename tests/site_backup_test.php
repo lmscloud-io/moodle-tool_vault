@@ -83,6 +83,7 @@ class site_backup_test extends \advanced_testcase {
         }
 
         $this->resetAfterTest();
+        $this->setAdminUser();
         $sitebackup = $this->create_site_backup();
         $sitebackup->prepare();
         [$filepathstructure, $filepath] = $sitebackup->export_db();

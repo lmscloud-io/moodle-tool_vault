@@ -59,6 +59,7 @@ class site_restore_test extends \advanced_testcase {
             $this->markTestSkipped('PHPUNIT_LONGTEST is not defined');
         }
         $this->resetAfterTest();
+        $this->setAdminUser();
         // Create a course and an instance of book module.
         $course = $this->getDataGenerator()->create_course();
         $book1 = $this->getDataGenerator()->create_module('book', ['course' => $course->id]);
