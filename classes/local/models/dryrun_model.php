@@ -25,7 +25,7 @@ use tool_vault\constants;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class dryrun_model extends operation_model {
+class dryrun_model extends restore_base_model {
     /** @var string */
     protected static $defaulttype = 'dryrun';
 
@@ -35,7 +35,7 @@ class dryrun_model extends operation_model {
      * @return string
      */
     public function get_title() {
-        $title = 'Restore pre-check ' . $this->backupkey;
+        $title = 'Restore pre-check ' . $this->backupkey; // TODO still not happy with this header.
         if ($this->status === constants::STATUS_SCHEDULED) {
             $title .= ' (scheduled)';
         }
@@ -53,41 +53,14 @@ class dryrun_model extends operation_model {
     }
 
     /**
-     * Remote metadata
-     *
-     * @return array
-     */
-    public function get_metadata(): array {
-        return ($this->get_remote_details()['metadata'] ?? []) + ($this->get_remote_details()['info'] ?? []);
-    }
-
-    /**
-     * Remote files as array
-     *
-     * @return array
-     */
-    public function get_files(): array {
-        return ($this->get_remote_details()['files'] ?? []);
-    }
-
-    /**
-     * DB structure XML
-     *
-     * @return string
-     */
-    public function get_dbstructure_xml(): string {
-        return ($this->get_remote_details()['dbstructure'] ?? '');
-    }
-
-    /**
      * Get last record for a given backupkey, if exists
      *
      * @param string $backupkey
      * @return static|null
      */
     public static function get_last_dry_run(string $backupkey): ?self {
-        $records = self::get_records_select('type = ? AND backupkey = ? AND status = ?',
-            [static::$defaulttype, $backupkey, constants::STATUS_FINISHED]);
+        $records = self::get_records_select('type = ? AND backupkey = ?',
+            [static::$defaulttype, $backupkey]);
         return $records ? reset($records) : null;
     }
 }

@@ -19,8 +19,10 @@ namespace tool_vault;
 use tool_vault\local\checks\check_base;
 use tool_vault\local\checks\diskspace_restore;
 use tool_vault\local\checks\version_restore;
+use tool_vault\local\logger;
 use tool_vault\local\models\dryrun_model;
-use tool_vault\local\models\remote_backup;
+use tool_vault\local\models\operation_model;
+use tool_vault\local\models\restore_base_model;
 use tool_vault\task\dryrun_task;
 
 /**
@@ -34,8 +36,6 @@ class site_restore_dryrun implements local\logger {
 
     /** @var dryrun_model */
     protected $model;
-    /** @var remote_backup */
-    protected $remotebackup;
     /** @var check_base[] */
     protected $prechecks = null;
 
@@ -68,12 +68,10 @@ class site_restore_dryrun implements local\logger {
      * @return void
      */
     public static function schedule_dryrun(string $backupkey) {
-        $backupmetadata = api::get_remote_backup($backupkey, constants::STATUS_FINISHED);
         $dryrun = new dryrun_model();
         $dryrun
             ->set_status( constants::STATUS_SCHEDULED)
             ->set_backupkey($backupkey)
-            ->set_remote_details((array)$backupmetadata->to_object())
             ->save();
         $dryrun->add_log("Restore pre-check scheduled");
         dryrun_task::schedule();
@@ -99,6 +97,59 @@ class site_restore_dryrun implements local\logger {
     }
 
     /**
+     * Runs all pre-checks (executed from both "dryrun" and the actual restore)
+     *
+     * @param restore_base_model $model
+     * @param logger $logger
+     * @return check_base[] array of executed prechecks
+     */
+    public static function execute_prechecks(restore_base_model $model, logger $logger) {
+        try {
+            $backupmetadata = api::get_remote_backup($model->backupkey, constants::STATUS_FINISHED);
+        } catch (\moodle_exception $e) {
+            $error = "Backup with the key {$model->backupkey} is no longer avaialable";
+            throw new \moodle_exception($error);
+        }
+
+        $dir = make_request_directory();
+        $zippath = $dir.DIRECTORY_SEPARATOR.constants::FILENAME_DBSTRUCTURE.'.zip';
+        api::download_backup_file($model->backupkey, $zippath, $logger);
+        $zippacker = new \zip_packer();
+        $zippacker->extract_to_pathname($zippath, $dir);
+        if (!file_exists($dir.DIRECTORY_SEPARATOR.constants::FILE_STRUCTURE)) {
+            throw new \moodle_exception('Archive '.constants::FILENAME_DBSTRUCTURE.'.zip does not contain database structure');
+        }
+        if (!file_exists($dir.DIRECTORY_SEPARATOR.constants::FILE_METADATA)) {
+            throw new \moodle_exception('Archive '.constants::FILENAME_DBSTRUCTURE.'.zip does not contain backup metadata');
+        }
+
+        $remotedetails = (array)$backupmetadata->to_object();
+        $remotedetails['dbstructure'] = file_get_contents($dir.DIRECTORY_SEPARATOR.constants::FILE_STRUCTURE);
+        $remotedetails['metadata'] = json_decode(file_get_contents($dir.DIRECTORY_SEPARATOR.constants::FILE_METADATA), true);
+        $model
+            ->set_remote_details($remotedetails)
+            ->save();
+
+        /** @var check_base[] $precheckclasses */
+        $precheckclasses = [
+            version_restore::class,
+            diskspace_restore::class,
+        ];
+        $prechecks = [];
+        foreach ($precheckclasses as $classname) {
+            $logger->add_to_log('Restore pre-check: '.$classname::get_display_name().'...');
+            $chk = $classname::create_and_run($model);
+            if ($chk->success()) {
+                $prechecks[$chk->get_name()] = $chk;
+                $logger->add_to_log('...OK');
+            } else {
+                throw new \moodle_exception('...'.$classname::get_display_name().' failed');
+            }
+        }
+        return $prechecks;
+    }
+
+    /**
      * Perform dry-run
      *
      * @return void
@@ -110,38 +161,7 @@ class site_restore_dryrun implements local\logger {
             ->save();
         $this->add_to_log('Restore pre-check started');
 
-        $backupmetadata = api::get_remote_backup($this->model->backupkey, constants::STATUS_FINISHED);
-
-        $dir = make_request_directory();
-        $zippath = $dir.DIRECTORY_SEPARATOR.constants::FILENAME_DBSTRUCTURE.'.zip';
-        api::download_backup_file($this->model->backupkey, $zippath, $this);
-        $zippacker = new \zip_packer();
-        $zippacker->extract_to_pathname($zippath, $dir);
-
-        $remotedetails = (array)$backupmetadata->to_object();
-        $remotedetails['dbstructure'] = file_get_contents($dir.DIRECTORY_SEPARATOR.constants::FILE_STRUCTURE);
-        $remotedetails['metadata'] = json_decode(file_get_contents($dir.DIRECTORY_SEPARATOR.constants::FILE_METADATA), true);
-        $this->model
-            ->set_remote_details($remotedetails)
-            ->save();
-
-        // TODO...
-
-        /** @var check_base[] $precheckclasses */
-        $precheckclasses = [
-            version_restore::class,
-            diskspace_restore::class,
-        ];
-        $this->prechecks = [];
-        foreach ($precheckclasses as $classname) {
-            $this->add_to_log('Restore pre-check: '.$classname::get_display_name().'...');
-            if (($chk = $classname::create_and_run($this->model)) && $chk->success()) {
-                $this->prechecks[$chk->get_name()] = $chk;
-                $this->add_to_log('...OK');
-            } else {
-                throw new \moodle_exception('...'.$classname::get_display_name().' failed');
-            }
-        }
+        $this->prechecks = self::execute_prechecks($this->model, $this);
 
         $this->model->set_status(constants::STATUS_FINISHED)->save();
         $this->add_to_log('Restore pre-check finished');

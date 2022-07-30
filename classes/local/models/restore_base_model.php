@@ -19,48 +19,38 @@ namespace tool_vault\local\models;
 use tool_vault\constants;
 
 /**
- * Model for local restore
+ * Base model for restore dry-run (checks only) and restore
  *
  * @package     tool_vault
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class restore_model extends restore_base_model {
-    /** @var string */
-    protected static $defaulttype = 'restore';
+abstract class restore_base_model extends operation_model {
 
     /**
-     * Get display title
+     * Remote metadata
      *
-     * @return string
+     * @return array
      */
-    public function get_title() {
-        $title = 'Restore from backup ' . $this->backupkey;
-        if ($this->status === constants::STATUS_SCHEDULED) {
-            $title .= ' (scheduled)';
-        }
-        return $title;
+    public function get_metadata(): array {
+        return ($this->get_remote_details()['metadata'] ?? []) + ($this->get_remote_details()['info'] ?? []);
     }
 
     /**
-     * Get status and time modified
+     * Remote files as array
      *
-     * @return string
-     * @throws \coding_exception
+     * @return array
      */
-    public function get_subtitle() {
-        return 'Status '.$this->status.' : '.userdate($this->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
+    public function get_files(): array {
+        return ($this->get_remote_details()['files'] ?? []);
     }
 
     /**
-     * Save record
+     * DB structure XML
      *
-     * @return operation_model
+     * @return string
      */
-    public function save(): operation_model {
-        if (!$this->accesskey) {
-            $this->generate_access_key();
-        }
-        return parent::save();
+    public function get_dbstructure_xml(): string {
+        return ($this->get_remote_details()['dbstructure'] ?? '');
     }
 }

@@ -16,8 +16,8 @@
 
 namespace tool_vault;
 
+use tool_vault\local\checks\check_base;
 use tool_vault\local\logger;
-use tool_vault\local\models\remote_backup;
 use tool_vault\local\models\restore_model;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\task\restore_task;
@@ -33,8 +33,8 @@ class site_restore implements logger {
 
     /** @var restore_model */
     protected $model;
-    /** @var remote_backup */
-    protected $remotebackup;
+    /** @var check_base[] */
+    protected $prechecks = null;
 
     /**
      * Constructor
@@ -67,7 +67,6 @@ class site_restore implements logger {
             return;
         }
 
-        $backupmetadata = api::get_remote_backup($backupkey, constants::STATUS_FINISHED);
         $model = new restore_model();
         $model
             ->set_status( constants::STATUS_SCHEDULED)
@@ -78,7 +77,6 @@ class site_restore implements logger {
                 'fullname' => fullname($USER),
                 'email' => $USER->email,
             ])
-            ->set_remote_details((array)$backupmetadata->to_object())
             ->save();
         $model->add_log("Restore scheduled");
         restore_task::schedule();
@@ -128,16 +126,8 @@ class site_restore implements logger {
             ->set_status(constants::STATUS_INPROGRESS)
             ->save();
         $this->add_to_log('Preparing to restore');
-        try {
-            $this->remotebackup = api::get_remote_backup($this->model->backupkey, constants::STATUS_FINISHED);
-        } catch (\moodle_exception $e) {
-            $error = "Backup with the key {$this->model->backupkey} is no longer avaialable";
-            throw new \moodle_exception($error);
-        }
-        $this->model
-            ->set_remote_details((array)$this->remotebackup->to_object())
-            ->save();
-        $this->remotebackup->ensure_version_compatibility();
+
+        $this->prechecks = site_restore_dryrun::execute_prechecks($this->model, $this);
 
         // Download files.
         $tempdir = make_request_directory();
