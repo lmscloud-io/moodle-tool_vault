@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="admin/tool/vault/db" VERSION="20220724" COMMENT="XMLDB file for Moodle admin/tool/vault"
+<XMLDB PATH="admin/tool/vault/db" VERSION="20220730" COMMENT="XMLDB file for Moodle admin/tool/vault"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
 >
@@ -23,6 +23,7 @@
         <FIELD NAME="type" TYPE="char" LENGTH="32" NOTNULL="false" SEQUENCE="false" COMMENT="Backup, restore or check type"/>
         <FIELD NAME="backupkey" TYPE="char" LENGTH="120" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="parentid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="remotedetails" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON-encoded metadata received from the remote source (original backup info for restores)"/>
@@ -31,6 +32,7 @@
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="parentid" TYPE="foreign" FIELDS="parentid" REFTABLE="tool_vault_operation" REFFIELDS="id"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="typestatustime" UNIQUE="false" FIELDS="type, status, timecreated"/>

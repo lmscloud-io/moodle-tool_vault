@@ -19,6 +19,7 @@ namespace tool_vault\output;
 use renderer_base;
 use stdClass;
 use tool_vault\api;
+use tool_vault\site_restore_dryrun;
 
 /**
  * Remote backup
@@ -62,6 +63,9 @@ class remote_backup implements \templatable {
         $restoreurl = new \moodle_url($PAGE->url,
             ['section' => 'restore', 'action' => 'restore',
                 'backupkey' => $this->backup->backupkey, 'sesskey' => sesskey()]);
+        $dryrunurl = new \moodle_url($PAGE->url,
+            ['section' => 'restore', 'action' => 'dryrun',
+                'backupkey' => $this->backup->backupkey, 'sesskey' => sesskey()]);
         $rv = [
             'sectionurl' => $PAGE->url->out(false),
             'showdetails' => $this->extradetails,
@@ -71,6 +75,7 @@ class remote_backup implements \templatable {
             'info' => $this->backup->info,
             'isfinished' => ($this->backup->status === \tool_vault\constants::STATUS_FINISHED),
             'viewurl' => $viewurl->out(false),
+            'dryrunurl' => $dryrunurl->out(false),
             'restoreurl' => $restoreurl->out(false),
             // @codingStandardsIgnoreLine
             'details' => $this->extradetails ? print_r($this->backup->to_object(), true) : '',
@@ -88,6 +93,10 @@ class remote_backup implements \templatable {
             $rv['restorenotallowedreason'] = (new \core\output\notification($error, null, false))->export_for_template($output);
         } else {
             $rv['restoreallowed'] = true;
+        }
+
+        if ($dryrun = site_restore_dryrun::get_last_dryrun($this->backup)) {
+            $rv['lastdryrun'] = (new dryrun($dryrun))->export_for_template($output);
         }
         return $rv;
     }

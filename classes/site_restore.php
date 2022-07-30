@@ -114,7 +114,7 @@ class site_restore implements logger {
      */
     public function mark_as_failed(\Throwable $t) {
         $this->restore->set_status(constants::STATUS_FAILED)->save();
-        $this->add_to_log('Backup failed: '.$t->getMessage(), constants::LOGLEVEL_ERROR);
+        $this->add_to_log('Restore failed: '.$t->getMessage(), constants::LOGLEVEL_ERROR);
     }
 
     /**
@@ -171,9 +171,8 @@ class site_restore implements logger {
         $this->restore_dataroot($datarootfiles);
         $this->restore_filedir($filedirpath);
 
-        $this->restore->set_status(constants::STATUS_FINISHED)->save();
-
         $this->post_restore();
+        $this->restore->set_status(constants::STATUS_FINISHED)->save();
         $this->add_to_log('Restore finished');
     }
 

@@ -33,6 +33,7 @@ use tool_vault\constants;
  * @property-read string $remotedetails
  * @property-read string $details
  * @property-read string $accesskey
+ * @property-read int $parentid
  */
 abstract class operation {
     /** @var array */
@@ -55,6 +56,7 @@ abstract class operation {
         'details',
         'remotedetails',
         'accesskey',
+        'parentid',
     ];
 
     /**
@@ -65,7 +67,7 @@ abstract class operation {
     public function __construct(?\stdClass $record = null) {
         $record = $record ?? new \stdClass();
         foreach ($record as $key => $value) {
-            if (!in_array($key, array_merge(self::$fields, ['id', 'timecreated', 'timemodified']))) {
+            if (!in_array($key, array_merge(self::$fields, ['id', 'timecreated', 'timemodified', 'parentid']))) {
                 throw new \coding_exception('Unknown field '.$key);
             }
         }

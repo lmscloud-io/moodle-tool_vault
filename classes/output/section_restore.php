@@ -45,6 +45,14 @@ class section_restore extends section_base implements \templatable {
             redirect($PAGE->url);
         }
 
+        if ($action === 'dryrun' && confirm_sesskey()) {
+            $backupkey = required_param('backupkey', PARAM_ALPHANUMEXT);
+            \tool_vault\site_restore_dryrun::schedule_dryrun($backupkey);
+            $viewurl = new \moodle_url($PAGE->url,
+                ['section' => 'restore', 'action' => 'remotedetails', 'backupkey' => $backupkey]);
+            redirect($viewurl);
+        }
+
         if ($action === 'updateremote' && confirm_sesskey()) {
             api::store_config('cachedremotebackups', null);
             redirect($PAGE->url);

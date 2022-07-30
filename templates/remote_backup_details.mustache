@@ -15,7 +15,7 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template tool_vault/remote_backup_details_details
+    @template tool_vault/remote_backup_details
 
     Example context (json):
     {
@@ -39,6 +39,9 @@
 
 <p>Backup: {{backupkey}} - {{status}} - {{started}} - {{info.description}} </p>
 {{#showdetails}}
+    {{#lastdryrun}}
+        {{> tool_vault/dryrun }}
+    {{/lastdryrun}}
     <pre>
         {{{details}}}
     </pre>
@@ -51,6 +54,7 @@
         <a href="{{viewurl}}" class="btn btn-secondary">View more details</a>
     {{/showdetails}}
     {{#isfinished}}
+        <a href="{{dryrunurl}}" class="btn btn-secondary">Run pre-check</a>
         <a href="{{restoreurl}}" class="btn btn-secondary {{^restoreallowed}}disabled{{/restoreallowed}}">Restore this backup</a>
     {{/isfinished}}
 </p>

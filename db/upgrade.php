@@ -241,5 +241,27 @@ function xmldb_tool_vault_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2022072304, 'tool', 'vault');
     }
 
+    if ($oldversion < 2022073000) {
+
+        // Define field parentid to be added to tool_vault_operation.
+        $table = new xmldb_table('tool_vault_operation');
+        $field = new xmldb_field('parentid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'status');
+
+        // Conditionally launch add field parentid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define key parentid (foreign) to be added to tool_vault_operation.
+        $table = new xmldb_table('tool_vault_operation');
+        $key = new xmldb_key('parentid', XMLDB_KEY_FOREIGN, ['parentid'], 'tool_vault_operation', ['id']);
+
+        // Launch add key parentid.
+        $dbman->add_key($table, $key);
+
+        // Vault savepoint reached.
+        upgrade_plugin_savepoint(true, 2022073000, 'tool', 'vault');
+    }
+
     return true;
 }

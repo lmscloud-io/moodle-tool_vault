@@ -291,10 +291,12 @@ class api {
             $records = $apiresult['backups'];
             self::store_config('cachedremotebackups', json_encode($apiresult['backups']));
         }
-        $backups = array_map(function($b) {
-            return new remote_backup($b);
-        }, $records);
-        usort($backups, function($a, $b) {
+        $backups = [];
+        foreach ($records as $record) {
+            $backup = new remote_backup($record);
+            $backups[$backup->backupkey] = $backup;
+        }
+        uasort($backups, function($a, $b) {
             return - $a->timecreated + $b->timecreated;
         });
         return $backups;
@@ -319,6 +321,7 @@ class api {
     public static function get_remote_backup(string $backupkey, ?string $withstatus = null): remote_backup {
         $result = self::api_call("backups/{$backupkey}", 'GET');
         if (isset($withstatus) && $result['status'] !== $withstatus) {
+            // TODO this is only executed for finished backups, improve the message.
             throw new \moodle_exception('Backup has a wrong status');
         }
         $result['backupkey'] = $backupkey;

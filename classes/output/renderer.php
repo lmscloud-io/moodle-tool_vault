@@ -23,6 +23,7 @@ use tool_vault\api;
 use tool_vault\local\models\remote_backup;
 use tool_vault\local\models\restore;
 use tool_vault\local\models\backup;
+use tool_vault\site_restore_dryrun;
 
 /**
  * Plugin renderer
@@ -69,7 +70,7 @@ class renderer extends plugin_renderer_base {
             return $this->render_from_template('tool_vault/restore_details', $data);
         }
 
-        if ($action === 'remotedetails' && $backupkey && ($backup = api::get_remote_backup($backupkey))) {
+        if ($action === 'remotedetails' && $backupkey && ($backup = (api::get_remote_backups()[$backupkey] ?? null))) {
             $data = (new \tool_vault\output\remote_backup($backup, true))->export_for_template($this);
             return $this->render_from_template('tool_vault/remote_backup_details', $data);
         }
