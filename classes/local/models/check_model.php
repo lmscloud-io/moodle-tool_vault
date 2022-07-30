@@ -23,7 +23,7 @@ namespace tool_vault\local\models;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class check extends operation {
+class check_model extends operation_model {
     /** @var string */
     protected static $defaulttypeprefix = 'check:';
 
@@ -70,7 +70,7 @@ class check extends operation {
      * @param int $id
      * @return static|null
      */
-    public static function get_by_id(int $id): ?operation {
+    public static function get_by_id(int $id): ?operation_model {
         if (($model = parent::get_by_id($id)) && self::validate_type($model->type)) {
             return $model;
         }

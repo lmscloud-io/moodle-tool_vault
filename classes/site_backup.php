@@ -16,12 +16,12 @@
 
 namespace tool_vault;
 
-use tool_vault\local\checks\base;
+use tool_vault\local\checks\check_base;
 use tool_vault\local\checks\configoverride;
 use tool_vault\local\checks\dbstatus;
 use tool_vault\local\checks\diskspace;
 use tool_vault\local\logger;
-use tool_vault\local\models\backup;
+use tool_vault\local\models\backup_model;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\local\xmldb\dbtable;
 use tool_vault\task\backup_task;
@@ -34,18 +34,18 @@ use tool_vault\task\backup_task;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class site_backup implements logger {
-    /** @var backup */
-    protected $backup;
-    /** @var \tool_vault\local\checks\base[] */
+    /** @var backup_model */
+    protected $model;
+    /** @var \tool_vault\local\checks\check_base[] */
     protected $prechecks = [];
 
     /**
      * Constructor
      *
-     * @param backup $backup
+     * @param backup_model $model
      */
-    public function __construct(backup $backup) {
-        $this->backup = $backup;
+    public function __construct(backup_model $model) {
+        $this->model = $model;
     }
 
     /**
@@ -93,17 +93,17 @@ class site_backup implements logger {
      */
     public static function schedule_backup() {
         global $USER;
-        if (backup::get_records([constants::STATUS_SCHEDULED])) {
+        if (backup_model::get_records([constants::STATUS_SCHEDULED])) {
             // Pressed button twice maybe?
             return;
         }
-        if (backup::get_records([constants::STATUS_INPROGRESS])) {
+        if (backup_model::get_records([constants::STATUS_INPROGRESS])) {
             throw new \moodle_exception('Another backup is in progress');
         }
 
-        $backup = new backup((object)[]);
-        $backup->set_status(constants::STATUS_SCHEDULED)->set_details(['usercreated' => $USER->id])->save();
-        $backup->add_log("Backup scheduled");
+        $model = new backup_model((object)[]);
+        $model->set_status(constants::STATUS_SCHEDULED)->set_details(['usercreated' => $USER->id])->save();
+        $model->add_log("Backup scheduled");
         backup_task::schedule();
     }
 
@@ -137,12 +137,12 @@ class site_backup implements logger {
         if (!api::is_registered()) {
             throw new \moodle_exception('API key not found');
         }
-        $backup = backup::get_scheduled_backup();
-        if (!$backup) {
+        $model = backup_model::get_scheduled_backup();
+        if (!$model) {
             throw new \moodle_exception('No scheduled backup');
         }
-        $backup->set_pid_for_logging($pid);
-        $instance = new static($backup);
+        $model->set_pid_for_logging($pid);
+        $instance = new static($model);
 
         $params = [
             'description' => $CFG->wwwroot.' by '.fullname($USER), // TODO from the form.
@@ -153,7 +153,7 @@ class site_backup implements logger {
             $backupkey = api::request_new_backup_key($params);
         } catch (\Throwable $t) {
             // API rejected - above limit/quota. TODO store details of failure? how to notify user?
-            $backup
+            $model
                 ->set_status(constants::STATUS_FAILEDTOSTART)
                 ->set_details($params)
                 ->save();
@@ -161,7 +161,7 @@ class site_backup implements logger {
                 constants::LOGLEVEL_ERROR);
             throw $t;
         }
-        $backup
+        $model
             ->set_backupkey($backupkey)
             ->set_status(constants::STATUS_INPROGRESS)
             ->set_details($params)
@@ -177,10 +177,10 @@ class site_backup implements logger {
      * @return void
      */
     public function mark_as_failed(\Throwable $t) {
-        $this->backup->set_status(constants::STATUS_FAILED)->save();
+        $this->model->set_status(constants::STATUS_FAILED)->save();
         $this->add_to_log('Backup failed: '.$t->getMessage(), constants::LOGLEVEL_ERROR);
         try {
-            api::update_backup($this->backup->backupkey, ['faileddetails' => $t->getMessage()], 'failed');
+            api::update_backup($this->model->backupkey, ['faileddetails' => $t->getMessage()], 'failed');
         } catch (\Throwable $tapi) {
             // One of the reason for the failed backup - impossible to communicate with the API,
             // in which case this request will also fail.
@@ -194,7 +194,7 @@ class site_backup implements logger {
      * @return void
      */
     public function prepare() {
-        /** @var base[] $prechecks */
+        /** @var check_base[] $prechecks */
         $prechecks = [
             dbstatus::class,
             diskspace::class,
@@ -202,7 +202,7 @@ class site_backup implements logger {
         ];
         foreach ($prechecks as $classname) {
             $this->add_to_log('Backup pre-check: '.$classname::get_display_name().'...');
-            if (($chk = $classname::create_and_run($this->backup)) && $chk->success()) {
+            if (($chk = $classname::create_and_run($this->model)) && $chk->success()) {
                 $this->prechecks[$chk->get_name()] = $chk;
                 $this->add_to_log('...OK');
             } else {
@@ -217,8 +217,7 @@ class site_backup implements logger {
      * @return void
      */
     public function execute() {
-        $backup = $this->backup;
-        if (!$backup || $backup->status !== constants::STATUS_INPROGRESS) {
+        if (!$this->model || $this->model->status !== constants::STATUS_INPROGRESS) {
             throw new \moodle_exception('Backup in progress not found');
         }
 
@@ -229,24 +228,24 @@ class site_backup implements logger {
         $filepaths = $this->export_db();
         $this->add_to_log('...done');
         foreach ($filepaths as $filepath) {
-            $totalsize += api::upload_backup_file($this->backup->backupkey, $filepath, 'application/zip', $this);
+            $totalsize += api::upload_backup_file($this->model->backupkey, $filepath, 'application/zip', $this);
         }
 
         $this->add_to_log('Exporting dataroot...');
         $filepath = $this->export_dataroot();
         $this->add_to_log('...done');
-        $totalsize += api::upload_backup_file($this->backup->backupkey, $filepath, 'application/zip', $this);
+        $totalsize += api::upload_backup_file($this->model->backupkey, $filepath, 'application/zip', $this);
 
         $this->add_to_log('Exporting files...');
         $filepaths = $this->export_filedir();
         $this->add_to_log('...done');
         foreach ($filepaths as $filepath) {
-            $totalsize += api::upload_backup_file($this->backup->backupkey, $filepath, 'application/zip', $this);
+            $totalsize += api::upload_backup_file($this->model->backupkey, $filepath, 'application/zip', $this);
         }
 
         $this->add_to_log('Total size of backup: '.display_size($totalsize));
-        api::update_backup($this->backup->backupkey, ['totalsize' => $totalsize], constants::STATUS_FINISHED);
-        $backup->set_status(constants::STATUS_FINISHED)->save();
+        api::update_backup($this->model->backupkey, ['totalsize' => $totalsize], constants::STATUS_FINISHED);
+        $this->model->set_status(constants::STATUS_FINISHED)->save();
         $this->add_to_log('Backup finished');
 
         // TODO notify user.
@@ -539,10 +538,10 @@ class site_backup implements logger {
      * @return void
      */
     public function add_to_log(string $message, string $loglevel = constants::LOGLEVEL_INFO) {
-        if ($this->backup && $this->backup->id) {
-            $logrecord = $this->backup->add_log($message, $loglevel);
+        if ($this->model && $this->model->id) {
+            $logrecord = $this->model->add_log($message, $loglevel);
             if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
-                mtrace($this->backup->format_log_line($logrecord, false));
+                mtrace($this->model->format_log_line($logrecord, false));
             }
         }
     }

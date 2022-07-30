@@ -28,7 +28,7 @@ use tool_vault\site_restore;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class diskspace extends base {
+class diskspace extends check_base {
     /** @var array  */
     protected $tablesizes = [];
     /** @var array  */

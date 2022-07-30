@@ -28,7 +28,7 @@
  */
 function xmldb_tool_vault_install() {
 
-    \tool_vault\local\checks\base::get_all_checks();
+    \tool_vault\local\checks\check_base::get_all_checks();
 
     \tool_vault\api::insert_default_config();
 

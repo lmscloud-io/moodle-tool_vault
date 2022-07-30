@@ -18,7 +18,6 @@ namespace tool_vault\output;
 
 use renderer_base;
 use tool_vault\constants;
-use tool_vault\local\checks\base;
 use tool_vault\site_restore_dryrun;
 
 /**
@@ -31,8 +30,6 @@ use tool_vault\site_restore_dryrun;
 class dryrun implements \templatable {
     /** @var site_restore_dryrun */
     protected $dryrun;
-    /** @var \tool_vault\local\models\dryrun */
-    protected $model;
 
     /**
      * Constructor
@@ -41,7 +38,6 @@ class dryrun implements \templatable {
      */
     public function __construct(site_restore_dryrun $dryrun) {
         $this->dryrun = $dryrun;
-        $this->model = $dryrun->get_model();
     }
 
     /**
@@ -51,21 +47,22 @@ class dryrun implements \templatable {
      * @return array
      */
     public function export_for_template(renderer_base $output) {
-        $isfinished = $this->model->status === constants::STATUS_FINISHED;
+        $model = $this->dryrun->get_model();
+        $isfinished = $model->status === constants::STATUS_FINISHED;
         $prechecks = [];
         foreach ($this->dryrun->get_prechecks() as $check) {
             $prechecks[] = (new check_display($check))->export_for_template($output);
         }
         return [
-            'title' => $this->model->get_title(),
-            'subtitle' => $this->model->get_subtitle(),
+            'title' => $model->get_title(),
+            'subtitle' => $model->get_subtitle(),
             'summary' => '<pre>'.
                 // @codingStandardsIgnoreLine
-                print_r($this->model->get_metadata(), true).
+                print_r($model->get_metadata(), true).
                 // @codingStandardsIgnoreLine
-                print_r($this->model->get_files(), true).
+                print_r($model->get_files(), true).
                 '</pre>',
-            'logs' => $isfinished ? '' : $this->model->get_logs(),
+            'logs' => $isfinished ? '' : $model->get_logs(),
             'prechecks' => $prechecks,
         ];
     }

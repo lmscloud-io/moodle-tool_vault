@@ -16,7 +16,7 @@
 
 namespace tool_vault\output;
 
-use tool_vault\local\models\restore;
+use tool_vault\local\models\restore_model;
 
 /**
  * Restore details
@@ -26,15 +26,15 @@ use tool_vault\local\models\restore;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_details implements \templatable {
-    /** @var restore */
+    /** @var restore_model */
     protected $restore;
 
     /**
      * Constructor
      *
-     * @param restore $restore
+     * @param restore_model $restore
      */
-    public function __construct(restore $restore) {
+    public function __construct(restore_model $restore) {
         $this->restore = $restore;
     }
 

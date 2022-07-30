@@ -25,7 +25,7 @@ use tool_vault\constants;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class configoverride extends base {
+class configoverride extends check_base {
 
     // TODO. Recommend not to include settings that contain paths to executables.
 

@@ -16,8 +16,8 @@
 
 namespace tool_vault;
 
-use tool_vault\local\models\backup;
-use tool_vault\local\models\restore;
+use tool_vault\local\models\backup_model;
+use tool_vault\local\models\restore_model;
 
 /**
  * The site_restore_test test class.
@@ -36,7 +36,7 @@ class site_restore_test extends \advanced_testcase {
      * @return site_backup
      */
     protected function create_site_backup() {
-        $backup = new backup((object)['status' => constants::STATUS_INPROGRESS]);
+        $backup = new backup_model((object)['status' => constants::STATUS_INPROGRESS]);
         $backup->save();
         return new site_backup($backup);
     }
@@ -48,7 +48,7 @@ class site_restore_test extends \advanced_testcase {
      * @throws \coding_exception
      */
     protected function create_site_restore() {
-        $restore = new restore((object)['status' => constants::STATUS_INPROGRESS]);
+        $restore = new restore_model((object)['status' => constants::STATUS_INPROGRESS]);
         $restore->save();
         return new site_restore($restore);
     }

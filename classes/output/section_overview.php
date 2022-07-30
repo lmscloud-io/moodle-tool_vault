@@ -18,7 +18,7 @@ namespace tool_vault\output;
 
 use renderer_base;
 use stdClass;
-use tool_vault\local\checks\base;
+use tool_vault\local\checks\check_base;
 
 /**
  * Tab overview
@@ -37,7 +37,7 @@ class section_overview extends section_base {
         $action = optional_param('action', null, PARAM_ALPHANUMEXT);
 
         if ($action === 'newcheck' && confirm_sesskey()) {
-            base::schedule_new(required_param('type', PARAM_ALPHANUMEXT));
+            check_base::schedule_new(required_param('type', PARAM_ALPHANUMEXT));
             redirect($PAGE->url);
         }
     }

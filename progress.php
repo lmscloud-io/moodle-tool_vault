@@ -28,7 +28,7 @@ require(__DIR__ . '/../../../config.php');
 
 $accesskey = required_param('accesskey', PARAM_ALPHANUM);
 $PAGE->set_url(new moodle_url('/admin/tool/vault/progress.php', ['accesskey' => $accesskey]));
-$operation = \tool_vault\local\models\operation::get_by_access_key($accesskey);
+$operation = \tool_vault\local\models\operation_model::get_by_access_key($accesskey);
 
 $PAGE->set_pagelayout('embedded');
 $PAGE->set_heading(get_string('pluginname', 'tool_vault'));
@@ -42,10 +42,10 @@ $renderer = $PAGE->get_renderer('tool_vault');
 echo $renderer->header();
 
 echo html_writer::start_div('p-3');
-if ($operation instanceof \tool_vault\local\models\backup) {
+if ($operation instanceof \tool_vault\local\models\backup_model) {
     $data = (new \tool_vault\output\backup_details($operation))->export_for_template($renderer);
     echo $renderer->render_from_template('tool_vault/backup_details', $data);
-} else if ($operation instanceof \tool_vault\local\models\restore) {
+} else if ($operation instanceof \tool_vault\local\models\restore_model) {
     $data = (new \tool_vault\output\restore_details($operation))->export_for_template($renderer);
     echo $renderer->render_from_template('tool_vault/restore_details', $data);
 } else {

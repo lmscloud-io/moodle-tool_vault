@@ -17,7 +17,7 @@
 namespace tool_vault\local\checks;
 
 use tool_vault\constants;
-use tool_vault\local\models\dryrun;
+use tool_vault\local\models\dryrun_model;
 
 /**
  * Check version on restore
@@ -26,13 +26,13 @@ use tool_vault\local\models\dryrun;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class version_restore extends base {
+class version_restore extends check_base {
 
     /**
      * Evaluate check and store results in model details
      */
     public function perform(): void {
-        /** @var dryrun $parent */
+        /** @var dryrun_model $parent */
         $parent = $this->get_parent();
         $this->model->set_details([
             'backupversion' => $parent->get_metadata()['version'],

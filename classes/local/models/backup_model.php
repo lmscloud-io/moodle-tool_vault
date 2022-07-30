@@ -25,7 +25,7 @@ use tool_vault\constants;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class backup extends operation {
+class backup_model extends operation_model {
     /** @var string */
     protected static $defaulttype = 'backup';
 
@@ -61,7 +61,7 @@ class backup extends operation {
      * @return static|null
      */
     public static function get_by_backup_key(string $backupkey): ?self {
-        /** @var backup[] $records */
+        /** @var backup_model[] $records */
         $records = self::get_records_select(
             "type = :type AND backupkey = :backupkey",
             ['type' => self::$defaulttype, 'backupkey' => $backupkey]);
@@ -73,8 +73,8 @@ class backup extends operation {
      *
      * @return false|mixed
      */
-    public static function get_scheduled_backup(): ?backup {
-        /** @var backup[] $backups */
+    public static function get_scheduled_backup(): ?backup_model {
+        /** @var backup_model[] $backups */
         $backups = self::get_records([constants::STATUS_SCHEDULED]);
         return $backups ? reset($backups) : null;
     }
@@ -84,8 +84,8 @@ class backup extends operation {
      *
      * @return \stdClass|null
      */
-    public static function get_backup_in_progress(): ?backup {
-        /** @var backup[] $backups */
+    public static function get_backup_in_progress(): ?backup_model {
+        /** @var backup_model[] $backups */
         $backups = self::get_records([constants::STATUS_INPROGRESS]);
         return $backups ? reset($backups) : null;
     }
@@ -93,10 +93,10 @@ class backup extends operation {
     /**
      * Get the last backup scheduled on this server
      *
-     * @return ?backup
+     * @return ?backup_model
      */
-    public static function get_last_backup(): ?backup {
-        /** @var backup[] $backups */
+    public static function get_last_backup(): ?backup_model {
+        /** @var backup_model[] $backups */
         $backups = self::get_records();
         return $backups ? reset($backups) : null;
     }

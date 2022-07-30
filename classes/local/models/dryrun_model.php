@@ -25,7 +25,7 @@ use tool_vault\constants;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class dryrun extends operation {
+class dryrun_model extends operation_model {
     /** @var string */
     protected static $defaulttype = 'dryrun';
 
@@ -35,7 +35,7 @@ class dryrun extends operation {
      * @return string
      */
     public function get_title() {
-        $title = 'Remote backup pre-check ' . $this->backupkey;
+        $title = 'Restore pre-check ' . $this->backupkey;
         if ($this->status === constants::STATUS_SCHEDULED) {
             $title .= ' (scheduled)';
         }

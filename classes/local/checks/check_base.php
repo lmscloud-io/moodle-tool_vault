@@ -18,8 +18,8 @@ namespace tool_vault\local\checks;
 
 use renderer_base;
 use tool_vault\constants;
-use tool_vault\local\models\check;
-use tool_vault\local\models\operation;
+use tool_vault\local\models\check_model;
+use tool_vault\local\models\operation_model;
 use tool_vault\task\check_task;
 
 /**
@@ -29,18 +29,18 @@ use tool_vault\task\check_task;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class base {
-    /** @var check */
+abstract class check_base {
+    /** @var check_model */
     protected $model;
-    /** @var operation */
+    /** @var operation_model */
     protected $parent;
 
     /**
      * Constructor
      *
-     * @param check $model
+     * @param check_model $model
      */
-    protected function __construct(check $model) {
+    protected function __construct(check_model $model) {
         $this->model = $model;
     }
 
@@ -64,7 +64,7 @@ abstract class base {
      * @return static|null
      */
     public static function load(int $id): ?self {
-        $model = check::get_by_id($id);
+        $model = check_model::get_by_id($id);
         if (!$model) {
             return null;
         }
@@ -82,11 +82,11 @@ abstract class base {
     /**
      * Creates an instance of this class from a model
      *
-     * @param check $model
+     * @param check_model $model
      * @return static
      * @throws \coding_exception
      */
-    protected static function instance(check $model): self {
+    protected static function instance(check_model $model): self {
         $checkname = $model->get_check_name();
         if (clean_param($checkname, PARAM_ALPHANUMEXT) !== $checkname || !strlen($checkname)) {
             throw new \coding_exception('Check name is not valid');
@@ -108,7 +108,7 @@ abstract class base {
      * @return self[]
      */
     public static function get_all_checks_for_operation(int $operationid): array {
-        $checks = check::get_all_checks_for_operation($operationid);
+        $checks = check_model::get_all_checks_for_operation($operationid);
         $res = [];
         foreach ($checks as $check) {
             $res[] = self::instance($check);
@@ -122,8 +122,8 @@ abstract class base {
      * @return self[]
      */
     public static function get_scheduled(): array {
-        /** @var check[] $models */
-        $models = check::get_records([constants::STATUS_SCHEDULED]);
+        /** @var check_model[] $models */
+        $models = check_model::get_records([constants::STATUS_SCHEDULED]);
         $res = [];
         foreach ($models as $model) {
             try {
@@ -148,9 +148,9 @@ abstract class base {
     /**
      * Get the model
      *
-     * @return check
+     * @return check_model
      */
-    public function get_model(): check {
+    public function get_model(): check_model {
         return $this->model;
     }
 
@@ -161,7 +161,7 @@ abstract class base {
      */
     public static function get_last_check(): self {
         global $DB;
-        $records = check::get_checks_by_type(static::get_name());
+        $records = check_model::get_checks_by_type(static::get_name());
         if (!$records) {
             return self::schedule_new(static::get_name());
         } else {
@@ -190,7 +190,7 @@ abstract class base {
      * @return static
      */
     public static function schedule_new(string $type): self {
-        $model = new check((object)['status' => constants::STATUS_SCHEDULED], $type);
+        $model = new check_model((object)['status' => constants::STATUS_SCHEDULED], $type);
         $obj = self::instance($model);
         $model->save();
         check_task::schedule();
@@ -200,13 +200,13 @@ abstract class base {
     /**
      * Run individual check from CLI
      *
-     * @param operation|null $parent
+     * @param operation_model|null $parent
      * @return static
      */
-    public static function create_and_run(?operation $parent = null): self {
+    public static function create_and_run(?operation_model $parent = null): self {
         // TODO check - only to use from CLI.
         // TODO make sure there is nothing else scheduled.
-        $model = new check((object)['status' => constants::STATUS_INPROGRESS, 'parentid' => $parent ? $parent->id : null],
+        $model = new check_model((object)['status' => constants::STATUS_INPROGRESS, 'parentid' => $parent ? $parent->id : null],
             self::get_name());
         $obj = static::instance($model);
         $obj->parent = $parent;
@@ -329,9 +329,9 @@ abstract class base {
     /**
      * Get parent
      *
-     * @return operation|null
+     * @return operation_model|null
      */
-    public function get_parent(): ?operation {
+    public function get_parent(): ?operation_model {
         return $this->parent;
     }
 }

@@ -18,7 +18,7 @@ namespace tool_vault\output;
 
 use tool_vault\api;
 use tool_vault\form\general_settings_form;
-use tool_vault\local\models\backup;
+use tool_vault\local\models\backup_model;
 
 /**
  * Tab backup
@@ -58,13 +58,13 @@ class section_backup extends section_base implements \templatable {
         $result = [
             'canstartbackup' => false,
         ];
-        if ($backup = backup::get_scheduled_backup()) {
+        if ($backup = backup_model::get_scheduled_backup()) {
             $result['lastbackup'] = [
                 'title' => $backup->get_title(),
                 'subtitle' => $backup->get_subtitle(),
                 'summary' => 'You backup is now scheduled and will be executed during the next cron run',
             ];
-        } else if ($backup = backup::get_backup_in_progress()) {
+        } else if ($backup = backup_model::get_backup_in_progress()) {
             $result['lastbackup'] = [
                 'title' => $backup->get_title(),
                 'subtitle' => $backup->get_subtitle(),
@@ -72,7 +72,7 @@ class section_backup extends section_base implements \templatable {
                 'logs' => $backup->get_logs_shortened(),
             ];
             $result['showdetailslink'] = 1;
-        } else if ($backup = backup::get_last_backup()) {
+        } else if ($backup = backup_model::get_last_backup()) {
             $result['lastbackup'] = [
                 'title' => $backup->get_title(),
                 'subtitle' => $backup->get_subtitle(),

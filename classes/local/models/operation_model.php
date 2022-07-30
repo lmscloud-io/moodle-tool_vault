@@ -35,7 +35,7 @@ use tool_vault\constants;
  * @property-read string $accesskey
  * @property-read int $parentid
  */
-abstract class operation {
+abstract class operation_model {
     /** @var array */
     protected $data;
     /** @var int process id, not stored in DB but used for logging */
@@ -252,7 +252,7 @@ abstract class operation {
      * @param string $sql
      * @param array $params
      * @param string $sort
-     * @return operation[]
+     * @return operation_model[]
      */
     protected static function get_records_select(string $sql, array $params = [], string $sort = 'timecreated DESC'): array {
         global $DB;
@@ -351,9 +351,9 @@ abstract class operation {
         $record = $DB->get_record(self::TABLE, ['accesskey' => $accesskey]);
         if ($record) {
             if ($record->type === 'backup') {
-                return new backup($record);
+                return new backup_model($record);
             } else if ($record->type === 'restore') {
-                return new restore($record);
+                return new restore_model($record);
             }
         }
         return null;

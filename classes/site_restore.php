@@ -18,7 +18,7 @@ namespace tool_vault;
 
 use tool_vault\local\logger;
 use tool_vault\local\models\remote_backup;
-use tool_vault\local\models\restore;
+use tool_vault\local\models\restore_model;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\task\restore_task;
 
@@ -31,27 +31,27 @@ use tool_vault\task\restore_task;
  */
 class site_restore implements logger {
 
-    /** @var restore */
-    protected $restore;
+    /** @var restore_model */
+    protected $model;
     /** @var remote_backup */
     protected $remotebackup;
 
     /**
      * Constructor
      *
-     * @param restore $restore
+     * @param restore_model $model
      */
-    public function __construct(restore $restore) {
-        $this->restore = $restore;
+    public function __construct(restore_model $model) {
+        $this->model = $model;
     }
 
     /**
      * Get the last restore performed on this server
      *
-     * @return ?restore
+     * @return ?restore_model
      */
-    public static function get_last_restore(): ?restore {
-        $records = restore::get_records();
+    public static function get_last_restore(): ?restore_model {
+        $records = restore_model::get_records();
         return $records ? reset($records) : null;
     }
 
@@ -68,8 +68,8 @@ class site_restore implements logger {
         }
 
         $backupmetadata = api::get_remote_backup($backupkey, constants::STATUS_FINISHED);
-        $restore = new restore();
-        $restore
+        $model = new restore_model();
+        $model
             ->set_status( constants::STATUS_SCHEDULED)
             ->set_backupkey($backupkey)
             ->set_details([
@@ -80,7 +80,7 @@ class site_restore implements logger {
             ])
             ->set_remote_details((array)$backupmetadata->to_object())
             ->save();
-        $restore->add_log("Restore scheduled");
+        $model->add_log("Restore scheduled");
         restore_task::schedule();
     }
 
@@ -97,13 +97,13 @@ class site_restore implements logger {
         if (!api::are_restores_allowed()) {
             throw new \moodle_exception('restoresnotallowed', 'tool_vault');
         }
-        $records = restore::get_records([constants::STATUS_SCHEDULED]);
+        $records = restore_model::get_records([constants::STATUS_SCHEDULED]);
         if (!$records) {
             throw new \moodle_exception('No restores scheduled');
         }
-        $restore = reset($records);
-        $restore->set_pid_for_logging($pid);
-        return new static($restore);
+        $model = reset($records);
+        $model->set_pid_for_logging($pid);
+        return new static($model);
     }
 
     /**
@@ -113,7 +113,7 @@ class site_restore implements logger {
      * @return void
      */
     public function mark_as_failed(\Throwable $t) {
-        $this->restore->set_status(constants::STATUS_FAILED)->save();
+        $this->model->set_status(constants::STATUS_FAILED)->save();
         $this->add_to_log('Restore failed: '.$t->getMessage(), constants::LOGLEVEL_ERROR);
     }
 
@@ -124,17 +124,17 @@ class site_restore implements logger {
      * @throws \moodle_exception
      */
     public function execute() {
-        $this->restore
+        $this->model
             ->set_status(constants::STATUS_INPROGRESS)
             ->save();
         $this->add_to_log('Preparing to restore');
         try {
-            $this->remotebackup = api::get_remote_backup($this->restore->backupkey, constants::STATUS_FINISHED);
+            $this->remotebackup = api::get_remote_backup($this->model->backupkey, constants::STATUS_FINISHED);
         } catch (\moodle_exception $e) {
-            $error = "Backup with the key {$this->restore->backupkey} is no longer avaialable";
+            $error = "Backup with the key {$this->model->backupkey} is no longer avaialable";
             throw new \moodle_exception($error);
         }
-        $this->restore
+        $this->model
             ->set_remote_details((array)$this->remotebackup->to_object())
             ->save();
         $this->remotebackup->ensure_version_compatibility();
@@ -150,10 +150,10 @@ class site_restore implements logger {
         $filepath2 = $tempdir.DIRECTORY_SEPARATOR.$filename2;
         $filepath3 = $tempdir.DIRECTORY_SEPARATOR.$filename3;
 
-        api::download_backup_file($this->restore->backupkey, $filepath0, $this);
-        api::download_backup_file($this->restore->backupkey, $filepath1, $this);
-        api::download_backup_file($this->restore->backupkey, $filepath2, $this);
-        api::download_backup_file($this->restore->backupkey, $filepath3, $this);
+        api::download_backup_file($this->model->backupkey, $filepath0, $this);
+        api::download_backup_file($this->model->backupkey, $filepath1, $this);
+        api::download_backup_file($this->model->backupkey, $filepath2, $this);
+        api::download_backup_file($this->model->backupkey, $filepath3, $this);
 
         $structure = $this->prepare_restore_db($filepath0);
         $datarootfiles = $this->prepare_restore_dataroot($filepath2);
@@ -172,7 +172,7 @@ class site_restore implements logger {
         $this->restore_filedir($filedirpath);
 
         $this->post_restore();
-        $this->restore->set_status(constants::STATUS_FINISHED)->save();
+        $this->model->set_status(constants::STATUS_FINISHED)->save();
         $this->add_to_log('Restore finished');
     }
 
@@ -466,10 +466,10 @@ class site_restore implements logger {
      * @return void
      */
     public function add_to_log(string $message, string $loglevel = constants::LOGLEVEL_INFO) {
-        if ($this->restore && $this->restore->id) {
-            $logrecord = $this->restore->add_log($message, $loglevel);
+        if ($this->model && $this->model->id) {
+            $logrecord = $this->model->add_log($message, $loglevel);
             if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
-                mtrace($this->restore->format_log_line($logrecord, false));
+                mtrace($this->model->format_log_line($logrecord, false));
             }
         }
     }

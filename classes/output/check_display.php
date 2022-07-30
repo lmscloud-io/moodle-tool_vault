@@ -17,7 +17,7 @@
 namespace tool_vault\output;
 
 use renderer_base;
-use tool_vault\local\checks\base;
+use tool_vault\local\checks\check_base;
 
 /**
  * Display check results
@@ -28,7 +28,7 @@ use tool_vault\local\checks\base;
  */
 class check_display implements \templatable {
 
-    /** @var base */
+    /** @var check_base */
     protected $check;
     /** @var bool */
     protected $detailed;
@@ -36,10 +36,10 @@ class check_display implements \templatable {
     /**
      * Constructor
      *
-     * @param base $check
+     * @param check_base $check
      * @param bool $detailed
      */
-    public function __construct(base $check, bool $detailed = false) {
+    public function __construct(check_base $check, bool $detailed = false) {
         $this->check = $check;
         $this->detailed = $detailed;
     }

@@ -16,7 +16,7 @@
 
 namespace tool_vault;
 
-use tool_vault\local\models\backup;
+use tool_vault\local\models\backup_model;
 use tool_vault\local\xmldb\dbtable;
 
 /**
@@ -36,7 +36,7 @@ class site_backup_test extends \advanced_testcase {
      * @return site_backup
      */
     protected function create_site_backup() {
-        $backup = new backup((object)['status' => constants::STATUS_INPROGRESS]);
+        $backup = new backup_model((object)['status' => constants::STATUS_INPROGRESS]);
         $backup->save();
         return new site_backup($backup);
     }

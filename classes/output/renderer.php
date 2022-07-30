@@ -21,8 +21,8 @@ use moodle_url;
 use plugin_renderer_base;
 use tool_vault\api;
 use tool_vault\local\models\remote_backup;
-use tool_vault\local\models\restore;
-use tool_vault\local\models\backup;
+use tool_vault\local\models\restore_model;
+use tool_vault\local\models\backup_model;
 use tool_vault\site_restore_dryrun;
 
 /**
@@ -44,7 +44,7 @@ class renderer extends plugin_renderer_base {
         $action = optional_param('action', null, PARAM_ALPHANUMEXT);
         $id = optional_param('id', null, PARAM_INT);
 
-        if ($action === 'details' && $id && ($backup = backup::get_by_id($id))) {
+        if ($action === 'details' && $id && ($backup = backup_model::get_by_id($id))) {
             $data = (new backup_details($backup))->export_for_template($this);
             return $this->render_from_template('tool_vault/backup_details', $data);
         }
@@ -65,7 +65,7 @@ class renderer extends plugin_renderer_base {
         $id = optional_param('id', null, PARAM_INT);
         $backupkey = optional_param('backupkey', null, PARAM_ALPHANUMEXT);
 
-        if ($action === 'details' && $id && ($restore = restore::get_by_id($id))) {
+        if ($action === 'details' && $id && ($restore = restore_model::get_by_id($id))) {
             $data = (new restore_details($restore))->export_for_template($this);
             return $this->render_from_template('tool_vault/restore_details', $data);
         }
@@ -114,13 +114,13 @@ class renderer extends plugin_renderer_base {
         $action = optional_param('action', null, PARAM_ALPHANUMEXT);
         $id = optional_param('id', null, PARAM_INT);
 
-        if ($action === 'details' && $id && ($check = \tool_vault\local\checks\base::load($id)) && $check->has_details()) {
+        if ($action === 'details' && $id && ($check = \tool_vault\local\checks\check_base::load($id)) && $check->has_details()) {
             $data = (new check_display($check, true))->export_for_template($this);
             $data['details'] = $check->detailed_report();
             return $this->render_from_template('tool_vault/check_details', $data);
         }
 
-        foreach (\tool_vault\local\checks\base::get_all_checks() as $check) {
+        foreach (\tool_vault\local\checks\check_base::get_all_checks() as $check) {
             $data = (new check_display($check))->export_for_template($this);
             $rv .= $this->render_from_template('tool_vault/check_summary', $data);
         }

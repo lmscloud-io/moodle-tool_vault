@@ -17,7 +17,7 @@
 namespace tool_vault\output;
 
 use renderer_base;
-use tool_vault\local\models\backup;
+use tool_vault\local\models\backup_model;
 
 /**
  * Backup details
@@ -27,15 +27,15 @@ use tool_vault\local\models\backup;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_details implements \templatable {
-    /** @var backup */
+    /** @var backup_model */
     protected $backup;
 
     /**
      * Constructor
      *
-     * @param backup $backup
+     * @param backup_model $backup
      */
-    public function __construct(backup $backup) {
+    public function __construct(backup_model $backup) {
         $this->backup = $backup;
     }
 

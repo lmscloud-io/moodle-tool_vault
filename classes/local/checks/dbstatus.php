@@ -28,7 +28,7 @@ use tool_vault\local\xmldb\dbtable;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class dbstatus extends base {
+class dbstatus extends check_base {
 
     /** @var int */
     const STATUS_CLEAN = 1;

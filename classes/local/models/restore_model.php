@@ -25,7 +25,7 @@ use tool_vault\constants;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class restore extends operation {
+class restore_model extends operation_model {
     /** @var string */
     protected static $defaulttype = 'restore';
 
@@ -55,9 +55,9 @@ class restore extends operation {
     /**
      * Save record
      *
-     * @return operation
+     * @return operation_model
      */
-    public function save(): operation {
+    public function save(): operation_model {
         if (!$this->accesskey) {
             $this->generate_access_key();
         }

@@ -16,12 +16,11 @@
 
 namespace tool_vault;
 
-use tool_vault\local\checks\base;
+use tool_vault\local\checks\check_base;
 use tool_vault\local\checks\diskspace_restore;
 use tool_vault\local\checks\version_restore;
-use tool_vault\local\models\dryrun;
+use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\remote_backup;
-use tool_vault\local\models\restore;
 use tool_vault\task\dryrun_task;
 
 /**
@@ -33,20 +32,20 @@ use tool_vault\task\dryrun_task;
  */
 class site_restore_dryrun implements local\logger {
 
-    /** @var dryrun */
-    protected $dryrun;
+    /** @var dryrun_model */
+    protected $model;
     /** @var remote_backup */
     protected $remotebackup;
-    /** @var base[] */
+    /** @var check_base[] */
     protected $prechecks = null;
 
     /**
      * Constructor
      *
-     * @param dryrun $dryrun
+     * @param dryrun_model $model
      */
-    public function __construct(dryrun $dryrun) {
-        $this->dryrun = $dryrun;
+    public function __construct(dryrun_model $model) {
+        $this->model = $model;
     }
 
     /**
@@ -56,7 +55,7 @@ class site_restore_dryrun implements local\logger {
      * @return static|null
      */
     public static function get_last_dryrun(string $backupkey): ?self {
-        if ($model = dryrun::get_last_dry_run($backupkey)) {
+        if ($model = dryrun_model::get_last_dry_run($backupkey)) {
             return new static($model);
         }
         return null;
@@ -70,13 +69,13 @@ class site_restore_dryrun implements local\logger {
      */
     public static function schedule_dryrun(string $backupkey) {
         $backupmetadata = api::get_remote_backup($backupkey, constants::STATUS_FINISHED);
-        $dryrun = new dryrun();
+        $dryrun = new dryrun_model();
         $dryrun
             ->set_status( constants::STATUS_SCHEDULED)
             ->set_backupkey($backupkey)
             ->set_remote_details((array)$backupmetadata->to_object())
             ->save();
-        $dryrun->add_log("Pre-check scheduled");
+        $dryrun->add_log("Restore pre-check scheduled");
         dryrun_task::schedule();
     }
 
@@ -90,9 +89,9 @@ class site_restore_dryrun implements local\logger {
         if (!api::is_registered()) {
             throw new \moodle_exception('API key not found');
         }
-        $records = dryrun::get_records([constants::STATUS_SCHEDULED]);
+        $records = dryrun_model::get_records([constants::STATUS_SCHEDULED]);
         if (!$records) {
-            throw new \moodle_exception('No pre-checks scheduled');
+            throw new \moodle_exception('No restore pre-checks scheduled');
         }
         $dryrun = reset($records);
         $dryrun->set_pid_for_logging($pid);
@@ -106,37 +105,37 @@ class site_restore_dryrun implements local\logger {
      * @throws \moodle_exception
      */
     public function execute() {
-        $this->dryrun
+        $this->model
             ->set_status(constants::STATUS_INPROGRESS)
             ->save();
-        $this->add_to_log('Started');
+        $this->add_to_log('Restore pre-check started');
 
-        $backupmetadata = api::get_remote_backup($this->dryrun->backupkey, constants::STATUS_FINISHED);
+        $backupmetadata = api::get_remote_backup($this->model->backupkey, constants::STATUS_FINISHED);
 
         $dir = make_request_directory();
         $zippath = $dir.DIRECTORY_SEPARATOR.constants::FILENAME_DBSTRUCTURE.'.zip';
-        api::download_backup_file($this->dryrun->backupkey, $zippath, $this);
+        api::download_backup_file($this->model->backupkey, $zippath, $this);
         $zippacker = new \zip_packer();
         $zippacker->extract_to_pathname($zippath, $dir);
 
         $remotedetails = (array)$backupmetadata->to_object();
         $remotedetails['dbstructure'] = file_get_contents($dir.DIRECTORY_SEPARATOR.constants::FILE_STRUCTURE);
         $remotedetails['metadata'] = json_decode(file_get_contents($dir.DIRECTORY_SEPARATOR.constants::FILE_METADATA), true);
-        $this->dryrun
+        $this->model
             ->set_remote_details($remotedetails)
             ->save();
 
         // TODO...
 
-        /** @var base[] $precheckclasses */
+        /** @var check_base[] $precheckclasses */
         $precheckclasses = [
             version_restore::class,
             diskspace_restore::class,
         ];
         $this->prechecks = [];
         foreach ($precheckclasses as $classname) {
-            $this->add_to_log('Running pre-check: '.$classname::get_display_name().'...');
-            if (($chk = $classname::create_and_run($this->dryrun)) && $chk->success()) {
+            $this->add_to_log('Restore pre-check: '.$classname::get_display_name().'...');
+            if (($chk = $classname::create_and_run($this->model)) && $chk->success()) {
                 $this->prechecks[$chk->get_name()] = $chk;
                 $this->add_to_log('...OK');
             } else {
@@ -144,8 +143,8 @@ class site_restore_dryrun implements local\logger {
             }
         }
 
-        $this->dryrun->set_status(constants::STATUS_FINISHED)->save();
-        $this->add_to_log('Finished');
+        $this->model->set_status(constants::STATUS_FINISHED)->save();
+        $this->add_to_log('Restore pre-check finished');
     }
 
     /**
@@ -155,7 +154,7 @@ class site_restore_dryrun implements local\logger {
      * @return void
      */
     public function mark_as_failed(\Throwable $t) {
-        $this->dryrun->set_status(constants::STATUS_FAILED)->save();
+        $this->model->set_status(constants::STATUS_FAILED)->save();
         $this->add_to_log('Pre-check failed: '.$t->getMessage(), constants::LOGLEVEL_ERROR);
     }
 
@@ -168,10 +167,10 @@ class site_restore_dryrun implements local\logger {
      * @return void
      */
     public function add_to_log(string $message, string $loglevel = constants::LOGLEVEL_INFO) {
-        if ($this->dryrun && $this->dryrun->id) {
-            $logrecord = $this->dryrun->add_log($message, $loglevel);
+        if ($this->model && $this->model->id) {
+            $logrecord = $this->model->add_log($message, $loglevel);
             if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
-                mtrace($this->dryrun->format_log_line($logrecord, false));
+                mtrace($this->model->format_log_line($logrecord, false));
             }
         }
     }
@@ -179,20 +178,20 @@ class site_restore_dryrun implements local\logger {
     /**
      * Model
      *
-     * @return dryrun
+     * @return dryrun_model
      */
-    public function get_model(): dryrun {
-        return $this->dryrun;
+    public function get_model(): dryrun_model {
+        return $this->model;
     }
 
     /**
      * Get all prechecks
      *
-     * @return base[]
+     * @return check_base[]
      */
     public function get_prechecks(): array {
         if ($this->prechecks === null) {
-            $this->prechecks = base::get_all_checks_for_operation($this->get_model()->id);
+            $this->prechecks = check_base::get_all_checks_for_operation($this->model->id);
         }
         return $this->prechecks;
     }

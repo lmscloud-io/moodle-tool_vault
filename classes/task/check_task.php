@@ -18,8 +18,8 @@ namespace tool_vault\task;
 
 use core\task\adhoc_task;
 use tool_vault\constants;
-use tool_vault\local\checks\base;
-use tool_vault\local\models\check;
+use tool_vault\local\checks\check_base;
+use tool_vault\local\models\check_model;
 
 /**
  * Ad-hoc task for scheduling checks
@@ -36,7 +36,7 @@ class check_task extends adhoc_task {
      */
     public function execute() {
 
-        $models = check::get_records([constants::STATUS_INPROGRESS]);
+        $models = check_model::get_records([constants::STATUS_INPROGRESS]);
         if ($models) {
             // This task should not run if another task is in progress. This can only mean that other task
             // aborted. Mark the stalled check as failed.
@@ -45,7 +45,7 @@ class check_task extends adhoc_task {
             }
         }
 
-        $checks = base::get_scheduled();
+        $checks = check_base::get_scheduled();
         foreach ($checks as $check) {
             $check->mark_as_inprogress();
             try {

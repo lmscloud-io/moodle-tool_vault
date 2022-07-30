@@ -28,7 +28,7 @@ use tool_vault\site_restore;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class diskspace_restore extends base {
+class diskspace_restore extends check_base {
 
     /**
      * Evaluate check and store results in model details
