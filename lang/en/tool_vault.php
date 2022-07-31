@@ -25,6 +25,15 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['backupkey'] = 'Backup key';
+$string['clidefault'] = 'Default:';
+$string['clihelp'] = 'Print out this help';
+$string['climissingargument'] = 'Argument --{$a} is required';
+$string['clititlebackup'] = 'Command line site backup';
+$string['clititlelist'] = 'Command line remote backup list';
+$string['clititlerestore'] = 'Command line site restore';
+$string['errorapikeynotvalid'] = 'API key not valid';
+$string['errorrestorenotallowed'] = 'Restores are not allowed on this site.';
 $string['messageprovider:statusupdate'] = 'Status update for Vault - Site migration';
 $string['pluginname'] = 'Vault - Site migration';
 $string['restoresnotallowed'] = 'Restores are not allowed on this site';

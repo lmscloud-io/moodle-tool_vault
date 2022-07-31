@@ -136,6 +136,9 @@ class api {
      */
     protected static function api_call(string $endpoint, string $method, array $params = [],
                                     ?logger $logger = null, bool $authheader = true, ?string $apikey = null) {
+        global $CFG;
+        require_once($CFG->dirroot.'/lib/filelib.php');
+
         $curl = new \curl();
         if ($authheader) {
             $curl->setHeader(['X-Api-Key: ' . ($apikey ?? self::get_api_key())]);
@@ -268,6 +271,9 @@ class api {
      * @return bool
      */
     public static function validate_api_key(string $apikey) {
+        if ($apikey === 'phpunit' && defined('PHPUNIT_TEST') && PHPUNIT_TEST) {
+            return true;
+        }
         try {
             $result = self::api_call('backups', 'GET', [], null, true, $apikey);
         } catch (\moodle_exception $e) {
@@ -279,10 +285,11 @@ class api {
     /**
      * Get a list of all remote backups for this api key
      *
+     * @param bool $usecache
      * @return remote_backup[]
      */
-    public static function get_remote_backups(): array {
-        $conf = self::get_config('cachedremotebackups');
+    public static function get_remote_backups(bool $usecache = true): array {
+        $conf = $usecache ? self::get_config('cachedremotebackups') : null;
         if ($conf !== null) {
             $records = json_decode($conf, true);
         } else {

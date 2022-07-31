@@ -53,7 +53,7 @@ class restore_details implements \templatable {
             'details' =>
                 '<h4>Metadata</h4>'.
                 // @codingStandardsIgnoreLine
-                '<pre>'.print_r($this->restore->get_remote_details(), true).'</pre>' .
+                '<pre>'.print_r($this->restore->get_metadata(), true).'</pre>' .
                 // @codingStandardsIgnoreLine
                 '<pre>'.print_r($this->restore->get_details(), true).'</pre>' .
                 '<h4>Logs</h4>'.

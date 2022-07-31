@@ -21,7 +21,6 @@ use tool_vault\local\checks\diskspace_restore;
 use tool_vault\local\checks\version_restore;
 use tool_vault\local\logger;
 use tool_vault\local\models\dryrun_model;
-use tool_vault\local\models\operation_model;
 use tool_vault\local\models\restore_base_model;
 use tool_vault\task\dryrun_task;
 
@@ -85,7 +84,7 @@ class site_restore_dryrun implements local\logger {
      */
     public static function start_dryrun(int $pid): self {
         if (!api::is_registered()) {
-            throw new \moodle_exception('API key not found');
+            throw new \moodle_exception('errorapikeynotvalid', 'tool_vault');
         }
         $records = dryrun_model::get_records([constants::STATUS_SCHEDULED]);
         if (!$records) {

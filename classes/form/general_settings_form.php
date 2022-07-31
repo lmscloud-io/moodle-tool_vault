@@ -114,7 +114,7 @@ class general_settings_form extends \moodleform {
     public function validation($data, $files) {
         $errors = [];
         if ($this->editable && strlen($data['apikey']) && !api::validate_api_key($data['apikey'])) {
-            $errors['apikey'] = 'API key not valid';
+            $errors['apikey'] = get_string('errorapikeynotvalid', 'tool_vault');
         }
         return $errors;
     }

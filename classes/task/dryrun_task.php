@@ -36,7 +36,8 @@ class dryrun_task extends adhoc_task {
         try {
             $dryrun = site_restore_dryrun::start_dryrun($this->get_pid());
         } catch (\Throwable $t) {
-            mtrace("Failed to start: ".$t->getMessage()."\n".$t->getTraceAsString());
+            mtrace("Failed to start: ".$t->getMessage());
+            return;
         }
 
         try {

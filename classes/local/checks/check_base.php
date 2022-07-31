@@ -20,6 +20,7 @@ use renderer_base;
 use tool_vault\constants;
 use tool_vault\local\models\check_model;
 use tool_vault\local\models\operation_model;
+use tool_vault\site_backup;
 use tool_vault\task\check_task;
 
 /**
@@ -50,11 +51,13 @@ abstract class check_base {
      * @return self[]
      */
     public static function get_all_checks(): array {
-        return [
-            dbstatus::get_last_check(),
-            diskspace::get_last_check(),
-            configoverride::get_last_check(),
-        ];
+        $checks = [];
+        /** @var check_base[] $precheckclasses */
+        $precheckclasses = site_backup::backup_prechecks();
+        foreach ($precheckclasses as $classname) {
+            $checks[] = $classname::get_last_check();
+        }
+        return $checks;
     }
 
     /**
@@ -160,7 +163,6 @@ abstract class check_base {
      * @return static
      */
     public static function get_last_check(): self {
-        global $DB;
         $records = check_model::get_checks_by_type(static::get_name());
         if (!$records) {
             return self::schedule_new(static::get_name());
@@ -308,7 +310,7 @@ abstract class check_base {
      * @return \moodle_url|null
      */
     public function get_reschedule_url(): ?\moodle_url {
-        if ($this->get_model()->parentid) {
+        if ($this->get_model()->parentid && !in_array(get_class($this), site_backup::backup_prechecks())) {
             return null;
         }
         return new \moodle_url('/admin/tool/vault/index.php',

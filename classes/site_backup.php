@@ -89,10 +89,11 @@ class site_backup implements logger {
     /**
      * Schedules new backup
      *
+     * @param string|null $description
      * @return void
      */
-    public static function schedule_backup() {
-        global $USER;
+    public static function schedule_backup(?string $description = null) {
+        global $USER, $CFG;
         if (backup_model::get_records([constants::STATUS_SCHEDULED])) {
             // Pressed button twice maybe?
             return;
@@ -102,7 +103,11 @@ class site_backup implements logger {
         }
 
         $model = new backup_model((object)[]);
-        $model->set_status(constants::STATUS_SCHEDULED)->set_details(['usercreated' => $USER->id])->save();
+        $description = $description ?? ($CFG->wwwroot.' by '.fullname($USER)); // TODO no default here, only in the form.
+        $model->set_status(constants::STATUS_SCHEDULED)->set_details([
+            'usercreated' => $USER->id,
+            'description' => substr($description, 0, constants::DESCRIPTION_MAX_LENGTH),
+        ])->save();
         $model->add_log("Backup scheduled");
         backup_task::schedule();
     }
@@ -121,8 +126,8 @@ class site_backup implements logger {
             'version' => $CFG->version,
             'branch' => $CFG->branch,
             'tool_vault_version' => get_config('tool_vault', 'version'),
-            'email' => $USER->email,
-            'name' => fullname($USER),
+            'email' => $USER->email ?? '',
+            'name' => $USER ? fullname($USER) : '',
         ];
     }
 
@@ -133,9 +138,8 @@ class site_backup implements logger {
      * @return self
      */
     public static function start_backup(int $pid): self {
-        global $CFG, $USER, $DB;
         if (!api::is_registered()) {
-            throw new \moodle_exception('API key not found');
+            throw new \moodle_exception('errorapikeynotvalid', 'tool_vault');
         }
         $model = backup_model::get_scheduled_backup();
         if (!$model) {
@@ -145,9 +149,7 @@ class site_backup implements logger {
         $instance = new static($model);
 
         $params = [
-            'description' => $CFG->wwwroot.' by '.fullname($USER), // TODO from the form.
-            'version' => $CFG->version,
-            'branch' => $CFG->branch,
+            'description' => $model->get_details()['description'] ?? '',
         ];
         try {
             $backupkey = api::request_new_backup_key($params);
@@ -189,17 +191,26 @@ class site_backup implements logger {
     }
 
     /**
+     * List of backup pre-checks that are executed before each backup and also independently on Overview tab
+     *
+     * @return string[]
+     */
+    public static function backup_prechecks(): array {
+        return [
+            dbstatus::class,
+            diskspace::class,
+            configoverride::class,
+        ];
+    }
+
+    /**
      * Prepare backup
      *
      * @return void
      */
     public function prepare() {
         /** @var check_base[] $prechecks */
-        $prechecks = [
-            dbstatus::class,
-            diskspace::class,
-            configoverride::class,
-        ];
+        $prechecks = self::backup_prechecks();
         foreach ($prechecks as $classname) {
             $this->add_to_log('Backup pre-check: '.$classname::get_display_name().'...');
             if (($chk = $classname::create_and_run($this->model)) && $chk->success()) {
@@ -249,6 +260,15 @@ class site_backup implements logger {
         $this->add_to_log('Backup finished');
 
         // TODO notify user.
+    }
+
+    /**
+     * Return backup key
+     *
+     * @return string|null
+     */
+    public function get_backup_key(): ?string {
+        return $this->model->backupkey;
     }
 
     /**

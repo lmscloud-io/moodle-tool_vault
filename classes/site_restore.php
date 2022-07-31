@@ -72,10 +72,10 @@ class site_restore implements logger {
             ->set_status( constants::STATUS_SCHEDULED)
             ->set_backupkey($backupkey)
             ->set_details([
-                'id' => $USER->id,
-                'username' => $USER->username,
-                'fullname' => fullname($USER),
-                'email' => $USER->email,
+                'id' => $USER->id ?? '',
+                'username' => $USER->username ?? '',
+                'fullname' => $USER ? fullname($USER) : '',
+                'email' => $USER->email ?? '',
             ])
             ->save();
         $model->add_log("Restore scheduled");
@@ -90,7 +90,7 @@ class site_restore implements logger {
      */
     public static function start_restore(int $pid): self {
         if (!api::is_registered()) {
-            throw new \moodle_exception('API key not found');
+            throw new \moodle_exception('errorapikeynotvalid', 'tool_vault');
         }
         if (!api::are_restores_allowed()) {
             throw new \moodle_exception('restoresnotallowed', 'tool_vault');
@@ -374,7 +374,7 @@ class site_restore implements logger {
      * @return void
      */
     public function restore_filedir(string $restoredir) {
-        $this->add_to_log('Moving files to file storage...');
+        $this->add_to_log('Restoring files to file storage...');
         $fs = get_file_storage();
         $files = self::dirlist_recursive($restoredir);
         foreach ($files as $subpath => $filepath) {

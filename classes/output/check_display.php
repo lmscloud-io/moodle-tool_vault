@@ -18,6 +18,7 @@ namespace tool_vault\output;
 
 use renderer_base;
 use tool_vault\local\checks\check_base;
+use tool_vault\site_backup;
 
 /**
  * Display check results
@@ -51,7 +52,6 @@ class check_display implements \templatable {
      * @return array
      */
     public function export_for_template(renderer_base $output) {
-        $hasparent = $this->check->get_model()->parentid ? true : false;
         $overviewurl = new \moodle_url('/admin/tool/vault/index.php');
         $rescheduleurl = $this->check->get_reschedule_url();
         $fullreporturl = $this->check->get_fullreport_url();
@@ -61,7 +61,7 @@ class check_display implements \templatable {
             'subtitle' => 'Status: '.$this->check->get_model()->status.', '.
                 userdate($this->check->get_model()->timemodified, get_string('strftimedatetimeshort', 'langconfig')),
             'inprogress' => $this->check->is_in_progress(),
-            'reschedulelink' => $hasparent ? '' : $rescheduleurl->out(false),
+            'reschedulelink' => $rescheduleurl ? $rescheduleurl->out(false) : '',
             'summary' => $this->check->summary(),
             'showdetailslink' => $this->check->has_details(),
             'fullreporturl' => $this->check->has_details() ? $fullreporturl->out(false) : null,

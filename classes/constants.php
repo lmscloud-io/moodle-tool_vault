@@ -94,4 +94,7 @@ class constants {
 
     /** @var int */
     const DBFILE_SIZE = 1024 * 1024 * 2; // 2 Mb.
+
+    /** @var int */
+    const DESCRIPTION_MAX_LENGTH = 255;
 }
