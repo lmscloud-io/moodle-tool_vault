@@ -37,7 +37,7 @@ class section_overview extends section_base {
         $action = optional_param('action', null, PARAM_ALPHANUMEXT);
 
         if ($action === 'newcheck' && confirm_sesskey()) {
-            check_base::schedule_new(required_param('type', PARAM_ALPHANUMEXT));
+            check_base::schedule(['type' => required_param('type', PARAM_ALPHANUMEXT)]);
             redirect($PAGE->url);
         }
     }

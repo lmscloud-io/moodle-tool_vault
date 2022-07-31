@@ -47,8 +47,8 @@ if ($clihelper->get_cli_option('dryrun')) {
     cli_error('Option --dryrun is not yet implemented');
 }
 
-\tool_vault\site_backup::schedule_backup($clihelper->get_cli_option('description'));
-$operation = \tool_vault\site_backup::start_backup((int)getmypid());
+$operation = \tool_vault\site_backup::schedule(['description' => $clihelper->get_cli_option('description')]);
+$operation->start((int)getmypid());
 try {
     $operation->execute();
 } catch (\Throwable $t) {
@@ -56,4 +56,5 @@ try {
     die(1);
 }
 
-echo "\nBackup key: ".$operation->get_backup_key()."\n";
+cli_writeln("");
+cli_writeln("Backup key: ".$operation->get_backup_key());

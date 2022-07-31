@@ -41,13 +41,13 @@ class section_restore extends section_base implements \templatable {
 
         if ($action === 'restore' && confirm_sesskey()) {
             $backupkey = required_param('backupkey', PARAM_ALPHANUMEXT);
-            \tool_vault\site_restore::schedule_restore($backupkey);
+            \tool_vault\site_restore::schedule(['backupkey' => $backupkey]);
             redirect($PAGE->url);
         }
 
         if ($action === 'dryrun' && confirm_sesskey()) {
             $backupkey = required_param('backupkey', PARAM_ALPHANUMEXT);
-            \tool_vault\site_restore_dryrun::schedule_dryrun($backupkey);
+            \tool_vault\site_restore_dryrun::schedule(['backupkey' => $backupkey]);
             $viewurl = new \moodle_url($PAGE->url,
                 ['section' => 'restore', 'action' => 'remotedetails', 'backupkey' => $backupkey]);
             redirect($viewurl);

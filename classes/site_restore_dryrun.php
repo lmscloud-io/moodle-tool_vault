@@ -22,6 +22,7 @@ use tool_vault\local\checks\version_restore;
 use tool_vault\local\logger;
 use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\restore_base_model;
+use tool_vault\local\operations\operation_base;
 use tool_vault\task\dryrun_task;
 
 /**
@@ -31,7 +32,7 @@ use tool_vault\task\dryrun_task;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class site_restore_dryrun implements local\logger {
+class site_restore_dryrun extends operation_base {
 
     /** @var dryrun_model */
     protected $model;
@@ -63,36 +64,33 @@ class site_restore_dryrun implements local\logger {
     /**
      * Schedule dry-run
      *
-     * @param string $backupkey
-     * @return void
+     * @param array $params ['backupkey' => ?]
+     * @return static
      */
-    public static function schedule_dryrun(string $backupkey) {
+    public static function schedule(array $params = []): operation_base {
+        if (empty($params['backupkey'])) {
+            throw new \coding_exception('Parameter backupkey is required for site_restore_dryrun::schedule()');
+        }
+        $backupkey = $params['backupkey'];
         $dryrun = new dryrun_model();
         $dryrun
             ->set_status( constants::STATUS_SCHEDULED)
             ->set_backupkey($backupkey)
             ->save();
         $dryrun->add_log("Restore pre-check scheduled");
-        dryrun_task::schedule();
+        return new static($dryrun);
     }
 
     /**
      * Start scheduled dry-run
      *
      * @param int $pid
-     * @return static
      */
-    public static function start_dryrun(int $pid): self {
+    public function start(int $pid) {
         if (!api::is_registered()) {
             throw new \moodle_exception('errorapikeynotvalid', 'tool_vault');
         }
-        $records = dryrun_model::get_records([constants::STATUS_SCHEDULED]);
-        if (!$records) {
-            throw new \moodle_exception('No restore pre-checks scheduled');
-        }
-        $dryrun = reset($records);
-        $dryrun->set_pid_for_logging($pid);
-        return new static($dryrun);
+        parent::start($pid);
     }
 
     /**
@@ -164,34 +162,6 @@ class site_restore_dryrun implements local\logger {
 
         $this->model->set_status(constants::STATUS_FINISHED)->save();
         $this->add_to_log('Restore pre-check finished');
-    }
-
-    /**
-     * Mark as failed
-     *
-     * @param \Throwable $t
-     * @return void
-     */
-    public function mark_as_failed(\Throwable $t) {
-        $this->model->set_status(constants::STATUS_FAILED)->save();
-        $this->add_to_log('Pre-check failed: '.$t->getMessage(), constants::LOGLEVEL_ERROR);
-    }
-
-    /**
-     * Log action
-     *
-     * @package tool_vault
-     * @param string $message
-     * @param string $loglevel
-     * @return void
-     */
-    public function add_to_log(string $message, string $loglevel = constants::LOGLEVEL_INFO) {
-        if ($this->model && $this->model->id) {
-            $logrecord = $this->model->add_log($message, $loglevel);
-            if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
-                mtrace($this->model->format_log_line($logrecord, false));
-            }
-        }
     }
 
     /**

@@ -37,7 +37,7 @@ class section_backup extends section_base implements \templatable {
         $action = optional_param('action', null, PARAM_ALPHANUMEXT);
 
         if ($action === 'startbackup' && confirm_sesskey()) {
-            \tool_vault\site_backup::schedule_backup();
+            \tool_vault\site_backup::schedule();
             redirect($PAGE->url);
         }
 

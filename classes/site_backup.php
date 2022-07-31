@@ -20,11 +20,11 @@ use tool_vault\local\checks\check_base;
 use tool_vault\local\checks\configoverride;
 use tool_vault\local\checks\dbstatus;
 use tool_vault\local\checks\diskspace;
-use tool_vault\local\logger;
 use tool_vault\local\models\backup_model;
+use tool_vault\local\models\restore_model;
+use tool_vault\local\operations\operation_base;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\local\xmldb\dbtable;
-use tool_vault\task\backup_task;
 
 /**
  * Perform site backup
@@ -33,7 +33,7 @@ use tool_vault\task\backup_task;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class site_backup implements logger {
+class site_backup extends operation_base {
     /** @var backup_model */
     protected $model;
     /** @var \tool_vault\local\checks\check_base[] */
@@ -72,6 +72,7 @@ class site_backup implements logger {
                 'temp',
                 'sessions',
                 'trashdir',
+                'lock',
                 // For phpunit.
                 'phpunit',
                 'phpunittestdir.txt',
@@ -89,27 +90,30 @@ class site_backup implements logger {
     /**
      * Schedules new backup
      *
-     * @param string|null $description
-     * @return void
+     * @param array $params
+     * @return operation_base
      */
-    public static function schedule_backup(?string $description = null) {
+    public static function schedule(array $params = []): operation_base {
         global $USER, $CFG;
-        if (backup_model::get_records([constants::STATUS_SCHEDULED])) {
+        if ($records = backup_model::get_records([constants::STATUS_SCHEDULED])) {
             // Pressed button twice maybe?
-            return;
+            return new static(reset($records));
         }
         if (backup_model::get_records([constants::STATUS_INPROGRESS])) {
             throw new \moodle_exception('Another backup is in progress');
         }
+        if (restore_model::get_records([constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
+            throw new \moodle_exception('Another restore is in progress');
+        }
 
         $model = new backup_model((object)[]);
-        $description = $description ?? ($CFG->wwwroot.' by '.fullname($USER)); // TODO no default here, only in the form.
+        $description = $params['description'] ?? ($CFG->wwwroot.' by '.fullname($USER)); // TODO move default to the form.
         $model->set_status(constants::STATUS_SCHEDULED)->set_details([
             'usercreated' => $USER->id,
             'description' => substr($description, 0, constants::DESCRIPTION_MAX_LENGTH),
         ])->save();
         $model->add_log("Backup scheduled");
-        backup_task::schedule();
+        return new static($model);
     }
 
     /**
@@ -135,41 +139,24 @@ class site_backup implements logger {
      * Start backup
      *
      * @param int $pid
-     * @return self
      */
-    public static function start_backup(int $pid): self {
+    public function start(int $pid) {
         if (!api::is_registered()) {
             throw new \moodle_exception('errorapikeynotvalid', 'tool_vault');
         }
-        $model = backup_model::get_scheduled_backup();
-        if (!$model) {
-            throw new \moodle_exception('No scheduled backup');
-        }
-        $model->set_pid_for_logging($pid);
-        $instance = new static($model);
+        $this->model->set_pid_for_logging($pid);
+        $model = $this->model;
 
         $params = [
             'description' => $model->get_details()['description'] ?? '',
         ];
-        try {
-            $backupkey = api::request_new_backup_key($params);
-        } catch (\Throwable $t) {
-            // API rejected - above limit/quota. TODO store details of failure? how to notify user?
-            $model
-                ->set_status(constants::STATUS_FAILEDTOSTART)
-                ->set_details($params)
-                ->save();
-            $instance->add_to_log('Failed to start the backup with the cloud service: '.$t->getMessage(),
-                constants::LOGLEVEL_ERROR);
-            throw $t;
-        }
+        $backupkey = api::request_new_backup_key($params);
         $model
             ->set_backupkey($backupkey)
             ->set_status(constants::STATUS_INPROGRESS)
             ->set_details($params)
             ->save();
-        $instance->add_to_log('Backup started, backup key is '.$backupkey);
-        return $instance;
+        $this->add_to_log('Backup started, backup key is '.$backupkey);
     }
 
     /**
@@ -179,8 +166,7 @@ class site_backup implements logger {
      * @return void
      */
     public function mark_as_failed(\Throwable $t) {
-        $this->model->set_status(constants::STATUS_FAILED)->save();
-        $this->add_to_log('Backup failed: '.$t->getMessage(), constants::LOGLEVEL_ERROR);
+        parent::mark_as_failed($t);
         try {
             api::update_backup($this->model->backupkey, ['faileddetails' => $t->getMessage()], 'failed');
         } catch (\Throwable $tapi) {
@@ -548,21 +534,5 @@ class site_backup implements logger {
         }
 
         return implode(', ', $fields);
-    }
-
-    /**
-     * Log action
-     *
-     * @param string $message
-     * @param string $loglevel
-     * @return void
-     */
-    public function add_to_log(string $message, string $loglevel = constants::LOGLEVEL_INFO) {
-        if ($this->model && $this->model->id) {
-            $logrecord = $this->model->add_log($message, $loglevel);
-            if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
-                mtrace($this->model->format_log_line($logrecord, false));
-            }
-        }
     }
 }

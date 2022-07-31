@@ -20,6 +20,7 @@ use renderer_base;
 use tool_vault\constants;
 use tool_vault\local\models\check_model;
 use tool_vault\local\models\operation_model;
+use tool_vault\local\operations\operation_base;
 use tool_vault\site_backup;
 use tool_vault\task\check_task;
 
@@ -30,7 +31,7 @@ use tool_vault\task\check_task;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class check_base {
+abstract class check_base extends operation_base {
     /** @var check_model */
     protected $model;
     /** @var operation_model */
@@ -75,9 +76,6 @@ abstract class check_base {
             $instance = static::instance($model);
             return $instance;
         } catch (\Throwable $t) {
-            if (in_array($model->status, [constants::STATUS_SCHEDULED, constants::STATUS_INPROGRESS])) {
-                $model->set_error($t)->set_status(constants::STATUS_FAILEDTOSTART)->save();
-            }
             return null;
         }
     }
@@ -120,25 +118,6 @@ abstract class check_base {
     }
 
     /**
-     * Get all scheduled checks
-     *
-     * @return self[]
-     */
-    public static function get_scheduled(): array {
-        /** @var check_model[] $models */
-        $models = check_model::get_records([constants::STATUS_SCHEDULED]);
-        $res = [];
-        foreach ($models as $model) {
-            try {
-                $res[] = self::instance($model);
-            } catch (\Throwable $e) {
-                $model->set_status(constants::STATUS_FAILEDTOSTART)->save();
-            }
-        }
-        return $res;
-    }
-
-    /**
      * Get last part of the class name
      *
      * @return string
@@ -165,13 +144,9 @@ abstract class check_base {
     public static function get_last_check(): self {
         $records = check_model::get_checks_by_type(static::get_name());
         if (!$records) {
-            return self::schedule_new(static::get_name());
+            return self::schedule(['type' => static::get_name()]);
         } else {
             $model = reset($records);
-            if ($model->status == constants::STATUS_SCHEDULED || $model->status == constants::STATUS_INPROGRESS) {
-                // Make sure there is a scheduled ad-hoc task in case previous one failed (this will not schedule a duplicate).
-                check_task::schedule();
-            }
             return new static($model);
         }
     }
@@ -188,14 +163,14 @@ abstract class check_base {
     /**
      * Schedule new check of the given type
      *
-     * @param string $type
+     * @param array $params
      * @return static
      */
-    public static function schedule_new(string $type): self {
+    public static function schedule(array $params = []): operation_base {
+        $type = $params['type'];
         $model = new check_model((object)['status' => constants::STATUS_SCHEDULED], $type);
         $obj = self::instance($model);
         $model->save();
-        check_task::schedule();
         return $obj;
     }
 
@@ -215,8 +190,7 @@ abstract class check_base {
         $model->save();
 
         try {
-            $obj->perform();
-            $obj->mark_as_finished();
+            $obj->execute();
         } catch (\Throwable $t) {
             $obj->mark_as_failed($t);
         }
@@ -225,34 +199,17 @@ abstract class check_base {
     }
 
     /**
-     * Mark check as failed
-     *
-     * @param \Throwable $t
+     * Evaluate check and store results in model details
      */
-    public function mark_as_failed(\Throwable $t) {
-        $this->model->set_status(constants::STATUS_FAILED)->set_error($t)->save();
-    }
-
-    /**
-     * Mark check as in progress
-     */
-    public function mark_as_inprogress() {
-        $this->model->set_status(constants::STATUS_INPROGRESS)->save();
-    }
-
-    /**
-     * Mark check as finished
-     *
-     * @return void
-     */
-    public function mark_as_finished() {
-        $this->model->set_status(constants::STATUS_FINISHED)->save();
-    }
+    abstract public function perform(): void;
 
     /**
      * Evaluate check and store results in model details
      */
-    abstract public function perform(): void;
+    final public function execute(): void {
+        $this->perform();
+        $this->model->set_status(constants::STATUS_FINISHED)->save();
+    }
 
     /**
      * Get summary of the past check

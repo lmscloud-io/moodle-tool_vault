@@ -17,8 +17,9 @@
 namespace tool_vault;
 
 use tool_vault\local\checks\check_base;
-use tool_vault\local\logger;
+use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
+use tool_vault\local\operations\operation_base;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\task\restore_task;
 
@@ -29,7 +30,7 @@ use tool_vault\task\restore_task;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class site_restore implements logger {
+class site_restore extends operation_base {
 
     /** @var restore_model */
     protected $model;
@@ -58,13 +59,27 @@ class site_restore implements logger {
     /**
      * Schedule restore
      *
-     * @param string $backupkey
-     * @return void
+     * @param array $params
+     * @return static
      */
-    public static function schedule_restore(string $backupkey) {
+    public static function schedule(array $params = []): operation_base {
         global $USER;
+        if (empty($params['backupkey'])) {
+            throw new \coding_exception('Parameter backupkey is required for site_restore::schedule()');
+        }
         if (!api::are_restores_allowed()) {
-            return;
+            throw new \moodle_exception('restoresnotallowed', 'tool_vault');
+        }
+        $backupkey = $params['backupkey'];
+        if ($records = restore_model::get_records([constants::STATUS_SCHEDULED])) {
+            // Pressed button twice maybe?
+            return new static(reset($records));
+        }
+        if (restore_model::get_records([constants::STATUS_INPROGRESS])) {
+            throw new \moodle_exception('Another restore is in progress');
+        }
+        if (backup_model::get_records([constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
+            throw new \moodle_exception('Another backup is in progress');
         }
 
         $model = new restore_model();
@@ -79,40 +94,22 @@ class site_restore implements logger {
             ])
             ->save();
         $model->add_log("Restore scheduled");
-        restore_task::schedule();
+        return new static($model);
     }
 
     /**
      * Start scheduled restore
      *
      * @param int $pid
-     * @return static
      */
-    public static function start_restore(int $pid): self {
+    public function start(int $pid) {
         if (!api::is_registered()) {
             throw new \moodle_exception('errorapikeynotvalid', 'tool_vault');
         }
         if (!api::are_restores_allowed()) {
             throw new \moodle_exception('restoresnotallowed', 'tool_vault');
         }
-        $records = restore_model::get_records([constants::STATUS_SCHEDULED]);
-        if (!$records) {
-            throw new \moodle_exception('No restores scheduled');
-        }
-        $model = reset($records);
-        $model->set_pid_for_logging($pid);
-        return new static($model);
-    }
-
-    /**
-     * Mark backup as failed
-     *
-     * @param \Throwable $t
-     * @return void
-     */
-    public function mark_as_failed(\Throwable $t) {
-        $this->model->set_status(constants::STATUS_FAILED)->save();
-        $this->add_to_log('Restore failed: '.$t->getMessage(), constants::LOGLEVEL_ERROR);
+        parent::start($pid);
     }
 
     /**
@@ -446,21 +443,5 @@ class site_restore implements logger {
             }
         }
         rmdir($dir);
-    }
-
-    /**
-     * Log action
-     *
-     * @param string $message
-     * @param string $loglevel
-     * @return void
-     */
-    public function add_to_log(string $message, string $loglevel = constants::LOGLEVEL_INFO) {
-        if ($this->model && $this->model->id) {
-            $logrecord = $this->model->add_log($message, $loglevel);
-            if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
-                mtrace($this->model->format_log_line($logrecord, false));
-            }
-        }
     }
 }

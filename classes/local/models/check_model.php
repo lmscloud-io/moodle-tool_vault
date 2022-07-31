@@ -50,7 +50,7 @@ class check_model extends operation_model {
      * @param string $type
      * @return bool
      */
-    protected static function validate_type(string $type) {
+    public static function validate_type(string $type) {
         return substr($type, 0, strlen(self::$defaulttypeprefix)) === self::$defaulttypeprefix;
     }
 

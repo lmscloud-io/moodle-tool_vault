@@ -44,15 +44,15 @@ $clihelper->validate_cli_options();
 
 // Run restore.
 if ($clihelper->get_cli_option('dryrun')) {
-    \tool_vault\site_restore_dryrun::schedule_dryrun($clihelper->get_cli_option('backupkey'));
-    $operation = \tool_vault\site_restore_dryrun::start_dryrun((int)getmypid());
+    $operation = \tool_vault\site_restore_dryrun::schedule(['backupkey' => $clihelper->get_cli_option('backupkey')]);
+    $operation->start((int)getmypid());
 } else {
     if (!\tool_vault\api::are_restores_allowed()) {
         cli_error(get_string('errorrestorenotallowed', 'tool_vault') . ' ' .
             'You can enable site restore for this CLI script by adding the option --allow-restore');
     }
-    \tool_vault\site_restore::schedule_restore($clihelper->get_cli_option('backupkey'));
-    $operation = \tool_vault\site_restore::start_restore((int)getmypid());
+    $operation = \tool_vault\site_restore::schedule(['backupkey' => $clihelper->get_cli_option('backupkey')]);
+    $operation->start((int)getmypid());
 }
 
 try {

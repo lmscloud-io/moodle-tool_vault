@@ -202,6 +202,37 @@ abstract class operation_model {
     }
 
     /**
+     * Validate type
+     *
+     * @param string $type
+     * @return bool
+     */
+    public static function validate_type(string $type) {
+        return static::$defaulttype && $type === static::$defaulttype;
+    }
+
+    /**
+     * Create an instance from a record - looks for a matching model class
+     *
+     * @param \stdClass $record
+     * @return static|null
+     */
+    public static function instance(\stdClass $record): ?self {
+        if (static::validate_type($record->type)) {
+            return new static($record);
+        }
+        $classes = \core_component::get_component_classes_in_namespace('tool_vault', 'local\models');
+        foreach (array_keys($classes) as $class) {
+            $rc = new \ReflectionClass($class);
+            if ($rc->isInstantiable() && is_subclass_of($class, self::class) &&
+                    $class::validate_type($record->type)) {
+                return new $class($record);
+            }
+        }
+        return null;
+    }
+
+    /**
      * Retrieve record by id
      *
      * @param int $id
@@ -210,7 +241,7 @@ abstract class operation_model {
     public static function get_by_id(int $id): ?self {
         global $DB;
         $record = $DB->get_record(self::TABLE, ['id' => $id]);
-        return $record && (!self::$defaulttype || $record->type === self::$defaulttype) ? new static($record) : null;
+        return $record && static::validate_type($record->type) ? new static($record) : null;
     }
 
     /**
@@ -257,9 +288,9 @@ abstract class operation_model {
     protected static function get_records_select(string $sql, array $params = [], string $sort = 'timecreated DESC'): array {
         global $DB;
         $records = $DB->get_records_select(self::TABLE, $sql, $params ?? [], $sort);
-        return array_map(function($b) {
-            return new static($b);
-        }, $records);
+        return array_filter(array_map(function($b) {
+            return static::instance($b);
+        }, $records));
     }
 
     /**
@@ -317,9 +348,10 @@ abstract class operation_model {
      * Get records with specified statuses
      *
      * @param array|null $statuses
+     * @param string $sort
      * @return static[]
      */
-    public static function get_records(?array $statuses = null): array {
+    public static function get_records(?array $statuses = null, string $sort = 'timecreated DESC'): array {
         global $DB;
         if (static::$defaulttype) {
             $sql = 'type = :type';
@@ -328,13 +360,14 @@ abstract class operation_model {
             $sql = 'type LIKE :type';
             $params = ['type' => static::$defaulttypeprefix.'%'];
         } else {
-            throw new \coding_exception('Method can not be used in this class');
+            $sql = '1=1';
+            $params = [];
         }
         if ($statuses) {
             [$sql2, $params2] = $DB->get_in_or_equal($statuses, SQL_PARAMS_NAMED);
             $sql .= ' AND status '.$sql2;
         }
-        return static::get_records_select($sql, ($params2 ?? []) + $params);
+        return static::get_records_select($sql, ($params2 ?? []) + $params, $sort);
     }
 
     /**
@@ -357,5 +390,17 @@ abstract class operation_model {
             }
         }
         return null;
+    }
+
+    /**
+     * Get last timestamp recorded on the model or on the logs
+     *
+     * @return int
+     */
+    public function get_last_modified(): int {
+        global $DB;
+        $sql = 'SELECT MAX(timecreated) FROM {'.self::LOGTABLE.'} WHERE operationid = ?';
+        return max($this->timecreated, $this->timemodified,
+            $DB->get_field_sql($sql, [$this->id]));
     }
 }
