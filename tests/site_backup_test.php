@@ -14,10 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+/**
+ * The site_backup_test test class.
+ *
+ * @package     tool_vault
+ * @category    test
+ * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 namespace tool_vault;
 
+use tool_vault\fixtures\site_backup_mock;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\xmldb\dbtable;
+
+defined('MOODLE_INTERNAL') || die();
+
+global $CFG;
+require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_backup_mock.php');
 
 /**
  * The site_backup_test test class.
@@ -33,12 +48,12 @@ class site_backup_test extends \advanced_testcase {
     /**
      * Create mock site backup instance
      *
-     * @return site_backup
+     * @return site_backup_mock
      */
     protected function create_site_backup() {
         $backup = new backup_model((object)['status' => constants::STATUS_INPROGRESS]);
         $backup->save();
-        return new site_backup($backup);
+        return new site_backup_mock($backup);
     }
 
     /**
@@ -66,10 +81,7 @@ class site_backup_test extends \advanced_testcase {
         api::store_config('n6', "value\nwith\nnewlines");
 
         $dir = make_request_directory();
-        $ziparchive = new \zip_archive();
-        $ziparchive->open($dir.DIRECTORY_SEPARATOR.'temp.zip', \file_archive::CREATE);
-        $sitebackup->export_table_data($tableobj, $ziparchive, $dir);
-        $ziparchive->close();
+        $sitebackup->export_table_data($tableobj, $dir);
 
         $data = json_decode(file_get_contents($dir.DIRECTORY_SEPARATOR.'tool_vault_config.0.json'), true);
         $this->assertEquals(['name', 'n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6'], array_column($data, 1));
@@ -86,7 +98,9 @@ class site_backup_test extends \advanced_testcase {
         $this->setAdminUser();
         $sitebackup = $this->create_site_backup();
         $sitebackup->prepare();
-        [$filepathstructure, $filepath] = $sitebackup->export_db();
+        $sitebackup->export_db();
+        [$filepathstructure] = $sitebackup->get_files_backup(constants::FILENAME_DBSTRUCTURE)->uploadedfiles;
+        [$filepath] = $sitebackup->get_files_backup(constants::FILENAME_DBDUMP)->uploadedfiles;
         $this->assertGreaterThanOrEqual(100000, filesize($filepath));
 
         // Unpack and check contents.
@@ -126,7 +140,8 @@ class site_backup_test extends \advanced_testcase {
 
         // Call export_dataroot() from site_backup.
         $sitebackup = $this->create_site_backup();
-        $filepath = $sitebackup->export_dataroot();
+        $sitebackup->export_dataroot();
+        [$filepath] = $sitebackup->get_files_backup(constants::FILENAME_DATAROOT)->uploadedfiles;
         $this->assertTrue(file_exists($filepath));
 
         // Unpack and check contents.
@@ -143,7 +158,8 @@ class site_backup_test extends \advanced_testcase {
         $this->resetAfterTest();
 
         $sitebackup = $this->create_site_backup();
-        $filepaths = $sitebackup->export_filedir();
+        $sitebackup->export_filedir();
+        $filepaths = $sitebackup->get_files_backup(constants::FILENAME_FILEDIR)->uploadedfiles;
         $this->assertEquals(1, count($filepaths));
         $filepath = reset($filepaths);
         $this->assertGreaterThanOrEqual(1000, filesize($filepath));

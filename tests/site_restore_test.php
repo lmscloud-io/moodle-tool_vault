@@ -14,10 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+/**
+ * The site_restore_test test class.
+ *
+ * @package     tool_vault
+ * @category    test
+ * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 namespace tool_vault;
 
+use tool_vault\fixtures\site_backup_mock;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
+
+defined('MOODLE_INTERNAL') || die();
+
+global $CFG;
+require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_backup_mock.php');
 
 /**
  * The site_restore_test test class.
@@ -33,12 +48,12 @@ class site_restore_test extends \advanced_testcase {
     /**
      * Create mock site backup instance
      *
-     * @return site_backup
+     * @return site_backup_mock
      */
-    protected function create_site_backup() {
+    protected function create_site_backup(): site_backup_mock {
         $backup = new backup_model((object)['status' => constants::STATUS_INPROGRESS]);
         $backup->save();
-        return new site_backup($backup);
+        return new site_backup_mock($backup);
     }
 
     /**
@@ -71,7 +86,9 @@ class site_restore_test extends \advanced_testcase {
 
         // Perform backup.
         $sitebackup = $this->create_site_backup();
-        [$filepathstructure, $filepath] = $sitebackup->export_db();
+        $sitebackup->export_db();
+        [$filepathstructure] = $sitebackup->get_files_backup(constants::FILENAME_DBSTRUCTURE)->uploadedfiles;
+        [$filepath] = $sitebackup->get_files_backup(constants::FILENAME_DBDUMP)->uploadedfiles;
 
         // Add a second book instance.
         $book2 = $this->getDataGenerator()->create_module('book', ['course' => $course->id]);
@@ -103,7 +120,8 @@ class site_restore_test extends \advanced_testcase {
 
         // Call export_dataroot() from site_backup.
         $sitebackup = $this->create_site_backup();
-        $filepath = $sitebackup->export_dataroot();
+        $sitebackup->export_dataroot();
+        [$filepath] = $sitebackup->get_files_backup(constants::FILENAME_DATAROOT)->uploadedfiles;
 
         // Remove file.
         unlink($hellofilepath);
@@ -131,7 +149,8 @@ class site_restore_test extends \advanced_testcase {
 
         // Perform backup.
         $sitebackup = $this->create_site_backup();
-        $filepaths = $sitebackup->export_filedir();
+        $sitebackup->export_filedir();
+        $filepaths = $sitebackup->get_files_backup(constants::FILENAME_FILEDIR)->uploadedfiles;
 
         // Remove the file.
         $this->delete_file();

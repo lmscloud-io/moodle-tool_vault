@@ -20,6 +20,7 @@ use tool_vault\local\checks\check_base;
 use tool_vault\local\checks\configoverride;
 use tool_vault\local\checks\dbstatus;
 use tool_vault\local\checks\diskspace;
+use tool_vault\local\helpers\files_backup;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
 use tool_vault\local\operations\operation_base;
@@ -38,6 +39,8 @@ class site_backup extends operation_base {
     protected $model;
     /** @var \tool_vault\local\checks\check_base[] */
     protected $prechecks = [];
+    /** @var files_backup[] */
+    protected $filesbackups = [];
 
     /**
      * Constructor
@@ -160,6 +163,19 @@ class site_backup extends operation_base {
     }
 
     /**
+     * Get the helper to backup files of the specified type
+     *
+     * @param string $filetype
+     * @return files_backup
+     */
+    public function get_files_backup(string $filetype): files_backup {
+        if (!array_key_exists($filetype, $this->filesbackups)) {
+            $this->filesbackups[$filetype] = new files_backup($this, $filetype);
+        }
+        return $this->filesbackups[$filetype];
+    }
+
+    /**
      * Mark backup as failed
      *
      * @param \Throwable $t
@@ -219,25 +235,13 @@ class site_backup extends operation_base {
         }
 
         $this->prepare();
+        $this->export_db();
+        $this->export_dataroot();
+        $this->export_filedir();
+
         $totalsize = 0;
-
-        $this->add_to_log('Exporting database...');
-        $filepaths = $this->export_db();
-        $this->add_to_log('...done');
-        foreach ($filepaths as $filepath) {
-            $totalsize += api::upload_backup_file($this->model->backupkey, $filepath, 'application/zip', $this);
-        }
-
-        $this->add_to_log('Exporting dataroot...');
-        $filepath = $this->export_dataroot();
-        $this->add_to_log('...done');
-        $totalsize += api::upload_backup_file($this->model->backupkey, $filepath, 'application/zip', $this);
-
-        $this->add_to_log('Exporting files...');
-        $filepaths = $this->export_filedir();
-        $this->add_to_log('...done');
-        foreach ($filepaths as $filepath) {
-            $totalsize += api::upload_backup_file($this->model->backupkey, $filepath, 'application/zip', $this);
+        foreach ($this->filesbackups as $filesbackup) {
+            $totalsize += $filesbackup->get_uploaded_size();
         }
 
         $this->add_to_log('Total size of backup: '.display_size($totalsize));
@@ -255,20 +259,6 @@ class site_backup extends operation_base {
      */
     public function get_backup_key(): ?string {
         return $this->model->backupkey;
-    }
-
-    /**
-     * Get total file size of several files
-     *
-     * @param array $filepaths
-     * @return int
-     */
-    protected function get_total_files_size(array $filepaths) {
-        $size3 = 0;
-        foreach ($filepaths as $filepath) {
-            $size3 += filesize($filepath);
-        }
-        return $size3;
     }
 
     /** @var dbstructure */
@@ -298,7 +288,6 @@ class site_backup extends operation_base {
         if ($precheck) {
             [$rowscnt, $size] = $precheck->get_table_size($tablename);
             $chunkscnt = ceil($size / constants::DBFILE_SIZE);
-            $res = (!$rowscnt || !$chunkscnt) ? 0 : (int)($rowscnt / $chunkscnt);
             return (!$rowscnt || !$chunkscnt) ? 0 : (int)($rowscnt / $chunkscnt);
         } else {
             return 0;
@@ -309,13 +298,10 @@ class site_backup extends operation_base {
      * Exports one database table
      *
      * @param dbtable $table
-     * @param \zip_archive $ziparchive
-     * @param string $dir
-     * @return array list of added filepaths
+     * @param string $dir path to temp directory to store files before they are added to archive
      */
-    public function export_table_data(dbtable $table, \zip_archive $ziparchive, string $dir): array {
+    public function export_table_data(dbtable $table, string $dir) {
         global $DB;
-        $filepaths = [];
 
         $fields = array_map(function(\xmldb_field $f) {
             return $f->getName();
@@ -343,50 +329,46 @@ class site_backup extends operation_base {
             }
             $rs->close();
             fwrite($fp, "\n]");
-            $ziparchive->add_file_from_pathname($filename, $filepath);
-            $filepaths[] = $filepath;
+            $this->get_files_backup(constants::FILENAME_DBDUMP)
+                ->add_table_file($table->get_xmldb_table()->getName(), $filepath);
             if (!$chunksize) {
                 break;
             }
         }
-        return $filepaths;
+
+        if (($table->get_xmldb_table()->getName() === 'config') &&
+                ($precheck = $this->prechecks[configoverride::get_name()] ?? null) &&
+                ($confs = $precheck->get_config_overrides_for_backup())) {
+            $this->get_files_backup(constants::FILENAME_DBDUMP)
+                ->add_file_from_string(constants::FILE_CONFIGOVERRIDE, json_encode($confs));
+        }
+
+        $this->get_files_backup(constants::FILENAME_DBDUMP)->finish_table();
     }
 
     /**
      * Export db structure and metadata
      *
      * @param array $tablenames
-     * @param string $zipdir
-     * @return string path to the zip archive
      */
-    protected function export_dbstructure(array $tablenames, string $zipdir): string {
+    protected function export_dbstructure(array $tablenames) {
         global $CFG;
 
-        $zipfilepathstruct = $zipdir.DIRECTORY_SEPARATOR.constants::FILENAME_DBSTRUCTURE.'.zip';
-        $ziparchivestruct = new \zip_archive();
-        if ($ziparchivestruct->open($zipfilepathstruct, \file_archive::CREATE)) {
-            $ziparchivestruct->add_file_from_pathname('xmldb.xsd', $CFG->dirroot.'/lib/xmldb/xmldb.xsd');
-            $ziparchivestruct->add_file_from_string(constants::FILE_STRUCTURE, $this->dbstructure->output($tablenames));
-            $ziparchivestruct->add_file_from_string(constants::FILE_METADATA, json_encode($this->get_metadata()));
-            // TODO add backup metadata.
-            $ziparchivestruct->close();
-        } else {
-            // TODO?
-            throw new \moodle_exception('Can not create ZIP file');
-        }
-
-        return $zipfilepathstruct;
+        $this->get_files_backup(constants::FILENAME_DBSTRUCTURE)
+            ->add_file($CFG->dirroot.'/lib/xmldb/xmldb.xsd', null, true, false)
+            ->add_file_from_string(constants::FILE_STRUCTURE, $this->dbstructure->output($tablenames))
+            ->add_file_from_string(constants::FILE_METADATA, json_encode($this->get_metadata()))
+            ->finish();
     }
 
     /**
      * Exports the whole moodle database
      *
-     * @return array paths to the zip file with the export
      */
-    public function export_db(): array {
+    public function export_db() {
 
+        $this->add_to_log('Exporting database:');
         $dir = make_request_directory();
-        $zipdir = make_request_directory();
 
         $structure = $this->get_db_structure();
         $tables = [];
@@ -395,112 +377,114 @@ class site_backup extends operation_base {
                 $tables[$table] = $tableobj;
             }
         }
-        $zipfilepathstruct = $this->export_dbstructure(array_keys($tables), $zipdir);
 
-        $zipfilepath = $zipdir.DIRECTORY_SEPARATOR.constants::FILENAME_DBDUMP.'.zip';
-        $ziparchive = new \zip_archive();
-        if (!$ziparchive->open($zipfilepath, \file_archive::CREATE)) {
-            // TODO?
-            throw new \moodle_exception('Can not create ZIP file');
-        }
+        $this->export_dbstructure(array_keys($tables));
 
         foreach ($tables as $tableobj) {
-            $this->export_table_data($tableobj, $ziparchive, $dir);
+            $this->export_table_data($tableobj, $dir);
         }
 
-        $ziparchive->add_file_from_string(constants::FILE_SEQUENCE,
-            json_encode(array_intersect_key($structure->retrieve_sequences(), $tables)));
-
-        if ($precheck = $this->prechecks[configoverride::get_name()] ?? null) {
-            if ($confs = $precheck->get_config_overrides_for_backup()) {
-                $ziparchive->add_file_from_string(constants::FILE_CONFIGOVERRIDE, json_encode($confs));
-            }
-        }
-
-        $ziparchive->close();
-        site_restore::remove_recursively($dir);
-
-        return [$zipfilepathstruct, $zipfilepath];
+        $this->get_files_backup(constants::FILENAME_DBDUMP)
+            ->add_file_from_string(constants::FILE_SEQUENCE,
+              json_encode(array_intersect_key($structure->retrieve_sequences(), $tables)))
+            ->finish();
+        $this->add_to_log('Database export completed');
     }
 
     /**
      * Export $CFG->dataroot
-     *
-     * @return string path to the zip file with the export
      */
     public function export_dataroot() {
         global $CFG;
-        $exportfilename = constants::FILENAME_DATAROOT . '.zip';
+        $this->add_to_log('Exporting dataroot:');
+        $filesbackup = $this->get_files_backup(constants::FILENAME_DATAROOT);
+        $lastfile = $filesbackup->get_last_backedup_file();
+
+        $pathstoexport = [];
         $handle = opendir($CFG->dataroot);
-        $files = [];
         while (($file = readdir($handle)) !== false) {
-            if (!$this->is_dataroot_path_skipped($file)) {
-                $files[$file] = $CFG->dataroot . DIRECTORY_SEPARATOR . $file;
+            if (!$this->is_dataroot_path_skipped($file) && ($lastfile === null || strcmp($file, $lastfile) > 0)) {
+                $pathstoexport[] = $file;
             }
         }
         closedir($handle);
-
-        $zipfilepath = make_request_directory().DIRECTORY_SEPARATOR.$exportfilename;
-        $zippacker = new \zip_packer();
-        // TODO use progress somehow?
-        if (!$zippacker->archive_to_pathname($files, $zipfilepath)) {
-            // TODO?
-            throw new \moodle_exception('Failed to create dataroot archive');
+        if (empty($pathstoexport)) {
+            $this->add_to_log('Nothing to export in dataroot');
+            return;
         }
-        return $zipfilepath;
+
+        asort($pathstoexport, SORT_STRING);
+
+        foreach ($pathstoexport as $file) {
+            $filesbackup->add_file($CFG->dataroot . DIRECTORY_SEPARATOR . $file, $file, true, false);
+        }
+
+        $filesbackup->finish();
+        $this->add_to_log('Dataroot export completed');
+    }
+
+    /**
+     * Export one file from filedir
+     *
+     * @param \stored_file $file
+     * @param string $tempdir
+     * @return bool
+     */
+    protected function export_one_file(\stored_file $file, string $tempdir): bool {
+        global $CFG;
+        $chash = $file->get_contenthash();
+        $filename = substr($chash, 0, 2) .
+            DIRECTORY_SEPARATOR . substr($chash, 2, 2) .
+            DIRECTORY_SEPARATOR . $chash;
+        $fullpath = $tempdir . DIRECTORY_SEPARATOR . $filename;
+        if (!file_exists(dirname($fullpath))) {
+            mkdir(dirname($fullpath), $CFG->directorypermissions, true);
+        }
+        if ($file->copy_content_to($fullpath)) {
+            $this->get_files_backup(constants::FILENAME_FILEDIR)
+                ->add_file($fullpath, $filename);
+            return true;
+        }
+        $this->add_to_log('- can not back up file with contenthash ' . $chash . ' - skipping', constants::LOGLEVEL_WARNING);
+        return false;
     }
 
     /**
      * Export filedir
      *
      * This function works with any file storage (local or remote)
-     *
-     * @return string[]
      */
-    public function export_filedir(): array {
-        global $DB, $CFG;
+    public function export_filedir() {
+        global $DB;
+
+        $this->add_to_log('Exporting files:');
         $fs = get_file_storage();
         $dir = make_request_directory();
-        $zippacker = new \zip_packer();
+        $filesbackup = $this->get_files_backup(constants::FILENAME_FILEDIR);
+        $lasthash = ($lastfile = $filesbackup->get_last_backedup_file()) ? basename($lastfile) : null;
+        $cntexported = 0;
 
-        $records = $DB->get_records_sql('SELECT '.self::instance_sql_fields('f', 'r').'
-            FROM (SELECT contenthash, min(id) AS id
-                from {files}
-                GROUP BY contenthash) filehash
-            JOIN {files} f ON f.id = filehash.id
-            LEFT JOIN {files_reference} r
-                       ON f.referencefileid = r.id',
-            []);
-        $toarchive = [];
-        foreach ($records as $filerecord) {
-            $file = $fs->get_file_instance($filerecord);
-            $chash = $filerecord->contenthash;
-            $filename = substr($chash, 0, 2) .
-                DIRECTORY_SEPARATOR . substr($chash, 2, 2) .
-                DIRECTORY_SEPARATOR . $chash;
-            $fullpath = $dir . DIRECTORY_SEPARATOR . $filename;
-            if (!file_exists(dirname($fullpath))) {
-                mkdir(dirname($fullpath), $CFG->directorypermissions, true);
+        do {
+            $subquery = ($lasthash ? ' WHERE contenthash > ?' : '');
+            $sql = 'SELECT ' . self::instance_sql_fields('f', 'r') . "
+                FROM (SELECT contenthash, min(id) AS id
+                    FROM {files}
+                    $subquery
+                    GROUP BY contenthash
+                ) filehash
+                JOIN {files} f ON f.id = filehash.id
+                LEFT JOIN {files_reference} r ON f.referencefileid = r.id
+                ORDER BY filehash.contenthash";
+            $records = $DB->get_records_sql($sql, [$lasthash], 0, constants::FILES_BATCH);
+            foreach ($records as $filerecord) {
+                $cntexported += (int)$this->export_one_file($fs->get_file_instance($filerecord), $dir);
+                $lasthash = $filerecord->contenthash;
             }
-            if (!$file->copy_content_to($fullpath)) {
-                $this->add_to_log('- can not back up file with contenthash '.$chash.' - skipping', constants::LOGLEVEL_WARNING);
-                continue;
-            }
-            $toarchive[$filename] = $fullpath;
-        }
+        } while (count($records) >= constants::FILES_BATCH - 1);
 
-        $exportfilename = constants::FILENAME_FILEDIR . '.zip';
-        $zipfilepath = make_request_directory() .
-            DIRECTORY_SEPARATOR . $exportfilename;
-        if (!$zippacker->archive_to_pathname($toarchive, $zipfilepath)) {
-            // TODO?
-            throw new \moodle_exception('Failed to create filedir archive');
-        }
-        foreach ($toarchive as $filepath) {
-            unlink($filepath);
-        }
-
-        return [$zipfilepath];
+        $filesbackup->finish();
+        site_restore::remove_recursively($dir);
+        $this->add_to_log('Files export completed, '.$cntexported.' files exported');
     }
 
     /**

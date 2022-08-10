@@ -40,6 +40,15 @@ abstract class operation_base implements logger {
     abstract public static function schedule(array $params = []): self;
 
     /**
+     * Returns the operation model (has properties id, status, etc)
+     *
+     * @return operation_model
+     */
+    public function get_model(): ?operation_model {
+        return $this->model;
+    }
+
+    /**
      * Mark operation as failed
      *
      * @param \Throwable $t

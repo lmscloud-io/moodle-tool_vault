@@ -17,6 +17,7 @@
 namespace tool_vault;
 
 use tool_vault\local\logger;
+use tool_vault\local\models\backup_file;
 use tool_vault\local\models\remote_backup;
 
 /**
@@ -207,20 +208,18 @@ class api {
     /**
      * Upload a backup file to the cloud
      *
-     * @param string $backupkey
+     * @param site_backup $sitebackup
      * @param string $filepath
-     * @param string $contenttype
-     * @param logger|null $logger
-     * @return int size of uploaded file
+     * @param backup_file $backupfile
      */
-    public static function upload_backup_file(string $backupkey, string $filepath, string $contenttype,
-                                              ?logger $logger = null): int {
+    public static function upload_backup_file(site_backup $sitebackup, string $filepath, backup_file $backupfile) {
         $filename = basename($filepath);
-        $filesize = filesize($filepath);
-        if ($logger) {
-            $logger->add_to_log('Uploading file '.$filename.' ('.display_size($filesize).')...');
-        }
-        $result = self::api_call("backups/$backupkey/upload/$filename", 'post', ['contenttype' => $contenttype], $logger);
+        $backupkey = $sitebackup->get_backup_key();
+        $contenttype = 'application/zip';
+
+        $sitebackup->add_to_log('Uploading file '.$filename.' ('.display_size($backupfile->filesize).')...');
+
+        $result = self::api_call("backups/$backupkey/upload/$filename", 'post', ['contenttype' => $contenttype], $sitebackup);
         $s3url = $result['uploadurl'] ?? null;
 
         // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
@@ -244,9 +243,7 @@ class api {
             $info  = $curl->get_info();
             if ($curl->get_errno() || !is_array($info) || $info['http_code'] != 200) {
                 if ($i < constants::REQUEST_S3_RETRIES - 1) {
-                    if ($logger) {
-                        $logger->add_to_log('Could not upload file '.$filename.', trying again', constants::LOGLEVEL_WARNING);
-                    }
+                    $sitebackup->add_to_log('Could not upload file '.$filename.', trying again', constants::LOGLEVEL_WARNING);
                 } else {
                     // TODO process error properly.
                     // @codingStandardsIgnoreLine
@@ -257,11 +254,9 @@ class api {
             }
         }
 
-        self::api_call("backups/$backupkey/uploadcompleted/$filename", 'get', [], $logger);
-        if ($logger) {
-            $logger->add_to_log('...done');
-        }
-        return $filesize;
+        // TODO send the original size / metadata of all files in the backup.
+        self::api_call("backups/$backupkey/uploadcompleted/$filename", 'get', [], $sitebackup);
+        $sitebackup->add_to_log('...done');
     }
 
     /**
