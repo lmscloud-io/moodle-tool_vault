@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * The site_backup_test class.
+ * The files_restore_mock class.
  *
  * @package     tool_vault
  * @category    test
@@ -26,28 +26,31 @@
 namespace tool_vault\fixtures;
 
 /**
- * Mock class for files_backup helper
+ * Mock class for files_restore helper
  */
-class files_backup_mock extends \tool_vault\local\helpers\files_backup {
+class files_restore_mock extends \tool_vault\local\helpers\files_restore {
     /** @var array */
-    public $uploadedfiles = [];
+    protected static $archives = [];
 
     /**
-     * Finish
+     * Set archive to use
      *
-     * @param bool $startnew
+     * @param string $filepath
      * @return void
      */
-    public function finish(bool $startnew = false) {
-        $zipfilepath = $this->get_archive_file_path();
-        $this->ziparchive->close();
-        $newfilepath = make_request_directory().DIRECTORY_SEPARATOR.basename($zipfilepath);
-        copy($zipfilepath, $newfilepath);
-        $this->uploadedfiles[] = $newfilepath;
+    public static function use_archive(string $filepath) {
+        static::$archives[basename($filepath)] = $filepath;
+    }
 
-        \curl::mock_response('123');
-        \curl::mock_response('123');
-        \curl::mock_response(json_encode(['uploadurl' => 'https://test.s3.amazonaws.com/']));
-        parent::finish($startnew);
+    /**
+     * Overrides parent function to use the mock archive instead of downloading
+     *
+     * @return string path to the archive file
+     */
+    protected function download_backup_file(): string {
+        $key = $this->backupfiles[$this->currentseq]->get_file_name();
+        $file = static::$archives[$key];
+        unset(static::$archives[$key]);
+        return $file;
     }
 }

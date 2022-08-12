@@ -19,11 +19,11 @@ namespace tool_vault;
 use tool_vault\local\checks\check_base;
 use tool_vault\local\checks\diskspace_restore;
 use tool_vault\local\checks\version_restore;
+use tool_vault\local\helpers\files_restore;
 use tool_vault\local\logger;
 use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\restore_base_model;
 use tool_vault\local\operations\operation_base;
-use tool_vault\task\dryrun_task;
 
 /**
  * Site restore pre-checks only
@@ -107,6 +107,8 @@ class site_restore_dryrun extends operation_base {
             $error = "Backup with the key {$model->backupkey} is no longer avaialable";
             throw new \moodle_exception($error);
         }
+
+        files_restore::populate_backup_files($model->id, $backupmetadata->files ?? []);
 
         $dir = make_request_directory();
         $zippath = $dir.DIRECTORY_SEPARATOR.constants::FILENAME_DBSTRUCTURE.'.zip';

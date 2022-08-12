@@ -351,7 +351,7 @@ class site_backup extends operation_base {
      *
      * @param array $tablenames
      */
-    protected function export_dbstructure(array $tablenames) {
+    public function export_dbstructure(array $tablenames) {
         global $CFG;
 
         $this->get_files_backup(constants::FILENAME_DBSTRUCTURE)

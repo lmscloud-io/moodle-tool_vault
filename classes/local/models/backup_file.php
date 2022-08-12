@@ -48,7 +48,37 @@ class backup_file {
      * @param array $b
      */
     public function __construct(array $b) {
-        $this->data = $b;
+        $this->data = $b + [
+                'details' => json_encode([]),
+                'origsize' => 0,
+                'filesize' => 0,
+                'etag' => null,
+                'seq' => 0,
+            ];
+        // TODO check required fields - operationid, filetype, status.
+    }
+
+    /**
+     * Create from params
+     *
+     * @param string $filename may have suffix -1 -2, etc that will be converted to seq
+     * @param array $params
+     * @return static|null
+     */
+    public static function create(string $filename, array $params = []): ?self {
+        if (pathinfo($filename, PATHINFO_EXTENSION) !== 'zip') {
+            return null;
+        }
+        $name = pathinfo($filename, PATHINFO_FILENAME);
+        $seq = 0;
+        if (preg_match('/^(.*?)-([\d]+)$/', $name, $matches)) {
+            $seq = (int)$matches[2];
+            $name = $matches[1];
+        }
+        return new backup_file([
+                'filetype' => $name,
+                'seq' => $seq,
+            ] + $params);
     }
 
     /**

@@ -96,12 +96,13 @@ class site_restore_test extends \advanced_testcase {
 
         // Prepare restore, only 'book' table.
         $siterestore = $this->create_site_restore();
-        $structure = $siterestore->prepare_restore_db($filepathstructure);
+        $siterestore->prepare_restore_db($filepathstructure);
+        $structure = $siterestore->get_db_structure();
         $tables = array_intersect_key($structure->get_tables_definitions(), ['book' => 1]);
         $structure->set_tables_definitions($tables);
 
         // Run restore, the content of table 'book' should revert to the state when the backup was made.
-        $siterestore->restore_db($structure, $filepath);
+        $siterestore->restore_db($filepath);
         $this->assertCount(1, $DB->get_records('book'));
 
         // Assert sequences were restored.

@@ -16,7 +16,6 @@
 
 namespace tool_vault\local\helpers;
 
-use core_search\engine_exception;
 use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\models\backup_file;
@@ -222,7 +221,7 @@ class files_backup {
      */
     public function add_table_file(string $tablename, string $filepath): self {
         if (!$this->is_db_backup()) {
-            throw new engine_exception('This function can only be used for the DB backup');
+            throw new \moodle_exception('This function can only be used for the DB backup');
         }
         $this->add_file($filepath, null, false);
         $uploadedtables = $this->currentbackupfile->get_detail('tables') ?? [];
@@ -239,7 +238,7 @@ class files_backup {
      */
     public function finish_table(): self {
         if (!$this->is_db_backup()) {
-            throw new engine_exception('This function can only be used for the DB backup');
+            throw new \moodle_exception('This function can only be used for the DB backup');
         }
         $this->check_if_new_zip_needed();
         return $this;

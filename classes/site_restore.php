@@ -21,7 +21,6 @@ use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
 use tool_vault\local\operations\operation_base;
 use tool_vault\local\xmldb\dbstructure;
-use tool_vault\task\restore_task;
 
 /**
  * Perform site restore
@@ -36,6 +35,8 @@ class site_restore extends operation_base {
     protected $model;
     /** @var check_base[] */
     protected $prechecks = null;
+    /** @var dbstructure */
+    protected $dbstructure = null;
 
     /**
      * Constructor
@@ -142,7 +143,7 @@ class site_restore extends operation_base {
         api::download_backup_file($this->model->backupkey, $filepath2, $this);
         api::download_backup_file($this->model->backupkey, $filepath3, $this);
 
-        $structure = $this->prepare_restore_db($filepath0);
+        $this->prepare_restore_db($filepath0);
         $datarootfiles = $this->prepare_restore_dataroot($filepath2);
         $filedirpath = $this->prepare_restore_filedir($filepath3);
         unlink($filepath2);
@@ -153,7 +154,7 @@ class site_restore extends operation_base {
 
         $this->before_restore();
 
-        $this->restore_db($structure, $filepath1);
+        $this->restore_db($filepath1);
         unlink($filepath1);
         $this->restore_dataroot($datarootfiles);
         $this->restore_filedir($filedirpath);
@@ -164,24 +165,31 @@ class site_restore extends operation_base {
     }
 
     /**
+     * Retrns DB structure
+     *
+     * @return dbstructure
+     */
+    public function get_db_structure(): ?dbstructure {
+        return $this->dbstructure;
+    }
+
+    /**
      * Prepare to restore db
      *
      * @param string $filepath
-     * @return dbstructure
      */
-    public function prepare_restore_db(string $filepath): dbstructure {
+    public function prepare_restore_db(string $filepath) {
         $structurefilename = constants::FILE_STRUCTURE;
         $this->add_to_log('Extracting database structure...');
 
         $temppath = make_request_directory();
         $zippacker = new \zip_packer();
         $zippacker->extract_to_pathname($filepath, $temppath, [$structurefilename, 'xmldb.xsd']);
-        $structure = dbstructure::load_from_backup($temppath.DIRECTORY_SEPARATOR.$structurefilename);
+        $this->dbstructure = dbstructure::load_from_backup($temppath.DIRECTORY_SEPARATOR.$structurefilename);
 
         // TODO do all the checks that all tables exist and have necessary fields.
 
         $this->add_to_log('...done');
-        return $structure;
     }
 
     /**
@@ -230,13 +238,12 @@ class site_restore extends operation_base {
     /**
      * Restore db
      *
-     * @param dbstructure $structure
      * @param string $zipfilepath
      * @return void
      */
-    public function restore_db(dbstructure $structure, string $zipfilepath) {
+    public function restore_db(string $zipfilepath) {
         global $DB;
-        $tables = $structure->get_backup_tables();
+        $tables = $this->dbstructure->get_backup_tables();
         $this->add_to_log('Restoring database ('.count($tables).' tables)...');
         $temppath = make_request_directory();
         $zippacker = new \zip_packer();
@@ -250,7 +257,7 @@ class site_restore extends operation_base {
         unlink($filepath);
 
         foreach ($tables as $tablename => $table) {
-            if ($altersql = $table->get_alter_sql($structure->get_tables_actual()[$tablename] ?? null)) {
+            if ($altersql = $table->get_alter_sql($this->dbstructure->get_tables_actual()[$tablename] ?? null)) {
                 try {
                     $DB->change_database_structure($altersql);
                     $this->add_to_log('- table '.$tablename.' structure is modified');
