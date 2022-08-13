@@ -147,18 +147,13 @@ class site_restore extends operation_base {
         // Download files.
         $tempdir = make_request_directory();
         $filename2 = constants::FILENAME_DATAROOT . '.zip';
-        $filename3 = constants::FILENAME_FILEDIR . '.zip';
         $filepath2 = $tempdir.DIRECTORY_SEPARATOR.$filename2;
-        $filepath3 = $tempdir.DIRECTORY_SEPARATOR.$filename3;
 
         api::download_backup_file($this->model->backupkey, $filepath2, $this);
-        api::download_backup_file($this->model->backupkey, $filepath3, $this);
 
         $this->prepare_restore_db();
         $datarootfiles = $this->prepare_restore_dataroot($filepath2);
-        $filedirpath = $this->prepare_restore_filedir($filepath3);
         unlink($filepath2);
-        unlink($filepath3);
 
         // From this moment on we can not throw any exceptions, we have to try to restore as much as possible skipping problems.
         $this->add_to_log('Restore started');
@@ -167,7 +162,7 @@ class site_restore extends operation_base {
 
         $this->restore_db();
         $this->restore_dataroot($datarootfiles);
-        $this->restore_filedir($filedirpath);
+        $this->restore_filedir();
 
         $this->post_restore();
         $this->model->set_status(constants::STATUS_FINISHED)->save();
@@ -226,19 +221,24 @@ class site_restore extends operation_base {
     }
 
     /**
-     * Prepare restore filedir
+     * Apply config overrides
      *
-     * @param string $filepath
-     * @return string
+     * @param string $tablename
+     * @return void
      */
-    public function prepare_restore_filedir(string $filepath): string {
-        $this->add_to_log('Extracting filedir files...');
-        $temppath = make_request_directory();
-        $zippacker = new \zip_packer();
-        $zippacker->extract_to_pathname($filepath, $temppath);
-
-        $this->add_to_log('...done');
-        return $temppath;
+    protected function apply_config_overrides(string $tablename) {
+        $structurefiles = $this->get_files_restore(constants::FILENAME_DBSTRUCTURE)->get_all_files();
+        if (!array_key_exists(constants::FILE_CONFIGOVERRIDE, $structurefiles)) {
+            return;
+        }
+        $confs = json_decode(file_get_contents($structurefiles[constants::FILE_CONFIGOVERRIDE]), true);
+        foreach ($confs as $conf) {
+            if ($tablename === 'config' && empty($conf['plugin'])) {
+                set_config($conf['name'], $conf['value']);
+            } else if ($tablename === 'config_plugins' && !empty($conf['plugin'])) {
+                set_config($conf['name'], $conf['value'], $conf['plugin']);
+            }
+        }
     }
 
     /**
@@ -259,6 +259,8 @@ class site_restore extends operation_base {
         while (($tabledata = $helper->get_next_table()) !== null) {
             [$tablename, $filesfortable] = $tabledata;
             $table = $tables[$tablename];
+
+            // Alter table structure in the DB if needed.
             if ($altersql = $table->get_alter_sql($this->dbstructure->get_tables_actual()[$tablename] ?? null)) {
                 try {
                     $DB->change_database_structure($altersql);
@@ -269,8 +271,8 @@ class site_restore extends operation_base {
                 }
             }
 
+            // Truncate and insert new data.
             $DB->execute('TRUNCATE TABLE {'.$tablename.'}');
-
             foreach ($filesfortable as $filepath) {
                 $data = json_decode(file_get_contents($filepath), true);
                 if ($data) {
@@ -286,6 +288,8 @@ class site_restore extends operation_base {
                 }
                 unlink($filepath);
             }
+
+            // Change sequences.
             if ($altersql = $table->get_fix_sequence_sql($sequences[$tablename] ?? 0)) {
                 try {
                     $DB->change_database_structure($altersql);
@@ -294,14 +298,10 @@ class site_restore extends operation_base {
                         constants::LOGLEVEL_WARNING);
                 }
             }
-        }
 
-        // Extract config overrides.
-        $filepath = $structurefiles[constants::FILE_CONFIGOVERRIDE] ?? null;
-        if ($filepath) {
-            $confs = json_decode(file_get_contents($filepath), true);
-            foreach ($confs as $conf) {
-                set_config($conf['name'], $conf['value'], $conf['plugin']);
+            // Apply config overrides.
+            if ($tablename === 'config' || $tablename === 'config_overrides') {
+                $this->apply_config_overrides($tablename);
             }
         }
 
@@ -367,14 +367,14 @@ class site_restore extends operation_base {
      *
      * This function works with any file storage (local or remote)
      *
-     * @param string $restoredir
      * @return void
      */
-    public function restore_filedir(string $restoredir) {
+    public function restore_filedir() {
         $this->add_to_log('Restoring files to file storage...');
         $fs = get_file_storage();
-        $files = self::dirlist_recursive($restoredir);
-        foreach ($files as $subpath => $filepath) {
+        $helper = $this->get_files_restore(constants::FILENAME_FILEDIR);
+        while (($nextfile = $helper->get_next_file()) !== null) {
+            [$filepath, $subpath] = $nextfile;
             $file = basename($filepath);
             if ($subpath !== substr($file, 0, 2) . DIRECTORY_SEPARATOR . substr($file, 2, 2) . DIRECTORY_SEPARATOR . $file) {
                 // Integrity check.
@@ -387,7 +387,6 @@ class site_restore extends operation_base {
                 $this->add_to_log('- could not add file with contenthash '.$file.' to file system: '.$t->getMessage(),
                     constants::LOGLEVEL_WARNING);
             }
-            unlink($filepath);
         }
         $this->add_to_log('...files restore completed');
     }

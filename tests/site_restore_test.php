@@ -179,8 +179,11 @@ class site_restore_test extends \advanced_testcase {
 
         // Run restore, file is now back.
         $siterestore = $this->create_site_restore();
-        $restoreddir = $siterestore->prepare_restore_filedir($filepaths[0]);
-        $siterestore->restore_filedir($restoreddir);
+        files_restore::populate_backup_files($siterestore->get_model()->id, [
+            ['name' => constants::FILENAME_FILEDIR.'.zip', 'size' => 0, 'etag' => ''],
+        ]);
+        $this->curl_mock_file_download($filepaths[0]);
+        $siterestore->restore_filedir();
         $this->assertTrue(file_exists($filepathondisk));
         $this->assertEquals('helloworld', file_get_contents($filepathondisk));
     }
