@@ -83,16 +83,16 @@ class diskspace extends check_base {
         $handle = opendir($CFG->dataroot);
         $size = 0;
         while (($file = readdir($handle)) !== false) {
-            if (!site_backup::is_dataroot_path_skipped($file)) {
-                if (is_dir($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
-                    $filelist = site_restore::dirlist_recursive($CFG->dataroot.DIRECTORY_SEPARATOR.$file);
-                } else {
-                    $filelist = [$file => $CFG->dataroot.DIRECTORY_SEPARATOR.$file];
-                }
-                foreach ($filelist as $filepath) {
-                    if (is_file($filepath) && is_readable($filepath)) {
-                        $size += filesize($filepath);
+            if (!site_backup::is_dataroot_path_skipped($file) && $file !== '.' && $file !== '..') {
+                $filepath = $CFG->dataroot . DIRECTORY_SEPARATOR . $file;
+                if (is_dir($filepath)) {
+                    $it = new \RecursiveDirectoryIterator($filepath, \RecursiveDirectoryIterator::SKIP_DOTS);
+                    $allfiles = new \RecursiveIteratorIterator($it, \RecursiveIteratorIterator::LEAVES_ONLY);
+                    foreach ($allfiles as $f) {
+                        $size += $f->getSize();
                     }
+                } else if (is_file($filepath) && is_readable($filepath)) {
+                    $size += filesize($filepath);
                 }
             }
         }

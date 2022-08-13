@@ -400,7 +400,9 @@ class site_backup extends operation_base {
         $pathstoexport = [];
         $handle = opendir($CFG->dataroot);
         while (($file = readdir($handle)) !== false) {
-            if (!$this->is_dataroot_path_skipped($file) && ($lastfile === null || strcmp($file, $lastfile) > 0)) {
+            if (!$this->is_dataroot_path_skipped($file)
+                    && $file !== '.' && $file !== '..'
+                    && ($lastfile === null || strcmp($file, $lastfile) > 0)) {
                 $pathstoexport[] = $file;
             }
         }

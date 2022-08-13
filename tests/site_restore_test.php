@@ -150,8 +150,11 @@ class site_restore_test extends \advanced_testcase {
 
         // Restore.
         $siterestore = $this->create_site_restore();
-        $files = $siterestore->prepare_restore_dataroot($filepath);
-        $siterestore->restore_dataroot($files);
+        files_restore::populate_backup_files($siterestore->get_model()->id, [
+            ['name' => constants::FILENAME_DATAROOT.'.zip', 'size' => 0, 'etag' => ''],
+        ]);
+        $this->curl_mock_file_download($filepath);
+        $siterestore->restore_dataroot();
 
         // File is now present.
         $this->assertTrue(file_exists($hellofilepath));

@@ -114,10 +114,12 @@ class files_restore_test extends \advanced_testcase {
         ]);
 
         $filesrestore = new files_restore($siterestore, constants::FILENAME_FILEDIR);
+        $this->assertTrue($filesrestore->is_first_archive());
         $this->assertEquals($files0[1], $filesrestore->get_next_file()[1]);
         $this->assertEquals($files0[0], $filesrestore->get_next_file()[1]);
         $this->assertEquals($files1[1], $filesrestore->get_next_file()[1]);
 
+        $this->assertFalse($filesrestore->is_first_archive());
         $this->assertEquals(constants::STATUS_FINISHED,
             $DB->get_field('tool_vault_backup_file', 'status', ['filetype' => constants::FILENAME_FILEDIR, 'seq' => 0]));
         $this->assertEquals(constants::STATUS_SCHEDULED,
@@ -145,8 +147,14 @@ class files_restore_test extends \advanced_testcase {
         // Check result of get_next_file().
         $filesrestore = new files_restore($siterestore, constants::FILENAME_DATAROOT);
         $this->assertEquals('lang', $filesrestore->get_next_file()[1]);
+        $this->assertEquals('lang/de', $filesrestore->get_next_file()[1]);
+        $this->assertEquals('lang/de/moodle.php', $filesrestore->get_next_file()[1]);
+        $this->assertEquals('lang/en', $filesrestore->get_next_file()[1]);
+        $this->assertEquals('lang/en/moodle.php', $filesrestore->get_next_file()[1]);
         $this->assertEquals('something.json', $filesrestore->get_next_file()[1]);
         $this->assertEquals('d', $filesrestore->get_next_file()[1]);
+        $this->assertEquals('d/subdir', $filesrestore->get_next_file()[1]);
+        $this->assertEquals('d/subdir/file.php', $filesrestore->get_next_file()[1]);
         $this->assertNull($filesrestore->get_next_file());
     }
 

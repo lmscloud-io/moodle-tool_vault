@@ -17,6 +17,7 @@
 namespace tool_vault;
 
 use tool_vault\local\checks\check_base;
+use tool_vault\local\helpers\files_backup;
 use tool_vault\local\helpers\files_restore;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
@@ -144,16 +145,7 @@ class site_restore extends operation_base {
         $this->prechecks = site_restore_dryrun::execute_prechecks(
             $this->get_files_restore(constants::FILENAME_DBSTRUCTURE), $this->model, $this, true);
 
-        // Download files.
-        $tempdir = make_request_directory();
-        $filename2 = constants::FILENAME_DATAROOT . '.zip';
-        $filepath2 = $tempdir.DIRECTORY_SEPARATOR.$filename2;
-
-        api::download_backup_file($this->model->backupkey, $filepath2, $this);
-
         $this->prepare_restore_db();
-        $datarootfiles = $this->prepare_restore_dataroot($filepath2);
-        unlink($filepath2);
 
         // From this moment on we can not throw any exceptions, we have to try to restore as much as possible skipping problems.
         $this->add_to_log('Restore started');
@@ -161,11 +153,12 @@ class site_restore extends operation_base {
         $this->before_restore();
 
         $this->restore_db();
-        $this->restore_dataroot($datarootfiles);
+        $this->restore_dataroot();
         $this->restore_filedir();
 
         $this->post_restore();
         $this->model->set_status(constants::STATUS_FINISHED)->save();
+        $this->get_files_restore(constants::FILENAME_DBSTRUCTURE)->finish();
         $this->add_to_log('Restore finished');
     }
 
@@ -191,33 +184,6 @@ class site_restore extends operation_base {
         // TODO do all the checks that all tables exist and have necessary fields.
 
         $this->add_to_log('...done');
-    }
-
-    /**
-     * Prepare to restore dataroot
-     *
-     * @param string $filepath
-     * @return array
-     */
-    public function prepare_restore_dataroot(string $filepath) {
-        global $CFG;
-        $this->add_to_log('Extracting dataroot files...');
-        $temppath = $CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__';
-        $this->remove_recursively($temppath);
-        make_writable_directory($temppath);
-        $zippacker = new \zip_packer();
-        $zippacker->extract_to_pathname($filepath, $temppath);
-
-        $handle = opendir($temppath);
-        $files = [];
-        while (($file = readdir($handle)) !== false) {
-            if (!preg_match('/^\\./', $file)) {
-                $files[$file] = $temppath.DIRECTORY_SEPARATOR.$file;
-            }
-        }
-        closedir($handle);
-        $this->add_to_log('...done');
-        return $files;
     }
 
     /**
@@ -306,60 +272,65 @@ class site_restore extends operation_base {
         }
 
         $this->add_to_log('...database restore completed');
-        // We will not need dbstructure anymore.
-        $this->get_files_restore(constants::FILENAME_DBSTRUCTURE)->finish();
     }
 
     /**
      * Restore dataroot
      *
-     * @param array $files
      * @return void
      */
-    public function restore_dataroot(array $files) {
+    public function restore_dataroot() {
         global $CFG;
-        $this->add_to_log('Restoring datadir...');
-        foreach ($files as $file => $path) {
-            // TODO what if we can not delete some files?
-            self::remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.$file);
-            if (file_exists($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
-                $this->add_to_log('- existing path '.$file.' in dataroot could not be removed',
-                    constants::LOGLEVEL_WARNING);
-                // TODO try to move files one by one.
-            } else {
-                rename($path, $CFG->dataroot.DIRECTORY_SEPARATOR.$file);
-                $this->add_to_log("- added ".$file);
-            }
-        }
+        $this->add_to_log('Restoring dataroot...');
+        $helper = $this->get_files_restore(constants::FILENAME_DATAROOT);
 
-        self::remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__');
-        $this->add_to_log('...datadir restore completed');
-    }
-
-    /**
-     * List all files in a directory recursively
-     *
-     * @param string $pathtodir
-     * @param string $prefix
-     * @return array array [filepathlocal => filepathfull] (filepathfull == $pathtodir.'/'/filepathlocal)
-     */
-    public static function dirlist_recursive(string $pathtodir, string $prefix = ''): array {
-        $files = [];
-        if ($handle = opendir($pathtodir)) {
-            while (false !== ($entry = readdir($handle))) {
-                if (substr($entry, 0, 1) === '.') {
-                    continue;
-                } else if (is_dir($pathtodir . DIRECTORY_SEPARATOR . $entry)) {
-                    $thisfiles = self::dirlist_recursive($pathtodir . DIRECTORY_SEPARATOR . $entry,
-                        $prefix . $entry . DIRECTORY_SEPARATOR);
-                    $files += $thisfiles;
-                } else {
-                    $files[$prefix . $entry] = $pathtodir . DIRECTORY_SEPARATOR . $entry;
+        if ($helper->is_first_archive()) {
+            // Delete everything from the current dataroot (this will not be executed if we resume restore).
+            $handle = opendir($CFG->dataroot);
+            while (($file = readdir($handle)) !== false) {
+                if (!site_backup::is_dataroot_path_skipped($file) && $file !== '.' && $file !== '..') {
+                    $this->add_to_log("Removing '$file' from dataroot...");
+                    $cnt = self::remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.$file);
+                    if (!file_exists($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
+                        $this->add_to_log('...done');
+                    } else if (is_dir($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
+                        $this->add_to_log("...failed to remove directory" .
+                            ($cnt ? ", $cnt files in the directory were removed" : ''), constants::LOGLEVEL_WARNING);
+                    } else {
+                        $this->add_to_log('...failed to remove file', constants::LOGLEVEL_WARNING);
+                    }
                 }
             }
             closedir($handle);
         }
-        return $files;
+
+        // Start extracting files.
+        while (($nextfile = $helper->get_next_file()) !== null) {
+            [$path, $file] = $nextfile;
+            $newpath = $CFG->dataroot.DIRECTORY_SEPARATOR.$file;
+            if (is_dir($path) && !is_dir($newpath)) {
+                try {
+                    make_writable_directory($newpath);
+                } catch (\Throwable $t) {
+                    $this->add_to_log($t->getMessage(), constants::LOGLEVEL_WARNING);
+                }
+            } else if (!is_dir($newpath)) {
+                $dir = dirname($newpath);
+                if (!(file_exists($dir) && is_dir($dir) && is_writable($dir))) {
+                    // We already showed the warning when we could not create a dir.
+                    continue;
+                }
+                if (!file_exists($newpath) || is_writable($newpath)) {
+                    rename($path, $newpath);
+                    $this->add_to_log("- added ".$file);
+                } else {
+                    $this->add_to_log('- existing path '.$file.' in dataroot could not be replaced',
+                        constants::LOGLEVEL_WARNING);
+                }
+            }
+        }
+
+        $this->add_to_log('...dataroot restore completed');
     }
 
     /**
@@ -421,16 +392,16 @@ class site_restore extends operation_base {
      * Remove directory recursively
      *
      * @param string $dir
-     * @return void
+     * @return int count of removed files
      */
-    public static function remove_recursively(string $dir) {
+    public static function remove_recursively(string $dir): int {
         if (!file_exists($dir)) {
-            return;
+            return 0;
         }
         if (!is_dir($dir)) {
-            unlink($dir);
-            return;
+            return (int)unlink($dir);
         }
+        $cnt = 0;
         $it = new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS);
         $files = new \RecursiveIteratorIterator($it,
             \RecursiveIteratorIterator::CHILD_FIRST);
@@ -438,9 +409,10 @@ class site_restore extends operation_base {
             if ($file->isDir()) {
                 rmdir($file->getRealPath());
             } else {
-                unlink($file->getRealPath());
+                $cnt += (int)unlink($file->getRealPath());
             }
         }
         rmdir($dir);
+        return $cnt;
     }
 }

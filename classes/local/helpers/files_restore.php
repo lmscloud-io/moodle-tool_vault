@@ -19,7 +19,6 @@ namespace tool_vault\local\helpers;
 use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\models\backup_file;
-use tool_vault\local\models\restore_base_model;
 use tool_vault\local\operations\operation_base;
 use tool_vault\site_restore;
 
@@ -57,15 +56,18 @@ class files_restore {
      * @param string $filetype
      */
     public function __construct(operation_base $siterestore, string $filetype) {
-        if ($filetype === constants::FILENAME_DBDUMP) {
+        $this->filetype = $filetype;
+        $this->siterestore = $siterestore;
+        if ($this->is_dbdump_backup()) {
             if ($siterestore instanceof site_restore) {
                 $this->dbstructure = $siterestore->get_db_structure();
+                if (!$this->dbstructure) {
+                    throw new \coding_exception('DB structure is not available');
+                }
             } else {
                 throw new \coding_exception('Files restore helper for dbdump can only be used from site_restore');
             }
         }
-        $this->siterestore = $siterestore;
-        $this->filetype = $filetype;
         $this->rescan_files_from_db();
     }
 
@@ -94,6 +96,15 @@ class files_restore {
      */
     public function has_known_archives(): bool {
         return !empty($this->backupfiles);
+    }
+
+    /**
+     * Are we on the very first backup archive (which means we are starting restore for the first time and not resuming)
+     *
+     * @return bool
+     */
+    public function is_first_archive(): bool {
+        return $this->backupfiles && $this->currentseq == key($this->backupfiles);
     }
 
     /**
@@ -141,12 +152,21 @@ class files_restore {
     }
 
     /**
-     * Filedir backup
+     * DBstructure backup
      *
      * @return bool
      */
-    protected function is_filedir_backup(): bool {
-        return $this->filetype === constants::FILENAME_FILEDIR;
+    protected function is_dbstructure_backup(): bool {
+        return $this->filetype === constants::FILENAME_DBSTRUCTURE;
+    }
+
+    /**
+     * Dataroot backup
+     *
+     * @return bool
+     */
+    protected function is_dataroot_backup(): bool {
+        return $this->filetype === constants::FILENAME_DATAROOT;
     }
 
     /**
@@ -155,7 +175,7 @@ class files_restore {
      * @return array
      */
     public function get_all_files(): array {
-        if ($this->filetype !== constants::FILENAME_DBSTRUCTURE) {
+        if (!$this->is_dbstructure_backup()) {
             throw new \coding_exception('Can only be called for the dbstructure file type');
         }
         $files = [];
@@ -245,66 +265,42 @@ class files_restore {
     /**
      * Creates an array of files from the backup archive
      *
-     * For dbdump groups by table, for datadir only returns top-level files/folders
+     * Special magic for dbdump files where it groups by tables
      *
-     * @param bool $recursive
      * @param string $subpath
      * @return void
      */
-    protected function populate_files_list(bool $recursive, string $subpath = '') {
+    protected function retrieve_files_list(string $subpath = '') {
         $path = $this->dir . DIRECTORY_SEPARATOR . $subpath;
-        $handle = opendir($path);
-        $files = [];
-        while (($file = readdir($handle)) !== false) {
-            if ($file !== '.' && $file !== '..') {
-                $files[] = $file;
-            }
-        }
-        closedir($handle);
-        usort($files, [$this, 'filesorter']);
-        foreach ($files as $file) {
-            if ($recursive && is_dir($path . $file)) {
-                $this->populate_files_list($recursive, $subpath . $file . DIRECTORY_SEPARATOR);
-            } else {
-                $this->add_to_current_files($subpath . $file);
-            }
-        }
-    }
 
-    /**
-     * Called from populate_files_list
-     *
-     * @param string $localpath
-     * @return void
-     */
-    protected function add_to_current_files(string $localpath) {
-        if ($this->is_dbdump_backup()) {
-            if (array_key_exists($this->tablename($localpath), $this->curenttables)) {
-                $this->curenttables[$this->tablename($localpath)][] = $localpath;
-            }
-        } else {
-            $this->curentfileslist[] = $localpath;
+        // Get list of files recursively.
+        $it = new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS);
+        $mode = $this->is_dataroot_backup() ? \RecursiveIteratorIterator::SELF_FIRST : \RecursiveIteratorIterator::LEAVES_ONLY;
+        /** @var \RecursiveDirectoryIterator $itfiles */
+        $itfiles = new \RecursiveIteratorIterator($it, $mode);
+        $this->curentfileslist = [];
+        foreach ($itfiles as $file) {
+            $this->curentfileslist[] = $itfiles->getSubPathName();
         }
-    }
 
-    /**
-     * Used to sort files names
-     *
-     * @param string $file1
-     * @param string $file2
-     * @return int
-     */
-    protected function filesorter($file1, $file2): int {
+        // Sorting and grouping magic.
         if ($this->is_dbdump_backup()) {
-            $c1 = strcmp($this->tablename($file1), $this->tablename($file2));
-            if ($c1 != 0) {
-                return $c1;
+            $this->curenttables = array_fill_keys(array_keys($this->dbstructure->get_backup_tables()), []);
+            foreach ($this->curentfileslist as $localpath) {
+                if (array_key_exists($this->tablename($localpath), $this->curenttables)) {
+                    $this->curenttables[$this->tablename($localpath)][] = $localpath;
+                }
             }
-            $ext1 = (int)pathinfo(pathinfo($file1, PATHINFO_FILENAME), PATHINFO_EXTENSION);
-            $ext2 = (int)pathinfo(pathinfo($file2, PATHINFO_FILENAME), PATHINFO_EXTENSION);
-            return $ext1 - $ext2;
+            foreach ($this->curenttables as $tablename => &$fileslist) {
+                usort($fileslist, function ($file1, $file2) {
+                    $ext1 = (int)pathinfo(pathinfo($file1, PATHINFO_FILENAME), PATHINFO_EXTENSION);
+                    $ext2 = (int)pathinfo(pathinfo($file2, PATHINFO_FILENAME), PATHINFO_EXTENSION);
+                    return $ext1 - $ext2;
+                });
+            }
+            $this->curentfileslist = array_keys(array_filter($this->curenttables));
         } else {
-            return strcmp($file1, $file2);
+            sort($this->curentfileslist, SORT_STRING);
         }
     }
 
@@ -328,25 +324,32 @@ class files_restore {
      * @throws \moodle_exception
      */
     protected function open_next_archive(): bool {
+        global $CFG;
         $this->currentseq = $this->find_next_seq();
         if ($this->currentseq === null) {
             return false;
         }
-        $this->dir = make_request_directory();
+        $this->dir = null;
+        if ($this->is_dataroot_backup()) {
+            // It is better to unzip the dataroot backup straight into dataroot directory so we can then
+            // move them during restore faster (tmp path can be in a different filesystem/partition).
+            try {
+                $basedir = $CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__';
+                if (!file_exists($basedir)) {
+                    make_writable_directory($basedir);
+                }
+                $this->dir = make_unique_writable_directory($basedir);
+            } catch (\Throwable $t) {
+                $this->siterestore->add_to_log($t->getMessage(), constants::LOGLEVEL_WARNING);
+            }
+        }
+        $this->dir = $this->dir ?? make_request_directory();
         $zippath = $this->download_backup_file();
         $zippacker = new \zip_packer();
         $zippacker->extract_to_pathname($zippath, $this->dir);
-        $this->curentfileslist = [];
-        if ($this->is_dbdump_backup()) {
-            $this->curenttables = array_fill_keys(array_keys($this->dbstructure->get_backup_tables()), []);
-            $this->populate_files_list(false);
-            $this->curenttables = array_filter($this->curenttables);
-            $this->curentfileslist = array_keys($this->curenttables);
-        } else {
-            $this->populate_files_list($this->is_filedir_backup());
-        }
+        $this->retrieve_files_list();
         $this->nextfileidx = 0;
-        @unlink($zippath); // TODO where did it go?
+        unlink($zippath);
         return true;
     }
 
@@ -356,12 +359,17 @@ class files_restore {
      * @return void
      */
     protected function close_current_archive(): void {
+        global $CFG;
         if (!array_key_exists($this->currentseq, $this->backupfiles)) {
             return;
         }
         $this->backupfiles[$this->currentseq]->set_status(constants::STATUS_FINISHED)->save();
         if ($this->dir && file_exists($this->dir) && is_dir($this->dir)) {
             site_restore::remove_recursively($this->dir);
+        }
+        if ($this->is_dataroot_backup() && $this->currentseq == array_key_last($this->backupfiles)) {
+            // If it's the last file, remove the whole __vault_restore__ folder.
+            site_restore::remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__');
         }
     }
 
