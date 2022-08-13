@@ -322,7 +322,6 @@ class site_restore extends operation_base {
                 }
                 if (!file_exists($newpath) || is_writable($newpath)) {
                     rename($path, $newpath);
-                    $this->add_to_log("- added ".$file);
                 } else {
                     $this->add_to_log('- existing path '.$file.' in dataroot could not be replaced',
                         constants::LOGLEVEL_WARNING);
