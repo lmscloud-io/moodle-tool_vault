@@ -26,6 +26,7 @@
 namespace tool_vault;
 
 use tool_vault\fixtures\site_backup_mock;
+use tool_vault\local\helpers\files_restore;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
 
@@ -63,9 +64,20 @@ class site_restore_test extends \advanced_testcase {
      * @throws \coding_exception
      */
     protected function create_site_restore() {
-        $restore = new restore_model((object)['status' => constants::STATUS_INPROGRESS]);
+        $restore = new restore_model((object)['status' => constants::STATUS_INPROGRESS, 'backupkey' => 'b']);
         $restore->save();
         return new site_restore($restore);
+    }
+
+    /**
+     * Set archive to use
+     *
+     * @param string $filepath
+     * @return void
+     */
+    protected function curl_mock_file_download(string $filepath) {
+        \curl::mock_response(file_get_contents($filepath));
+        \curl::mock_response(json_encode(['downloadurl' => 'https://test.s3.amazonaws.com/']));
     }
 
     public function test_restore_db() {
@@ -94,15 +106,23 @@ class site_restore_test extends \advanced_testcase {
         $book2 = $this->getDataGenerator()->create_module('book', ['course' => $course->id]);
         $this->assertCount(2, $DB->get_records('book'));
 
-        // Prepare restore, only 'book' table.
+        // Prepare restore.
         $siterestore = $this->create_site_restore();
-        $siterestore->prepare_restore_db($filepathstructure);
+        files_restore::populate_backup_files($siterestore->get_model()->id, [
+            ['name' => constants::FILENAME_DBSTRUCTURE.'.zip', 'etag' => '', 'size' => 0],
+            ['name' => constants::FILENAME_DBDUMP.'.zip', 'etag' => '', 'size' => 0],
+        ]);
+        $this->curl_mock_file_download($filepathstructure);
+        $siterestore->prepare_restore_db();
+
+        // Set structure to contain only book table.
         $structure = $siterestore->get_db_structure();
         $tables = array_intersect_key($structure->get_tables_definitions(), ['book' => 1]);
         $structure->set_tables_definitions($tables);
 
         // Run restore, the content of table 'book' should revert to the state when the backup was made.
-        $siterestore->restore_db($filepath);
+        $this->curl_mock_file_download($filepath);
+        $siterestore->restore_db();
         $this->assertCount(1, $DB->get_records('book'));
 
         // Assert sequences were restored.

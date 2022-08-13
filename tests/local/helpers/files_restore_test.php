@@ -26,7 +26,6 @@
 namespace tool_vault\local\helpers;
 
 use tool_vault\constants;
-use tool_vault\fixtures\files_restore_mock;
 use tool_vault\fixtures\site_backup_mock;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
@@ -36,7 +35,6 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_backup_mock.php');
-require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/files_restore_mock.php');
 
 /**
  * The files_restore_test test class.
@@ -67,7 +65,7 @@ class files_restore_test extends \advanced_testcase {
      * @throws \coding_exception
      */
     protected function create_site_restore() {
-        $restore = new restore_model((object)['status' => constants::STATUS_INPROGRESS]);
+        $restore = new restore_model((object)['status' => constants::STATUS_INPROGRESS, 'backupkey' => 'b']);
         $restore->save();
         return new site_restore($restore);
     }
@@ -106,17 +104,16 @@ class files_restore_test extends \advanced_testcase {
         global $DB;
         $this->resetAfterTest();
         $siterestore = $this->create_site_restore();
-        files_restore::populate_backup_files($siterestore->get_model()->id, [
-            ['name' => constants::FILENAME_FILEDIR.'.zip', 'size' => 0, 'etag' => 0],
-            ['name' => constants::FILENAME_FILEDIR.'-1.zip', 'size' => 0, 'etag' => 0],
+
+        // Mock responses from API.
+        $files0 = ['f5/a3/ddddddddddddddddddd', 'ab/cd/bbbbbbbbbbbbbbbb'];
+        $files1 = ['d4/a2/cccccccccccccccc', 'ab/df/aaaaaaaaaaaaaaaaaaaa'];
+        $this->mock_backup_files($siterestore->get_model()->id, [
+            [constants::FILENAME_FILEDIR, null, $files0],
+            [constants::FILENAME_FILEDIR.'-1', null, $files1],
         ]);
 
-        $files0 = ['f5/a3/ddddddddddddddddddd', 'ab/cd/bbbbbbbbbbbbbbbb'];
-        files_restore_mock::use_archive($this->create_archive(constants::FILENAME_FILEDIR.'.zip', $files0));
-        $files1 = ['d4/a2/cccccccccccccccc', 'ab/df/aaaaaaaaaaaaaaaaaaaa'];
-        files_restore_mock::use_archive($this->create_archive(constants::FILENAME_FILEDIR.'-1.zip', $files1));
-
-        $filesrestore = new files_restore_mock($siterestore, constants::FILENAME_FILEDIR);
+        $filesrestore = new files_restore($siterestore, constants::FILENAME_FILEDIR);
         $this->assertEquals($files0[1], $filesrestore->get_next_file()[1]);
         $this->assertEquals($files0[0], $filesrestore->get_next_file()[1]);
         $this->assertEquals($files1[1], $filesrestore->get_next_file()[1]);
@@ -136,17 +133,17 @@ class files_restore_test extends \advanced_testcase {
     public function test_dataroot() {
         $this->resetAfterTest();
         $siterestore = $this->create_site_restore();
-        files_restore::populate_backup_files($siterestore->get_model()->id, [
-            ['name' => constants::FILENAME_DATAROOT.'.zip', 'size' => 0, 'etag' => 0],
-            ['name' => constants::FILENAME_DATAROOT.'-1.zip', 'size' => 0, 'etag' => 0],
+
+        // Mock responses from API.
+        $files0 = ['lang/en/moodle.php', 'lang/de/moodle.php', 'something.json'];
+        $files1 = ['d/subdir/file.php'];
+        $this->mock_backup_files($siterestore->get_model()->id, [
+            [constants::FILENAME_DATAROOT, null, $files0],
+            [constants::FILENAME_DATAROOT.'-1', null, $files1],
         ]);
 
-        $files0 = ['lang/en/moodle.php', 'lang/de/moodle.php', 'something.json'];
-        files_restore_mock::use_archive($this->create_archive(constants::FILENAME_DATAROOT.'.zip', $files0));
-        $files1 = ['d/subdir/file.php'];
-        files_restore_mock::use_archive($this->create_archive(constants::FILENAME_DATAROOT.'-1.zip', $files1));
-
-        $filesrestore = new files_restore_mock($siterestore, constants::FILENAME_DATAROOT);
+        // Check result of get_next_file().
+        $filesrestore = new files_restore($siterestore, constants::FILENAME_DATAROOT);
         $this->assertEquals('lang', $filesrestore->get_next_file()[1]);
         $this->assertEquals('something.json', $filesrestore->get_next_file()[1]);
         $this->assertEquals('d', $filesrestore->get_next_file()[1]);
@@ -155,14 +152,43 @@ class files_restore_test extends \advanced_testcase {
 
     /**
      * Prepare archive with db structure (from fixture)
-     *
-     * @return string
      */
     protected function prepare_db_structure() {
         global $CFG;
         return $this->create_archive(constants::FILENAME_DBSTRUCTURE.'.zip',
             [constants::FILE_STRUCTURE => file_get_contents(
                 $CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/dbstructure1.xml')]);
+    }
+
+    /**
+     * Set archive to use
+     *
+     * @param string $filepath
+     * @return void
+     */
+    protected function curl_mock_file_download(string $filepath) {
+        \curl::mock_response(file_get_contents($filepath));
+        \curl::mock_response(json_encode(['downloadurl' => 'https://test.s3.amazonaws.com/']));
+    }
+
+    /**
+     * Mock both backup files in DB and API responses
+     *
+     * @param int $opid
+     * @param array $files each row is an array:
+     *     [filename without extension, archivefilepath|null, list of files to create archive file]
+     * @return void
+     */
+    protected function mock_backup_files(int $opid, array $files) {
+        $apifiles = [];
+        foreach ($files as $file) {
+            $apifiles[] = ['name' => $file[0].'.zip', 'size' => 0, 'etag' => 0];
+        }
+        files_restore::populate_backup_files($opid, $apifiles);
+        foreach (array_reverse($files) as $file) {
+            $filepath = $file[1] ?? $this->create_archive($file[0].'.zip', $file[2]);
+            $this->curl_mock_file_download($filepath);
+        }
     }
 
     /**
@@ -174,26 +200,35 @@ class files_restore_test extends \advanced_testcase {
         $filepathstructure = $this->prepare_db_structure();
 
         $siterestore = $this->create_site_restore();
-        $siterestore->prepare_restore_db($filepathstructure);
 
-        files_restore::populate_backup_files($siterestore->get_model()->id, [
-            ['name' => constants::FILENAME_DBDUMP.'.zip', 'size' => 0, 'etag' => 0],
-            ['name' => constants::FILENAME_DBDUMP.'-1.zip', 'size' => 0, 'etag' => 0],
-        ]);
-
+        // Mock backup files and curl responses.
         $usersfiles = [];
         for ($i = 0; $i < 140; $i++) {
             $usersfiles[] = "user.{$i}.json";
         }
         $files0 = array_merge($usersfiles, ['config.0.json']);
-        shuffle($files0); // Test that the order will be correct later.
-        files_restore_mock::use_archive($this->create_archive(constants::FILENAME_DBDUMP.'.zip', $files0));
         $files1 = ['forum.0.josn', 'nonexistingtable.0.json', 'course.0.json', 'course.1.json'];
-        files_restore_mock::use_archive($this->create_archive(constants::FILENAME_DBDUMP.'-1.zip', $files1));
+        shuffle($files0); // Test that the order will be correct later.
 
-        $filesrestore = new files_restore_mock($siterestore, constants::FILENAME_DBDUMP);
-        $this->assertEquals(['config', ['config.0.json']], $filesrestore->get_next_table());
-        $this->assertEquals(['user', $usersfiles], $filesrestore->get_next_table());
+        $this->mock_backup_files($siterestore->get_model()->id, [
+            [constants::FILENAME_DBSTRUCTURE, $filepathstructure],
+            [constants::FILENAME_DBDUMP, null, $files0],
+            [constants::FILENAME_DBDUMP.'-1', null, $files1],
+        ]);
+
+        // Read db structure.
+        $siterestore->prepare_restore_db();
+
+        // Start pulling tables one by one and check response.
+        $filesrestore = new files_restore($siterestore, constants::FILENAME_DBDUMP);
+        $nexttable = $filesrestore->get_next_table();
+        $nexttable[1] = array_map('basename', $nexttable[1]);
+        $this->assertEquals(['config', ['config.0.json']], $nexttable);
+
+        $nexttable = $filesrestore->get_next_table();
+        $nexttable[1] = array_map('basename', $nexttable[1]);
+        $this->assertEquals(['user', $usersfiles], $nexttable);
+
         $this->assertEquals('forum', $filesrestore->get_next_table()[0]);
         $this->assertEquals('course', $filesrestore->get_next_table()[0]);
         $this->assertNull($filesrestore->get_next_table());

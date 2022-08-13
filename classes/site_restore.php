@@ -17,6 +17,7 @@
 namespace tool_vault;
 
 use tool_vault\local\checks\check_base;
+use tool_vault\local\helpers\files_restore;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
 use tool_vault\local\operations\operation_base;
@@ -37,6 +38,8 @@ class site_restore extends operation_base {
     protected $prechecks = null;
     /** @var dbstructure */
     protected $dbstructure = null;
+    /** @var files_restore[] */
+    protected $filesrestore = [];
 
     /**
      * Constructor
@@ -55,6 +58,19 @@ class site_restore extends operation_base {
     public static function get_last_restore(): ?restore_model {
         $records = restore_model::get_records();
         return $records ? reset($records) : null;
+    }
+
+    /**
+     * Get the helper to restore files of the specified type
+     *
+     * @param string $filetype
+     * @return files_restore
+     */
+    public function get_files_restore(string $filetype): files_restore {
+        if (!array_key_exists($filetype, $this->filesrestore)) {
+            $this->filesrestore[$filetype] = new files_restore($this, $filetype);
+        }
+        return $this->filesrestore[$filetype];
     }
 
     /**
@@ -125,25 +141,20 @@ class site_restore extends operation_base {
             ->save();
         $this->add_to_log('Preparing to restore');
 
-        $this->prechecks = site_restore_dryrun::execute_prechecks($this->model, $this);
+        $this->prechecks = site_restore_dryrun::execute_prechecks(
+            $this->get_files_restore(constants::FILENAME_DBSTRUCTURE), $this->model, $this, true);
 
         // Download files.
         $tempdir = make_request_directory();
-        $filename0 = constants::FILENAME_DBSTRUCTURE . '.zip';
-        $filename1 = constants::FILENAME_DBDUMP . '.zip';
         $filename2 = constants::FILENAME_DATAROOT . '.zip';
         $filename3 = constants::FILENAME_FILEDIR . '.zip';
-        $filepath0 = $tempdir.DIRECTORY_SEPARATOR.$filename0;
-        $filepath1 = $tempdir.DIRECTORY_SEPARATOR.$filename1;
         $filepath2 = $tempdir.DIRECTORY_SEPARATOR.$filename2;
         $filepath3 = $tempdir.DIRECTORY_SEPARATOR.$filename3;
 
-        api::download_backup_file($this->model->backupkey, $filepath0, $this);
-        api::download_backup_file($this->model->backupkey, $filepath1, $this);
         api::download_backup_file($this->model->backupkey, $filepath2, $this);
         api::download_backup_file($this->model->backupkey, $filepath3, $this);
 
-        $this->prepare_restore_db($filepath0);
+        $this->prepare_restore_db();
         $datarootfiles = $this->prepare_restore_dataroot($filepath2);
         $filedirpath = $this->prepare_restore_filedir($filepath3);
         unlink($filepath2);
@@ -154,8 +165,7 @@ class site_restore extends operation_base {
 
         $this->before_restore();
 
-        $this->restore_db($filepath1);
-        unlink($filepath1);
+        $this->restore_db();
         $this->restore_dataroot($datarootfiles);
         $this->restore_filedir($filedirpath);
 
@@ -175,17 +185,13 @@ class site_restore extends operation_base {
 
     /**
      * Prepare to restore db
-     *
-     * @param string $filepath
      */
-    public function prepare_restore_db(string $filepath) {
-        $structurefilename = constants::FILE_STRUCTURE;
-        $this->add_to_log('Extracting database structure...');
+    public function prepare_restore_db() {
+        $helper = $this->get_files_restore(constants::FILENAME_DBSTRUCTURE);
+        $filepath = $helper->get_all_files()[constants::FILE_STRUCTURE];
 
-        $temppath = make_request_directory();
-        $zippacker = new \zip_packer();
-        $zippacker->extract_to_pathname($filepath, $temppath, [$structurefilename, 'xmldb.xsd']);
-        $this->dbstructure = dbstructure::load_from_backup($temppath.DIRECTORY_SEPARATOR.$structurefilename);
+        $this->add_to_log('Extracting database structure...');
+        $this->dbstructure = dbstructure::load_from_backup($filepath);
 
         // TODO do all the checks that all tables exist and have necessary fields.
 
@@ -238,25 +244,21 @@ class site_restore extends operation_base {
     /**
      * Restore db
      *
-     * @param string $zipfilepath
      * @return void
      */
-    public function restore_db(string $zipfilepath) {
+    public function restore_db() {
         global $DB;
         $tables = $this->dbstructure->get_backup_tables();
         $this->add_to_log('Restoring database ('.count($tables).' tables)...');
-        $temppath = make_request_directory();
-        $zippacker = new \zip_packer();
 
-        $allfiles = array_column($zippacker->list_files($zipfilepath), 'pathname');
+        $structurefiles = $this->get_files_restore(constants::FILENAME_DBSTRUCTURE)->get_all_files();
+        $filepath = $structurefiles[constants::FILE_SEQUENCE] ?? null;
+        $sequences = $filepath ? json_decode(file_get_contents($filepath), true) : [];
 
-        $sequencesfilename = constants::FILE_SEQUENCE;
-        $zippacker->extract_to_pathname($zipfilepath, $temppath, [$sequencesfilename]);
-        $filepath = $temppath.DIRECTORY_SEPARATOR.$sequencesfilename;
-        $sequences = json_decode(file_get_contents($filepath), true);
-        unlink($filepath);
-
-        foreach ($tables as $tablename => $table) {
+        $helper = $this->get_files_restore(constants::FILENAME_DBDUMP);
+        while (($tabledata = $helper->get_next_table()) !== null) {
+            [$tablename, $filesfortable] = $tabledata;
+            $table = $tables[$tablename];
             if ($altersql = $table->get_alter_sql($this->dbstructure->get_tables_actual()[$tablename] ?? null)) {
                 try {
                     $DB->change_database_structure($altersql);
@@ -269,16 +271,7 @@ class site_restore extends operation_base {
 
             $DB->execute('TRUNCATE TABLE {'.$tablename.'}');
 
-            $filesfortable = [];
-            foreach ($allfiles as $filename) {
-                if (preg_match('/^'.preg_quote($tablename, '/').'\\.([\\d]+)\\.json$/', $filename, $matches)) {
-                    $filesfortable[(int)$matches[1]] = $filename;
-                }
-            }
-            ksort($filesfortable);
-            foreach ($filesfortable as $filename) {
-                $zippacker->extract_to_pathname($zipfilepath, $temppath, [$filename]);
-                $filepath = $temppath.DIRECTORY_SEPARATOR.$filename;
+            foreach ($filesfortable as $filepath) {
                 $data = json_decode(file_get_contents($filepath), true);
                 if ($data) {
                     $fields = array_shift($data);
@@ -304,17 +297,17 @@ class site_restore extends operation_base {
         }
 
         // Extract config overrides.
-        $zippacker->extract_to_pathname($zipfilepath, $temppath, [constants::FILE_CONFIGOVERRIDE]);
-        $filepath = $temppath.DIRECTORY_SEPARATOR.constants::FILE_CONFIGOVERRIDE;
-        if (file_exists($filepath)) {
+        $filepath = $structurefiles[constants::FILE_CONFIGOVERRIDE] ?? null;
+        if ($filepath) {
             $confs = json_decode(file_get_contents($filepath), true);
             foreach ($confs as $conf) {
                 set_config($conf['name'], $conf['value'], $conf['plugin']);
             }
-            unlink($filepath);
         }
 
         $this->add_to_log('...database restore completed');
+        // We will not need dbstructure anymore.
+        $this->get_files_restore(constants::FILENAME_DBSTRUCTURE)->finish();
     }
 
     /**

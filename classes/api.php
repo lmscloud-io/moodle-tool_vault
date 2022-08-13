@@ -358,8 +358,8 @@ class api {
 
         // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
         if (!preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
-            // TODO string?
-            throw new \moodle_exception('Vault API did not return a valid download link '.$filename);
+            throw new \moodle_exception('Vault API did not return a valid download link for '.$filename.
+                ': '.$s3url);
         }
 
         $passphrase = 'password'; // TODO do not hardcode.
@@ -371,7 +371,12 @@ class api {
 
         for ($i = 0; $i < constants::REQUEST_S3_RETRIES; $i++) {
             $curl = new \curl();
-            $res = $curl->download_one($s3url, [], $options + ['filepath' => $filepath]);
+            if ((defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
+                // Unfortunately curl::download_one does not process 'filepath' option correctly if response is mocked.
+                $res = file_put_contents($filepath, $curl->get($s3url));
+            } else {
+                $res = $curl->download_one($s3url, [], $options + ['filepath' => $filepath]);
+            }
             $info = $curl->get_info();
             if ($curl->get_errno() || !is_array($info) || $info['http_code'] != 200) {
                 if ($i < constants::REQUEST_S3_RETRIES - 1) {

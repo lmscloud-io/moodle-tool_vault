@@ -336,13 +336,6 @@ class site_backup extends operation_base {
             }
         }
 
-        if (($table->get_xmldb_table()->getName() === 'config') &&
-                ($precheck = $this->prechecks[configoverride::get_name()] ?? null) &&
-                ($confs = $precheck->get_config_overrides_for_backup())) {
-            $this->get_files_backup(constants::FILENAME_DBDUMP)
-                ->add_file_from_string(constants::FILE_CONFIGOVERRIDE, json_encode($confs));
-        }
-
         $this->get_files_backup(constants::FILENAME_DBDUMP)->finish_table();
     }
 
@@ -354,10 +347,17 @@ class site_backup extends operation_base {
     public function export_dbstructure(array $tablenames) {
         global $CFG;
 
+        $structure = $this->get_db_structure();
+        $confprecheck = $this->prechecks[configoverride::get_name()] ?? null;
+        $confs = $confprecheck ? $confprecheck->get_config_overrides_for_backup() : [];
+
         $this->get_files_backup(constants::FILENAME_DBSTRUCTURE)
             ->add_file($CFG->dirroot.'/lib/xmldb/xmldb.xsd', null, true, false)
-            ->add_file_from_string(constants::FILE_STRUCTURE, $this->dbstructure->output($tablenames))
+            ->add_file_from_string(constants::FILE_STRUCTURE, $structure->output($tablenames))
             ->add_file_from_string(constants::FILE_METADATA, json_encode($this->get_metadata()))
+            ->add_file_from_string(constants::FILE_SEQUENCE,
+                json_encode(array_intersect_key($structure->retrieve_sequences(), array_combine($tablenames, $tablenames))))
+            ->add_file_from_string(constants::FILE_CONFIGOVERRIDE, json_encode($confs))
             ->finish();
     }
 
@@ -378,16 +378,13 @@ class site_backup extends operation_base {
             }
         }
 
-        $this->export_dbstructure(array_keys($tables));
-
         foreach ($tables as $tableobj) {
             $this->export_table_data($tableobj, $dir);
         }
+        $this->get_files_backup(constants::FILENAME_DBDUMP)->finish();
 
-        $this->get_files_backup(constants::FILENAME_DBDUMP)
-            ->add_file_from_string(constants::FILE_SEQUENCE,
-              json_encode(array_intersect_key($structure->retrieve_sequences(), $tables)))
-            ->finish();
+        $this->export_dbstructure(array_keys($tables));
+
         $this->add_to_log('Database export completed');
     }
 

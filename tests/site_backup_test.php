@@ -121,7 +121,7 @@ class site_backup_test extends \advanced_testcase {
         $this->assertTrue(in_array('config.0', $files));
         $this->assertTrue(in_array('user.0', $files));
         $this->assertTrue(file_exists($dirstruct.DIRECTORY_SEPARATOR.constants::FILE_STRUCTURE));
-        $this->assertTrue(file_exists($dir.DIRECTORY_SEPARATOR.constants::FILE_SEQUENCE));
+        $this->assertTrue(file_exists($dirstruct.DIRECTORY_SEPARATOR.constants::FILE_SEQUENCE));
         $this->assertFalse(in_array('tool_vault_config.0', $files));
         $this->assertFalse(in_array('tool_vault_operation.0', $files));
         $this->assertFalse(in_array('tool_vault_log.0', $files));

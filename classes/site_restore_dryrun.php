@@ -22,6 +22,7 @@ use tool_vault\local\checks\version_restore;
 use tool_vault\local\helpers\files_restore;
 use tool_vault\local\logger;
 use tool_vault\local\models\dryrun_model;
+use tool_vault\local\models\operation_model;
 use tool_vault\local\models\restore_base_model;
 use tool_vault\local\operations\operation_base;
 
@@ -96,11 +97,14 @@ class site_restore_dryrun extends operation_base {
     /**
      * Runs all pre-checks (executed from both "dryrun" and the actual restore)
      *
+     * @param files_restore $restorehelper
      * @param restore_base_model $model
      * @param logger $logger
+     * @param bool $exceptiononfailure throw exception if one of the prechecks fails
      * @return check_base[] array of executed prechecks
      */
-    public static function execute_prechecks(restore_base_model $model, logger $logger) {
+    public static function execute_prechecks(files_restore $restorehelper, restore_base_model $model,
+                                             logger $logger, bool $exceptiononfailure = false): array {
         try {
             $backupmetadata = api::get_remote_backup($model->backupkey, constants::STATUS_FINISHED);
         } catch (\moodle_exception $e) {
@@ -109,22 +113,22 @@ class site_restore_dryrun extends operation_base {
         }
 
         files_restore::populate_backup_files($model->id, $backupmetadata->files ?? []);
+        if (!$restorehelper->has_known_archives()) {
+            $restorehelper->rescan_files_from_db();
+        }
 
-        $dir = make_request_directory();
-        $zippath = $dir.DIRECTORY_SEPARATOR.constants::FILENAME_DBSTRUCTURE.'.zip';
-        api::download_backup_file($model->backupkey, $zippath, $logger);
-        $zippacker = new \zip_packer();
-        $zippacker->extract_to_pathname($zippath, $dir);
-        if (!file_exists($dir.DIRECTORY_SEPARATOR.constants::FILE_STRUCTURE)) {
+        $files = $restorehelper->get_all_files();
+
+        if (!array_key_exists(constants::FILE_STRUCTURE, $files)) {
             throw new \moodle_exception('Archive '.constants::FILENAME_DBSTRUCTURE.'.zip does not contain database structure');
         }
-        if (!file_exists($dir.DIRECTORY_SEPARATOR.constants::FILE_METADATA)) {
+        if (!array_key_exists(constants::FILE_METADATA, $files)) {
             throw new \moodle_exception('Archive '.constants::FILENAME_DBSTRUCTURE.'.zip does not contain backup metadata');
         }
 
         $remotedetails = (array)$backupmetadata->to_object();
-        $remotedetails['dbstructure'] = file_get_contents($dir.DIRECTORY_SEPARATOR.constants::FILE_STRUCTURE);
-        $remotedetails['metadata'] = json_decode(file_get_contents($dir.DIRECTORY_SEPARATOR.constants::FILE_METADATA), true);
+        $remotedetails['dbstructure'] = file_get_contents($files[constants::FILE_STRUCTURE]);
+        $remotedetails['metadata'] = json_decode(file_get_contents($files[constants::FILE_METADATA]), true);
         $model
             ->set_remote_details($remotedetails)
             ->save();
@@ -138,11 +142,14 @@ class site_restore_dryrun extends operation_base {
         foreach ($precheckclasses as $classname) {
             $logger->add_to_log('Restore pre-check: '.$classname::get_display_name().'...');
             $chk = $classname::create_and_run($model);
+            $prechecks[$chk->get_name()] = $chk;
             if ($chk->success()) {
-                $prechecks[$chk->get_name()] = $chk;
                 $logger->add_to_log('...OK');
+            } else if ($exceptiononfailure) {
+                $restorehelper->finish();
+                throw new \moodle_exception('... pre-check '.$classname::get_display_name().' failed');
             } else {
-                throw new \moodle_exception('...'.$classname::get_display_name().' failed');
+                $logger->add_to_log('... pre-check '.$classname::get_display_name().' failed');
             }
         }
         return $prechecks;
@@ -160,7 +167,9 @@ class site_restore_dryrun extends operation_base {
             ->save();
         $this->add_to_log('Restore pre-check started');
 
-        $this->prechecks = self::execute_prechecks($this->model, $this);
+        $helper = new files_restore($this, constants::FILENAME_DBSTRUCTURE);
+        $this->prechecks = self::execute_prechecks($helper, $this->model, $this);
+        $helper->finish();
 
         $this->model->set_status(constants::STATUS_FINISHED)->save();
         $this->add_to_log('Restore pre-check finished');
@@ -171,7 +180,7 @@ class site_restore_dryrun extends operation_base {
      *
      * @return dryrun_model
      */
-    public function get_model(): dryrun_model {
+    public function get_model(): operation_model {
         return $this->model;
     }
 

@@ -19,6 +19,8 @@ namespace tool_vault\local\helpers;
 use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\models\backup_file;
+use tool_vault\local\models\restore_base_model;
+use tool_vault\local\operations\operation_base;
 use tool_vault\site_restore;
 
 /**
@@ -45,24 +47,53 @@ class files_restore {
     protected $nextfileidx = 0;
     /** @var string  */
     protected $dir = '';
+    /** @var \tool_vault\local\xmldb\dbstructure|null */
+    protected $dbstructure = null;
 
     /**
      * Constructor
      *
-     * @param site_restore $siterestore
+     * @param operation_base $siterestore
      * @param string $filetype
      */
-    public function __construct(site_restore $siterestore, string $filetype) {
-        global $DB;
+    public function __construct(operation_base $siterestore, string $filetype) {
+        if ($filetype === constants::FILENAME_DBDUMP) {
+            if ($siterestore instanceof site_restore) {
+                $this->dbstructure = $siterestore->get_db_structure();
+            } else {
+                throw new \coding_exception('Files restore helper for dbdump can only be used from site_restore');
+            }
+        }
         $this->siterestore = $siterestore;
         $this->filetype = $filetype;
+        $this->rescan_files_from_db();
+    }
+
+    /**
+     * Re-scan the backup files from the DB
+     *
+     * @return void
+     */
+    public function rescan_files_from_db() {
+        global $DB;
+        $this->backupfiles = [];
+        $this->currentseq = -1;
         $records = $DB->get_records_select(backup_file::TABLE, "operationid = ? AND filetype = ?",
-            [$siterestore->get_model()->id, $this->filetype], 'seq, id');
+            [$this->siterestore->get_model()->id, $this->filetype], 'seq, id');
         foreach ($records as $record) {
             $backupfile = new backup_file((array)$record);
             $this->backupfiles[$backupfile->seq] = $backupfile;
         }
         $this->open_next_archive();
+    }
+
+    /**
+     * Are there any archives of this type in the DB
+     *
+     * @return bool
+     */
+    public function has_known_archives(): bool {
+        return !empty($this->backupfiles);
     }
 
     /**
@@ -119,6 +150,22 @@ class files_restore {
     }
 
     /**
+     * Returns all files extracted from archive (only for dbstructure)
+     *
+     * @return array
+     */
+    public function get_all_files(): array {
+        if ($this->filetype !== constants::FILENAME_DBSTRUCTURE) {
+            throw new \coding_exception('Can only be called for the dbstructure file type');
+        }
+        $files = [];
+        foreach ($this->curentfileslist as $localfilename) {
+            $files[$localfilename] = $this->dir.DIRECTORY_SEPARATOR.$localfilename;
+        }
+        return $files;
+    }
+
+    /**
      * Returns the next file in the backup.
      *
      * For dataroot only returns top-level files and directories, for filedir returns all files with paths
@@ -165,7 +212,10 @@ class files_restore {
         if (($tablename = $this->get_next()) === null) {
             return null;
         }
-        return [$tablename, $this->curenttables[$tablename] ?? []];
+        $tablefiles = array_map(function($file) {
+            return $this->dir.DIRECTORY_SEPARATOR.$file;
+        }, $this->curenttables[$tablename] ?? []);
+        return [$tablename, $tablefiles];
     }
 
     /**
@@ -267,7 +317,7 @@ class files_restore {
     protected function download_backup_file(): string {
         $zipdir = make_request_directory();
         $zippath = $zipdir.DIRECTORY_SEPARATOR.$this->backupfiles[$this->currentseq]->get_file_name();
-        api::download_backup_file($this->siterestore->get_backup_key(), $zippath, $this->siterestore);
+        api::download_backup_file($this->siterestore->get_model()->backupkey, $zippath, $this->siterestore);
         return $zippath;
     }
 
@@ -288,7 +338,7 @@ class files_restore {
         $zippacker->extract_to_pathname($zippath, $this->dir);
         $this->curentfileslist = [];
         if ($this->is_dbdump_backup()) {
-            $this->curenttables = array_fill_keys(array_keys($this->siterestore->get_db_structure()->get_backup_tables()), []);
+            $this->curenttables = array_fill_keys(array_keys($this->dbstructure->get_backup_tables()), []);
             $this->populate_files_list(false);
             $this->curenttables = array_filter($this->curenttables);
             $this->curentfileslist = array_keys($this->curenttables);
@@ -296,7 +346,7 @@ class files_restore {
             $this->populate_files_list($this->is_filedir_backup());
         }
         $this->nextfileidx = 0;
-        unlink($zippath);
+        @unlink($zippath); // TODO where did it go?
         return true;
     }
 
@@ -316,7 +366,10 @@ class files_restore {
     }
 
     /**
-     * Finish - not necessary to use, calling get_next_file/get_next_table last time will automatically finalise
+     * Finish and remove all temp files
+     *
+     * not necessary to use, calling get_next_file/get_next_table last time will automatically finalise
+     * only may be needed for dbstructure that we may read several times
      *
      * @return void
      */
