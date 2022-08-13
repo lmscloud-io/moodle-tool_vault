@@ -190,7 +190,7 @@ class files_restore_test extends \advanced_testcase {
     protected function mock_backup_files(int $opid, array $files) {
         $apifiles = [];
         foreach ($files as $file) {
-            $apifiles[] = ['name' => $file[0].'.zip', 'size' => 0, 'etag' => 0];
+            $apifiles[] = ['name' => $file[0].'.zip'];
         }
         files_restore::populate_backup_files($opid, $apifiles);
         foreach (array_reverse($files) as $file) {

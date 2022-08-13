@@ -174,7 +174,9 @@ class api {
         $info = $curl->get_info();
         $error = $curl->error;
         $errno = $curl->get_errno();
-        if ($errno || !is_array($info) || $info['http_code'] != 200) {
+        if (($info['http_code'] ?? 200) != 200) {
+            throw new \moodle_exception("Can not connect to API, server returned {$info['http_code']}: ". $rv);
+        } else if ($errno || !is_array($info)) {
             // TODO retry up to REQUEST_API_RETRIES (unless unauthorized).
             // TODO string, display error, etc.
             // @codingStandardsIgnoreLine
@@ -254,8 +256,8 @@ class api {
             }
         }
 
-        // TODO send the original size / metadata of all files in the backup.
-        self::api_call("backups/$backupkey/uploadcompleted/$filename", 'get', [], $sitebackup);
+        self::api_call("backups/$backupkey/uploadcompleted/$filename", 'post',
+            ['origsize' => $backupfile->origsize], $sitebackup);
         $sitebackup->add_to_log('...done');
     }
 
