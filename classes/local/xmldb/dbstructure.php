@@ -182,6 +182,7 @@ class dbstructure {
      */
     protected function load_actual_tables() {
         global $DB;
+        $DB->reset_caches();
         $tablesnames = $DB->get_tables();
         foreach ($tablesnames as $tablename) {
             if (specialrules::is_actual_table_ignored($tablename)) {

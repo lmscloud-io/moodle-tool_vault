@@ -200,16 +200,66 @@ class dbstatus extends check_base {
     }
 
     /**
+     * Data for the template
+     *
+     * @return array
+     */
+    protected function get_template_data(): array {
+        global $OUTPUT;
+        $report = $this->get_report();
+        $tables = [];
+        if (!$report) {
+            return $tables;
+        }
+        foreach ($report as $r) {
+            foreach ($r as $tablename => $details) {
+                $tables[$tablename] = [
+                    'tablename' => $tablename,
+                    'tablewarnings' => [],
+                    'diffdefinition' => s($details[0]),
+                    'diffactual' => s($details[1]),
+                ];
+            }
+        }
+        foreach ($report as $errortype => $r) {
+            foreach ($r as $tablename => $details) {
+                if ($errortype === constants::DIFF_MISSINGTABLES) {
+                    // TODO strings.
+                    $tables[$tablename]['tablewarnings'][] =
+                        'Missing table: Table is present in the definition but is absent in the actual database';
+                } else if ($errortype === constants::DIFF_EXTRATABLES) {
+                    $tables[$tablename]['tablewarnings'][] =
+                        'Extra table: Table is absent in the definition but is present in the actual database';
+                } else if ($errortype === constants::DIFF_CHANGEDTABLES) {
+                    foreach ($details[2] as $changetype => $list) {
+                        foreach ($list as $l) {
+                            // TODO more human readable?
+                            $tables[$tablename]['tablewarnings'][] = $changetype . ': '.s($l);
+                        }
+                    }
+                } else if ($errortype === constants::DIFF_INVALIDTABLES) {
+                    foreach ($details[2] as $l) {
+                        $tables[$tablename]['tablewarnings'][] = $OUTPUT->pix_icon('req', '') . $l;
+                    }
+                }
+            }
+        }
+        return ['tables' => array_values($tables)];
+    }
+
+    /**
      * Detailed report
      *
      * @return string
      */
     public function detailed_report(): string {
+        global $OUTPUT;
         $report = $this->get_report();
         if ($report !== null) {
-            // TODO show nicer.
-            // @codingStandardsIgnoreLine
-            return '<pre>' . s(print_r($report, true)) . '</pre>';
+            $status = $this->get_status($report);
+            return
+                $this->status_message($this->get_status_str($status), !empty(array_filter($report))).
+                    $OUTPUT->render_from_template('tool_vault/check_dbstatus_details', $this->get_template_data());
         }
         return '';
     }

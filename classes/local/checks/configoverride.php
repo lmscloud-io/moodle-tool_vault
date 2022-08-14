@@ -167,10 +167,9 @@ class configoverride extends check_base {
      * @return string
      */
     public function summary(): string {
-        if ($this->model->status !== constants::STATUS_FINISHED) {
+        if (($details = $this->get_report()) === null) {
             return '';
         }
-        $details = $this->model->get_details();
         return
             '<ul>'.
             '<li>Settings from config.php that will be included in backup: '.
@@ -197,6 +196,57 @@ class configoverride extends check_base {
     }
 
     /**
+     * Format setting value for details
+     *
+     * @param string $name
+     * @param string|null $plugin
+     * @param mixed $value
+     * @param bool $included
+     * @return array
+     */
+    protected function format_setting_value_for_details(string $name, ?string $plugin, $value, bool $included): array {
+        $value = s((string)$value);
+        if (!$included) {
+            $value = '<em>Redacted</em>';
+        }
+        return ['name' => $name, 'value' => $value, 'plugin' => $plugin];
+    }
+
+    /**
+     * Data for the template
+     *
+     * @return array
+     */
+    protected function get_template_data(): array {
+        $data = [
+            'includedsettings' => [],
+            'notincludedsettings' => [],
+        ];
+        if (($report = $this->get_report()) === null) {
+            return $data;
+        }
+        foreach (($report['config_php_settings_included'] ?? []) as $key => $value) {
+            $data['includedsettings'][] = $this->format_setting_value_for_details($key, null, $value, true);
+        }
+        foreach (($report['forced_plugin_settings_included'] ?? []) as $plugin => $settings) {
+            foreach ($settings as $key => $value) {
+                $data['includedsettings'][] = $this->format_setting_value_for_details($key, $plugin, $value, true);
+            }
+        }
+        foreach (($report['config_php_settings_notincluded'] ?? []) as $key => $value) {
+            $data['notincludedsettings'][] = $this->format_setting_value_for_details($key, null, $value, false);
+        }
+        foreach (($report['forced_plugin_settings_notincluded'] ?? []) as $plugin => $settings) {
+            foreach ($settings as $key => $value) {
+                $data['notincludedsettings'][] = $this->format_setting_value_for_details($key, $plugin, $value, false);
+            }
+        }
+        $data['hasincludedsettings'] = !empty($data['includedsettings']);
+        $data['hasnotincludedsettings'] = !empty($data['notincludedsettings']);
+        return $data;
+    }
+
+    /**
      * Does this past check have details (to display a link "Show details")
      *
      * @return bool
@@ -212,8 +262,11 @@ class configoverride extends check_base {
      * @return string
      */
     public function detailed_report(): string {
-        // @codingStandardsIgnoreLine
-        return '<pre>'.print_r($this->get_report(), true).'</pre>';
+        global $OUTPUT;
+        $report = $this->get_report();
+        return $report !== null ?
+            $OUTPUT->render_from_template('tool_vault/check_configoverride_details', $this->get_template_data()) :
+            '';
     }
 
     /**

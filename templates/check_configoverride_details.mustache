@@ -1,0 +1,71 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_vault/check_configoverride_details
+
+    Example context (json):
+    {
+        "hasincludedsettings": true,
+        "includedsettings": [
+            {"name": "show", "plugin": "mod_forum", "value": 1}
+        ]
+    }
+
+}}
+{{#hasincludedsettings}}
+<h4>Included in the backup</h4>
+<table class="generaltable">
+    <thead>
+        <tr>
+            <th class="col-3">Setting name</th>
+            <th class="col-3">Plugin</th>
+            <th class="col-6">Setting value</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#includedsettings}}
+            <tr>
+                <td class="col-3">{{{name}}}</td>
+                <td class="col-3">{{{plugin}}}</td>
+                <td class="col-6">{{{value}}}</td>
+            </tr>
+        {{/includedsettings}}
+    </tbody>
+</table>
+{{/hasincludedsettings}}
+
+{{#hasnotincludedsettings}}
+<h4>Not included in the backup</h4>
+<table class="generaltable">
+    <thead>
+    <tr>
+        <th class="col-3">Setting name</th>
+        <th class="col-3">Plugin</th>
+        <th class="col-6">Setting value</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{#notincludedsettings}}
+        <tr>
+            <td class="col-3">{{{name}}}</td>
+            <td class="col-3">{{{plugin}}}</td>
+            <td class="col-6">{{{value}}}</td>
+        </tr>
+    {{/notincludedsettings}}
+    </tbody>
+</table>
+{{/hasnotincludedsettings}}
