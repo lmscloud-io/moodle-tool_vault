@@ -16,6 +16,7 @@
 
 namespace tool_vault\output;
 
+use tool_vault\constants;
 use tool_vault\local\models\restore_model;
 
 /**
@@ -46,19 +47,32 @@ class restore_details implements \templatable {
      */
     public function export_for_template($output) {
         $url = new \moodle_url('/admin/tool/vault/index.php', ['section' => 'restore']);
-        return [
+        $rv = [
             'sectionurl' => $url->out(false),
             'title' => $this->restore->get_title(),
-            'subtitle' => $this->restore->get_subtitle(),
-            'details' =>
-                '<h4>Metadata</h4>'.
-                // @codingStandardsIgnoreLine
-                '<pre>'.print_r($this->restore->get_metadata(), true).'</pre>' .
-                // @codingStandardsIgnoreLine
-                '<pre>'.print_r($this->restore->get_details(), true).'</pre>' .
-                '<h4>Logs</h4>'.
-                // @codingStandardsIgnoreLine
-                '<pre>'.print_r($this->restore->get_logs(), true).'</pre>',
+            'logs' => $this->restore->get_logs(),
+            'metadata' => []
         ];
+
+        $started = userdate($this->restore->timecreated, get_string('strftimedatetimeshort', 'langconfig'));
+        $finished = userdate($this->restore->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
+        $backupurl = new \moodle_url('/admin/tool/vault/index.php',
+            ['section' => 'restore', 'action' => 'remotedetails', 'backupkey' => $this->restore->backupkey]);
+        $performedby = $this->restore->get_details()['fullname'] ?? '';
+        if (!empty($this->restore->get_details()['email'])) {
+            $performedby .= " <{$this->restore->get_details()['email']}>";
+        }
+
+        $rv['metadata'][] = ['name' => 'Status', 'value' => $this->restore->status];
+        $rv['metadata'][] = ['name' => 'Performed by', 'value' => s($performedby)];
+        $rv['metadata'][] = ['name' => 'Started on', 'value' => $started];
+        if (!in_array($this->restore->status, [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
+            $rv['metadata'][] = ['name' => 'Finished on', 'value' => $finished];
+        }
+        $rv['metadata'][] = ['name' => 'Remote backup', 'value' =>
+            ($this->restore->get_metadata()['description'] ?? '').
+            '<br>'.\html_writer::link($backupurl, $this->restore->backupkey)];
+
+        return $rv;
     }
 }

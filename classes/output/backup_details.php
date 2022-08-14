@@ -17,6 +17,7 @@
 namespace tool_vault\output;
 
 use renderer_base;
+use tool_vault\constants;
 use tool_vault\local\models\backup_model;
 
 /**
@@ -47,17 +48,28 @@ class backup_details implements \templatable {
      */
     public function export_for_template($output) {
         $url = new \moodle_url('/admin/tool/vault/index.php', ['section' => 'backup']);
-        return [
+        $rv = [
             'sectionurl' => $url->out(false),
             'title' => $this->backup->get_title(),
             'subtitle' => $this->backup->get_subtitle(),
-            'details' =>
-                '<h4>Metadata</h4>'.
-                // @codingStandardsIgnoreLine
-                '<pre>'.print_r($this->backup->get_details(), true).'</pre>' .
-                '<h4>Logs</h4>'.
-                // @codingStandardsIgnoreLine
-                '<pre>'.print_r($this->backup->get_logs(), true).'</pre>',
+            'metadata' => [],
+            'logs' => $this->backup->get_logs(),
         ];
+
+        $started = userdate($this->backup->timecreated, get_string('strftimedatetimeshort', 'langconfig'));
+        $finished = userdate($this->backup->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
+        $performedby = $this->backup->get_details()['fullname'] ?? '';
+        if (!empty($this->backup->get_details()['email'])) {
+            $performedby .= " <{$this->backup->get_details()['email']}>";
+        }
+        $rv['metadata'][] = ['name' => 'Status', 'value' => $this->backup->status];
+        $rv['metadata'][] = ['name' => 'Description', 'value' => $this->backup->get_details()['description']];
+        $rv['metadata'][] = ['name' => 'Performed by', 'value' => s($performedby)];
+        $rv['metadata'][] = ['name' => 'Started on', 'value' => $started];
+        if (!in_array($this->backup->status, [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
+            $rv['metadata'][] = ['name' => 'Finished on', 'value' => $finished];
+        }
+
+        return $rv;
     }
 }

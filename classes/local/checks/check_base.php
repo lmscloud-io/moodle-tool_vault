@@ -99,7 +99,7 @@ abstract class check_base extends operation_base {
                 return new $classname($model);
             }
         }
-        throw new \coding_exception('Check with the name '.$checkname.' does not exist -- '.$classname);
+        throw new \coding_exception('Check with the name ' . $checkname . ' does not exist -- ' . $classname);
     }
 
     /**
@@ -132,7 +132,7 @@ abstract class check_base extends operation_base {
      *
      * @return check_model
      */
-    public function get_model(): check_model {
+    public function get_model(): operation_model {
         return $this->model;
     }
 
@@ -253,11 +253,11 @@ abstract class check_base extends operation_base {
      * @param bool $iswarning
      * @return string
      */
-    protected function status_message(string $status, bool $iswarning = false): string {
+    protected function display_status_message(string $status, bool $iswarning = false): string {
         global $OUTPUT;
         return $OUTPUT->notification($status,
-            !$this->success() ? 'notifyproblem' :
-                ($iswarning ? 'notifywarning' : 'info'),
+            !$this->success() ? 'error' :
+                ($iswarning ? 'warning' : 'success'),
             false);
     }
 
@@ -292,5 +292,14 @@ abstract class check_base extends operation_base {
      */
     public function get_parent(): ?operation_model {
         return $this->parent;
+    }
+
+    /**
+     * String explaining the status
+     *
+     * @return string
+     */
+    public function get_status_message(): string {
+        return $this->success() ? 'Success' : 'Failed';
     }
 }

@@ -76,21 +76,23 @@ class dbstatus extends check_base {
     /**
      * String explaining the status
      *
-     * @param int $status
      * @return string
      */
-    protected function get_status_str(int $status) {
-        switch ($status) {
-            case self::STATUS_CLEAN:
-                return "Your database tables match descriptions in install.xml";
-            case self::STATUS_NOMODIFICATIONS:
-                return "Site backup can be performed without any database modifications";
-            case self::STATUS_MODIFIED:
-                return "Your database state does not match specifications in install.xml. The site can be backed up, ".
-                    "the modifications will be included in the backup";
-            case self::STATUS_INVALID:
-                return "Your database has modifications that can not be processed by Moodle. You need to adjust the ".
-                    "'Backup settings' and exclude some entities if you want to perform site backup";
+    public function get_status_message(): string {
+        if ($report = $this->get_report()) {
+            $status = $this->get_status($report);
+            switch ($status) {
+                case self::STATUS_CLEAN:
+                    return "Your database tables match descriptions in install.xml";
+                case self::STATUS_NOMODIFICATIONS:
+                    return "Site backup can be performed without any database modifications";
+                case self::STATUS_MODIFIED:
+                    return "Your database state does not match specifications in install.xml. The site can be backed up, " .
+                        "the modifications will be included in the backup";
+                case self::STATUS_INVALID:
+                    return "Your database has modifications that can not be processed by Moodle. You need to adjust the " .
+                        "'Backup settings' and exclude some entities if you want to perform site backup";
+            }
         }
         return "Unknown";
     }
@@ -102,6 +104,7 @@ class dbstatus extends check_base {
      * @return int
      */
     protected function get_status(array $result): int {
+        $result = $this->get_report();
         if (!empty($result[constants::DIFF_INVALIDTABLES])) {
             $status = self::STATUS_INVALID;
         } else if (array_filter($result)) {
@@ -176,9 +179,8 @@ class dbstatus extends check_base {
                 return '<p>Error:</p><pre>'.s(print_r($details['error'], true)).'</pre>';
             }
         } else {
-            $status = $this->get_status($report);
             return
-                $this->status_message($this->get_status_str($status), !empty(array_filter($report))).
+                $this->display_status_message($this->get_status_message(), !empty(array_filter($report))).
                 '<ul>'.
                 '<li>Missing tables: '.count($report[constants::DIFF_MISSINGTABLES]).'</li>'.
                 '<li>Extra tables: '.count($report[constants::DIFF_EXTRATABLES]).'</li>'.
@@ -256,9 +258,8 @@ class dbstatus extends check_base {
         global $OUTPUT;
         $report = $this->get_report();
         if ($report !== null) {
-            $status = $this->get_status($report);
             return
-                $this->status_message($this->get_status_str($status), !empty(array_filter($report))).
+                $this->display_status_message($this->get_status_message(), !empty(array_filter($report))).
                     $OUTPUT->render_from_template('tool_vault/check_dbstatus_details', $this->get_template_data());
         }
         return '';

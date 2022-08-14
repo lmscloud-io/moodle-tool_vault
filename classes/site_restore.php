@@ -178,12 +178,9 @@ class site_restore extends operation_base {
         $helper = $this->get_files_restore(constants::FILENAME_DBSTRUCTURE);
         $filepath = $helper->get_all_files()[constants::FILE_STRUCTURE];
 
-        $this->add_to_log('Extracting database structure...');
         $this->dbstructure = dbstructure::load_from_backup($filepath);
 
         // TODO do all the checks that all tables exist and have necessary fields.
-
-        $this->add_to_log('...done');
     }
 
     /**
@@ -215,7 +212,7 @@ class site_restore extends operation_base {
     public function restore_db() {
         global $DB;
         $tables = $this->dbstructure->get_backup_tables();
-        $this->add_to_log('Restoring database ('.count($tables).' tables)...');
+        $this->add_to_log('Starting database restore ('.count($tables).' tables)...');
 
         $structurefiles = $this->get_files_restore(constants::FILENAME_DBSTRUCTURE)->get_all_files();
         $filepath = $structurefiles[constants::FILE_SEQUENCE] ?? null;
@@ -271,7 +268,7 @@ class site_restore extends operation_base {
             }
         }
 
-        $this->add_to_log('...database restore completed');
+        $this->add_to_log('Finished database restore');
     }
 
     /**
@@ -281,7 +278,7 @@ class site_restore extends operation_base {
      */
     public function restore_dataroot() {
         global $CFG;
-        $this->add_to_log('Restoring dataroot...');
+        $this->add_to_log('Starting dataroot restore');
         $helper = $this->get_files_restore(constants::FILENAME_DATAROOT);
 
         if ($helper->is_first_archive()) {
@@ -289,15 +286,14 @@ class site_restore extends operation_base {
             $handle = opendir($CFG->dataroot);
             while (($file = readdir($handle)) !== false) {
                 if (!site_backup::is_dataroot_path_skipped($file) && $file !== '.' && $file !== '..') {
-                    $this->add_to_log("Removing '$file' from dataroot...");
                     $cnt = self::remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.$file);
                     if (!file_exists($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
-                        $this->add_to_log('...done');
+                        continue;
                     } else if (is_dir($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
-                        $this->add_to_log("...failed to remove directory" .
+                        $this->add_to_log("Failed to remove existing dataroot directory" .
                             ($cnt ? ", $cnt files in the directory were removed" : ''), constants::LOGLEVEL_WARNING);
                     } else {
-                        $this->add_to_log('...failed to remove file', constants::LOGLEVEL_WARNING);
+                        $this->add_to_log('Failed to remove existing dataroot file', constants::LOGLEVEL_WARNING);
                     }
                 }
             }
@@ -329,7 +325,7 @@ class site_restore extends operation_base {
             }
         }
 
-        $this->add_to_log('...dataroot restore completed');
+        $this->add_to_log('Finished dataroot restore');
     }
 
     /**
@@ -340,7 +336,7 @@ class site_restore extends operation_base {
      * @return void
      */
     public function restore_filedir() {
-        $this->add_to_log('Restoring files to file storage...');
+        $this->add_to_log('Starting files restore');
         $fs = get_file_storage();
         $helper = $this->get_files_restore(constants::FILENAME_FILEDIR);
         while (($nextfile = $helper->get_next_file()) !== null) {
@@ -358,7 +354,7 @@ class site_restore extends operation_base {
                     constants::LOGLEVEL_WARNING);
             }
         }
-        $this->add_to_log('...files restore completed');
+        $this->add_to_log('Finished files restore');
     }
 
     /**
@@ -367,7 +363,7 @@ class site_restore extends operation_base {
      * @return void
      */
     public function before_restore() {
-        $this->add_to_log('Killing all sessions');
+        $this->add_to_log('Killing all sessions...');
         \core\session\manager::kill_all_sessions();
         $this->add_to_log('...done');
     }
@@ -382,7 +378,7 @@ class site_restore extends operation_base {
         $this->add_to_log('Purging all caches...');
         purge_all_caches();
         $this->add_to_log('...done');
-        $this->add_to_log('Killing all sessions');
+        $this->add_to_log('Killing all sessions...');
         \core\session\manager::kill_all_sessions();
         $this->add_to_log('...done');
     }

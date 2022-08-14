@@ -60,10 +60,39 @@
 {{#isregistered}}
     <h4>Remote backups</h4>
     <p>Last updated: {{remotebackupstime}} <a href="{{remotebackupsupdateurl}}">{{#pix}} i/reload, core, Refresh {{/pix}}</a></p>
+    <table class="generaltable">
+        <thead>
+            <tr>
+                <th>Backup</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
     {{#remotebackups}}
-        {{> tool_vault/remote_backup_details }}
+        <tr>
+            <td>
+                {{info.description}}<br>
+                <b>Backup key:</b> <a href="{{viewurl}}">{{backupkey}}</a>
+            </td>
+            <td>
+                {{status}}
+            </td>
+            <td>
+                {{started}}
+            </td>
+            <td>
+                {{#isfinished}}
+                    <a href="{{dryrunurl}}" class="btn btn-secondary">Run pre-check</a>
+                    <a href="{{restoreurl}}" class="btn btn-secondary {{^restoreallowed}}disabled{{/restoreallowed}}">Restore this backup</a>
+                {{/isfinished}}
+            </td>
+        </tr>
     {{/remotebackups}}
     {{^remotebackups}}
-        <p><em>You don't have any remote backups yet</em></p>
+        <tr><td colspan="4"><em>You don't have any remote backups yet</em></td></tr>
     {{/remotebackups}}
+        </tbody>
+    </table>
 {{/isregistered}}

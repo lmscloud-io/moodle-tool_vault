@@ -31,18 +31,20 @@
     </p>
 {{/sectionurl}}
 
-<div class="card">
-    <div class="card-header">
-        <h5 class="mb-0">
-            {{{title}}}
-        </h5>
-    </div>
-    <div class="card-body">
-        {{#subtitle}}
-            <h6 class="card-subtitle mb-2 text-muted">{{{subtitle}}}</h6>
-        {{/subtitle}}
-        <p class="card-text">
-            {{{details}}}
-        </p>
-    </div>
-</div>
+<h3>{{{title}}}</h3>
+
+<table class="generaltable">
+    {{#metadata}}
+        <tr>
+            <th>{{name}}</th>
+            <td>{{{value}}}</td>
+        </tr>
+    {{/metadata}}
+</table>
+
+<h3>Logs</h3>
+
+<pre>
+{{{logs}}}
+</pre>
+

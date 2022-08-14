@@ -111,6 +111,17 @@ class diskspace extends check_base {
     }
 
     /**
+     * Status message
+     *
+     * @return string
+     */
+    public function get_status_message(): string {
+        return $this->success() ?
+            'There is enough disk space to perform site backup' :
+            'There is not enough disk space to perform site backup';
+    }
+
+    /**
      * Get summary of the past check
      *
      * @return string
@@ -120,11 +131,8 @@ class diskspace extends check_base {
             return '';
         }
         $details = $this->model->get_details();
-        $status = $details['enoughspace'] ?
-            'There is enough disk space to perform site backup' :
-            'There is not enough disk space to perform site backup';
         return
-            $this->status_message($status).
+            $this->display_status_message($this->get_status_message()).
             '<ul>'.
             '<li>Total size of files: '.display_size($details['totalfilesize']).'</li>'.
             '<li>The largest file: '.display_size($details['maxfilesize']).'</li>'.

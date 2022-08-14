@@ -34,27 +34,64 @@
 
 }}
 {{#showdetails}}
-    <a href="{{sectionurl}}">Back to site restore</a>
+    <p><a href="{{sectionurl}}">Back to site restore</a></p>
 {{/showdetails}}
 
-<p>Backup: {{backupkey}} - {{status}} - {{started}} - {{info.description}} </p>
-{{#showdetails}}
-    {{#lastdryrun}}
-        {{> tool_vault/dryrun }}
-    {{/lastdryrun}}
-    <pre>
-        {{{details}}}
-    </pre>
-    {{#restorenotallowedreason}}
+<h4>Remote backup {{backupkey}}</h4>
+
+<table class="generaltable">
+    <tr>
+        <th>Description</th>
+        <td>{{info.description}}</td>
+    </tr>
+    <tr>
+        <th>Status</th>
+        <td>{{status}}</td>
+    </tr>
+    {{#metadata}}
+        <tr>
+            <th>{{name}}</th>
+            <td>{{{value}}}</td>
+        </tr>
+    {{/metadata}}
+</table>
+
+{{#lastdryrun}}
+    <h4>Restore pre-checks</h4>
+    <h6 class="card-subtitle mb-2 text-muted">{{{subtitle}}}</h6>
+
+    {{#inprogress}}
+        <p class="mt-3 mb-3">... Wait for cron to finish to view report ...</p>
+    {{/inprogress}}
+
+    {{#logs}}
+        <div class="card mt-2">
+            <div class="card-body">
+                <div class="card-text">
+                    <pre>{{{logs}}}</pre>
+                </div>
+            </div>
+        </div>
+
+    {{/logs}}
+
+    {{#prechecks}}
+        {{> tool_vault/check_summary}}
+    {{/prechecks}}
+
+{{/lastdryrun}}
+
+{{#isfinished}}
+{{#restorenotallowedreason}}
+    <div class="mt-2">
         {{> core/notification_error}}
-    {{/restorenotallowedreason}}
-{{/showdetails}}
-<p>
-    {{^showdetails}}
-        <a href="{{viewurl}}" class="btn btn-secondary">View more details</a>
-    {{/showdetails}}
-    {{#isfinished}}
+    </div>
+{{/restorenotallowedreason}}
+{{/isfinished}}
+
+<div>
+    {{#showactions}}
         <a href="{{dryrunurl}}" class="btn btn-secondary">Run pre-check</a>
         <a href="{{restoreurl}}" class="btn btn-secondary {{^restoreallowed}}disabled{{/restoreallowed}}">Restore this backup</a>
-    {{/isfinished}}
-</p>
+    {{/showactions}}
+</div>

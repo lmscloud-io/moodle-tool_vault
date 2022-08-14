@@ -114,6 +114,8 @@ class site_backup extends operation_base {
         $model->set_status(constants::STATUS_SCHEDULED)->set_details([
             'usercreated' => $USER->id,
             'description' => substr($description, 0, constants::DESCRIPTION_MAX_LENGTH),
+            'fullname' => $USER ? fullname($USER) : '',
+            'email' => $USER->email ?? '',
         ])->save();
         $model->add_log("Backup scheduled");
         return new static($model);
@@ -219,7 +221,8 @@ class site_backup extends operation_base {
                 $this->prechecks[$chk->get_name()] = $chk;
                 $this->add_to_log('...OK');
             } else {
-                throw new \moodle_exception('...'.$classname::get_display_name().' failed');
+                throw new \moodle_exception($chk ? $chk->get_status_message() :
+                    'Unable to run pre-check '.$classname::get_display_name());
             }
         }
     }
@@ -367,7 +370,7 @@ class site_backup extends operation_base {
      */
     public function export_db() {
 
-        $this->add_to_log('Exporting database:');
+        $this->add_to_log('Starting database backup');
         $dir = make_request_directory();
 
         $structure = $this->get_db_structure();
@@ -385,7 +388,7 @@ class site_backup extends operation_base {
 
         $this->export_dbstructure(array_keys($tables));
 
-        $this->add_to_log('Database export completed');
+        $this->add_to_log('Finished database backup');
     }
 
     /**
@@ -393,7 +396,7 @@ class site_backup extends operation_base {
      */
     public function export_dataroot() {
         global $CFG;
-        $this->add_to_log('Exporting dataroot:');
+        $this->add_to_log('Starting dataroot backup');
         $filesbackup = $this->get_files_backup(constants::FILENAME_DATAROOT);
         $lastfile = $filesbackup->get_last_backedup_file();
 
@@ -419,7 +422,7 @@ class site_backup extends operation_base {
         }
 
         $filesbackup->finish();
-        $this->add_to_log('Dataroot export completed');
+        $this->add_to_log('Finished dataroot backup');
     }
 
     /**
@@ -456,7 +459,7 @@ class site_backup extends operation_base {
     public function export_filedir() {
         global $DB;
 
-        $this->add_to_log('Exporting files:');
+        $this->add_to_log('Starting files backup');
         $fs = get_file_storage();
         $dir = make_request_directory();
         $filesbackup = $this->get_files_backup(constants::FILENAME_FILEDIR);
@@ -483,7 +486,7 @@ class site_backup extends operation_base {
 
         $filesbackup->finish();
         site_restore::remove_recursively($dir);
-        $this->add_to_log('Files export completed, '.$cntexported.' files exported');
+        $this->add_to_log('Finished files backup, '.$cntexported.' files exported');
     }
 
     /**

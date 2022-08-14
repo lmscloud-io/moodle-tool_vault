@@ -60,12 +60,13 @@ class version_restore extends check_base {
     /**
      * Status message text
      *
-     * @param string $branch
-     * @param string $version
      * @return string
      */
-    public function get_status_message_text(string $branch, string $version): string {
+    public function get_status_message(): string {
         global $CFG;
+        $details = $this->model->get_details();
+        $branch = $details['backupbranch'] ?? null;
+        $version = $details['backupversion'];
         if ($this->success()) {
             return 'Moodle version matches';
         } else if ("{$branch}" !== "{$CFG->branch}") {
@@ -89,7 +90,7 @@ class version_restore extends check_base {
         }
         $details = $this->model->get_details();
         return
-            $this->status_message($this->get_status_message_text($details['backupbranch'], $details['backupversion'])).
+            $this->display_status_message($this->get_status_message()).
             '<ul>'.
             '<li>Backup made in version '.$details['backupversion'].' (branch '.$details['backupbranch'].')</li>'.
             '<li>This website has version '.$CFG->version.' (branch '.$CFG->branch.')</li>'.

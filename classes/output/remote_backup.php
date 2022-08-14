@@ -19,6 +19,7 @@ namespace tool_vault\output;
 use renderer_base;
 use stdClass;
 use tool_vault\api;
+use tool_vault\local\models\dryrun_model;
 use tool_vault\site_restore_dryrun;
 
 /**
@@ -44,6 +45,47 @@ class remote_backup implements \templatable {
     public function __construct(\tool_vault\local\models\remote_backup $backup, bool $extradetails = false) {
         $this->backup = $backup;
         $this->extradetails = $extradetails;
+    }
+
+    /**
+     * Prepare metadata
+     *
+     * @param site_restore_dryrun|null $dryrun
+     * @return array
+     */
+    protected function get_metadata( ?\tool_vault\site_restore_dryrun $dryrun) {
+        $metadata = [];
+        $started = userdate($this->backup->timecreated, get_string('strftimedatetimeshort', 'langconfig'));
+        $metadata[] = ['name' => 'Time started', 'value' => $started];
+        if ($this->backup->status !== \tool_vault\constants::STATUS_FINISHED) {
+            if ($faileddetails = ($this->backup->info['faileddetails'] ?? '')) {
+                $metadata[] = ['name' => 'Reason for failure', 'value' => $faileddetails];
+            }
+            return $metadata;
+        }
+        $finished = userdate($this->backup->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
+        $metadata[] = ['name' => 'Time finished', 'value' => $finished];
+        $metadata[] = ['name' => 'Total size (archived)',
+            'value' => $this->backup->info['totalsize'] ? display_size($this->backup->info['totalsize']) : ''];
+        $other = $dryrun ? $dryrun->get_model()->get_metadata() : [];
+        foreach ($other as $key => $value) {
+            if (in_array($key, ['description', 'totalsize', 'tool_vault_version', 'version', 'branch', 'email'])) {
+                continue;
+            } else if ($key === 'wwwroot') {
+                $name = 'Original site URL';
+            } else if ($key === 'dbengine') {
+                $name = 'Original database type';
+            } else if ($key === 'name') {
+                $name = 'Performed by';
+                $value = $value . (!empty($other['email']) ? " &lt;{$other['email']}&gt;" : '');
+            } else if (is_array($value)) {
+                continue;
+            } else {
+                $name = $key;
+            }
+            $metadata[] = ['name' => $name, 'value' => $value];
+        }
+        return $metadata;
     }
 
     /**
@@ -77,8 +119,6 @@ class remote_backup implements \templatable {
             'viewurl' => $viewurl->out(false),
             'dryrunurl' => $dryrunurl->out(false),
             'restoreurl' => $restoreurl->out(false),
-            // @codingStandardsIgnoreLine
-            'details' => $this->extradetails ? print_r($this->backup->to_object(), true) : '',
         ];
         if (!api::are_restores_allowed()) {
             $error = get_string('restoresnotallowed', 'tool_vault');
@@ -89,6 +129,8 @@ class remote_backup implements \templatable {
                 $error = 'Restore can not be performed until all pre-checkes have passed';
             }
         }
+        $rv['showactions'] = $rv['isfinished'] && empty($rv['lastdryrun']['inprogress']);
+        $rv['metadata'] = $this->get_metadata($dryrun);
         if (isset($error)) {
             $rv['restorenotallowedreason'] = (new \core\output\notification($error, null, false))->export_for_template($output);
         } else {

@@ -41,6 +41,17 @@ class dryrun implements \templatable {
     }
 
     /**
+     * Get status and time modified
+     *
+     * @return string
+     * @throws \coding_exception
+     */
+    public function get_subtitle() {
+        $model = $this->dryrun->get_model();
+        return 'Status '.$model->status.' : '.userdate($model->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
+    }
+
+    /**
      * Function to export the renderer data in a format that is suitable for a mustache template.
      *
      * @param renderer_base $output Used to do a final render of any components that need to be rendered for export.
@@ -49,20 +60,15 @@ class dryrun implements \templatable {
     public function export_for_template(renderer_base $output) {
         $model = $this->dryrun->get_model();
         $isfinished = $model->status === constants::STATUS_FINISHED;
+        $inprogress = $model->status === constants::STATUS_SCHEDULED || $model->status === constants::STATUS_INPROGRESS;
         $prechecks = [];
         foreach ($this->dryrun->get_prechecks() as $check) {
             $prechecks[] = (new check_display($check))->export_for_template($output);
         }
         return [
-            'title' => $model->get_title(),
-            'subtitle' => $model->get_subtitle(),
-            'summary' => '<pre>'.
-                // @codingStandardsIgnoreLine
-                print_r($model->get_metadata(), true).
-                // @codingStandardsIgnoreLine
-                print_r($model->get_files(), true).
-                '</pre>',
+            'subtitle' => $this->get_subtitle(),
             'logs' => $isfinished ? '' : $model->get_logs(),
+            'inprogress' => $inprogress,
             'prechecks' => $prechecks,
         ];
     }

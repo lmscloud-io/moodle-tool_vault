@@ -30,29 +30,6 @@ class dryrun_model extends restore_base_model {
     protected static $defaulttype = 'dryrun';
 
     /**
-     * Get display title
-     *
-     * @return string
-     */
-    public function get_title() {
-        $title = 'Restore pre-check ' . $this->backupkey; // TODO still not happy with this header.
-        if ($this->status === constants::STATUS_SCHEDULED) {
-            $title .= ' (scheduled)';
-        }
-        return $title;
-    }
-
-    /**
-     * Get status and time modified
-     *
-     * @return string
-     * @throws \coding_exception
-     */
-    public function get_subtitle() {
-        return 'Status '.$this->status.' : '.userdate($this->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
-    }
-
-    /**
      * Get last record for a given backupkey, if exists
      *
      * @param string $backupkey
