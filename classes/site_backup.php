@@ -128,6 +128,7 @@ class site_backup extends operation_base {
      */
     protected function get_metadata() {
         global $CFG, $USER, $DB;
+        $precheck = $this->prechecks[diskspace::get_name()] ?? null;
         return [
             // TODO - what other metadata do we want - languages, installed plugins, estimated size?
             'wwwroot' => $CFG->wwwroot,
@@ -137,6 +138,7 @@ class site_backup extends operation_base {
             'tool_vault_version' => get_config('tool_vault', 'version'),
             'email' => $USER->email ?? '',
             'name' => $USER ? fullname($USER) : '',
+            'dbtotalsize' => $precheck ? $precheck->get_model()->get_details()['dbtotalsize'] : 0,
         ];
     }
 

@@ -125,13 +125,10 @@ class files_restore {
 
         foreach ($files as $file) {
             $extra = [
-                'filesize' => $file['size'] ?? 0,
-                'etag' => $file['etag'] ?? '',
                 'operationid' => $operationid,
                 'status' => constants::STATUS_SCHEDULED,
-                'origsize' => $file['origsize'] ?? 0,
             ];
-            if (!$backupfile = backup_file::create($file['name'], $extra)) {
+            if (!$backupfile = backup_file::create($extra + $file)) {
                 continue;
             }
             foreach ($existing as $eb) {

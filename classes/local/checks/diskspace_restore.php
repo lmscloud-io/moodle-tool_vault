@@ -17,6 +17,8 @@
 namespace tool_vault\local\checks;
 
 use tool_vault\constants;
+use tool_vault\local\models\backup_file;
+use tool_vault\local\models\dryrun_model;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\site_backup;
 use tool_vault\site_restore;
@@ -34,11 +36,33 @@ class diskspace_restore extends check_base {
      * Evaluate check and store results in model details
      */
     public function perform(): void {
+        /** @var dryrun_model $parent */
+        $parent = $this->get_parent();
+        $largestarchive = 0;
+        $filetypes = [constants::FILENAME_DBSTRUCTURE, constants::FILENAME_DATAROOT, constants::FILENAME_FILEDIR,
+            constants::FILENAME_DBDUMP];
+        $origsizes = array_fill_keys($filetypes, 0);
+        $sizes = array_fill_keys($filetypes, 0);
+        foreach ($parent->get_files() as $file) {
+            $bfile = backup_file::create($file);
+            $largestarchive = max($largestarchive, $bfile->filesize + $bfile->origsize);
+            $origsizes[$bfile->filetype] += $bfile->origsize;
+            $sizes[$bfile->filetype] += $bfile->filesize;
+        }
+
+        $mintmpspace = $largestarchive + $sizes[constants::FILENAME_DBSTRUCTURE] + $origsizes[constants::FILENAME_DBSTRUCTURE];
+
         $freespace = disk_free_space(make_request_directory());
-        $enoughspace = true; // TODO.
+
+        $enoughspace = $freespace > $mintmpspace;
+
         $this->model->set_details([
             'freespace' => $freespace,
             'enoughspace' => $enoughspace,
+            'datarootsize' => $origsizes[constants::FILENAME_DATAROOT],
+            'filedirsize' => $origsizes[constants::FILENAME_FILEDIR],
+            'mintmpspace' => $mintmpspace,
+            'dbtotalsize' => $parent->get_metadata()['dbtotalsize'] ?? 0,
         ])->save();
     }
 
@@ -53,14 +77,29 @@ class diskspace_restore extends check_base {
     }
 
     /**
+     * Should we display a warning
+     *
+     * @return bool
+     */
+    protected function is_warning(): bool {
+        $details = $this->model->get_details();
+        return $this->success() &&
+            (($details['datarootsize'] ?? 0) + ($details['filedirsize'] ?? 0) +
+                ($details['mintmpspace'] ?? 0) > $details['freespace']);
+    }
+
+    /**
      * Status message
      *
      * @return string
      */
     public function get_status_message(): string {
         return $this->success() ?
-            'There is enough disk space to perform site restore' :
-            'There is not enough disk space to perform site restore';
+            ($this->is_warning() ?
+                'There is enough disk space in the temporary directory however there may not be '.
+                'enough space for all files and dataroot if they are in the same local disk partition' :
+                'There is enough disk space in the temporary directory to perform site restore') :
+            'There is not enough disk space in the temporary directory to perform site restore';
     }
 
     /**
@@ -74,10 +113,15 @@ class diskspace_restore extends check_base {
         }
         $details = $this->model->get_details();
         return
-            $this->display_status_message($this->get_status_message()).
+            $this->display_status_message($this->get_status_message(), $this->is_warning()).
             '<ul>'.
             '<li>Free space in temp dir: '.display_size($details['freespace']).'</li>'.
-            '</ul>';
+            '<li>Minimum space required in temp dir: '.display_size($details['mintmpspace'] ?? 0).'</li>'.
+            '<li>Required space for dataroot (excluding filedir): '.display_size($details['datarootsize'] ?? 0).'</li>'.
+            '<li>Required space for files: '.display_size($details['filedirsize'] ?? 0).'</li>'.
+            '<li>Required space for database (*): '.display_size($details['dbtotalsize'] ?? 0).'</li>'.
+            '</ul>'.
+            '<p>(*) Note, tool Vault is <b>not able to check</b> if there is enough space in the database to perform restore.</p>';
     }
 
     /**

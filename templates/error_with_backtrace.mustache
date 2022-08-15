@@ -41,7 +41,6 @@
 </div>
 {{#js}}
     var el = document.getElementById('{{uniqueid}}');
-    console.log(el);
     el.querySelector('.action-backtrace-show').onclick = function(e) {
         e.preventDefault();
         el.querySelector('.action-backtrace-hide').classList.remove('hidden');

@@ -19,7 +19,6 @@ namespace tool_vault\local\checks;
 use tool_vault\constants;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\site_backup;
-use tool_vault\site_restore;
 
 /**
  * Check disk space
@@ -58,8 +57,16 @@ class diskspace extends check_base {
         $this->tablesizes = array_intersect_key($structure->get_actual_tables_sizes(), $this->tablerowscnt);
         $dbtotalsize = array_sum($this->tablesizes);
         $dbmaxsize = max($this->tablesizes);
-        $datarootsize = $this->get_dataroot_size();
-        $enoughspace = ($totalsize + $dbtotalsize) * 2 + $datarootsize < $freespace;
+        [$datarootsize, $maxdatarootfilesize] = $this->get_dataroot_size();
+
+        // This is a rough estimate!
+        // There should be enough space to archive the largest file. In the worst case we already have almost
+        // constants::UPLOAD_SIZE of files prepared and then add the largest file/table. After that we archive
+        // them and in the worst case the archive is the same size as the original.
+        $requiredspace = (constants::UPLOAD_SIZE + max($maxfilesize, $dbmaxsize, $maxdatarootfilesize)) * 2;
+        $enoughspace = $requiredspace < $freespace;
+
+        // Save results.
         $this->model->set_details([
             'totalfilesize' => $totalsize,
             'maxfilesize' => $maxfilesize,
@@ -69,6 +76,7 @@ class diskspace extends check_base {
             'dbtotalsize' => $dbtotalsize,
             'dbmaxsize' => $dbmaxsize,
             'datarootsize' => $datarootsize,
+            'maxdatarootfilesize' => $maxdatarootfilesize,
             'enoughspace' => $enoughspace,
         ])->save();
     }
@@ -76,12 +84,13 @@ class diskspace extends check_base {
     /**
      * Calculate total size of files in dataroot
      *
-     * @return int
+     * @return array [$totalsize, $maxfilesize]
      */
     protected function get_dataroot_size() {
         global $CFG;
         $handle = opendir($CFG->dataroot);
         $size = 0;
+        $maxfile = 0;
         while (($file = readdir($handle)) !== false) {
             if (!site_backup::is_dataroot_path_skipped($file) && $file !== '.' && $file !== '..') {
                 $filepath = $CFG->dataroot . DIRECTORY_SEPARATOR . $file;
@@ -89,15 +98,19 @@ class diskspace extends check_base {
                     $it = new \RecursiveDirectoryIterator($filepath, \RecursiveDirectoryIterator::SKIP_DOTS);
                     $allfiles = new \RecursiveIteratorIterator($it, \RecursiveIteratorIterator::LEAVES_ONLY);
                     foreach ($allfiles as $f) {
-                        $size += $f->getSize();
+                        $thissize = $f->getSize();
+                        $size += $thissize;
+                        $maxfile = max($maxfile, $thissize);
                     }
                 } else if (is_file($filepath) && is_readable($filepath)) {
-                    $size += filesize($filepath);
+                    $thissize = filesize($filepath);
+                    $size += $thissize;
+                    $maxfile = max($maxfile, $thissize);
                 }
             }
         }
         closedir($handle);
-        return $size;
+        return [$size, $maxfile];
     }
 
     /**
@@ -134,13 +147,14 @@ class diskspace extends check_base {
         return
             $this->display_status_message($this->get_status_message()).
             '<ul>'.
-            '<li>Total size of files: '.display_size($details['totalfilesize']).'</li>'.
-            '<li>The largest file: '.display_size($details['maxfilesize']).'</li>'.
-            '<li>Number of files: '.display_size($details['countfiles']).'</li>'.
+            '<li>Total size of files in the file storage: '.display_size($details['totalfilesize']).'</li>'.
+            '<li>The largest file in the file storage: '.display_size($details['maxfilesize']).'</li>'.
+            '<li>Number of files in the file storage: '.display_size($details['countfiles']).'</li>'.
             '<li>Total number of rows in DB tables: '.number_format($details['dbrecords'], 0).'</li>'.
             '<li>Total size of DB tables (approx): '.display_size($details['dbtotalsize']).'</li>'.
             '<li>The largest DB table size (approx): '.display_size($details['dbmaxsize']).'</li>'.
             '<li>Total size of dataroot (excl. caches and filedir): '.display_size($details['datarootsize']).'</li>'.
+            '<li>The largest file in dataroot: '.display_size($details['maxdatarootfilesize'] ?? 0).'</li>'.
             '<li>Free space in temp dir: '.display_size($details['freespace']).'</li>'.
             '</ul>';
     }

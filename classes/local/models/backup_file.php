@@ -65,7 +65,8 @@ class backup_file {
      * @param array $params
      * @return static|null
      */
-    public static function create(string $filename, array $params = []): ?self {
+    public static function create(array $filerecord): ?self {
+        $filename = $filerecord['name'];
         if (pathinfo($filename, PATHINFO_EXTENSION) !== 'zip') {
             return null;
         }
@@ -75,10 +76,12 @@ class backup_file {
             $seq = (int)$matches[2];
             $name = $matches[1];
         }
-        return new backup_file([
-                'filetype' => $name,
-                'seq' => $seq,
-            ] + $params);
+        if (array_key_exists('size', $filerecord) && empty($filerecord['filesize'])) {
+            $filerecord['filesize'] = $filerecord['size'];
+        }
+        $filerecord['filetype'] = $name;
+        $filerecord['seq'] = $seq;
+        return new backup_file($filerecord);
     }
 
     /**

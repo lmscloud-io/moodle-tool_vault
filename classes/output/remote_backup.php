@@ -69,7 +69,8 @@ class remote_backup implements \templatable {
             'value' => $this->backup->info['totalsize'] ? display_size($this->backup->info['totalsize']) : ''];
         $other = $dryrun ? $dryrun->get_model()->get_metadata() : [];
         foreach ($other as $key => $value) {
-            if (in_array($key, ['description', 'totalsize', 'tool_vault_version', 'version', 'branch', 'email'])) {
+            if (in_array($key, ['description', 'totalsize', 'tool_vault_version', 'version', 'branch', 'email', 'dbtotalsize'])) {
+                // Only used for pre-checks or displayed elsewhere.
                 continue;
             } else if ($key === 'wwwroot') {
                 $name = 'Original site URL';
