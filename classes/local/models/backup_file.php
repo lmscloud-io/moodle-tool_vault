@@ -61,8 +61,7 @@ class backup_file {
     /**
      * Create from params
      *
-     * @param string $filename may have suffix -1 -2, etc that will be converted to seq
-     * @param array $params
+     * @param array $filerecord record of the file as received from API plus additional properties ('operationid', 'status')
      * @return static|null
      */
     public static function create(array $filerecord): ?self {
