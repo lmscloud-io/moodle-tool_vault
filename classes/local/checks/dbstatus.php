@@ -171,14 +171,7 @@ class dbstatus extends check_base {
      */
     public function summary(): string {
         $report = $this->get_report();
-        if ($report === null) {
-            $details = $this->get_model()->get_details();
-            if (isset($details['error'])) {
-                // TODO show nicer.
-                // @codingStandardsIgnoreLine
-                return '<p>Error:</p><pre>'.s(print_r($details['error'], true)).'</pre>';
-            }
-        } else {
+        if ($report) {
             return
                 $this->display_status_message($this->get_status_message(), !empty(array_filter($report))).
                 '<ul>'.

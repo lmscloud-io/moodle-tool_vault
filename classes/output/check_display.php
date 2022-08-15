@@ -65,6 +65,7 @@ class check_display implements \templatable {
             'summary' => $this->check->summary(),
             'showdetailslink' => $this->check->has_details(),
             'fullreporturl' => $this->check->has_details() ? $fullreporturl->out(false) : null,
+            'errormessage' => (new error_with_backtrace($this->check->get_model()))->export_for_template($output),
         ];
         if ($this->detailed) {
             $rv['details'] = $this->check->detailed_report();

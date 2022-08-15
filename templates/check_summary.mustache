@@ -40,14 +40,17 @@
         {{#subtitle}}
             <h6 class="card-subtitle mb-2 text-muted">{{{subtitle}}}</h6>
         {{/subtitle}}
-        <p class="card-text">
+        <div class="card-text">
             {{#inprogress}}
                 ... Wait for cron to finish to view report ...
             {{/inprogress}}
+            {{#errormessage}}
+                {{> tool_vault/error_with_backtrace }}
+            {{/errormessage}}
             {{{summary}}}
-        </p>
+        </div>
         {{#showdetailslink}}
-            <a href="{{fullreporturl}}" class="card-link">See full report</a>
+            <p><a href="{{fullreporturl}}" class="card-link">See full report</a></p>
         {{/showdetailslink}}
     </div>
 </div>

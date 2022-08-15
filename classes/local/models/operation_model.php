@@ -89,7 +89,8 @@ abstract class operation_model {
      */
     public function set_error(\Throwable $t): self {
         $details = $this->get_details();
-        $details['error'] = $t->getMessage()."\n".$t->getTraceAsString(); // TODO store as array?
+        $details['error'] = $t->getMessage();
+        $details['errorbacktrace'] = $t->getTraceAsString();
         $this->data['details'] = json_encode($details);
         return $this;
     }
@@ -144,6 +145,15 @@ abstract class operation_model {
         } else {
             return [];
         }
+    }
+
+    /**
+     * Get error stroed in the details
+     *
+     * @return bool
+     */
+    public function has_error(): bool {
+        return ($this->get_details()['error'] ?? null) !== null;
     }
 
     /**

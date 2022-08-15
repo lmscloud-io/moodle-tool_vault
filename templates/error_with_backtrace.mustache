@@ -1,0 +1,57 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_vault/error_with_backtrace
+
+    Example context (json):
+    {
+        "uniqueid": "errormessageasdf",
+        "error": "Error",
+        "backtrace": "Backtrace"
+    }
+
+}}
+<div id="{{uniqueid}}" data-show-backtrace="0">
+    <div class="alert alert-danger alert-block fade in ">
+        {{{ error }}}
+        {{#backtrace}}
+            <a href="#" class="action-backtrace-show">Show backtrace</a>
+            <a href="#" class="action-backtrace-hide hidden">Hide backtrace</a>
+        {{/backtrace}}
+    </div>
+    {{#backtrace}}
+        <div class="backtrace" style="display: none">
+            <pre>{{{.}}}</pre>
+        </div>
+    {{/backtrace}}
+</div>
+{{#js}}
+    var el = document.getElementById('{{uniqueid}}');
+    console.log(el);
+    el.querySelector('.action-backtrace-show').onclick = function(e) {
+        e.preventDefault();
+        el.querySelector('.action-backtrace-hide').classList.remove('hidden');
+        el.querySelector('.action-backtrace-show').classList.add('hidden');
+        el.querySelector('.backtrace').style.display = 'inherit';
+    };
+    el.querySelector('.action-backtrace-hide').onclick = function(e) {
+        e.preventDefault();
+        el.querySelector('.action-backtrace-show').classList.remove('hidden');
+        el.querySelector('.action-backtrace-hide').classList.add('hidden');
+        el.querySelector('.backtrace').style.display = 'none';
+    };
+{{/js}}
