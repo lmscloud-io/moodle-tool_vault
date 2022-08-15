@@ -21,6 +21,7 @@ use stdClass;
 use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\form\general_settings_form;
+use tool_vault\local\exceptions\api_exception;
 use tool_vault\site_restore;
 
 /**
@@ -94,14 +95,18 @@ class section_restore extends section_base implements \templatable {
             $form = new general_settings_form(false, false);
             $result['registrationform'] = $form->render();
         } else {
-            $backups = \tool_vault\api::get_remote_backups();
-            $backupstime = \tool_vault\api::get_remote_backups_time();
-
-            $result['remotebackups'] = [];
-            foreach ($backups as $backup) {
-                $result['remotebackups'][] = (new remote_backup($backup))->export_for_template($output);
+            try {
+                $backups = \tool_vault\api::get_remote_backups();
+                $backupstime = \tool_vault\api::get_remote_backups_time();
+                $result['remotebackups'] = [];
+                foreach ($backups as $backup) {
+                    $result['remotebackups'][] = (new remote_backup($backup))->export_for_template($output);
+                }
+                $result['remotebackupstime'] = userdate($backupstime, get_string('strftimedatetimeshort', 'langconfig'));
+            } catch (api_exception $e) {
+                $result['errormessage'] = error_with_backtrace::create_from_exception($e)->export_for_template($output);
             }
-            $result['remotebackupstime'] = userdate($backupstime, get_string('strftimedatetimeshort', 'langconfig'));
+
             $url = new \moodle_url('/admin/tool/vault/index.php',
                 ['section' => 'restore', 'action' => 'updateremote', 'sesskey' => sesskey()]);
             $result['remotebackupsupdateurl'] = $url->out(false);

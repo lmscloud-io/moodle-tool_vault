@@ -51,7 +51,8 @@ class restore_details implements \templatable {
             'sectionurl' => $url->out(false),
             'title' => $this->restore->get_title(),
             'logs' => $this->restore->get_logs(),
-            'metadata' => []
+            'metadata' => [],
+            'errormessage' => error_with_backtrace::create_from_model($this->restore)->export_for_template($output),
         ];
 
         $started = userdate($this->restore->timecreated, get_string('strftimedatetimeshort', 'langconfig'));

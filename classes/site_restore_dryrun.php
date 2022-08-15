@@ -105,12 +105,7 @@ class site_restore_dryrun extends operation_base {
      */
     public static function execute_prechecks(files_restore $restorehelper, restore_base_model $model,
                                              logger $logger, bool $exceptiononfailure = false): array {
-        try {
-            $backupmetadata = api::get_remote_backup($model->backupkey, constants::STATUS_FINISHED);
-        } catch (\moodle_exception $e) {
-            $error = "Backup with the key {$model->backupkey} is no longer avaialable";
-            throw new \moodle_exception($error);
-        }
+        $backupmetadata = api::get_remote_backup($model->backupkey, constants::STATUS_FINISHED);
 
         files_restore::populate_backup_files($model->id, $backupmetadata->files ?? []);
         if (!$restorehelper->has_known_archives()) {

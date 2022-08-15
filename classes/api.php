@@ -16,6 +16,7 @@
 
 namespace tool_vault;
 
+use tool_vault\local\exceptions\api_exception;
 use tool_vault\local\logger;
 use tool_vault\local\models\backup_file;
 use tool_vault\local\models\remote_backup;
@@ -134,17 +135,18 @@ class api {
      * @param bool $authheader include authentication header
      * @param string|null $apikey override current api key (used in the validation function)
      * @return mixed
+     * @throws api_exception
      */
     protected static function api_call(string $endpoint, string $method, array $params = [],
                                     ?logger $logger = null, bool $authheader = true, ?string $apikey = null) {
         global $CFG;
         require_once($CFG->dirroot.'/lib/filelib.php');
 
-        $curl = new \curl();
+        $headers = [];
         if ($authheader) {
-            $curl->setHeader(['X-Api-Key: ' . ($apikey ?? self::get_api_key())]);
+            $headers[] = 'X-Api-Key: ' . ($apikey ?? self::get_api_key());
         }
-        $curl->setHeader(['Accept: application/json', 'Expect:']);
+        $headers = array_merge($headers, ['Accept: application/json', 'Expect:']);
 
         $options = [
             'CURLOPT_RETURNTRANSFER' => true,
@@ -158,31 +160,90 @@ class api {
             case 'post':
             case 'put':
             case 'patch':
-                $curl->setHeader(['Content-Type: application/json']);
-                $rv = $curl->$method($url, json_encode($params), $options);
+                $headers[] = 'Content-Type: application/json';
+                $params = json_encode($params);
                 break;
             case 'get':
-                $rv = $curl->get($url, $params, $options);
-                break;
             case 'delete':
-                $rv = $curl->delete($url, $params, $options);
                 break;
             default:
                 throw new \coding_exception('Unsupported method: '.$method);
         }
 
-        $info = $curl->get_info();
-        $error = $curl->error;
-        $errno = $curl->get_errno();
-        if (($info['http_code'] ?? 200) != 200) {
-            throw new \moodle_exception("Can not connect to API, server returned {$info['http_code']}: ". $rv);
-        } else if ($errno || !is_array($info)) {
-            // TODO retry up to REQUEST_API_RETRIES (unless unauthorized).
-            // TODO string, display error, etc.
-            // @codingStandardsIgnoreLine
-            throw new \moodle_exception("Can not connect to API, errno $errno, error '$error': ". $rv."\n". print_r($info, true));
+        $curl = new \curl();
+        $curl->setHeader($headers);
+        $rv = $curl->$method($url, $params, $options);
+
+        if ($curl->errno || (($curl->get_info()['http_code'] ?? 0) != 200)) {
+            // TODO retry up to REQUEST_API_RETRIES.
+            throw self::prepare_api_exception($curl, $rv);
         }
+
         return json_decode($rv, true);
+    }
+
+    /**
+     * Prepares an exception from Vault API request curl
+     *
+     * @param \curl $curl
+     * @param string|null $response response from Vault API, usually JSON
+     * @return api_exception
+     */
+    protected static function prepare_api_exception(\curl $curl, ?string $response): api_exception {
+        $errno = $curl->get_errno();
+        $error = $curl->error;
+        $httpcode = (int)($curl->get_info()['http_code'] ?? 0);
+        if ($httpcode) {
+            // This is an error returned by the server.
+            $errormessage = ($httpcode == 401) ?
+                "Vault API authentication error" :
+                "Vault API error ({$httpcode})";
+
+            $json = @json_decode($response, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($json) && count($json) == 1 && key($json) === 'message') {
+                // In case of a server error it will most likely return json-encoded message.
+                $errormessage .= ": " . s($json['message']);
+            } else if (strlen($response)) {
+                // Not sure what the server returned be but let's print to the user hoping that it is helpful.
+                $errormessage .= ": " . s($response);
+            }
+            return new api_exception($errormessage, $httpcode);
+        } else {
+            // This is a connection error.
+            // List of errno: https://www.php.net/manual/en/function.curl-errno.php , for example CURLE_OPERATION_TIMEDOUT.
+            return new api_exception("Can not connect to Vault API, errno $errno: ". $error, 0);
+        }
+    }
+
+    /**
+     * Prepares an exception from S3 curl request
+     *
+     * @param \curl $curl
+     * @param string|null $response - S3 response (normally XML)
+     * @return api_exception
+     */
+    protected static function prepare_s3_exception(\curl $curl, ?string $response): api_exception {
+        $errno = $curl->get_errno();
+        $error = $curl->error;
+        $httpcode = (int)($curl->get_info()['http_code'] ?? 0);
+        if ($httpcode) {
+            // This is an error returned by the server.
+            $errormessage = "AWS S3 error ({$httpcode})";
+
+            if (strlen($response) && substr($response, 0, 6) === '<?xml ') {
+                $xmlarr = xmlize($response);
+                $s3errorcode = $xmlarr['Error']['#']['Code'][0]['#'] ?? null;
+                $s3errormessage = $xmlarr['Error']['#']['Message'][0]['#'] ?? null;
+                if ($s3errorcode || $s3errormessage) {
+                    $errormessage .= ': ' . $s3errorcode . ' - ' . $s3errormessage;
+                }
+            }
+
+            return new api_exception($errormessage, $httpcode);
+        } else {
+            // This is a connection error.
+            return new api_exception("Can not connect to AWS S3, errno $errno: ". $error, 0);
+        }
     }
 
     /**
@@ -201,9 +262,8 @@ class api {
         if (!empty($result['apikey'])) {
             self::set_api_key($result['apikey']);
         } else {
-            // TODO string? special treatment?
-            // @codingStandardsIgnoreLine
-            throw new \moodle_exception('Could not register: '.print_r($result, true));
+            // This should never happen, if the http response code is not 200 api_call show throw an exception.
+            throw new api_exception('Vault API did not return new API key');
         }
     }
 
@@ -241,15 +301,12 @@ class api {
         for ($i = 0; $i < constants::REQUEST_S3_RETRIES; $i++) {
             $curl = new \curl();
             $res = $curl->put($s3url, ['file' => $filepath], $options);
-
-            $info  = $curl->get_info();
-            if ($curl->get_errno() || !is_array($info) || $info['http_code'] != 200) {
-                if ($i < constants::REQUEST_S3_RETRIES - 1) {
-                    $sitebackup->add_to_log('Could not upload file '.$filename.', trying again', constants::LOGLEVEL_WARNING);
-                } else {
-                    // TODO process error properly.
-                    // @codingStandardsIgnoreLine
-                    throw new \moodle_exception('Could not upload file '.$filename.': '.$res."\n".print_r($info, true));
+            if ($curl->errno || (($curl->get_info()['http_code'] ?? 0) != 200)) {
+                $s3exception = self::prepare_s3_exception($curl, $res);
+                $sitebackup->add_to_log("Error uploading file $filename (attempt ".($i + 1)."/".
+                    constants::REQUEST_S3_RETRIES."): ".$s3exception->getMessage(), constants::LOGLEVEL_WARNING);
+                if ($i == constants::REQUEST_S3_RETRIES - 1) {
+                    throw $s3exception;
                 }
             } else {
                 break;
@@ -273,8 +330,11 @@ class api {
         }
         try {
             $result = self::api_call('backups', 'GET', [], null, true, $apikey);
-        } catch (\moodle_exception $e) {
-            return false;
+        } catch (api_exception $e) {
+            if ($e->getCode() == 401) {
+                return false;
+            }
+            throw $e;
         }
         return true;
     }
@@ -284,6 +344,7 @@ class api {
      *
      * @param bool $usecache
      * @return remote_backup[]
+     * @throws api_exception
      */
     public static function get_remote_backups(bool $usecache = true): array {
         $conf = $usecache ? self::get_config('cachedremotebackups') : null;
@@ -323,10 +384,24 @@ class api {
      * @return remote_backup
      */
     public static function get_remote_backup(string $backupkey, ?string $withstatus = null): remote_backup {
-        $result = self::api_call("backups/{$backupkey}", 'GET');
+        try {
+            $result = self::api_call("backups/{$backupkey}", 'GET');
+        } catch (api_exception $t) {
+            if ($t->getCode() == 404) {
+                throw new api_exception("Backup with the key {$backupkey} is no longer avaialable", 404, $t);
+            } else {
+                throw $t;
+            }
+        }
         if (isset($withstatus) && $result['status'] !== $withstatus) {
-            // TODO this is only executed for finished backups, improve the message.
-            throw new \moodle_exception('Backup has a wrong status');
+            if ($result['status'] === constants::STATUS_INPROGRESS) {
+                $error = "Backup with the key {$backupkey} has not finished yet";
+            } else if ($result['status'] === constants::STATUS_FAILED) {
+                $error = "Backup with the key {$backupkey} has failed";
+            } else {
+                $error = "Backup with the key {$backupkey} has a wrong status";
+            }
+            throw new api_exception($error, 404);
         }
         $result['backupkey'] = $backupkey;
         return new remote_backup($result);
@@ -374,21 +449,23 @@ class api {
         for ($i = 0; $i < constants::REQUEST_S3_RETRIES; $i++) {
             $curl = new \curl();
             if ((defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
-                // Unfortunately curl::download_one does not process 'filepath' option correctly if response is mocked.
+                // Unfortunately curl::download_one does not process 'file' option correctly if response is mocked.
                 $res = file_put_contents($filepath, $curl->get($s3url));
             } else {
-                $res = $curl->download_one($s3url, [], $options + ['filepath' => $filepath]);
+                $file = fopen($filepath, 'w');
+                $res = $curl->download_one($s3url, [], $options + ['file' => $file]);
+                fclose($file);
             }
-            $info = $curl->get_info();
-            if ($curl->get_errno() || !is_array($info) || $info['http_code'] != 200) {
-                if ($i < constants::REQUEST_S3_RETRIES - 1) {
-                    if ($logger) {
-                        $logger->add_to_log('Could not download file '.$filename.', trying again', constants::LOGLEVEL_WARNING);
-                    }
-                } else {
-                    // TODO process error properly.
-                    // @codingStandardsIgnoreLine
-                    throw new \moodle_exception('Could not download file '.$filename.': '.$res."\n".print_r($info, true));
+
+            if ($curl->errno || (($curl->get_info()['http_code'] ?? 0) != 200)) {
+                $s3exception = self::prepare_s3_exception($curl, filesize($filepath) < 5000 ? file_get_contents($filepath) : '');
+                if ($logger) {
+                    $logger->add_to_log("Error downloading file $filename (attempt ".($i + 1)."/".
+                        constants::REQUEST_S3_RETRIES."): ".$s3exception->getMessage(), constants::LOGLEVEL_WARNING);
+                }
+                unlink($filepath);
+                if ($i == constants::REQUEST_S3_RETRIES - 1) {
+                    throw $s3exception;
                 }
             } else {
                 break;

@@ -128,6 +128,7 @@ class remote_backup implements \templatable {
             if (!isset($error) && !$dryrun->prechecks_succeeded()) {
                 $error = 'Restore can not be performed until all pre-checkes have passed';
             }
+            $rv['errormessage'] = error_with_backtrace::create_from_model($dryrun->get_model())->export_for_template($output);
         }
         $rv['showactions'] = $rv['isfinished'] && empty($rv['lastdryrun']['inprogress']);
         $rv['metadata'] = $this->get_metadata($dryrun);

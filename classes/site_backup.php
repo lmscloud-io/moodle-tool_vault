@@ -253,6 +253,10 @@ class site_backup extends operation_base {
         $this->add_to_log('Backup finished');
 
         // TODO notify user.
+
+        // Reset remote backups caches.
+        api::store_config('cachedremotebackupstime', null);
+        api::store_config('cachedremotebackups', null);
     }
 
     /**

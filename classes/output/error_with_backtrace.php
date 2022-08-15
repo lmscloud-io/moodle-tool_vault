@@ -17,9 +17,7 @@
 namespace tool_vault\output;
 
 use renderer_base;
-use tool_vault\local\checks\check_base;
 use tool_vault\local\models\operation_model;
-use tool_vault\site_backup;
 
 /**
  * Display error with backtrace
@@ -36,13 +34,29 @@ class error_with_backtrace implements \templatable {
     protected $backtrace;
 
     /**
-     * Constructor
+     * Create from model
      *
      * @param operation_model $model
+     * @return static
      */
-    public function __construct(operation_model $model) {
-        $this->error = ($model->get_details()['error'] ?? null);
-        $this->backtrace = debugging() ? ($model->get_details()['errorbacktrace'] ?? null) : null;
+    public static function create_from_model(operation_model $model): self {
+        $s = new self();
+        $s->error = ($model->get_details()['error'] ?? null);
+        $s->backtrace = $model->get_details()['errorbacktrace'] ?? null;
+        return $s;
+    }
+
+    /**
+     * Create from exception
+     *
+     * @param \Throwable $t
+     * @return static
+     */
+    public static function create_from_exception(\Throwable $t): self {
+        $e = new self();
+        $e->error = $t->getMessage();
+        $e->backtrace = $t->getTraceAsString();
+        return $e;
     }
 
     /**
@@ -59,7 +73,7 @@ class error_with_backtrace implements \templatable {
         return [
             'uniqueid' => 'errormessage'.random_string(),
             'error' => $this->error,
-            'backtrace' => $this->backtrace,
+            'backtrace' => debugging() ? $this->backtrace : null,
         ];
     }
 }
