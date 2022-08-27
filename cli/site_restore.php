@@ -24,7 +24,10 @@
 
 define('CLI_SCRIPT', true);
 
+use tool_vault\api;
 use \tool_vault\local\cli_helper;
+use tool_vault\local\exceptions\api_exception;
+use tool_vault\local\helpers\ui;
 
 require_once(__DIR__ . '/../../../../config.php');
 
@@ -47,8 +50,10 @@ $params = [
     'passphrase' => $clihelper->get_cli_option('passphrase'),
 ];
 
-if (!\tool_vault\api::validate_backup($params['backupkey'] ?? '', $params['passphrase'] ?? '')) {
-    cli_error(get_string('backupnotvalid', 'tool_vault'));
+try {
+    api::validate_backup($params['backupkey'] ?? '', $params['passphrase'] ?? '');
+} catch (api_exception $e) {
+    cli_error($e->getMessage());
 }
 
 // Run restore.

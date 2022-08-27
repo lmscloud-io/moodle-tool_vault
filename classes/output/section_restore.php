@@ -43,9 +43,10 @@ class section_restore extends section_base implements \templatable {
         if ($action === 'restore' && confirm_sesskey()) {
             $backupkey = required_param('backupkey', PARAM_ALPHANUMEXT);
             $passphrase = optional_param('passphrase', '', PARAM_RAW);
-            if (!api::validate_backup($backupkey, $passphrase)) {
-                redirect(ui::restoreurl(), get_string('backupnotvalid', 'tool_vault'),
-                    0, \core\output\notification::NOTIFY_ERROR);
+            try {
+                api::validate_backup($backupkey, $passphrase);
+            } catch (api_exception $e) {
+                redirect(ui::restoreurl(), $e->getMessage(), 0, \core\output\notification::NOTIFY_ERROR);
             }
             \tool_vault\site_restore::schedule(['backupkey' => $backupkey, 'passphrase' => $passphrase]);
             redirect(ui::restoreurl());
@@ -55,9 +56,10 @@ class section_restore extends section_base implements \templatable {
             $backupkey = required_param('backupkey', PARAM_ALPHANUMEXT);
             $passphrase = optional_param('passphrase', '', PARAM_RAW);
             $viewurl = ui::restoreurl(['action' => 'remotedetails', 'backupkey' => $backupkey]);
-            if (!api::validate_backup($backupkey, $passphrase)) {
-                redirect(ui::restoreurl(), get_string('backupnotvalid', 'tool_vault'),
-                    0, \core\output\notification::NOTIFY_ERROR);
+            try {
+                api::validate_backup($backupkey, $passphrase);
+            } catch (api_exception $e) {
+                redirect(ui::restoreurl(), $e->getMessage(), 0, \core\output\notification::NOTIFY_ERROR);
             }
             \tool_vault\site_restore_dryrun::schedule(['backupkey' => $backupkey, 'passphrase' => $passphrase]);
             redirect($viewurl);

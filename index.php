@@ -27,6 +27,9 @@ require_once($CFG->libdir . '/adminlib.php');
 
 $tabtree = new tool_vault\output\tabtree();
 admin_externalpage_setup('tool_vault_index', '', null, $tabtree->get_url(), ['nosearch' => true]);
+if (moodle_needs_upgrading()) {
+    redirect(new moodle_url('/admin/index.php'));
+}
 $PAGE->set_heading(get_string('pluginname', 'tool_vault'));
 if (method_exists($PAGE, 'set_secondary_navigation')) {
     $PAGE->set_secondary_navigation(false);

@@ -423,16 +423,16 @@ class api {
      *
      * @param string $backupkey
      * @param string $passphrase
-     * @return bool
+     * @throws api_exception
      */
-    public static function validate_backup(string $backupkey, string $passphrase): bool {
+    public static function validate_backup(string $backupkey, string $passphrase) {
         $result = self::api_call("backups/$backupkey/validate", 'get', []);
         $s3url = $result['downloadurl'] ?? null;
         $encrypted = $result['encrypted'] ?? false;
 
         if (!$encrypted) {
             // No need to validate the passphrase.
-            return true;
+            return;
         }
 
         // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
@@ -447,8 +447,14 @@ class api {
         ];
         $curl = new \curl();
         // Perform a 'head' request to the pre-signed S3 url to check if the encryption key is correct.
-        $curl->head($s3url, $options);
-        return !$curl->errno && (($curl->get_info()['http_code'] ?? 0) == 200);
+        $res = $curl->head($s3url, $options);
+        $httpcode = $curl->get_info()['http_code'] ?? 0;
+        if ($httpcode == 403) {
+            throw new api_exception(get_string('passphrasewrong', 'tool_vault'));
+        }
+        if ($curl->errno || ($httpcode != 200)) {
+            throw self::prepare_s3_exception($curl, $res);
+        }
     }
 
     /**

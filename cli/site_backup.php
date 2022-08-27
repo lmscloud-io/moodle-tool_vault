@@ -28,6 +28,10 @@ use \tool_vault\local\cli_helper;
 
 require_once(__DIR__ . '/../../../../config.php');
 
+if (moodle_needs_upgrading()) {
+    cli_error("Moodle upgrade pending, execution suspended.");
+}
+
 // Increase time and memory limit.
 core_php_time_limit::raise();
 raise_memory_limit(MEMORY_HUGE);

@@ -26,7 +26,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['backupkey'] = 'Backup key';
-$string['backupnotvalid'] = 'Backup is not found or passphrase is not correct';
 $string['clidefault'] = 'Default:';
 $string['clihelp'] = 'Print out this help';
 $string['climissingargument'] = 'Argument --{$a} is required';
@@ -36,6 +35,7 @@ $string['clititlerestore'] = 'Command line site restore';
 $string['errorapikeynotvalid'] = 'API key not valid';
 $string['errorrestorenotallowed'] = 'Restores are not allowed on this site.';
 $string['messageprovider:statusupdate'] = 'Status update for Vault - Site migration';
+$string['passphrasewrong'] = 'Backup passphrase is not correct';
 $string['pluginname'] = 'Vault - Site migration';
 $string['restoresnotallowed'] = 'Restores are not allowed on this site';
 $string['site restore'] = 'Site restore';
