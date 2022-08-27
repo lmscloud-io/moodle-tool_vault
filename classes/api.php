@@ -291,10 +291,10 @@ class api {
             throw new \moodle_exception('Vault API did not return a valid upload link '.$filename);
         }
 
-        $passphrase = $sitebackup->get_model()->get_details()['passphrase'] ?? '';
+        $encryptionkey = $sitebackup->get_model()->get_details()['encryptionkey'] ?? '';
         $options = [
             'CURLOPT_TIMEOUT' => constants::REQUEST_S3_TIMEOUT,
-            'CURLOPT_HTTPHEADER' => array_merge(self::prepare_s3_headers($passphrase), ["Content-type: $contenttype"]),
+            'CURLOPT_HTTPHEADER' => array_merge(self::prepare_s3_headers($encryptionkey), ["Content-type: $contenttype"]),
             'CURLOPT_RETURNTRANSFER' => 1,
             'CURLOPT_USERPWD' => '',
         ];
@@ -440,11 +440,13 @@ class api {
             throw new \moodle_exception('Vault API did not return a valid link: '.$s3url);
         }
 
+        $encryptionkey = self::prepare_encryption_key($passphrase);
         $options = [
             'CURLOPT_TIMEOUT' => constants::REQUEST_API_TIMEOUT, // Smaller timeout here.
-            'CURLOPT_HTTPHEADER' => self::prepare_s3_headers($passphrase),
+            'CURLOPT_HTTPHEADER' => self::prepare_s3_headers($encryptionkey),
         ];
         $curl = new \curl();
+        // Perform a 'head' request to the pre-signed S3 url to check if the encryption key is correct.
         $curl->head($s3url, $options);
         return !$curl->errno && (($curl->get_info()['http_code'] ?? 0) == 200);
     }
@@ -473,10 +475,10 @@ class api {
                 ': '.$s3url);
         }
 
-        $passphrase = $encrypted ? ($model->get_details()['passphrase'] ?? '') : '';
+        $encryptionkey = $encrypted ? ($model->get_details()['encryptionkey'] ?? '') : '';
         $options = [
             'CURLOPT_TIMEOUT' => constants::REQUEST_S3_TIMEOUT,
-            'CURLOPT_HTTPHEADER' => self::prepare_s3_headers($passphrase),
+            'CURLOPT_HTTPHEADER' => self::prepare_s3_headers($encryptionkey),
             'CURLOPT_RETURNTRANSFER' => 1,
         ];
 
@@ -512,21 +514,29 @@ class api {
     }
 
     /**
+     * Prepare encryption key from the passphrase
+     *
+     * @param string|null $passphrase
+     * @return string
+     */
+    public static function prepare_encryption_key(?string $passphrase): string {
+        return strlen($passphrase) ? base64_encode(hash('sha256', $passphrase, true)) : '';
+    }
+
+    /**
      * Prepare encryption headers for S3
      *
-     * @param string $passphrase
+     * @param string $key encryption key generated as base64_encode(hash('sha256', $passphrase, true))
      * @return array
      */
-    protected static function prepare_s3_headers(string $passphrase): array {
-        if (!strlen($passphrase)) {
+    protected static function prepare_s3_headers(string $key): array {
+        if (!strlen($key)) {
             return [];
         }
-        $key = hash('sha256', $passphrase, true);
-        $encodedkey = base64_encode($key);
-        $encodedmd5 = base64_encode(md5($key, true));
+        $encodedmd5 = base64_encode(md5(base64_decode($key), true));
         return [
             "x-amz-server-side-encryption-customer-algorithm: AES256",
-            "x-amz-server-side-encryption-customer-key: ". $encodedkey,
+            "x-amz-server-side-encryption-customer-key: ". $key,
             "x-amz-server-side-encryption-customer-key-MD5: ". $encodedmd5,
         ];
     }

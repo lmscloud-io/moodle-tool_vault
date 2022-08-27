@@ -101,6 +101,7 @@ class site_restore extends operation_base {
         }
 
         $model = new restore_model();
+        $encryptionkey = api::prepare_encryption_key($params['passphrase'] ?? '');
         $model
             ->set_status( constants::STATUS_SCHEDULED)
             ->set_backupkey($backupkey)
@@ -109,7 +110,7 @@ class site_restore extends operation_base {
                 'username' => $USER->username ?? '',
                 'fullname' => $USER ? fullname($USER) : '',
                 'email' => $USER->email ?? '',
-                'passphrase' => $params['passphrase'] ?? ''
+                'encryptionkey' => $encryptionkey,
             ])
             ->save();
         $model->add_log("Restore scheduled");
@@ -160,7 +161,7 @@ class site_restore extends operation_base {
         $this->post_restore();
         $this->model
             ->set_status(constants::STATUS_FINISHED)
-            ->set_details(['passphrase' => ''])
+            ->set_details(['encryptionkey' => ''])
             ->save();
         $this->get_files_restore(constants::FILENAME_DBSTRUCTURE)->finish();
         $this->add_to_log('Restore finished');

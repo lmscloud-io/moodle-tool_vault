@@ -73,10 +73,11 @@ class site_restore_dryrun extends operation_base {
             throw new \coding_exception('Parameter backupkey is required for site_restore_dryrun::schedule()');
         }
         $backupkey = $params['backupkey'];
+        $encryptionkey = api::prepare_encryption_key($params['passphrase'] ?? '');
         $dryrun = new dryrun_model();
         $dryrun
             ->set_status( constants::STATUS_SCHEDULED)
-            ->set_details(['passphrase' => $params['passphrase'] ?? ''])
+            ->set_details(['encryptionkey' => $encryptionkey])
             ->set_backupkey($backupkey)
             ->save();
         $dryrun->add_log("Restore pre-check scheduled");
@@ -169,7 +170,7 @@ class site_restore_dryrun extends operation_base {
 
         $this->model
             ->set_status(constants::STATUS_FINISHED)
-            ->set_details(['passphrase' => ''])
+            ->set_details(['encryptionkey' => ''])
             ->save();
         $this->add_to_log('Restore pre-check finished');
     }

@@ -141,7 +141,8 @@ abstract class operation_model {
      */
     public function get_details(): array {
         if (isset($this->data['details'])) {
-            return json_decode($this->data['details'], true);
+            $details = json_decode($this->data['details'], true);
+            return is_array($details) ? $details : [];
         } else {
             return [];
         }

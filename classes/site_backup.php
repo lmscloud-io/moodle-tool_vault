@@ -97,7 +97,7 @@ class site_backup extends operation_base {
      * @return operation_base
      */
     public static function schedule(array $params = []): operation_base {
-        global $USER, $CFG;
+        global $USER;
         if ($records = backup_model::get_records([constants::STATUS_SCHEDULED])) {
             // Pressed button twice maybe?
             return new static(reset($records));
@@ -110,11 +110,12 @@ class site_backup extends operation_base {
         }
 
         $model = new backup_model((object)[]);
+        $encryptionkey = api::prepare_encryption_key($params['passphrase'] ?? '');
         $model->set_status(constants::STATUS_SCHEDULED)->set_details([
             'usercreated' => $USER->id,
             'description' => substr($params['description'] ?? '', 0, constants::DESCRIPTION_MAX_LENGTH),
-            'passphrase' => $params['passphrase'] ?? '',
-            'encrypted' => (bool)strlen($params['passphrase'] ?? ''),
+            'encryptionkey' => $encryptionkey,
+            'encrypted' => (bool)strlen($encryptionkey),
             'fullname' => $USER ? fullname($USER) : '',
             'email' => $USER->email ?? '',
         ])->save();
@@ -189,7 +190,7 @@ class site_backup extends operation_base {
      */
     public function mark_as_failed(\Throwable $t) {
         parent::mark_as_failed($t);
-        $this->model->set_details(['passphrase' => ''])->save();
+        $this->model->set_details(['encryptionkey' => ''])->save();
         try {
             api::update_backup($this->model->backupkey, ['faileddetails' => $t->getMessage()], 'failed');
         } catch (\Throwable $tapi) {
@@ -256,7 +257,7 @@ class site_backup extends operation_base {
         api::update_backup($this->model->backupkey, ['totalsize' => $totalsize], constants::STATUS_FINISHED);
         $this->model
             ->set_status(constants::STATUS_FINISHED)
-            ->set_details(['passphrase' => ''])
+            ->set_details(['encryptionkey' => ''])
             ->save();
         $this->add_to_log('Backup finished');
 
