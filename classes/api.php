@@ -19,6 +19,7 @@ namespace tool_vault;
 use tool_vault\local\exceptions\api_exception;
 use tool_vault\local\logger;
 use tool_vault\local\models\backup_file;
+use tool_vault\local\models\operation_model;
 use tool_vault\local\models\remote_backup;
 
 /**
@@ -290,7 +291,7 @@ class api {
             throw new \moodle_exception('Vault API did not return a valid upload link '.$filename);
         }
 
-        $passphrase = 'password'; // TODO do not hardcode.
+        $passphrase = $sitebackup->get_model()->get_details()['passphrase'] ?? '';
         $options = [
             'CURLOPT_TIMEOUT' => constants::REQUEST_S3_TIMEOUT,
             'CURLOPT_HTTPHEADER' => array_merge(self::prepare_s3_headers($passphrase), ["Content-type: $contenttype"]),
@@ -418,20 +419,53 @@ class api {
     }
 
     /**
-     * Download backup file
+     * Validates that the backup exists and the passphrase is correct
      *
      * @param string $backupkey
+     * @param string $passphrase
+     * @return bool
+     */
+    public static function validate_backup(string $backupkey, string $passphrase): bool {
+        $result = self::api_call("backups/$backupkey/validate", 'get', []);
+        $s3url = $result['downloadurl'] ?? null;
+        $encrypted = $result['encrypted'] ?? false;
+
+        if (!$encrypted) {
+            // No need to validate the passphrase.
+            return true;
+        }
+
+        // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
+        if (!preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
+            throw new \moodle_exception('Vault API did not return a valid link: '.$s3url);
+        }
+
+        $options = [
+            'CURLOPT_TIMEOUT' => constants::REQUEST_API_TIMEOUT, // Smaller timeout here.
+            'CURLOPT_HTTPHEADER' => self::prepare_s3_headers($passphrase),
+        ];
+        $curl = new \curl();
+        $curl->head($s3url, $options);
+        return !$curl->errno && (($curl->get_info()['http_code'] ?? 0) == 200);
+    }
+
+    /**
+     * Download backup file
+     *
+     * @param operation_model $model
      * @param string $filepath
      * @param logger|null $logger
      * @return void
      */
-    public static function download_backup_file(string $backupkey, string $filepath, ?logger $logger = null) {
+    public static function download_backup_file(operation_model $model, string $filepath, ?logger $logger = null) {
+        $backupkey = $model->backupkey;
         $filename = basename($filepath);
         if ($logger) {
             $logger->add_to_log("Downloading file $filename ...");
         }
         $result = self::api_call("backups/$backupkey/download/$filename", 'get', [], $logger);
         $s3url = $result['downloadurl'] ?? null;
+        $encrypted = $result['encrypted'] ?? false;
 
         // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
         if (!preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
@@ -439,7 +473,7 @@ class api {
                 ': '.$s3url);
         }
 
-        $passphrase = 'password'; // TODO do not hardcode.
+        $passphrase = $encrypted ? ($model->get_details()['passphrase'] ?? '') : '';
         $options = [
             'CURLOPT_TIMEOUT' => constants::REQUEST_S3_TIMEOUT,
             'CURLOPT_HTTPHEADER' => self::prepare_s3_headers($passphrase),
@@ -484,6 +518,9 @@ class api {
      * @return array
      */
     protected static function prepare_s3_headers(string $passphrase): array {
+        if (!strlen($passphrase)) {
+            return [];
+        }
         $key = hash('sha256', $passphrase, true);
         $encodedkey = base64_encode($key);
         $encodedmd5 = base64_encode(md5($key, true));

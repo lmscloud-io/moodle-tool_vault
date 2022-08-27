@@ -143,6 +143,10 @@ class cli_helper {
                         'Check only, do not restore' : 'Check only, do not backup',
                     'hasvalue' => false,
                 ],
+                'passphrase' => [
+                    'description' => 'Passphrase to use for encryption',
+                    'hasvalue' => 'PHRASE',
+                ]
             ];
         }
         if ($this->script === self::SCRIPT_RESTORE) {

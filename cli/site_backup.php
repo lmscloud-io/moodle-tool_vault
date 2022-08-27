@@ -47,7 +47,10 @@ if ($clihelper->get_cli_option('dryrun')) {
     cli_error('Option --dryrun is not yet implemented');
 }
 
-$operation = \tool_vault\site_backup::schedule(['description' => $clihelper->get_cli_option('description')]);
+$operation = \tool_vault\site_backup::schedule([
+    'description' => $clihelper->get_cli_option('description'),
+    'passphrase' => $clihelper->get_cli_option('passphrase'),
+]);
 $operation->start((int)getmypid());
 try {
     $operation->execute();

@@ -42,16 +42,25 @@ if ($clihelper->get_cli_option('help')) {
 // Validate all arguments.
 $clihelper->validate_cli_options();
 
+$params = [
+    'backupkey' => $clihelper->get_cli_option('backupkey'),
+    'passphrase' => $clihelper->get_cli_option('passphrase'),
+];
+
+if (!\tool_vault\api::validate_backup($params['backupkey'] ?? '', $params['passphrase'] ?? '')) {
+    cli_error(get_string('backupnotvalid', 'tool_vault'));
+}
+
 // Run restore.
 if ($clihelper->get_cli_option('dryrun')) {
-    $operation = \tool_vault\site_restore_dryrun::schedule(['backupkey' => $clihelper->get_cli_option('backupkey')]);
+    $operation = \tool_vault\site_restore_dryrun::schedule($params);
     $operation->start((int)getmypid());
 } else {
     if (!\tool_vault\api::are_restores_allowed()) {
         cli_error(get_string('errorrestorenotallowed', 'tool_vault') . ' ' .
             'You can enable site restore for this CLI script by adding the option --allow-restore');
     }
-    $operation = \tool_vault\site_restore::schedule(['backupkey' => $clihelper->get_cli_option('backupkey')]);
+    $operation = \tool_vault\site_restore::schedule($params);
     $operation->start((int)getmypid());
 }
 

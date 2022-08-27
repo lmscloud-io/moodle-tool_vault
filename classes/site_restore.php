@@ -109,6 +109,7 @@ class site_restore extends operation_base {
                 'username' => $USER->username ?? '',
                 'fullname' => $USER ? fullname($USER) : '',
                 'email' => $USER->email ?? '',
+                'passphrase' => $params['passphrase'] ?? ''
             ])
             ->save();
         $model->add_log("Restore scheduled");
@@ -157,7 +158,10 @@ class site_restore extends operation_base {
         $this->restore_filedir();
 
         $this->post_restore();
-        $this->model->set_status(constants::STATUS_FINISHED)->save();
+        $this->model
+            ->set_status(constants::STATUS_FINISHED)
+            ->set_details(['passphrase' => ''])
+            ->save();
         $this->get_files_restore(constants::FILENAME_DBSTRUCTURE)->finish();
         $this->add_to_log('Restore finished');
     }

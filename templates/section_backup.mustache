@@ -55,7 +55,17 @@
 {{/lastbackup}}
 
 {{#canstartbackup}}
-    <p class="pt-2">
-        <a href="{{startbackupurl}}" class="btn btn-secondary">Start backup</a>
-    </p>
+    <div class="pt-2">
+        <form action="#" data-url="{{startbackupurl}}" method="POST" data-action="startbackup">
+            <input type="hidden" name="passphrase" value="">
+            <input type="hidden" name="description" value="{{defaultbackupdescription}}">
+            <input type="submit" value="{{#str}}startbackup, tool_vault{{/str}}" class="btn btn-secondary">
+        </form>
+    </div>
 {{/canstartbackup}}
+
+{{#js}}
+    require(['tool_vault/vault'], function(Vault) {
+        Vault.initStartBackup();
+    });
+{{/js}}

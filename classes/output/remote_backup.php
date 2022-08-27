@@ -19,6 +19,7 @@ namespace tool_vault\output;
 use renderer_base;
 use stdClass;
 use tool_vault\api;
+use tool_vault\local\helpers\ui;
 use tool_vault\local\models\dryrun_model;
 use tool_vault\site_restore_dryrun;
 
@@ -67,9 +68,12 @@ class remote_backup implements \templatable {
         $metadata[] = ['name' => 'Time finished', 'value' => $finished];
         $metadata[] = ['name' => 'Total size (archived)',
             'value' => $this->backup->info['totalsize'] ? display_size($this->backup->info['totalsize']) : ''];
+        $metadata[] = ['name' => 'Encrypted',
+            'value' => !empty($this->backup->info['encrypted']) ? get_string('yes') : get_string('no')];
         $other = $dryrun ? $dryrun->get_model()->get_metadata() : [];
         foreach ($other as $key => $value) {
-            if (in_array($key, ['description', 'totalsize', 'tool_vault_version', 'version', 'branch', 'email', 'dbtotalsize'])) {
+            if (in_array($key, ['description', 'totalsize', 'tool_vault_version', 'version', 'branch', 'email',
+                    'dbtotalsize', 'encrypted'])) {
                 // Only used for pre-checks or displayed elsewhere.
                 continue;
             } else if ($key === 'wwwroot') {
@@ -99,18 +103,14 @@ class remote_backup implements \templatable {
      * @return stdClass|array
      */
     public function export_for_template(renderer_base $output) {
-        global $PAGE;
         $started = userdate($this->backup->timecreated, get_string('strftimedatetimeshort', 'langconfig'));
-        $viewurl = new \moodle_url($PAGE->url,
-            ['section' => 'restore', 'action' => 'remotedetails', 'backupkey' => $this->backup->backupkey]);
-        $restoreurl = new \moodle_url($PAGE->url,
-            ['section' => 'restore', 'action' => 'restore',
+        $viewurl = ui::restoreurl(['action' => 'remotedetails', 'backupkey' => $this->backup->backupkey]);
+        $restoreurl = ui::restoreurl(['action' => 'restore',
                 'backupkey' => $this->backup->backupkey, 'sesskey' => sesskey()]);
-        $dryrunurl = new \moodle_url($PAGE->url,
-            ['section' => 'restore', 'action' => 'dryrun',
+        $dryrunurl = ui::restoreurl(['action' => 'dryrun',
                 'backupkey' => $this->backup->backupkey, 'sesskey' => sesskey()]);
         $rv = [
-            'sectionurl' => $PAGE->url->out(false),
+            'sectionurl' => ui::restoreurl()->out(false),
             'showdetails' => $this->extradetails,
             'status' => $this->backup->status,
             'backupkey' => $this->backup->backupkey,

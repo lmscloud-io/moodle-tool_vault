@@ -26,6 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['backupkey'] = 'Backup key';
+$string['backupnotvalid'] = 'Backup is not found or passphrase is not correct';
 $string['clidefault'] = 'Default:';
 $string['clihelp'] = 'Print out this help';
 $string['climissingargument'] = 'Argument --{$a} is required';
@@ -40,6 +41,9 @@ $string['restoresnotallowed'] = 'Restores are not allowed on this site';
 $string['site restore'] = 'Site restore';
 $string['sitebackup'] = 'Site backup';
 $string['siterestore'] = 'Site restore';
+$string['startbackup'] = 'Start backup';
+$string['startdryrun'] = 'Run pre-check';
+$string['startrestore'] = 'Restore this backup';
 $string['tabbackup'] = 'Site backup';
 $string['taboverview'] = 'Overview';
 $string['tabrestore'] = 'Site restore';

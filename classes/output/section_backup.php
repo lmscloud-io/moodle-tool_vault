@@ -18,6 +18,7 @@ namespace tool_vault\output;
 
 use tool_vault\api;
 use tool_vault\form\general_settings_form;
+use tool_vault\local\helpers\ui;
 use tool_vault\local\models\backup_model;
 
 /**
@@ -37,7 +38,10 @@ class section_backup extends section_base implements \templatable {
         $action = optional_param('action', null, PARAM_ALPHANUMEXT);
 
         if ($action === 'startbackup' && confirm_sesskey()) {
-            \tool_vault\site_backup::schedule();
+            \tool_vault\site_backup::schedule([
+                'passphrase' => optional_param('passphrase', null, PARAM_RAW),
+                'description' => optional_param('description', null, PARAM_NOTAGS),
+            ]);
             redirect($PAGE->url);
         }
 
@@ -54,7 +58,7 @@ class section_backup extends section_base implements \templatable {
      * @return false[]
      */
     public function export_for_template($output): array {
-        global $PAGE;
+        global $CFG, $USER;
         $result = [
             'canstartbackup' => false,
         ];
@@ -84,10 +88,9 @@ class section_backup extends section_base implements \templatable {
             $result['canstartbackup'] = true;
         }
 
-        $result['startbackupurl'] = (new \moodle_url($PAGE->url,
-            ['section' => 'backup', 'action' => 'startbackup', 'sesskey' => sesskey()]))->out(false);
-        $result['fullreporturl'] = (new \moodle_url($PAGE->url,
-            ['section' => 'backup', 'action' => 'details', 'id' => $backup->id ?? 0]))->out(false);
+        $result['startbackupurl'] = ui::backupurl(['action' => 'startbackup', 'sesskey' => sesskey()])->out(false);
+        $result['fullreporturl'] = ui::backupurl(['action' => 'details', 'id' => $backup->id ?? 0])->out(false);
+        $result['defaultbackupdescription'] = $CFG->wwwroot.' by '.fullname($USER); // TODO string?
 
         if (!api::is_registered()) {
             $form = new general_settings_form(false);

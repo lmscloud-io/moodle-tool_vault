@@ -65,7 +65,7 @@ class site_restore_dryrun extends operation_base {
     /**
      * Schedule dry-run
      *
-     * @param array $params ['backupkey' => ?]
+     * @param array $params ['backupkey' => ?, 'passphrase' => ?]
      * @return static
      */
     public static function schedule(array $params = []): operation_base {
@@ -76,6 +76,7 @@ class site_restore_dryrun extends operation_base {
         $dryrun = new dryrun_model();
         $dryrun
             ->set_status( constants::STATUS_SCHEDULED)
+            ->set_details(['passphrase' => $params['passphrase'] ?? ''])
             ->set_backupkey($backupkey)
             ->save();
         $dryrun->add_log("Restore pre-check scheduled");
@@ -166,7 +167,10 @@ class site_restore_dryrun extends operation_base {
         $this->prechecks = self::execute_prechecks($helper, $this->model, $this);
         $helper->finish();
 
-        $this->model->set_status(constants::STATUS_FINISHED)->save();
+        $this->model
+            ->set_status(constants::STATUS_FINISHED)
+            ->set_details(['passphrase' => ''])
+            ->save();
         $this->add_to_log('Restore pre-check finished');
     }
 

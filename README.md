@@ -22,7 +22,9 @@ Vault allows you to make a full backup of the site, push it to the cloud and the
 - After restore Vault will perform some necessary **post-restore** actions, for example, purge caches, kill all
   sessions, optionally reset site identifier, etc.
 - Vault does not back up or restore its own tables.
-- TODO: encryption
+- You may choose to set passphrase during backup which will be used to encrypt uploaded
+  files. Vault API never has access to your passphrase, it is only used to sign the
+  requests to AWS S3.
 
 ## Site backup with Vault
 

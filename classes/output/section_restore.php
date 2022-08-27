@@ -38,26 +38,34 @@ class section_restore extends section_base implements \templatable {
      * Process tab actions
      */
     public function process() {
-        global $PAGE, $DB;
         $action = optional_param('action', null, PARAM_ALPHANUMEXT);
 
         if ($action === 'restore' && confirm_sesskey()) {
             $backupkey = required_param('backupkey', PARAM_ALPHANUMEXT);
-            \tool_vault\site_restore::schedule(['backupkey' => $backupkey]);
-            redirect($PAGE->url);
+            $passphrase = optional_param('passphrase', '', PARAM_RAW);
+            if (!api::validate_backup($backupkey, $passphrase)) {
+                redirect(ui::restoreurl(), get_string('backupnotvalid', 'tool_vault'),
+                    0, \core\output\notification::NOTIFY_ERROR);
+            }
+            \tool_vault\site_restore::schedule(['backupkey' => $backupkey, 'passphrase' => $passphrase]);
+            redirect(ui::restoreurl());
         }
 
         if ($action === 'dryrun' && confirm_sesskey()) {
             $backupkey = required_param('backupkey', PARAM_ALPHANUMEXT);
-            \tool_vault\site_restore_dryrun::schedule(['backupkey' => $backupkey]);
-            $viewurl = new \moodle_url($PAGE->url,
-                ['section' => 'restore', 'action' => 'remotedetails', 'backupkey' => $backupkey]);
+            $passphrase = optional_param('passphrase', '', PARAM_RAW);
+            $viewurl = ui::restoreurl(['action' => 'remotedetails', 'backupkey' => $backupkey]);
+            if (!api::validate_backup($backupkey, $passphrase)) {
+                redirect(ui::restoreurl(), get_string('backupnotvalid', 'tool_vault'),
+                    0, \core\output\notification::NOTIFY_ERROR);
+            }
+            \tool_vault\site_restore_dryrun::schedule(['backupkey' => $backupkey, 'passphrase' => $passphrase]);
             redirect($viewurl);
         }
 
         if ($action === 'updateremote' && confirm_sesskey()) {
             api::store_config('cachedremotebackups', null);
-            redirect($PAGE->url);
+            redirect(ui::restoreurl());
         }
     }
 
@@ -71,7 +79,6 @@ class section_restore extends section_base implements \templatable {
      * @return stdClass|array
      */
     public function export_for_template(renderer_base $output) {
-        global $PAGE;
         $result = ['isregistered' => (int)api::is_registered()];
 
         if ($restore = site_restore::get_last_restore()) {

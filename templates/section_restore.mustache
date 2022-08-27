@@ -71,6 +71,7 @@
                 <th>Backup</th>
                 <th>Status</th>
                 <th>Date</th>
+                <th>Encrypted</th>
                 <th></th>
             </tr>
         </thead>
@@ -88,15 +89,18 @@
                 {{started}}
             </td>
             <td>
+                {{#info.encrypted}}{{#str}}yes{{/str}}{{/info.encrypted}}
+                {{^info.encrypted}}{{#str}}no{{/str}}{{/info.encrypted}}
+            </td>
+            <td>
                 {{#isfinished}}
-                    <a href="{{dryrunurl}}" class="btn btn-secondary">Run pre-check</a>
-                    <a href="{{restoreurl}}" class="btn btn-secondary {{^restoreallowed}}disabled{{/restoreallowed}}">Restore this backup</a>
+                    {{> tool_vault/remote_backup_buttons}}
                 {{/isfinished}}
             </td>
         </tr>
     {{/remotebackups}}
     {{^remotebackups}}
-        <tr><td colspan="4"><em>You don't have any remote backups yet</em></td></tr>
+        <tr><td colspan="5"><em>You don't have any remote backups yet</em></td></tr>
     {{/remotebackups}}
         </tbody>
     </table>

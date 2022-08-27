@@ -311,7 +311,7 @@ class files_restore {
     protected function download_backup_file(): string {
         $zipdir = make_request_directory();
         $zippath = $zipdir.DIRECTORY_SEPARATOR.$this->backupfiles[$this->currentseq]->get_file_name();
-        api::download_backup_file($this->siterestore->get_model()->backupkey, $zippath, $this->siterestore);
+        api::download_backup_file($this->siterestore->get_model(), $zippath, $this->siterestore);
         return $zippath;
     }
 

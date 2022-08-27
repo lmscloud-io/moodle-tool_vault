@@ -95,7 +95,6 @@
 
 <div>
     {{#showactions}}
-        <a href="{{dryrunurl}}" class="btn btn-secondary">Run pre-check</a>
-        <a href="{{restoreurl}}" class="btn btn-secondary {{^restoreallowed}}disabled{{/restoreallowed}}">Restore this backup</a>
+        {{> tool_vault/remote_backup_buttons}}
     {{/showactions}}
 </div>

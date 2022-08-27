@@ -110,10 +110,11 @@ class site_backup extends operation_base {
         }
 
         $model = new backup_model((object)[]);
-        $description = $params['description'] ?? ($CFG->wwwroot.' by '.fullname($USER)); // TODO move default to the form.
         $model->set_status(constants::STATUS_SCHEDULED)->set_details([
             'usercreated' => $USER->id,
-            'description' => substr($description, 0, constants::DESCRIPTION_MAX_LENGTH),
+            'description' => substr($params['description'] ?? '', 0, constants::DESCRIPTION_MAX_LENGTH),
+            'passphrase' => $params['passphrase'] ?? '',
+            'encrypted' => (bool)strlen($params['passphrase'] ?? ''),
             'fullname' => $USER ? fullname($USER) : '',
             'email' => $USER->email ?? '',
         ])->save();
@@ -156,6 +157,7 @@ class site_backup extends operation_base {
 
         $params = [
             'description' => $model->get_details()['description'] ?? '',
+            'encrypted' => !empty($model->get_details()['encrypted']),
         ];
         $backupkey = api::request_new_backup_key($params);
         $model
@@ -187,6 +189,7 @@ class site_backup extends operation_base {
      */
     public function mark_as_failed(\Throwable $t) {
         parent::mark_as_failed($t);
+        $this->model->set_details(['passphrase' => ''])->save();
         try {
             api::update_backup($this->model->backupkey, ['faileddetails' => $t->getMessage()], 'failed');
         } catch (\Throwable $tapi) {
@@ -251,7 +254,10 @@ class site_backup extends operation_base {
 
         $this->add_to_log('Total size of backup: '.display_size($totalsize));
         api::update_backup($this->model->backupkey, ['totalsize' => $totalsize], constants::STATUS_FINISHED);
-        $this->model->set_status(constants::STATUS_FINISHED)->save();
+        $this->model
+            ->set_status(constants::STATUS_FINISHED)
+            ->set_details(['passphrase' => ''])
+            ->save();
         $this->add_to_log('Backup finished');
 
         // TODO notify user.

@@ -52,7 +52,8 @@ $table = [];
 foreach ($backups as $backup) {
     $result = (new remote_backup($backup))->export_for_template($renderer);
     $table[$result['backupkey']] = trim($result['status'] . ' - ' . $result['started'] . "\n" .
-        ($result['info']['description'] ?? ''));
+        ($result['info']['description'] ?? '')) .
+        (!empty($result['info']['encrypted']) ? "\nEncrypted" : '');
 }
 $table = array_reverse($table, true);
 echo $clihelper->print_table($table);
