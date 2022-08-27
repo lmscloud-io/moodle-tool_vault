@@ -28,5 +28,5 @@ defined('MOODLE_INTERNAL') || die();
 if ($hassiteconfig) {
 
     $ADMIN->add('server', new admin_externalpage('tool_vault_index', new lang_string('pluginname', 'tool_vault'),
-        "$CFG->wwwroot/$CFG->admin/tool/vault/index.php"));
+        \tool_vault\local\helpers\ui::baseurl()->out(false)));
 }

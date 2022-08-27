@@ -18,6 +18,7 @@ namespace tool_vault\local\checks;
 
 use renderer_base;
 use tool_vault\constants;
+use tool_vault\local\helpers\ui;
 use tool_vault\local\models\check_model;
 use tool_vault\local\models\operation_model;
 use tool_vault\local\operations\operation_base;
@@ -270,8 +271,7 @@ abstract class check_base extends operation_base {
         if ($this->get_model()->parentid && !in_array(get_class($this), site_backup::backup_prechecks())) {
             return null;
         }
-        return new \moodle_url('/admin/tool/vault/index.php',
-            ['action' => 'newcheck', 'type' => $this->get_name(), 'sesskey' => sesskey()]);
+        return ui::overviewurl(['action' => 'newcheck', 'type' => $this->get_name(), 'sesskey' => sesskey()]);
     }
 
     /**
@@ -281,8 +281,7 @@ abstract class check_base extends operation_base {
      */
     public function get_fullreport_url(): ?\moodle_url {
         // TODO link for the restore checks.
-        return new \moodle_url('/admin/tool/vault/index.php',
-            ['action' => 'details', 'id' => $this->get_model()->id]);
+        return ui::overviewurl(['action' => 'details', 'id' => $this->get_model()->id]);
     }
 
     /**

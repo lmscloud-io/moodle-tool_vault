@@ -17,6 +17,7 @@
 namespace tool_vault\form;
 
 use tool_vault\api;
+use tool_vault\local\helpers\ui;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -49,8 +50,8 @@ class general_settings_form extends \moodleform {
     public function __construct(bool $editable = false, bool $allowtoregister = true) {
         $this->editable = $editable;
         $this->allowtoregister = $allowtoregister;
-        $this->action = new \moodle_url('/admin/tool/vault/index.php',
-            ['section' => 'settings', 'action' => 'general', 'returnurl' => $this->get_redirect_url()->out_as_local_url(false)]);
+        $this->action = ui::settingsurl(['action' => 'general',
+            'returnurl' => $this->get_redirect_url()->out_as_local_url(false)]);
         parent::__construct(new \moodle_url($this->action), null, 'post', '', null, $this->editable);
     }
 
@@ -77,8 +78,7 @@ class general_settings_form extends \moodleform {
             $mform->addElement('passwordunmask', 'apikey', 'API key');
             $mform->setType('apikey', PARAM_RAW);
         } else if (api::is_registered()) {
-            $forgeturl = new \moodle_url('/admin/tool/vault/index.php',
-                ['section' => 'settings', 'sesskey' => sesskey(), 'action' => 'forgetapikey']);
+            $forgeturl = ui::settingsurl(['sesskey' => sesskey(), 'action' => 'forgetapikey']);
             $mform->addElement('static', 'staticapikey', 'API key',
                 api::get_api_key() . ' ' . \html_writer::link($forgeturl, 'Forget'));
         } else {

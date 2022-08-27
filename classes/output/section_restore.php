@@ -22,6 +22,7 @@ use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\form\general_settings_form;
 use tool_vault\local\exceptions\api_exception;
+use tool_vault\local\helpers\ui;
 use tool_vault\site_restore;
 
 /**
@@ -84,8 +85,7 @@ class section_restore extends section_base implements \templatable {
                 $url = new \moodle_url('/admin/tool/vault/progress.php', ['accesskey' => $restore->accesskey]);
                 $result['lastrestore']['unauthlink'] = $url->out(false);
             } else {
-                $url = new \moodle_url('/admin/tool/vault/index.php',
-                    ['section' => 'restore', 'action' => 'details', 'id' => $restore->id]);
+                $url = ui::restoreurl(['action' => 'details', 'id' => $restore->id]);
                 $result['lastrestore']['showdetailslink'] = true;
                 $result['lastrestore']['fullreporturl'] = $url->out(false);
             }
@@ -107,8 +107,7 @@ class section_restore extends section_base implements \templatable {
                 $result['errormessage'] = error_with_backtrace::create_from_exception($e)->export_for_template($output);
             }
 
-            $url = new \moodle_url('/admin/tool/vault/index.php',
-                ['section' => 'restore', 'action' => 'updateremote', 'sesskey' => sesskey()]);
+            $url = ui::restoreurl(['action' => 'updateremote', 'sesskey' => sesskey()]);
             $result['remotebackupsupdateurl'] = $url->out(false);
         }
         return $result;

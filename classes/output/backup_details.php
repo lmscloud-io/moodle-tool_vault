@@ -18,6 +18,7 @@ namespace tool_vault\output;
 
 use renderer_base;
 use tool_vault\constants;
+use tool_vault\local\helpers\ui;
 use tool_vault\local\models\backup_model;
 
 /**
@@ -47,9 +48,8 @@ class backup_details implements \templatable {
      * @return array
      */
     public function export_for_template($output) {
-        $url = new \moodle_url('/admin/tool/vault/index.php', ['section' => 'backup']);
         $rv = [
-            'sectionurl' => $url->out(false),
+            'sectionurl' => ui::backupurl()->out(false),
             'title' => $this->backup->get_title(),
             'subtitle' => $this->backup->get_subtitle(),
             'metadata' => [],

@@ -17,6 +17,7 @@
 namespace tool_vault\output;
 
 use tool_vault\constants;
+use tool_vault\local\helpers\ui;
 use tool_vault\local\models\restore_model;
 
 /**
@@ -46,9 +47,8 @@ class restore_details implements \templatable {
      * @return array
      */
     public function export_for_template($output) {
-        $url = new \moodle_url('/admin/tool/vault/index.php', ['section' => 'restore']);
         $rv = [
-            'sectionurl' => $url->out(false),
+            'sectionurl' => ui::restoreurl()->out(false),
             'title' => $this->restore->get_title(),
             'logs' => $this->restore->get_logs(),
             'metadata' => [],
@@ -57,8 +57,7 @@ class restore_details implements \templatable {
 
         $started = userdate($this->restore->timecreated, get_string('strftimedatetimeshort', 'langconfig'));
         $finished = userdate($this->restore->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
-        $backupurl = new \moodle_url('/admin/tool/vault/index.php',
-            ['section' => 'restore', 'action' => 'remotedetails', 'backupkey' => $this->restore->backupkey]);
+        $backupurl = ui::restoreurl(['action' => 'remotedetails', 'backupkey' => $this->restore->backupkey]);
         $performedby = $this->restore->get_details()['fullname'] ?? '';
         if (!empty($this->restore->get_details()['email'])) {
             $performedby .= " <{$this->restore->get_details()['email']}>";

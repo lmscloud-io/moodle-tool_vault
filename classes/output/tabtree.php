@@ -18,6 +18,7 @@ namespace tool_vault\output;
 
 use moodle_url;
 use tabobject;
+use tool_vault\local\helpers\ui;
 
 /**
  * Tabs
@@ -36,15 +37,14 @@ class tabtree extends \tabtree {
     public function __construct() {
         $section = optional_param('section', null, PARAM_ALPHANUMEXT);
 
-        $baseurl = new moodle_url('/admin/tool/vault/index.php');
         $tabs = [];
-        $tabs[] = new tabobject('overview', new moodle_url($baseurl, ['section' => 'overview']),
+        $tabs[] = new tabobject('overview', ui::overviewurl(),
             get_string('taboverview', 'tool_vault'));
-        $tabs[] = new tabobject('backup', new moodle_url($baseurl, ['section' => 'backup']),
+        $tabs[] = new tabobject('backup', ui::backupurl(),
             get_string('tabbackup', 'tool_vault'));
-        $tabs[] = new tabobject('restore', new moodle_url($baseurl, ['section' => 'restore']),
+        $tabs[] = new tabobject('restore', ui::restoreurl(),
             get_string('tabrestore', 'tool_vault'));
-        $tabs[] = new tabobject('settings', new moodle_url($baseurl, ['section' => 'settings']),
+        $tabs[] = new tabobject('settings', ui::settingsurl(),
             get_string('tabsettings', 'tool_vault'));
 
         $this->currenttab = 'overview';
@@ -63,8 +63,7 @@ class tabtree extends \tabtree {
      * @return moodle_url
      */
     public function get_url(): moodle_url {
-        $params = $this->currenttab === 'overview' ? [] : ['section' => $this->currenttab];
-        return new moodle_url('/admin/tool/vault/index.php', $params);
+        return ui::baseurl(['section' => $this->currenttab]);
     }
 
     /**

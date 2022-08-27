@@ -43,7 +43,7 @@ if ($clihelper->get_cli_option('help')) {
 // Validate all arguments.
 $clihelper->validate_cli_options();
 
-$PAGE->set_url('/admin/tool/vault/index.php');
+$PAGE->set_url(\tool_vault\local\helpers\ui::baseurl());
 /** @var tool_vault\output\renderer $renderer */
 $renderer = $PAGE->get_renderer('tool_vault');
 
