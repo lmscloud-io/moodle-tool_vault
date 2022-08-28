@@ -147,6 +147,11 @@ class api {
         ];
 
         $url = self::APIURL . '/' . ltrim($endpoint, '/');
+        if (((defined('PHPUNIT_TEST') && PHPUNIT_TEST)
+                || defined('BEHAT_SITE_RUNNING') || defined('BEHAT_TEST'))
+                && defined('TOOL_VAULT_TEST_API_URL')) {
+            $url = TOOL_VAULT_TEST_API_URL . '/' . ltrim($endpoint, '/');
+        }
         $method = strtolower($method);
         switch ($method) {
             case 'post':
@@ -246,7 +251,7 @@ class api {
     public static function register() {
         global $USER, $CFG;
         $params = [
-            'secret' => $CFG->tool_vault_secret ?? '',
+            'secret' => defined('TOOL_VAULT_SECRET') ? TOOL_VAULT_SECRET : ($CFG->tool_vault_secret ?? ''),
             'email' => $USER->email,
             'name' => fullname($USER),
         ];

@@ -26,6 +26,7 @@ import ModalEvents from 'core/modal_events';
 import Templates from 'core/templates';
 import Notification from 'core/notification';
 import {get_string as getString} from 'core/str';
+import Pending from 'core/pending';
 
 const SELECTORS = {
     START_BACKUP: 'form[data-action="startbackup"]',
@@ -56,6 +57,7 @@ export const initStartBackup = () => {
     }
     backupForm.addEventListener('submit', event => {
         event.preventDefault();
+        const pendingPromise = new Pending('tool/vault:startBackupPopup');
         ModalFactory.create({
             type: ModalFactory.types.SAVE_CANCEL,
             title: getString('startbackup', 'tool_vault'),
@@ -69,10 +71,10 @@ export const initStartBackup = () => {
 
                 modal.getRoot().on(ModalEvents.save, () => submitForm(backupForm, modal));
                 modal.getRoot().on(ModalEvents.cancel, () => modal.hide());
-
+                modal.getRoot().on(ModalEvents.bodyRendered, () => pendingPromise.resolve());
                 return modal;
             })
-            .catch(Notification.exception());
+            .catch(Notification.exception);
     });
 };
 
@@ -99,7 +101,7 @@ export const initStartDryRun = (backupkey) => {
 
                 return modal;
             })
-            .catch(Notification.exception());
+            .catch(Notification.exception);
     });
 };
 
@@ -126,6 +128,6 @@ export const initStartRestore = (backupkey) => {
 
                 return modal;
             })
-            .catch(Notification.exception());
+            .catch(Notification.exception);
     });
 };

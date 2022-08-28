@@ -188,7 +188,7 @@ class cron_task extends \core\task\scheduled_task {
         }
 
         try {
-            $operation->start($this->get_pid());
+            $operation->start((int)$this->get_pid());
             $operation->execute();
         } catch (\Throwable $t) {
             $operation->mark_as_failed($t);
