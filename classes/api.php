@@ -30,17 +30,8 @@ use tool_vault\local\models\remote_backup;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class api {
-
-    /**
-     * Get API URL
-     *
-     * @return string
-     */
-    protected static function get_api_url() {
-        global $CFG;
-        // TODO: replace URL.
-        return $CFG->tool_vault_api ?? 'https://todo-future-vault-api.example.com';
-    }
+    /** @var string */
+    const APIURL = 'https://api.lmsvault.io';
 
     /**
      * Get a value from the special plugin config (not included in backups)
@@ -155,7 +146,7 @@ class api {
             'CURLOPT_MAXREDIRS' => 3,
         ];
 
-        $url = self::get_api_url() . '/' . ltrim($endpoint, '/');
+        $url = self::APIURL . '/' . ltrim($endpoint, '/');
         $method = strtolower($method);
         switch ($method) {
             case 'post':
