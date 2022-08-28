@@ -205,9 +205,10 @@ class configoverride extends check_base {
      * @return array
      */
     protected function format_setting_value_for_details(string $name, ?string $plugin, $value, bool $included): array {
-        $value = s((string)$value);
         if (!$included) {
             $value = '<em>Redacted</em>';
+        } else {
+            $value = is_array($value) ? 'Array' : s((string)$value);
         }
         return ['name' => $name, 'value' => $value, 'plugin' => $plugin];
     }
