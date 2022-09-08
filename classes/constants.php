@@ -101,4 +101,7 @@ class constants {
 
     /** @var int */
     const DESCRIPTION_MAX_LENGTH = 255;
+
+    /** @var int */
+    const LOG_FREQUENCY = 15; // 15s.
 }

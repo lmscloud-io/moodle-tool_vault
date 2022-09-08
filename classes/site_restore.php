@@ -223,6 +223,10 @@ class site_restore extends operation_base {
         $filepath = $structurefiles[constants::FILE_SEQUENCE] ?? null;
         $sequences = $filepath ? json_decode(file_get_contents($filepath), true) : [];
 
+        $totaltables = count($this->dbstructure->get_backup_tables());
+        $tablescnt = $lasttablescnt = 0;
+        $lastlog = time();
+
         $helper = $this->get_files_restore(constants::FILENAME_DBDUMP);
         while (($tabledata = $helper->get_next_table()) !== null) {
             [$tablename, $filesfortable] = $tabledata;
@@ -271,6 +275,26 @@ class site_restore extends operation_base {
             if ($tablename === 'config' || $tablename === 'config_overrides') {
                 $this->apply_config_overrides($tablename);
             }
+
+            // Add to log.
+            $tablescnt++;
+            if (time() - $lastlog > constants::LOG_FREQUENCY) {
+                $this->add_to_log(get_string('logrestoredtables', 'tool_vault', (object)[
+                    'cnt' => sprintf("%".strlen(''.$totaltables)."d", $tablescnt),
+                    'totalcnt' => $totaltables,
+                    'percent' => sprintf("%3d", (int)(100.0*$tablescnt/$totaltables)),
+                ]));
+                $lastlog = time();
+                $lasttablescnt = $tablescnt;
+            }
+        }
+
+        if ($lasttablescnt < $tablescnt) {
+            $this->add_to_log(get_string('logrestoredtables', 'tool_vault', (object)[
+                'cnt' => sprintf("%".strlen(''.$totaltables)."d", $tablescnt),
+                'totalcnt' => $tablescnt,
+                'percent' => '100',
+            ]));
         }
 
         $this->add_to_log('Finished database restore');

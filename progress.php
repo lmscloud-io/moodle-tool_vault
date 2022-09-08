@@ -23,6 +23,7 @@
  */
 
 define('NO_MOODLE_COOKIES', true);
+define('CACHE_DISABLE_ALL', true);
 
 require(__DIR__ . '/../../../config.php');
 

@@ -75,7 +75,7 @@ class general_settings_form extends \moodleform {
         $mform = $this->_form;
 
         if ($this->editable) {
-            $mform->addElement('passwordunmask', 'apikey', 'API key');
+            $mform->addElement('text', 'apikey', 'API key');
             $mform->setType('apikey', PARAM_RAW);
         } else if (api::is_registered()) {
             $forgeturl = ui::settingsurl(['sesskey' => sesskey(), 'action' => 'forgetapikey']);

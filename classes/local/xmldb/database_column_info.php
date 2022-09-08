@@ -83,6 +83,7 @@ class database_column_info extends \database_column_info {
         if ($deftable) {
             $this->fix_field_precision($field, $deftable);
         }
+        $this->fix_field_properties($field, $deftable);
         return $field;
     }
 
@@ -127,6 +128,22 @@ class database_column_info extends \database_column_info {
                 $actualfield->setLength($deffield->getLength());
                 $actualfield->setDecimals($deffield->getDecimals());
             }
+        }
+    }
+
+    /**
+     * Fix field properties, for example default value
+     *
+     * @param \xmldb_field $actualfield
+     * @param dbtable $deftable
+     * @return void
+     */
+    protected function fix_field_properties(\xmldb_field $actualfield, ?dbtable $deftable) {
+        // Non-null char column should have either no default or a default that is not empty string.
+        // Otherwise the parser complains on restore.
+        if ($actualfield->getType() === XMLDB_TYPE_CHAR && $actualfield->getNotNull() &&
+                $actualfield->getDefault() === '') {
+            $actualfield->setDefault(null);
         }
     }
 }

@@ -317,8 +317,16 @@ abstract class operation_model {
             return $usehtml ? \html_writer::span('...', $class) : '...';
         }
         $class = 'tool_vault-log tool_vault-log-level-'.($log->loglevel ?: constants::LOGLEVEL_INFO);
+        if (get_string_manager()->string_exists('strftimedatetimeshortaccurate', 'core_langconfig')) {
+            $format = get_string('strftimedatetimeshortaccurate', 'core_langconfig');
+        } else {
+            $format = get_string('strftimedatetimeshort', 'core_langconfig');
+            if (!preg_match('|%H:%M:%S|', $format)) {
+                $format = preg_replace('|%H:%M|', '%H:%M:%S', $format);
+            }
+        }
         $message =
-            "[".userdate($log->timecreated, get_string('strftimedatetimeshort', 'core_langconfig'))."] ".
+            "[".userdate($log->timecreated, $format, 99, false, false)."] ".
             ($log->loglevel ? "[{$log->loglevel}] " : '') .
             ($log->pid ? "[pid {$log->pid}] " : '') .
             $log->message;

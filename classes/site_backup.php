@@ -331,7 +331,8 @@ class site_backup extends operation_base {
             $rs = $DB->get_recordset_select($table->get_xmldb_table()->getName(),
                 ($lastvalue !== null) ? $sortby. ' > ?' : '', [$lastvalue],
                 $sortby, $fieldslist, 0, $chunksize);
-            if (!$rs->valid()) {
+            $hasrows = $rs->valid();
+            if ($cnt && !$hasrows) {
                 $rs->close();
                 break;
             }
@@ -339,15 +340,17 @@ class site_backup extends operation_base {
             $filepath = $dir.DIRECTORY_SEPARATOR.$filename;
             $fp = fopen($filepath, 'w');
             fwrite($fp, "[\n" . json_encode($fields));
-            foreach ($rs as $record) {
-                fwrite($fp, ",\n".json_encode(array_values((array)$record)));
-                $lastvalue = $record->$sortby;
+            if ($hasrows) {
+                foreach ($rs as $record) {
+                    fwrite($fp, ",\n".json_encode(array_values((array)$record)));
+                    $lastvalue = $record->$sortby;
+                }
             }
             $rs->close();
             fwrite($fp, "\n]");
             $this->get_files_backup(constants::FILENAME_DBDUMP)
                 ->add_table_file($table->get_xmldb_table()->getName(), $filepath);
-            if (!$chunksize) {
+            if (!$chunksize || !$hasrows) {
                 break;
             }
         }
