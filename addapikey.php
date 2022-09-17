@@ -15,21 +15,31 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin administration pages are defined here.
+ * Add API key (callback from the lmsvault.io)
  *
  * @package     tool_vault
- * @category    admin
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+require(__DIR__ . '/../../../config.php');
+require_once($CFG->libdir . '/adminlib.php');
 
-if ($hassiteconfig) {
+$apikey = required_param('apikey', PARAM_RAW);
 
-    $ADMIN->add('server', new admin_externalpage('tool_vault_index', new lang_string('pluginname', 'tool_vault'),
-        \tool_vault\local\helpers\ui::baseurl()));
+admin_externalpage_setup('tool_vault_addapikey', '', null, '', ['nosearch' => true]);
 
-    $ADMIN->add('server', new admin_externalpage('tool_vault_addapikey', new lang_string('addapikey', 'tool_vault'),
-        new \moodle_url('/admin/tool/vault/addpikey.php'), 'moodle/site:config', true));
+$PAGE->set_pagelayout('embedded');
+$PAGE->set_heading(get_string('addapikey', 'tool_vault'));
+if (method_exists($PAGE, 'set_secondary_navigation')) {
+    $PAGE->set_secondary_navigation(false);
 }
+/** @var tool_vault\output\renderer $renderer */
+$renderer = $PAGE->get_renderer('tool_vault');
+
+echo $renderer->header();
+
+\tool_vault\api::set_api_key($apikey); // TODO add all validation!!!
+echo $OUTPUT->render_from_template('tool_vault/registercallback', ['apikey' => substr($apikey, -8)]);
+
+echo $renderer->footer();

@@ -282,7 +282,7 @@ class site_restore extends operation_base {
                 $this->add_to_log(get_string('logrestoredtables', 'tool_vault', (object)[
                     'cnt' => sprintf("%".strlen(''.$totaltables)."d", $tablescnt),
                     'totalcnt' => $totaltables,
-                    'percent' => sprintf("%3d", (int)(100.0*$tablescnt/$totaltables)),
+                    'percent' => sprintf("%3d", (int)(100.0 * $tablescnt / $totaltables)),
                 ]));
                 $lastlog = time();
                 $lasttablescnt = $tablescnt;

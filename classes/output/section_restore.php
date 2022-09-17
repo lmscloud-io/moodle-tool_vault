@@ -101,7 +101,7 @@ class section_restore extends section_base implements \templatable {
         }
 
         if (!api::is_registered()) {
-            $form = new general_settings_form(false, false);
+            $form = new general_settings_form(false);
             $result['registrationform'] = $form->render();
         } else {
             try {

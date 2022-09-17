@@ -32,6 +32,8 @@ use tool_vault\local\models\remote_backup;
 class api {
     /** @var string */
     const APIURL = 'https://api.lmsvault.io';
+    /** @var string */
+    const FRONTENDURL = 'https://lmsvault.io';
 
     /**
      * Get a value from the special plugin config (not included in backups)
@@ -66,6 +68,20 @@ class api {
      */
     public static function get_api_key() {
         return self::get_config('apikey');
+    }
+
+    /**
+     * Returns site id, generate if not present
+     *
+     * @return string
+     */
+    public static function get_site_id(): string {
+        $siteid = self::get_config('siteid');
+        if (!$siteid) {
+            $siteid = random_string(32);
+            self::store_config('siteid', $siteid);
+        }
+        return $siteid;
     }
 
     /**
@@ -137,6 +153,8 @@ class api {
         $headers = [];
         if ($authheader) {
             $headers[] = 'X-Api-Key: ' . ($apikey ?? self::get_api_key());
+            $headers[] = 'X-Vault-Siteid: ' . self::get_site_id();
+            $headers[] = 'X-Vault-Siteurl: ' . $CFG->wwwroot;
         }
         $headers = array_merge($headers, ['Accept: application/json', 'Expect:']);
 
@@ -326,8 +344,10 @@ class api {
             return true;
         }
         try {
-            $result = self::api_call('backups', 'GET', [], null, true, $apikey);
+            $result = self::api_call('validateapikey', 'GET', [], null, true, $apikey);
+            // TODO $result['permissions'] will contain API keys permissions.
         } catch (api_exception $e) {
+            // TODO request can return 403 "This API key is already used on a different site".
             if ($e->getCode() == 401) {
                 return false;
             }

@@ -25,6 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['addapikey'] = 'Add API key';
 $string['backupkey'] = 'Backup key';
 $string['clidefault'] = 'Default:';
 $string['clihelp'] = 'Print out this help';

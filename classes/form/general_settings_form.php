@@ -37,19 +37,14 @@ class general_settings_form extends \moodleform {
     protected $editable = true;
     /** @var \moodle_url */
     protected $action = null;
-    /** @var bool */
-    protected $allowtoregister = true;
 
     /**
      * Constructor
      *
      * @param bool $editable
-     * @param bool $allowtoregister if user is not registered, display the "Register" button (disallowed
-     *     for 'Restore' page because it does not make sense there).
      */
-    public function __construct(bool $editable = false, bool $allowtoregister = true) {
+    public function __construct(bool $editable = false) {
         $this->editable = $editable;
-        $this->allowtoregister = $allowtoregister;
         $this->action = ui::settingsurl(['action' => 'general',
             'returnurl' => $this->get_redirect_url()->out_as_local_url(false)]);
         parent::__construct(new \moodle_url($this->action), null, 'post', '', null, $this->editable);
@@ -72,6 +67,7 @@ class general_settings_form extends \moodleform {
      * Form definition
      */
     protected function definition() {
+        global $CFG;
         $mform = $this->_form;
 
         if ($this->editable) {
@@ -92,9 +88,13 @@ class general_settings_form extends \moodleform {
         // Buttons.
         if (!$this->editable) {
             if (!api::is_registered()) {
-                $buttonregister = $this->allowtoregister ?
-                    \html_writer::link(new \moodle_url($this->action, ['action' => 'register', 'sesskey' => sesskey()]),
-                    'Register', ['class' => 'btn btn-secondary']) : '';
+                $registerurl = new \moodle_url(api::FRONTENDURL . '/getapikey',
+                    ['siteid' => api::get_site_id(), 'siteurl' => $CFG->wwwroot, 'sesskey' => sesskey()]);
+                $onclick = "MyWindow=window.open('".$registerurl->out(false).
+                    "','MyWindow','width=800,height=600,top=100,left=100'); return false;";
+                // TODO center/resize popup: https://stackoverflow.com/questions/4068373/center-a-popup-window-on-screen .
+                $buttonregister = \html_writer::link($registerurl,
+                    'Login / Sign up', ['class' => 'btn btn-secondary', 'onclick' => $onclick]);
                 $addapikey = \html_writer::link($this->action, 'I have an API key', ['class' => 'btn btn-secondary']);
                 $mform->addElement('html',
                     \html_writer::div($buttonregister . ' ' . $addapikey, 'pb-3'));
