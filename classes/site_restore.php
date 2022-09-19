@@ -129,7 +129,12 @@ class site_restore extends operation_base {
         if (!api::are_restores_allowed()) {
             throw new \moodle_exception('restoresnotallowed', 'tool_vault');
         }
-        parent::start($pid);
+        $restorekey = api::request_new_restore_key(['backupid' => $this->model->backupkey]);
+        $this->model->set_pid_for_logging($pid);
+        $this->model
+            ->set_status(constants::STATUS_INPROGRESS)
+            ->set_details(['restorekey' => $restorekey])
+            ->save();
     }
 
     /**
@@ -139,9 +144,6 @@ class site_restore extends operation_base {
      * @throws \moodle_exception
      */
     public function execute() {
-        $this->model
-            ->set_status(constants::STATUS_INPROGRESS)
-            ->save();
         $this->add_to_log('Preparing to restore');
 
         $this->prechecks = site_restore_dryrun::execute_prechecks(
@@ -164,6 +166,12 @@ class site_restore extends operation_base {
             ->set_details(['encryptionkey' => ''])
             ->save();
         $this->get_files_restore(constants::FILENAME_DBSTRUCTURE)->finish();
+        try {
+            api::update_restore($this->model->get_details()['restorekey'], [], constants::STATUS_FINISHED);
+        } catch (\Throwable $tapi) {
+            // If for some reason we could not mark remote restore as finished.
+            $this->add_to_log('Could not mark remote restore as finished: '.$tapi->getMessage(), constants::LOGLEVEL_WARNING);
+        }
         $this->add_to_log('Restore finished');
     }
 
@@ -438,5 +446,23 @@ class site_restore extends operation_base {
         }
         rmdir($dir);
         return $cnt;
+    }
+
+    /**
+     * Mark restore as failed
+     *
+     * @param \Throwable $t
+     * @return void
+     */
+    public function mark_as_failed(\Throwable $t) {
+        parent::mark_as_failed($t);
+        $this->model->set_details(['encryptionkey' => ''])->save();
+        try {
+            api::update_restore($this->model->get_details()['restorekey'], ['faileddetails' => $t->getMessage()], constants::STATUS_FAILED);
+        } catch (\Throwable $tapi) {
+            // One of the reason for the failed backup - impossible to communicate with the API,
+            // in which case this request will also fail.
+            $this->add_to_log('Could not mark remote restore as failed: '.$tapi->getMessage(), constants::LOGLEVEL_WARNING);
+        }
     }
 }

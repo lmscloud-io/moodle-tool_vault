@@ -39,7 +39,10 @@ $renderer = $PAGE->get_renderer('tool_vault');
 
 echo $renderer->header();
 
-\tool_vault\api::set_api_key($apikey); // TODO add all validation!!!
+if (!\tool_vault\api::validate_api_key($apikey)) {
+    throw new moodle_exception('errorapikeynotvalid', 'tool_vault');
+}
+\tool_vault\api::set_api_key($apikey);
 echo $OUTPUT->render_from_template('tool_vault/registercallback', ['apikey' => substr($apikey, -8)]);
 
 echo $renderer->footer();

@@ -483,11 +483,12 @@ class api {
      */
     public static function download_backup_file(operation_model $model, string $filepath, ?logger $logger = null) {
         $backupkey = $model->backupkey;
+        $restorekey = $model->get_details()['restorekey'] ?? '';
         $filename = basename($filepath);
         if ($logger) {
             $logger->add_to_log("Downloading file $filename ...");
         }
-        $result = self::api_call("backups/$backupkey/download/$filename", 'get', [], $logger);
+        $result = self::api_call("backups/$backupkey/download/$filename", 'post', ['restorekey' => $restorekey], $logger);
         $s3url = $result['downloadurl'] ?? null;
         $encrypted = $result['encrypted'] ?? false;
 
@@ -579,14 +580,27 @@ class api {
     }
 
     /**
+     * Request restore key
+     *
+     * @param array $info
+     * @return string
+     * @throws \moodle_exception
+     */
+    public static function request_new_restore_key(array $info): string {
+        $res = self::api_call('restores', 'PUT', $info);
+        if (empty($res['restorekey'])) {
+            throw new \moodle_exception('Server returned no data');
+        }
+        return $res['restorekey'];
+    }
+
+    /**
      * Update backup status and/or add info
      *
      * @param string $backupkey
      * @param array|null $info
      * @param string|null $status
      * @return void
-     * @throws \coding_exception
-     * @throws \moodle_exception
      */
     public static function update_backup(string $backupkey, ?array $info = [], ?string $status = null) {
         $params = ($status ? ['status' => $status] : []) + ($info ? ['info' => $info] : []);
@@ -594,5 +608,21 @@ class api {
             return;
         }
         self::api_call("backups/{$backupkey}", 'PATCH', $params);
+    }
+
+    /**
+     * Update restore status and/or add info
+     *
+     * @param string $restorekey
+     * @param array|null $info
+     * @param string|null $status
+     * @return void
+     */
+    public static function update_restore(string $restorekey, ?array $info = [], ?string $status = null) {
+        $params = ($status ? ['status' => $status] : []) + ($info ? ['info' => $info] : []);
+        if (!$params) {
+            return;
+        }
+        self::api_call("restores/{$restorekey}", 'PATCH', $params);
     }
 }
