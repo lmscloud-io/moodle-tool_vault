@@ -22,6 +22,7 @@ use tool_vault\local\helpers\files_restore;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
 use tool_vault\local\operations\operation_base;
+use tool_vault\local\restoreactions\action_base;
 use tool_vault\local\xmldb\dbstructure;
 
 /**
@@ -154,13 +155,15 @@ class site_restore extends operation_base {
         // From this moment on we can not throw any exceptions, we have to try to restore as much as possible skipping problems.
         $this->add_to_log('Restore started');
 
-        $this->before_restore();
+        action_base::execute_all($this, action_base::STAGE_BEFORE);
 
         $this->restore_db();
+        action_base::execute_all($this, action_base::STAGE_AFTER_DB);
         $this->restore_dataroot();
+        action_base::execute_all($this, action_base::STAGE_AFTER_DATA);
         $this->restore_filedir();
 
-        $this->post_restore();
+        action_base::execute_all($this, action_base::STAGE_AFTER_ALL);
         $this->model
             ->set_status(constants::STATUS_FINISHED)
             ->set_details(['encryptionkey' => ''])
@@ -392,32 +395,6 @@ class site_restore extends operation_base {
             }
         }
         $this->add_to_log('Finished files restore');
-    }
-
-    /**
-     * Post restore
-     *
-     * @return void
-     */
-    public function before_restore() {
-        $this->add_to_log('Killing all sessions...');
-        \core\session\manager::kill_all_sessions();
-        $this->add_to_log('...done');
-    }
-
-    /**
-     * Post restore
-     *
-     * @return void
-     */
-    public function post_restore() {
-        $this->add_to_log('Starting post-restore actions');
-        $this->add_to_log('Purging all caches...');
-        purge_all_caches();
-        $this->add_to_log('...done');
-        $this->add_to_log('Killing all sessions...');
-        \core\session\manager::kill_all_sessions();
-        $this->add_to_log('...done');
     }
 
     /**

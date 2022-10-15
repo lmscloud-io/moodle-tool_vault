@@ -178,6 +178,7 @@ class site_restore_dryrun extends operation_base {
             api::update_restore($this->model->get_details()['restorekey'], [], constants::STATUS_FINISHED);
         } catch (\Throwable $tapi) {
             // If for some reason we could not mark remote restore as finished, ignore the error.
+            null;
         }
         $this->add_to_log('Restore pre-check finished');
     }
