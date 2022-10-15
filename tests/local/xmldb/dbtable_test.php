@@ -77,7 +77,7 @@ class dbtable_test extends \advanced_testcase {
             $table->arr2xmldb_table($xmltable);
         }
         set_config('xmldbdisablecommentchecking', $oldxmldb);
-        return new dbtable($table);
+        return new dbtable($table, trim($xmltable['@']['COMPONENT'] ?? ''));
     }
 
     /**

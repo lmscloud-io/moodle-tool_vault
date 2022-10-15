@@ -31,14 +31,18 @@ use xmldb_table;
 class dbtable {
     /** @var \xmldb_table */
     protected $xmldbtable;
+    /** @var string */
+    protected $component;
 
     /**
      * Constructor
      *
      * @param \xmldb_table $table
+     * @param string $component
      */
-    public function __construct(\xmldb_table $table) {
+    public function __construct(\xmldb_table $table, string $component) {
         $this->xmldbtable = $table;
+        $this->component = $component;
     }
 
     /**
@@ -120,7 +124,7 @@ class dbtable {
         }
         foreach ($indexes as $index) {
             $list = implode(', ', $gen->getEncQuoted($index->getFields()));
-            $sqls[] = ($index->getUnique() ? 'UNIQUE ' : '').'INDEX ('.$list.')';
+            $sqls[] = ($index->getUnique() ? 'UNIQUE ' : '') . 'INDEX (' . $list . ')';
         }
         sort($sqls, SORT_STRING);
         return array_values(array_unique($sqls));
@@ -157,6 +161,7 @@ class dbtable {
         if (!$deftable) {
             return [constants::DIFF_EXTRATABLES => [$this->get_xmldb_table()]];
         }
+        $this->component = $deftable->component;
         $res = $this->align_fields_with_defintion($deftable, $autofix);
         $res += $this->align_keys_and_indexes_with_definition($deftable, $autofix);
         return array_filter($res);
@@ -179,7 +184,7 @@ class dbtable {
                 if ($deffield->getName() === $afield->getName()) {
                     $newfields[] = $afield;
                     if ($this->get_field_sql($deftable->get_xmldb_table(), $deffield) !==
-                                $this->get_field_sql($this->get_xmldb_table(), $afield)) {
+                        $this->get_field_sql($this->get_xmldb_table(), $afield)) {
                         $changedcolumns[] = $afield;
                     } else if ($autofix) {
                         $newfields[count($newfields) - 1] = $deffield;
@@ -275,16 +280,16 @@ class dbtable {
         if ($f1 !== $f2) {
             return false;
         }
-        $isunique = function(\xmldb_object $o) {
+        $isunique = function (\xmldb_object $o) {
             return ($o instanceof xmldb_key && (
-                $o->getType() == XMLDB_KEY_FOREIGN_UNIQUE || $o->getType() == XMLDB_KEY_UNIQUE
-                )) ||
+                        $o->getType() == XMLDB_KEY_FOREIGN_UNIQUE || $o->getType() == XMLDB_KEY_UNIQUE
+                    )) ||
                 ($o instanceof xmldb_index && $o->getUnique());
         };
         if ($isunique($o1) != $isunique($o2)) {
             return false;
         }
-        $isprimary = function(\xmldb_object $o) {
+        $isprimary = function (\xmldb_object $o) {
             return $o instanceof xmldb_key && $o->getType() == XMLDB_KEY_PRIMARY;
         };
         if ($isprimary($o1) != $isprimary($o2)) {
@@ -344,7 +349,7 @@ class dbtable {
                 $xmldbtable->addField(database_column_info::clone_from($dbfield)->to_xmldb_field($deftable));
             }
         }
-        $table = new self($xmldbtable);
+        $table = new self($xmldbtable, '?');
         if ($DB->get_dbfamily() === 'postgres') {
             $table->retrieve_keys_and_indexes_postgres($structure);
         } else {
@@ -503,7 +508,7 @@ class dbtable {
             return [];
         }
         $tablename = $this->get_xmldb_table()->getName();
-        $maxid = $DB->get_field_sql("SELECT MAX($field) FROM {".$tablename."}");
+        $maxid = $DB->get_field_sql("SELECT MAX($field) FROM {" . $tablename . "}");
         if (!$maxid && !$nextvalue) {
             return [];
         }
@@ -547,5 +552,17 @@ class dbtable {
         }
 
         return $result;
+    }
+
+    /**
+     * Output structure
+     *
+     * @return string
+     */
+    public function output() {
+        $component = "COMPONENT=\"".htmlspecialchars($this->component)."\"";
+        $res = $this->get_xmldb_table()->xmlOutput();
+        $res = preg_replace('|( *<TABLE NAME="[^"]*")|', '$1'.' '.$component, $res);
+        return $res;
     }
 }

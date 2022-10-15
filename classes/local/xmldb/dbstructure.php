@@ -112,7 +112,7 @@ class dbstructure {
 
         $dbdirs = get_db_directories();
 
-        foreach ($dbdirs as $dbdir) {
+        foreach ($dbdirs as $pluginname => $dbdir) {
             $xmldbfile = new \xmldb_file($dbdir.'/install.xml');
             if ($xmldbfile->fileExists()) {
                 $loaded = $xmldbfile->loadXMLStructure();
@@ -124,7 +124,7 @@ class dbstructure {
                         if (specialrules::is_definition_table_ignored($tablename)) {
                             continue;
                         }
-                        $this->deftables[$tablename] = new dbtable($table);
+                        $this->deftables[$tablename] = new dbtable($table, $pluginname);
                     }
                 }
             }
@@ -155,7 +155,7 @@ class dbstructure {
                 $name = strtolower(trim($xmltable['@']['NAME']));
                 $table = new xmldb_table($name);
                 $table->arr2xmldb_table($xmltable);
-                $this->backuptables[$name] = new dbtable($table);
+                $this->backuptables[$name] = new dbtable($table, trim($xmltable['@']['COMPONENT'] ?? ''));
             }
         }
         set_config('xmldbdisablecommentchecking', $oldxmldb);
@@ -335,7 +335,7 @@ class dbstructure {
             $o .= '  <TABLES>' . "\n";
             foreach ($tables as $table) {
                 if (!$onlytables || in_array($table->get_xmldb_table()->getName(), $onlytables)) {
-                    $o .= $table->get_xmldb_table()->xmlOutput();
+                    $o .= $table->output();
                 }
             }
             $o .= '  </TABLES>' . "\n";

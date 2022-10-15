@@ -122,7 +122,7 @@ class cli_helper {
         if ($this->script === self::SCRIPT_BACKUP) {
             $options += [
                 'description' => [
-                    'description' => 'Backup description that will be stored unencrypted, by default - site URL',
+                    'description' => 'Backup description, by default - site URL',
                     'hasvalue' => 'TEXT',
                     'default' => $CFG->wwwroot,
                     'validation' => function($text) {
