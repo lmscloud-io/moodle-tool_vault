@@ -76,7 +76,10 @@ class general_settings_form extends \moodleform {
         } else if (api::is_registered()) {
             $forgeturl = ui::settingsurl(['sesskey' => sesskey(), 'action' => 'forgetapikey']);
             $mform->addElement('static', 'staticapikey', 'API key',
-                api::get_api_key() . ' ' . \html_writer::link($forgeturl, 'Forget'));
+                substr(api::get_api_key(), 0, 8) . '... ' .
+                \html_writer::link(api::get_frontend_url(), get_string('managelsmvault', 'tool_vault'), ['target' => '_blank']) .
+                ' &nbsp; ' .
+                \html_writer::link($forgeturl, get_string('logoutfromvault', 'tool_vault')));
         } else {
             $mform->addElement('html', 'You need to register with Vault cloud to be able to backup or restore the site.');
         }
@@ -88,7 +91,7 @@ class general_settings_form extends \moodleform {
         // Buttons.
         if (!$this->editable) {
             if (!api::is_registered()) {
-                $registerurl = new \moodle_url(api::FRONTENDURL . '/getapikey',
+                $registerurl = new \moodle_url(api::get_frontend_url() . '/getapikey',
                     ['siteid' => api::get_site_id(), 'siteurl' => $CFG->wwwroot, 'sesskey' => sesskey()]);
                 $onclick = "MyWindow=window.open('".$registerurl->out(false).
                     "','MyWindow','width=800,height=600,top=100,left=100'); return false;";

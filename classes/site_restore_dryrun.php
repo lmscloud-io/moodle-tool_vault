@@ -93,7 +93,7 @@ class site_restore_dryrun extends operation_base {
         if (!api::is_registered()) {
             throw new \moodle_exception('errorapikeynotvalid', 'tool_vault');
         }
-        $restorekey = api::request_new_restore_key(['backupid' => $this->model->backupkey, 'dryrun' => true]);
+        $restorekey = api::request_new_restore_key(['backupkey' => $this->model->backupkey, 'dryrun' => true]);
         $this->model->set_pid_for_logging($pid);
         $this->model
             ->set_status(constants::STATUS_INPROGRESS)
@@ -227,7 +227,10 @@ class site_restore_dryrun extends operation_base {
         parent::mark_as_failed($t);
         $this->model->set_details(['encryptionkey' => ''])->save();
         try {
-            api::update_restore($this->model->get_details()['restorekey'], ['faileddetails' => $t->getMessage()], constants::STATUS_FAILED);
+            $restorekey = $this->model->get_details()['restorekey'] ?? '';
+            if ($restorekey) {
+                api::update_restore($restorekey, ['faileddetails' => $t->getMessage()], constants::STATUS_FAILED);
+            }
         } catch (\Throwable $tapi) {
             // One of the reason for the failed backup - impossible to communicate with the API,
             // in which case this request will also fail.

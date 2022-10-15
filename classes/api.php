@@ -31,8 +31,6 @@ use tool_vault\local\models\remote_backup;
  */
 class api {
     /** @var string */
-    const APIURL = 'https://api.lmsvault.io';
-    /** @var string */
     const FRONTENDURL = 'https://lmsvault.io';
 
     /**
@@ -59,6 +57,27 @@ class api {
         if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
             self::store_config('backupexcludedataroot', 'muc, antivirus_quarantine');
         }
+    }
+
+    /**
+     * Frontend URL
+     * @return string
+     */
+    public static function get_frontend_url() {
+        return self::get_config('frontendurl') ?: self::FRONTENDURL;
+    }
+
+    /**
+     * API URL
+     * @return string
+     */
+    public static function get_api_url() {
+        if (((defined('PHPUNIT_TEST') && PHPUNIT_TEST)
+                || defined('BEHAT_SITE_RUNNING') || defined('BEHAT_TEST'))
+            && defined('TOOL_VAULT_TEST_API_URL')) {
+            return TOOL_VAULT_TEST_API_URL;
+        }
+        return self::get_config('apiurl') ?: preg_replace('|^(https?://)|', '\1api.', self::get_frontend_url());
     }
 
     /**
@@ -164,12 +183,7 @@ class api {
             'CURLOPT_MAXREDIRS' => 3,
         ];
 
-        $url = self::APIURL . '/' . ltrim($endpoint, '/');
-        if (((defined('PHPUNIT_TEST') && PHPUNIT_TEST)
-                || defined('BEHAT_SITE_RUNNING') || defined('BEHAT_TEST'))
-                && defined('TOOL_VAULT_TEST_API_URL')) {
-            $url = TOOL_VAULT_TEST_API_URL . '/' . ltrim($endpoint, '/');
-        }
+        $url = self::get_api_url() . '/' . ltrim($endpoint, '/');
         $method = strtolower($method);
         switch ($method) {
             case 'post':
