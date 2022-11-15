@@ -52,9 +52,10 @@ class version_restore extends check_base {
             return false;
         }
         $details = $this->model->get_details();
-        $version = (int)($details['backupversion']);
+        $version = (float)($details['backupversion']);
         $branch = $details['backupbranch'];
-        return "{$branch}" === "{$CFG->branch}" && (int)($CFG->version) >= $version;
+        // TODO also make sure that all plugins are either missing or have higher versions, otherwise it will be stalled.
+        return "{$branch}" === "{$CFG->branch}" && (float)($CFG->version) >= $version;
     }
 
     /**

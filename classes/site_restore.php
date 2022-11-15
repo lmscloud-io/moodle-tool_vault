@@ -22,7 +22,7 @@ use tool_vault\local\helpers\files_restore;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
 use tool_vault\local\operations\operation_base;
-use tool_vault\local\restoreactions\action_base;
+use tool_vault\local\restoreactions\restore_action;
 use tool_vault\local\xmldb\dbstructure;
 
 /**
@@ -155,15 +155,14 @@ class site_restore extends operation_base {
         // From this moment on we can not throw any exceptions, we have to try to restore as much as possible skipping problems.
         $this->add_to_log('Restore started');
 
-        action_base::execute_all($this, action_base::STAGE_BEFORE);
-
+        restore_action::execute_before_restore($this);
         $this->restore_db();
-        action_base::execute_all($this, action_base::STAGE_AFTER_DB);
+        restore_action::execute_after_db_restore($this);
         $this->restore_dataroot();
-        action_base::execute_all($this, action_base::STAGE_AFTER_DATA);
+        restore_action::execute_after_dataroot_restore($this);
         $this->restore_filedir();
+        restore_action::execute_after_restore($this);
 
-        action_base::execute_all($this, action_base::STAGE_AFTER_ALL);
         $this->model
             ->set_status(constants::STATUS_FINISHED)
             ->set_details(['encryptionkey' => ''])

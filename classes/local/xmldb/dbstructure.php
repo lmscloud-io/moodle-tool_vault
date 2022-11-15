@@ -104,13 +104,34 @@ class dbstructure {
     }
 
     /**
+     * List of /db directories indexed by plugin name
+     *
+     * Very similar to {@see get_db_directories()} except the array has index
+     *
+     * @return string[]
+     */
+    protected static function get_db_directories() {
+        global $CFG;
+        $dbdirs = ['core' => $CFG->libdir.'/db'];
+        $plugintypes = \core_component::get_plugin_types();
+        foreach ($plugintypes as $plugintype => $pluginbasedir) {
+            if ($plugins = \core_component::get_plugin_list($plugintype)) {
+                foreach ($plugins as $plugin => $plugindir) {
+                    $dbdirs[$plugintype.'_'.$plugin] = $plugindir.'/db';
+                }
+            }
+        }
+        return $dbdirs;
+    }
+
+    /**
      * Retrieve the list of tables defined in this moodle version and all plugins
      */
     protected function load_definitions() {
         global $CFG;
         require_once($CFG->dirroot.'/lib/adminlib.php');
 
-        $dbdirs = get_db_directories();
+        $dbdirs = self::get_db_directories();
 
         foreach ($dbdirs as $pluginname => $dbdir) {
             $xmldbfile = new \xmldb_file($dbdir.'/install.xml');

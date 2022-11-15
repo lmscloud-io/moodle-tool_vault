@@ -25,7 +25,7 @@ use tool_vault\site_restore;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class kill_sessions extends action_base {
+class kill_sessions extends restore_action {
 
     /**
      * Executes individual action
@@ -38,15 +38,5 @@ class kill_sessions extends action_base {
         $logger->add_to_log('Killing all sessions...');
         \core\session\manager::kill_all_sessions();
         $logger->add_to_log('...done');
-    }
-
-    /**
-     * Check if the action should be executed for the stage
-     *
-     * @param string $stage
-     * @return bool
-     */
-    protected function applies_to_stage(string $stage): bool {
-        return in_array($stage, [self::STAGE_BEFORE, self::STAGE_AFTER_ALL]);
     }
 }

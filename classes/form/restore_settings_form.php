@@ -60,8 +60,14 @@ class restore_settings_form extends \moodleform {
             1 => get_string('yes'),
         ]);
 
+        $mform->addElement('select', 'removemissing', 'Automatically remove missing plugins after restore', [
+            0 => get_string('no'),
+            1 => get_string('yes'),
+        ]);
+
         $this->set_data([
             'allowrestore' => (int)(bool)api::get_config('allowrestore'),
+            'removemissing' => (int)(bool)api::get_config('removemissing'),
         ]);
         if (!$this->editable) {
             $mform->addElement('html',
@@ -80,5 +86,6 @@ class restore_settings_form extends \moodleform {
     public function process() {
         $data = $this->get_data();
         api::store_config('allowrestore', $data->allowrestore);
+        api::store_config('removemissing', $data->removemissing);
     }
 }
