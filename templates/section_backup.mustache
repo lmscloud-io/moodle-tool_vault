@@ -31,38 +31,52 @@
 
 {{{registrationform}}}
 
-{{#lastbackup}}
-    <div class="card mt-2">
-        <div class="card-header">
-            <h5 class="mb-0">
-                {{{title}}}
-            </h5>
-        </div>
-        <div class="card-body">
-            {{#subtitle}}
-                <h6 class="card-subtitle mb-2 text-muted">{{{subtitle}}}</h6>
-            {{/subtitle}}
-            <p class="card-text">
-                {{{summary}}}
-            </p>
-            <pre>
-{{{logs}}}</pre>
-            {{#showdetailslink}}
-                <a href="{{fullreporturl}}" class="card-link">More details</a>
-            {{/showdetailslink}}
-        </div>
-    </div>
-{{/lastbackup}}
+{{#notice}}
+    {{> core/notification_info}}
+{{/notice}}
 
-{{#canstartbackup}}
-    <div class="pt-2">
-        <form action="#" data-url="{{startbackupurl}}" method="POST" data-action="startbackup">
-            <input type="hidden" name="passphrase" value="">
-            <input type="hidden" name="description" value="{{defaultbackupdescription}}">
-            <input type="submit" value="{{#str}}startbackup, tool_vault{{/str}}" class="btn btn-secondary">
-        </form>
-    </div>
-{{/canstartbackup}}
+<div class="pt-2 pb-3">
+    <form action="#" data-url="{{startbackupurl}}" method="POST" data-action="startbackup">
+        <input type="hidden" name="passphrase" value="">
+        <input type="hidden" name="description" value="{{defaultbackupdescription}}">
+        <input type="submit" value="{{#str}}startbackup, tool_vault{{/str}}" class="btn btn-primary" {{^canstartbackup}}disabled{{/canstartbackup}}>
+    </form>
+</div>
+
+{{#haspastbackups}}
+    <h3>Past backups on this site</h3>
+    <table class="generaltable">
+        <tr>
+            <th>Backup</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Encrypted</th>
+            <th></th>
+        </tr>
+        {{#backups}}
+            <tr>
+                <td>
+                    {{{description}}}<br>
+                    <b>Backup key:</b> <a href="{{detailsurl}}">{{backupkey}}</a>
+                </td>
+                <td>{{status}}</td>
+                <td>{{started}}</td>
+                <td>
+                    {{#encrypted}}{{#str}}yes{{/str}}{{/encrypted}}
+                    {{^encrypted}}{{#str}}no{{/str}}{{/encrypted}}
+                </td>
+                <td>
+                    {{#showactions}}
+                        {{> tool_vault/remote_backup_buttons}}
+                    {{/showactions}}
+                </td>
+            </tr>
+        {{/backups}}
+    </table>
+{{/haspastbackups}}
+{{^haspastbackups}}
+    <p>You don't have any past backups</p>
+{{/haspastbackups}}
 
 {{#js}}
     require(['tool_vault/vault'], function(Vault) {

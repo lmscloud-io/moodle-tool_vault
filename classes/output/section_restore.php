@@ -23,6 +23,7 @@ use tool_vault\constants;
 use tool_vault\form\general_settings_form;
 use tool_vault\local\exceptions\api_exception;
 use tool_vault\local\helpers\ui;
+use tool_vault\local\models\restore_model;
 use tool_vault\site_restore;
 
 /**
@@ -119,6 +120,13 @@ class section_restore extends section_base implements \templatable {
             $url = ui::restoreurl(['action' => 'updateremote', 'sesskey' => sesskey()]);
             $result['remotebackupsupdateurl'] = $url->out(false);
         }
+
+        $restores = restore_model::get_records(null, null, 1, 20);
+        $result['restores'] = [];
+        foreach ($restores as $restore) {
+            $result['restores'][] = (new past_restore($restore))->export_for_template($output);
+        }
+        $result['haspastrestores'] = !empty($result['restores']);
         return $result;
     }
 }

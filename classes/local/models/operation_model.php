@@ -296,9 +296,10 @@ abstract class operation_model {
      * @param string $sort
      * @return operation_model[]
      */
-    protected static function get_records_select(string $sql, array $params = [], string $sort = 'timecreated DESC'): array {
+    protected static function get_records_select(string $sql, array $params = [],
+                     string $sort = 'timecreated DESC', int $offset = 0, int $limit = 0): array {
         global $DB;
-        $records = $DB->get_records_select(self::TABLE, $sql, $params ?? [], $sort);
+        $records = $DB->get_records_select(self::TABLE, $sql, $params ?? [], $sort, '*', $offset, $limit);
         return array_filter(array_map(function($b) {
             return static::instance($b);
         }, $records));
@@ -370,8 +371,9 @@ abstract class operation_model {
      * @param string $sort
      * @return static[]
      */
-    public static function get_records(?array $statuses = null, string $sort = 'timecreated DESC'): array {
+    public static function get_records(?array $statuses = null, ?string $sort = null, int $offset = 0, int $limit = 0): array {
         global $DB;
+        $sort = $sort ?? 'timecreated DESC, id DESC';
         if (static::$defaulttype) {
             $sql = 'type = :type';
             $params = ['type' => static::$defaulttype];
@@ -386,7 +388,30 @@ abstract class operation_model {
             [$sql2, $params2] = $DB->get_in_or_equal($statuses, SQL_PARAMS_NAMED);
             $sql .= ' AND status '.$sql2;
         }
-        return static::get_records_select($sql, ($params2 ?? []) + $params, $sort);
+        return static::get_records_select($sql, ($params2 ?? []) + $params, $sort, $offset, $limit);
+    }
+
+    /**
+     * Get backups and restores that are scheduled or in progress
+     *
+     * @param bool $includestuck include records that appear to be stuck (no modifications for LOCK_TIMEOUT seconds)
+     * @return operation_model[]
+     */
+    public static function get_active_processes(bool $includestuck = true): array {
+        if (static::class === self::class) {
+            $records = static::get_records_select("(status = :s1 OR status = :s2) AND (type = :t1 OR type = :t2)",
+                ['s1' => constants::STATUS_SCHEDULED, 's2' => constants::STATUS_INPROGRESS, 't1' => 'backup', 't2' => 'restore'],
+                'id');
+        } else {
+            $records = static::get_records([constants::STATUS_SCHEDULED, constants::STATUS_INPROGRESS], 'id');
+        }
+        if ($records && !$includestuck) {
+            $records = array_filter($records, function (operation_model $record) {
+                return ($record instanceof backup_model || $record instanceof restore_model) &&
+                    !$record->is_stuck();
+            });
+        }
+        return $records;
     }
 
     /**
@@ -421,5 +446,15 @@ abstract class operation_model {
         $sql = 'SELECT MAX(timecreated) FROM {'.self::LOGTABLE.'} WHERE operationid = ?';
         return max($this->timecreated, $this->timemodified,
             $DB->get_field_sql($sql, [$this->id]));
+    }
+
+    /**
+     * Process is in progress and has not been modified for LOCK_TIMEOUT seconds
+     *
+     * @return bool
+     */
+    public function is_stuck(): bool {
+        return $this->status == constants::STATUS_INPROGRESS &&
+            $this->get_last_modified() < time() - constants::LOCK_TIMEOUT;
     }
 }

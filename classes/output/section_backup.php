@@ -20,6 +20,7 @@ use tool_vault\api;
 use tool_vault\form\general_settings_form;
 use tool_vault\local\helpers\ui;
 use tool_vault\local\models\backup_model;
+use tool_vault\local\models\operation_model;
 
 /**
  * Tab backup
@@ -59,37 +60,26 @@ class section_backup extends section_base implements \templatable {
      */
     public function export_for_template($output): array {
         global $CFG, $USER;
+        $activeprocesses = operation_model::get_active_processes(true);
         $result = [
-            'canstartbackup' => false,
+            'canstartbackup' => empty($activeprocesses),
         ];
-        if ($backup = backup_model::get_scheduled_backup()) {
-            $result['lastbackup'] = [
-                'title' => $backup->get_title(),
-                'subtitle' => $backup->get_subtitle(),
-                'summary' => 'You backup is now scheduled and will be executed during the next cron run',
+
+        if ($activeprocesses) {
+            if ($backup = backup_model::get_scheduled_backup()) {
+                $message = 'You backup is now scheduled and will be executed during the next cron run';
+            } else if ($backup = backup_model::get_backup_in_progress()) {
+                $message = 'You have a backup in progress';
+            } else {
+                $message = 'You can not start a backup because you have another process in progress';
+            }
+            $result['notice'] = [
+                'message' => $message,
+                'closebutton' => false,
             ];
-        } else if ($backup = backup_model::get_backup_in_progress()) {
-            $result['lastbackup'] = [
-                'title' => $backup->get_title(),
-                'subtitle' => $backup->get_subtitle(),
-                'summary' => 'You have a backup in progress',
-                'logs' => $backup->get_logs_shortened(),
-            ];
-            $result['showdetailslink'] = 1;
-        } else if ($backup = backup_model::get_last_backup()) {
-            $result['lastbackup'] = [
-                'title' => $backup->get_title(),
-                'subtitle' => $backup->get_subtitle(),
-                'logs' => $backup->get_logs_shortened(),
-            ];
-            $result['canstartbackup'] = true;
-            $result['showdetailslink'] = 1;
-        } else {
-            $result['canstartbackup'] = true;
         }
 
         $result['startbackupurl'] = ui::backupurl(['action' => 'startbackup', 'sesskey' => sesskey()])->out(false);
-        $result['fullreporturl'] = ui::backupurl(['action' => 'details', 'id' => $backup->id ?? 0])->out(false);
         $result['defaultbackupdescription'] = $CFG->wwwroot.' by '.fullname($USER); // TODO string?
 
         if (!api::is_registered()) {
@@ -97,6 +87,14 @@ class section_backup extends section_base implements \templatable {
             $result['registrationform'] = $form->render();
             $result['canstartbackup'] = false;
         }
+
+        $backups = backup_model::get_records(null, null, 1, 20);
+        $result['backups'] = [];
+        foreach ($backups as $backup) {
+            $result['backups'][] = (new past_backup($backup))->export_for_template($output);
+        }
+        $result['haspastbackups'] = !empty($result['backups']);
+        $result['restoreallowed'] = api::are_restores_allowed();
         return $result;
     }
 }

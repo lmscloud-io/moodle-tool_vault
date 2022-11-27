@@ -649,18 +649,16 @@ class api {
      */
     public static function is_maintenance_mode(): bool {
         try {
-            $records = operation_model::get_records([constants::STATUS_INPROGRESS], 'id');
+            $records = operation_model::get_active_processes(false);
+            if ($records) {
+                $records = array_filter($records, function(operation_model $record) {
+                    return $record->status == constants::STATUS_INPROGRESS;
+                });
+            }
+            return !empty($records);
         } catch (\Throwable $t) {
             debugging($t->getMessage(), DEBUG_DEVELOPER);
             return false;
         }
-        if ($records) {
-            $now = time();
-            $records = array_filter($records, function (operation_model $record) use ($now) {
-                return ($record instanceof backup_model || $record instanceof restore_model) &&
-                    $record->get_last_modified() >= $now - constants::LOCK_TIMEOUT;
-            });
-        }
-        return !empty($records);
     }
 }

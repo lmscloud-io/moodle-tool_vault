@@ -78,7 +78,7 @@ class cron_task extends \core\task\scheduled_task {
                 if ($record instanceof backup_model || $record instanceof restore_model) {
                     $res[self::Q_INPROGRESS][] = $record;
                 }
-                if ($record->get_last_modified() < $now - constants::LOCK_TIMEOUT) {
+                if ($record->is_stuck()) {
                     $res[self::Q_INPROGRESS_STUCK][] = $record;
                 }
             } else {

@@ -31,32 +31,6 @@
 
 {{{registrationform}}}
 
-{{#lastrestore}}
-    <div class="card mt-2">
-        <div class="card-header">
-            <h5 class="mb-0">
-                {{{title}}}
-            </h5>
-        </div>
-        <div class="card-body">
-            {{#subtitle}}
-                <h6 class="card-subtitle mb-2 text-muted">{{{subtitle}}}</h6>
-            {{/subtitle}}
-            <p class="card-text">
-                {{{summary}}}
-            </p>
-            <pre>
-{{{logs}}}</pre>
-            {{#showdetailslink}}
-                <a href="{{fullreporturl}}" class="card-link">More details</a>
-            {{/showdetailslink}}
-            {{#unauthlink}}
-                <a href="{{unauthlink}}" class="card-link">Monitor restore status without authentication here</a>
-            {{/unauthlink}}
-        </div>
-    </div>
-{{/lastrestore}}
-
 {{#isregistered}}
     <h4>Remote backups</h4>
     <p>Last updated: {{remotebackupstime}} <a href="{{remotebackupsupdateurl}}">{{#pix}} i/reload, core, Refresh {{/pix}}</a></p>
@@ -105,3 +79,40 @@
         </tbody>
     </table>
 {{/isregistered}}
+
+
+
+{{#haspastrestores}}
+    <h3>Past restores on this site</h3>
+    <table class="generaltable">
+        <tr>
+            <th>Backup</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Encrypted</th>
+            <th></th>
+        </tr>
+        {{#restores}}
+            <tr>
+                <td>
+                    {{{description}}}<br>
+                    <b>Backup key:</b> <a href="{{detailsurl}}">{{backupkey}}</a>
+                </td>
+                <td>{{status}}</td>
+                <td>{{started}}</td>
+                <td>
+                    {{#encrypted}}{{#str}}yes{{/str}}{{/encrypted}}
+                    {{^encrypted}}{{#str}}no{{/str}}{{/encrypted}}
+                </td>
+                <td>
+                    {{#showactions}}
+                        {{> tool_vault/remote_backup_buttons}}
+                    {{/showactions}}
+                </td>
+            </tr>
+        {{/restores}}
+    </table>
+{{/haspastrestores}}
+{{^haspastrestores}}
+    <p>You don't have any past restores</p>
+{{/haspastrestores}}
