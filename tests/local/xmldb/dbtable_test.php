@@ -49,6 +49,8 @@ class dbtable_test extends \advanced_testcase {
      * @return void
      */
     public function test_get_alter_sql_xml() {
+        $this->resetAfterTest();
+
         $table = $this->fixture_config();
         $this->assertNotEmpty($table->get_alter_sql(null));
         $this->assertEmpty($table->get_alter_sql($table));
@@ -222,6 +224,8 @@ EOF;
      * Test for compare_with_other_table()
      */
     public function test_compare_with_other_table() {
+        $this->resetAfterTest();
+
         $deftable = $this->fixture_config_log();
         $table = $this->fixture_config_log_wrong_order();
         $res = $table->compare_with_other_table($deftable);

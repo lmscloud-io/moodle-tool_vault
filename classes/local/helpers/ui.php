@@ -77,4 +77,14 @@ class ui {
     public static function settingsurl(array $params = []): \moodle_url {
         return self::baseurl($params + ['section' => 'settings']);
     }
+
+    /**
+     * Link to progress page of backup/restore
+     *
+     * @param array $params
+     * @return \moodle_url
+     */
+    public static function progressurl(array $params = []): \moodle_url {
+        return new \moodle_url('/admin/tool/vault/progress.php', ['accesskey' => $params['accesskey']]);
+    }
 }

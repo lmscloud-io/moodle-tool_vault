@@ -19,8 +19,10 @@ namespace tool_vault;
 use tool_vault\local\exceptions\api_exception;
 use tool_vault\local\logger;
 use tool_vault\local\models\backup_file;
+use tool_vault\local\models\backup_model;
 use tool_vault\local\models\operation_model;
 use tool_vault\local\models\remote_backup;
+use tool_vault\local\models\restore_model;
 
 /**
  * Main api
@@ -638,5 +640,27 @@ class api {
             return;
         }
         self::api_call("restores/{$restorekey}", 'PATCH', $params);
+    }
+
+    /**
+     * Should site be in maintenance mode
+     *
+     * @return bool
+     */
+    public static function is_maintenance_mode(): bool {
+        try {
+            $records = operation_model::get_records([constants::STATUS_INPROGRESS], 'id');
+        } catch (\Throwable $t) {
+            debugging($t->getMessage(), DEBUG_DEVELOPER);
+            return false;
+        }
+        if ($records) {
+            $now = time();
+            $records = array_filter($records, function (operation_model $record) use ($now) {
+                return ($record instanceof backup_model || $record instanceof restore_model) &&
+                    $record->get_last_modified() >= $now - constants::LOCK_TIMEOUT;
+            });
+        }
+        return !empty($records);
     }
 }

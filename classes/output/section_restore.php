@@ -48,8 +48,8 @@ class section_restore extends section_base implements \templatable {
             } catch (api_exception $e) {
                 redirect(ui::restoreurl(), $e->getMessage(), 0, \core\output\notification::NOTIFY_ERROR);
             }
-            \tool_vault\site_restore::schedule(['backupkey' => $backupkey, 'passphrase' => $passphrase]);
-            redirect(ui::restoreurl());
+            $restore = \tool_vault\site_restore::schedule(['backupkey' => $backupkey, 'passphrase' => $passphrase]);
+            redirect(ui::progressurl(['accesskey' => $restore->get_model()->accesskey]));
         }
 
         if ($action === 'dryrun' && confirm_sesskey()) {

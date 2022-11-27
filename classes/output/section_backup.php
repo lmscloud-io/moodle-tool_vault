@@ -38,11 +38,11 @@ class section_backup extends section_base implements \templatable {
         $action = optional_param('action', null, PARAM_ALPHANUMEXT);
 
         if ($action === 'startbackup' && confirm_sesskey()) {
-            \tool_vault\site_backup::schedule([
+            $backup = \tool_vault\site_backup::schedule([
                 'passphrase' => optional_param('passphrase', null, PARAM_RAW),
                 'description' => optional_param('description', null, PARAM_NOTAGS),
             ]);
-            redirect($PAGE->url);
+            redirect(ui::progressurl(['accesskey' => $backup->get_model()->accesskey]));
         }
 
         if ($action === 'forgetapikey' && confirm_sesskey()) {

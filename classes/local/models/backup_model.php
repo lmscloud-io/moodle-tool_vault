@@ -100,4 +100,16 @@ class backup_model extends operation_model {
         $backups = self::get_records();
         return $backups ? reset($backups) : null;
     }
+
+    /**
+     * Save record
+     *
+     * @return operation_model
+     */
+    public function save(): operation_model {
+        if (!$this->accesskey) {
+            $this->generate_access_key();
+        }
+        return parent::save();
+    }
 }

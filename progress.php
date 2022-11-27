@@ -24,34 +24,56 @@
 
 define('NO_MOODLE_COOKIES', true);
 define('CACHE_DISABLE_ALL', true);
+define('NO_OUTPUT_BUFFERING', true);
 
 require(__DIR__ . '/../../../config.php');
 
 $accesskey = required_param('accesskey', PARAM_ALPHANUM);
-$PAGE->set_url(new moodle_url('/admin/tool/vault/progress.php', ['accesskey' => $accesskey]));
 $operation = \tool_vault\local\models\operation_model::get_by_access_key($accesskey);
 
-$PAGE->set_pagelayout('embedded');
-$PAGE->set_heading(get_string('pluginname', 'tool_vault'));
-if (method_exists($PAGE, 'set_secondary_navigation')) {
-    $PAGE->set_secondary_navigation(false);
-}
+@header('Content-Type: text/html; charset=utf-8');
+
+$title = get_string('pluginname', 'tool_vault');
+echo <<<EOF
+<html>
+<head>
+    <title>$title</title>
+</head>
+<body>
+EOF;
+
 
 /** @var tool_vault\output\renderer $renderer */
 $renderer = $PAGE->get_renderer('tool_vault');
 
-echo $renderer->header();
-
 echo html_writer::start_div('p-3');
+
+$isoldoperation = $operation &&
+    !in_array($operation->status, [\tool_vault\constants::STATUS_INPROGRESS, \tool_vault\constants::STATUS_SCHEDULED]) &&
+    $operation->get_last_modified() < time() - HOURSECS;
+
 if ($operation instanceof \tool_vault\local\models\backup_model) {
-    $data = (new \tool_vault\output\backup_details($operation))->export_for_template($renderer);
-    echo $renderer->render_from_template('tool_vault/backup_details', $data);
+    if ($isoldoperation) {
+        $url = \tool_vault\local\helpers\ui::backupurl(['action' => 'details', 'id' => $operation->id]);
+        echo "<p>This backup has already finished. You can access the logs <a href=\"$url\">here</a></p>";
+    } else {
+        $data = (new \tool_vault\output\backup_details($operation))->export_for_template($renderer);
+        echo $renderer->render_from_template('tool_vault/backup_details', $data);
+    }
 } else if ($operation instanceof \tool_vault\local\models\restore_model) {
-    $data = (new \tool_vault\output\restore_details($operation))->export_for_template($renderer);
-    echo $renderer->render_from_template('tool_vault/restore_details', $data);
+    if ($isoldoperation) {
+        $url = \tool_vault\local\helpers\ui::restoreurl(['action' => 'details', 'id' => $operation->id]);
+        echo "<p>This restore has already finished. You can access the logs <a href=\"$url\">here</a></p>";
+    } else {
+        $data = (new \tool_vault\output\restore_details($operation))->export_for_template($renderer);
+        echo $renderer->render_from_template('tool_vault/restore_details', $data);
+    }
 } else {
     echo 'Accesskey is not valid';
 }
 echo html_writer::end_div();
 
-echo $renderer->footer();
+echo <<<EOF
+</body>
+</html>
+EOF;
