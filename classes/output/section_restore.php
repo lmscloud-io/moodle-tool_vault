@@ -23,6 +23,7 @@ use tool_vault\constants;
 use tool_vault\form\general_settings_form;
 use tool_vault\local\exceptions\api_exception;
 use tool_vault\local\helpers\ui;
+use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\restore_model;
 use tool_vault\site_restore;
 
@@ -84,21 +85,18 @@ class section_restore extends section_base implements \templatable {
     public function export_for_template(renderer_base $output) {
         $result = ['isregistered' => (int)api::is_registered()];
 
-        if ($restore = site_restore::get_last_restore()) {
-            $result['lastrestore'] = [
-                'title' => $restore->get_title(),
-                'subtitle' => $restore->get_subtitle(),
-                'summary' => '',
-                'logs' => $restore->get_logs_shortened(),
-            ];
-            if ($restore->status === constants::STATUS_INPROGRESS || $restore->status === constants::STATUS_SCHEDULED) {
-                $url = new \moodle_url('/admin/tool/vault/progress.php', ['accesskey' => $restore->accesskey]);
-                $result['lastrestore']['unauthlink'] = $url->out(false);
-            } else {
-                $url = ui::restoreurl(['action' => 'details', 'id' => $restore->id]);
-                $result['lastrestore']['showdetailslink'] = true;
-                $result['lastrestore']['fullreporturl'] = $url->out(false);
-            }
+        $restore = restore_model::get_last();
+        $dryrun = dryrun_model::get_last();
+        if ($restore && $dryrun && $restore->show_as_last_operation() && $dryrun->show_as_last_operation()) {
+            $lastoperation = $restore->get_last_modified() > $dryrun->get_last_modified() ? $restore : $dryrun;
+        } else if (!$dryrun || !$dryrun->show_as_last_operation()) {
+            $lastoperation = $restore;
+        } else {
+            $lastoperation = $dryrun;
+        }
+
+        if ($lastoperation && $lastoperation->show_as_last_operation()) {
+            $result['lastoperation'] = (new last_operation($lastoperation))->export_for_template($output);
         }
 
         if (!api::is_registered()) {
@@ -110,6 +108,7 @@ class section_restore extends section_base implements \templatable {
                 $backupstime = \tool_vault\api::get_remote_backups_time();
                 $result['remotebackups'] = [];
                 foreach ($backups as $backup) {
+                    // TODO use class backup_details.
                     $result['remotebackups'][] = (new remote_backup($backup))->export_for_template($output);
                 }
                 $result['remotebackupstime'] = userdate($backupstime, get_string('strftimedatetimeshort', 'langconfig'));

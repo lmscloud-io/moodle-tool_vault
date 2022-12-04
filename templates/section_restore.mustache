@@ -31,6 +31,10 @@
 
 {{{registrationform}}}
 
+{{#lastoperation}}
+    {{> tool_vault/last_operation }}
+{{/lastoperation}}
+
 {{#isregistered}}
     <h4>Remote backups</h4>
     <p>Last updated: {{remotebackupstime}} <a href="{{remotebackupsupdateurl}}">{{#pix}} i/reload, core, Refresh {{/pix}}</a></p>
@@ -96,7 +100,7 @@
             <tr>
                 <td>
                     {{{description}}}<br>
-                    <b>Backup key:</b> <a href="{{detailsurl}}">{{backupkey}}</a>
+                    <b>Backup key:</b> {{backupkey}}
                 </td>
                 <td>{{status}}</td>
                 <td>{{started}}</td>
@@ -105,9 +109,7 @@
                     {{^encrypted}}{{#str}}no{{/str}}{{/encrypted}}
                 </td>
                 <td>
-                    {{#showactions}}
-                        {{> tool_vault/remote_backup_buttons}}
-                    {{/showactions}}
+                    <a href="{{restoredetailsurl}}" class="btn btn-secondary">View details</a>
                 </td>
             </tr>
         {{/restores}}

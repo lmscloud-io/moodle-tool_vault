@@ -17,6 +17,7 @@
 namespace tool_vault\output;
 
 use tool_vault\api;
+use tool_vault\constants;
 use tool_vault\form\general_settings_form;
 use tool_vault\local\helpers\ui;
 use tool_vault\local\models\backup_model;
@@ -61,23 +62,12 @@ class section_backup extends section_base implements \templatable {
     public function export_for_template($output): array {
         global $CFG, $USER;
         $activeprocesses = operation_model::get_active_processes(true);
+        $lastbackup = backup_model::get_last();
         $result = [
             'canstartbackup' => empty($activeprocesses),
+            'lastoperation' => ($lastbackup && $lastbackup->show_as_last_operation()) ?
+                (new last_operation($lastbackup))->export_for_template($output) : null,
         ];
-
-        if ($activeprocesses) {
-            if ($backup = backup_model::get_scheduled_backup()) {
-                $message = 'You backup is now scheduled and will be executed during the next cron run';
-            } else if ($backup = backup_model::get_backup_in_progress()) {
-                $message = 'You have a backup in progress';
-            } else {
-                $message = 'You can not start a backup because you have another process in progress';
-            }
-            $result['notice'] = [
-                'message' => $message,
-                'closebutton' => false,
-            ];
-        }
 
         $result['startbackupurl'] = ui::backupurl(['action' => 'startbackup', 'sesskey' => sesskey()])->out(false);
         $result['defaultbackupdescription'] = $CFG->wwwroot.' by '.fullname($USER); // TODO string?

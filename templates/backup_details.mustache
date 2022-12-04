@@ -33,6 +33,10 @@
 
 <h4>{{{title}}}</h4>
 
+{{^metadata}}
+    <p>Backup information not available</p>
+{{/metadata}}
+
 <table class="generaltable">
     {{#metadata}}
         <tr>
@@ -40,10 +44,47 @@
             <td>{{{value}}}</td>
         </tr>
     {{/metadata}}
-</table>
-
-<h4>Logs</h4>
-
+    {{#haslogs}}
+        <tr>
+            <th>Logs</th>
+            <td>
+<div data-vault-purpose="logsshort">
+<pre>
+{{{logsshort}}}
+</pre>
+<p><a href="#" data-vault-purpose="togglelogs">Expand logs</a></p>
+</div>
+<div data-vault-purpose="logslong" style="display: none">
 <pre>
 {{{logs}}}
 </pre>
+<p><a href="#" data-vault-purpose="togglelogs">Collapse logs</a></p>
+</div>
+            </td>
+        </tr>
+    {{/haslogs}}
+</table>
+
+{{#lastdryrun}}
+    {{> tool_vault/last_operation }}
+{{/lastdryrun}}
+
+{{#isfinished}}
+    {{#restorenotallowedreason}}
+        <div class="mt-2">
+            {{> core/notification_error}}
+        </div>
+    {{/restorenotallowedreason}}
+{{/isfinished}}
+
+<div>
+    {{#showactions}}
+        {{> tool_vault/remote_backup_buttons}}
+    {{/showactions}}
+</div>
+
+{{#js}}
+    require(['tool_vault/vault'], function(Vault) {
+        Vault.initCollapseExpandBackupLogs();
+    });
+{{/js}}

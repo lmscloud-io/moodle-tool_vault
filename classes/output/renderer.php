@@ -20,6 +20,7 @@ use html_writer;
 use moodle_url;
 use plugin_renderer_base;
 use tool_vault\api;
+use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\remote_backup;
 use tool_vault\local\models\restore_model;
 use tool_vault\local\models\backup_model;
@@ -45,7 +46,8 @@ class renderer extends plugin_renderer_base {
         $id = optional_param('id', null, PARAM_INT);
 
         if ($action === 'details' && $id && ($backup = backup_model::get_by_id($id))) {
-            $data = (new backup_details($backup))->export_for_template($this);
+            $remotebackup = api::get_remote_backups()[$backup->backupkey] ?? null;
+            $data = (new backup_details($backup, $remotebackup))->export_for_template($this);
             return $this->render_from_template('tool_vault/backup_details', $data);
         }
 
@@ -65,14 +67,33 @@ class renderer extends plugin_renderer_base {
         $id = optional_param('id', null, PARAM_INT);
         $backupkey = optional_param('backupkey', null, PARAM_ALPHANUMEXT);
 
-        if ($action === 'details' && $id && ($restore = restore_model::get_by_id($id))) {
-            $data = (new restore_details($restore))->export_for_template($this);
-            return $this->render_from_template('tool_vault/restore_details', $data);
+        if ($action === 'details' && $id) {
+            if ($restore = restore_model::get_by_id($id)) {
+                $data = (new restore_details($restore))->export_for_template($this);
+                return $this->render_from_template('tool_vault/restore_details', $data);
+            } else if ($dryrun = dryrun_model::get_by_id($id)) {
+                $data = (new dryrun(new site_restore_dryrun($dryrun)))->export_for_template($this);
+                return $this->render_from_template('tool_vault/dryrun', $data);
+            } else {
+                // Neither restore nor dryrun were found.
+                // TODO display a relevant error message.
+                $data = ['title' => 'Operation '.$id];
+                return $this->render_from_template('tool_vault/backup_details', $data);
+            }
         }
 
-        if ($action === 'remotedetails' && $backupkey && ($backup = (api::get_remote_backups()[$backupkey] ?? null))) {
-            $data = (new \tool_vault\output\remote_backup($backup, true))->export_for_template($this);
-            return $this->render_from_template('tool_vault/remote_backup_details', $data);
+        if ($action === 'remotedetails' && $backupkey) {
+            $localbackup = backup_model::get_by_backup_key($backupkey);
+            if (($backup = (api::get_remote_backups()[$backupkey] ?? null)) || $localbackup) {
+                $data = (new \tool_vault\output\backup_details($localbackup, $backup))->export_for_template($this);
+                return $this->render_from_template('tool_vault/backup_details', $data);
+            } else {
+                // Neither local nor remote backup is found.
+                $data = [
+                    'title' => 'Backup '.s($backupkey)
+                ];
+                return $this->render_from_template('tool_vault/backup_details', $data);
+            }
         }
 
         return

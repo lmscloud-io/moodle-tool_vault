@@ -457,4 +457,22 @@ abstract class operation_model {
         return $this->status == constants::STATUS_INPROGRESS &&
             $this->get_last_modified() < time() - constants::LOCK_TIMEOUT;
     }
+
+    public function show_as_last_operation(): bool {
+        if (in_array($this->status, [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
+            return true;
+        }
+        return $this->get_last_modified() >= time() - 4*WEEKSECS;  // Finished within last week. TODO constant?
+    }
+
+    /**
+     * Get the last operation of this type
+     *
+     * @return ?operation_model
+     */
+    public static function get_last(): ?operation_model {
+        /** @var operation_model[] $backups */
+        $backups = self::get_records(null, null, 1, 1);
+        return $backups ? reset($backups) : null;
+    }
 }

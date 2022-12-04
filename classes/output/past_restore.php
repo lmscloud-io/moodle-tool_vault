@@ -46,7 +46,7 @@ class past_restore implements \templatable {
     /**
      * Export for output
      *
-     * @param \tool_vault\output\renderer $output
+     * @param \tool_vault\output\renderer|renderer_base $output
      * @return array
      */
     public function export_for_template($output) {
@@ -62,23 +62,23 @@ class past_restore implements \templatable {
             $performedby .= " <{$this->restore->get_details()['email']}>";
         }
         $rv['status'] = $this->restore->status;
-        $rv['description'] = $this->restore->get_details()['description'] ?? '';
+        $rv['description'] = $this->restore->get_metadata()['description'] ?? '';
         $rv['performedby'] = s($performedby);
         if (!in_array($this->restore->status, [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
             $rv['finished'] = $finished;
         }
-        $rv['detailsurl'] = ui::backupurl(['action' => 'details', 'id' => $this->restore->id])->out(false);
+        $rv['restoredetailsurl'] = ui::restoreurl(['action' => 'details', 'id' => $this->restore->id])->out(false);
 
-        if (api::is_registered()) {
-            $remotebackups = api::get_remote_backups(api::get_remote_backups_time() > $this->restore->get_last_modified());
-            if (isset($remotebackups[$this->restore->backupkey])) {
-                $rv['restoreurl'] = ui::restoreurl(['action' => 'restore',
-                    'backupkey' => $this->restore->backupkey, 'sesskey' => sesskey()])->out(false);
-                $rv['dryrunurl'] = ui::restoreurl(['action' => 'dryrun',
-                    'backupkey' => $this->restore->backupkey, 'sesskey' => sesskey()])->out(false);
-                $rv['showactions'] = true;
-            }
-        }
+//        if (api::is_registered()) {
+//            $remotebackups = api::get_remote_backups(api::get_remote_backups_time() > $this->restore->get_last_modified());
+//            if (isset($remotebackups[$this->restore->backupkey])) {
+//                $rv['restoreurl'] = ui::restoreurl(['action' => 'restore',
+//                    'backupkey' => $this->restore->backupkey, 'sesskey' => sesskey()])->out(false);
+//                $rv['dryrunurl'] = ui::restoreurl(['action' => 'dryrun',
+//                    'backupkey' => $this->restore->backupkey, 'sesskey' => sesskey()])->out(false);
+//                $rv['showactions'] = true;
+//            }
+//        }
 
         return $rv;
     }

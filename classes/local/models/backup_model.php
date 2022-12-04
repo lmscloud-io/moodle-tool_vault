@@ -97,7 +97,7 @@ class backup_model extends operation_model {
      */
     public static function get_last_backup(): ?backup_model {
         /** @var backup_model[] $backups */
-        $backups = self::get_records();
+        $backups = self::get_records(null, null, 1, 1);
         return $backups ? reset($backups) : null;
     }
 

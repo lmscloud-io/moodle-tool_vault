@@ -50,7 +50,7 @@ $renderer = $PAGE->get_renderer('tool_vault');
 $backups = \tool_vault\api::get_remote_backups(false);
 $table = [];
 foreach ($backups as $backup) {
-    $result = (new remote_backup($backup))->export_for_template($renderer);
+    $result = (new \tool_vault\output\backup_details(null, $backup))->export_for_template($renderer);
     $table[$result['backupkey']] = trim($result['status'] . ' - ' . $result['started'] . "\n" .
         ($result['info']['description'] ?? '')) .
         (!empty($result['info']['encrypted']) ? "\nEncrypted" : '');

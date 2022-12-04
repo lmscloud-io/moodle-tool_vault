@@ -1,0 +1,30 @@
+<h4>Restore pre-checks</h4>
+<h6 class="card-subtitle mb-2 text-muted">{{{subtitle}}}</h6>
+
+<p>
+    Backup: <a href="{{backupurl}}">{{backupkey}}</a>
+</p>
+
+
+{{#inprogress}}
+    <p class="mt-3 mb-3">... Wait for cron to finish to view report ...</p>
+{{/inprogress}}
+
+{{#errormessage}}
+    {{> tool_vault/error_with_backtrace }}
+{{/errormessage}}
+
+{{#logs}}
+    <div class="card mt-2">
+        <div class="card-body">
+            <div class="card-text">
+                <pre>{{{logs}}}</pre>
+            </div>
+        </div>
+    </div>
+
+{{/logs}}
+
+{{#prechecks}}
+    {{> tool_vault/check_summary}}
+{{/prechecks}}
