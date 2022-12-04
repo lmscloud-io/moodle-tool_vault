@@ -19,6 +19,10 @@ namespace tool_vault\output;
 use moodle_url;
 use tabobject;
 use tool_vault\local\helpers\ui;
+use tool_vault\local\uiactions\backup;
+use tool_vault\local\uiactions\overview;
+use tool_vault\local\uiactions\restore;
+use tool_vault\local\uiactions\settings;
 
 /**
  * Tabs
@@ -38,13 +42,13 @@ class tabtree extends \tabtree {
         $section = optional_param('section', null, PARAM_ALPHANUMEXT);
 
         $tabs = [];
-        $tabs[] = new tabobject('overview', ui::overviewurl(),
+        $tabs[] = new tabobject('overview', overview::url(),
             get_string('taboverview', 'tool_vault'));
-        $tabs[] = new tabobject('backup', ui::backupurl(),
+        $tabs[] = new tabobject('backup', backup::url(),
             get_string('tabbackup', 'tool_vault'));
-        $tabs[] = new tabobject('restore', ui::restoreurl(),
+        $tabs[] = new tabobject('restore', restore::url(),
             get_string('tabrestore', 'tool_vault'));
-        $tabs[] = new tabobject('settings', ui::settingsurl(),
+        $tabs[] = new tabobject('settings', settings::url(),
             get_string('tabsettings', 'tool_vault'));
 
         $this->currenttab = 'overview';
@@ -64,31 +68,5 @@ class tabtree extends \tabtree {
      */
     public function get_url(): moodle_url {
         return ui::baseurl(['section' => $this->currenttab]);
-    }
-
-    /**
-     * Shortname for the current tab
-     *
-     * @return string
-     */
-    public function get_current_tab(): string {
-        return $this->currenttab;
-    }
-
-    /**
-     * Instance of the section
-     *
-     * @return section_base
-     */
-    public function get_section(): section_base {
-        if ($this->get_current_tab() === 'backup') {
-            return new section_backup();
-        } else if ($this->get_current_tab() === 'restore') {
-            return new section_restore();
-        } else if ($this->get_current_tab() === 'settings') {
-            return new section_settings();
-        } else {
-            return new section_overview();
-        }
     }
 }

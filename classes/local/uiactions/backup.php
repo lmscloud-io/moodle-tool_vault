@@ -14,14 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace tool_vault\output;
+namespace tool_vault\local\uiactions;
 
 use tool_vault\api;
-use tool_vault\constants;
 use tool_vault\form\general_settings_form;
 use tool_vault\local\helpers\ui;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\operation_model;
+use tool_vault\output\last_operation;
+use tool_vault\output\past_backup;
 
 /**
  * Tab backup
@@ -30,34 +31,13 @@ use tool_vault\local\models\operation_model;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class section_backup extends section_base implements \templatable {
-
-    /**
-     * Process tab actions
-     */
-    public function process() {
-        global $PAGE, $DB;
-        $action = optional_param('action', null, PARAM_ALPHANUMEXT);
-
-        if ($action === 'startbackup' && confirm_sesskey()) {
-            $backup = \tool_vault\site_backup::schedule([
-                'passphrase' => optional_param('passphrase', null, PARAM_RAW),
-                'description' => optional_param('description', null, PARAM_NOTAGS),
-            ]);
-            redirect(ui::progressurl(['accesskey' => $backup->get_model()->accesskey]));
-        }
-
-        if ($action === 'forgetapikey' && confirm_sesskey()) {
-            api::set_api_key(null);
-            redirect($PAGE->url);
-        }
-    }
+class backup extends base {
 
     /**
      * Export for output
      *
-     * @param \tool_vault\output\renderer $output
-     * @return false[]
+     * @param \renderer_base $output
+     * @return array
      */
     public function export_for_template($output): array {
         global $CFG, $USER;
@@ -69,7 +49,7 @@ class section_backup extends section_base implements \templatable {
                 (new last_operation($lastbackup))->export_for_template($output) : null,
         ];
 
-        $result['startbackupurl'] = ui::backupurl(['action' => 'startbackup', 'sesskey' => sesskey()])->out(false);
+        $result['startbackupurl'] = backup_startbackup::url()->out(false);
         $result['defaultbackupdescription'] = $CFG->wwwroot.' by '.fullname($USER); // TODO string?
 
         if (!api::is_registered()) {
@@ -86,5 +66,16 @@ class section_backup extends section_base implements \templatable {
         $result['haspastbackups'] = !empty($result['backups']);
         $result['restoreallowed'] = api::are_restores_allowed();
         return $result;
+    }
+
+    /**
+     * Display
+     *
+     * @param \renderer_base $output
+     * @return string
+     */
+    public function display(\renderer_base $output) {
+        return $output->render_from_template('tool_vault/section_backup',
+            $this->export_for_template($output));
     }
 }

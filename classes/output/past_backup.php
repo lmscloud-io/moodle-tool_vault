@@ -16,14 +16,14 @@
 
 namespace tool_vault\output;
 
-use renderer_base;
 use tool_vault\api;
 use tool_vault\constants;
-use tool_vault\local\helpers\ui;
 use tool_vault\local\models\backup_model;
+use tool_vault\local\uiactions\restore_dryrun;
+use tool_vault\local\uiactions\restore_restore;
 
 /**
- * Backup details
+ * Past backup
  *
  * @package     tool_vault
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
@@ -45,7 +45,7 @@ class past_backup implements \templatable {
     /**
      * Export for output
      *
-     * @param \tool_vault\output\renderer $output
+     * @param \renderer_base $output
      * @return array
      */
     public function export_for_template($output) {
@@ -66,15 +66,13 @@ class past_backup implements \templatable {
         if (!in_array($this->backup->status, [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
             $rv['finished'] = $finished;
         }
-        $rv['detailsurl'] = ui::backupurl(['action' => 'details', 'id' => $this->backup->id])->out(false);
+        $rv['detailsurl'] = \tool_vault\local\uiactions\backup_details::url(['id' => $this->backup->id])->out(false);
 
         if ($this->backup->status == constants::STATUS_FINISHED && api::is_registered()) {
             $remotebackups = api::get_remote_backups(api::get_remote_backups_time() > $this->backup->get_last_modified());
             if (isset($remotebackups[$this->backup->backupkey])) {
-                $rv['restoreurl'] = ui::restoreurl(['action' => 'restore',
-                    'backupkey' => $this->backup->backupkey, 'sesskey' => sesskey()])->out(false);
-                $rv['dryrunurl'] = ui::restoreurl(['action' => 'dryrun',
-                    'backupkey' => $this->backup->backupkey, 'sesskey' => sesskey()])->out(false);
+                $rv['restoreurl'] = restore_restore::url(['backupkey' => $this->backup->backupkey])->out(false);
+                $rv['dryrunurl'] = restore_dryrun::url(['backupkey' => $this->backup->backupkey])->out(false);
                 $rv['showactions'] = true;
             }
         }

@@ -19,6 +19,8 @@ namespace tool_vault\output;
 use tool_vault\constants;
 use tool_vault\local\helpers\ui;
 use tool_vault\local\models\restore_model;
+use tool_vault\local\uiactions\restore;
+use tool_vault\local\uiactions\restore_remotedetails;
 
 /**
  * Restore details
@@ -43,12 +45,12 @@ class restore_details implements \templatable {
     /**
      * Export for output
      *
-     * @param \tool_vault\output\renderer $output
+     * @param \renderer_base $output
      * @return array
      */
     public function export_for_template($output) {
         $rv = [
-            'sectionurl' => ui::restoreurl()->out(false),
+            'sectionurl' => restore::url()->out(false),
             'title' => $this->restore->get_title(),
             'logs' => $this->restore->get_logs(),
             'metadata' => [],
@@ -57,7 +59,7 @@ class restore_details implements \templatable {
 
         $started = userdate($this->restore->timecreated, get_string('strftimedatetimeshort', 'langconfig'));
         $finished = userdate($this->restore->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
-        $backupurl = ui::restoreurl(['action' => 'remotedetails', 'backupkey' => $this->restore->backupkey]);
+        $backupurl = restore_remotedetails::url(['backupkey' => $this->restore->backupkey]);
         $performedby = $this->restore->get_details()['fullname'] ?? '';
         if (!empty($this->restore->get_details()['email'])) {
             $performedby .= " <{$this->restore->get_details()['email']}>";

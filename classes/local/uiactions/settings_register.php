@@ -14,33 +14,38 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+namespace tool_vault\local\uiactions;
+
+use core\notification;
+
 /**
- * Add API key (callback from the lmsvault.io)
+ * Register
  *
  * @package     tool_vault
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+class settings_register extends base {
 
-require(__DIR__ . '/../../../config.php');
-require_once($CFG->libdir . '/adminlib.php');
+    /**
+     * Process action
+     */
+    public function process() {
+        require_sesskey();
+        \tool_vault\api::register();
+        notification::add('You are now registered. You can find your API key under the Settings tab',
+            \core\output\notification::NOTIFY_SUCCESS);
+        $returnurl = optional_param('returnurl', null, PARAM_LOCALURL);
+        $returnurl = $returnurl ? new \moodle_url($returnurl) : settings::url();
+        redirect($returnurl);
+    }
 
-$apikey = required_param('apikey', PARAM_RAW);
-
-admin_externalpage_setup('tool_vault_addapikey', '', null, '', ['nosearch' => true]);
-
-$PAGE->set_pagelayout('embedded');
-$PAGE->set_heading(get_string('addapikey', 'tool_vault'));
-if (method_exists($PAGE, 'set_secondary_navigation')) {
-    $PAGE->set_secondary_navigation(false);
+    /**
+     * Get URL for the current action
+     *
+     * @param array $params
+     */
+    public static function url(array $params = []) {
+        return parent::url($params + ['sesskey' => sesskey()]);
+    }
 }
-
-echo $OUTPUT->header();
-
-if (!\tool_vault\api::validate_api_key($apikey)) {
-    throw new moodle_exception('errorapikeynotvalid', 'tool_vault');
-}
-\tool_vault\api::set_api_key($apikey);
-echo $OUTPUT->render_from_template('tool_vault/registercallback', ['apikey' => substr($apikey, -8)]);
-
-echo $OUTPUT->footer();

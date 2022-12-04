@@ -406,7 +406,7 @@ class api {
      * @return int
      */
     public static function get_remote_backups_time(): int {
-        return self::get_config('cachedremotebackupstime');
+        return self::get_config('cachedremotebackupstime') ?? 0;
     }
 
     /**

@@ -19,6 +19,7 @@ namespace tool_vault\output;
 use renderer_base;
 use tool_vault\constants;
 use tool_vault\local\helpers\ui;
+use tool_vault\local\uiactions\restore_remotedetails;
 use tool_vault\site_restore_dryrun;
 
 /**
@@ -68,7 +69,7 @@ class dryrun implements \templatable {
         }
         return [
             'backupkey' => $model->backupkey,
-            'backupurl' => ui::restoreurl(['action' => 'remotedetails', 'backupkey' => $model->backupkey])->out(false),
+            'backupurl' => restore_remotedetails::url(['backupkey' => $model->backupkey])->out(false),
             'subtitle' => $this->get_subtitle(),
             'logs' => $isfinished ? '' : $model->get_logs(),
             'inprogress' => $inprogress,

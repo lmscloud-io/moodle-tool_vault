@@ -14,31 +14,39 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace tool_vault\output;
+namespace tool_vault\local\uiactions;
 
-use renderer_base;
-use stdClass;
-use tool_vault\local\checks\check_base;
+use tool_vault\local\helpers\ui;
 
 /**
- * Tab overview
+ * Schedule new backup
  *
  * @package     tool_vault
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class section_overview extends section_base {
+class backup_startbackup extends base {
+    /** @var bool */
+    protected $withsesskey = true;
 
     /**
-     * Process tab actions
+     * Process action
      */
     public function process() {
-        global $PAGE;
-        $action = optional_param('action', null, PARAM_ALPHANUMEXT);
+        require_sesskey();
+        $backup = \tool_vault\site_backup::schedule([
+            'passphrase' => optional_param('passphrase', null, PARAM_RAW),
+            'description' => optional_param('description', null, PARAM_NOTAGS),
+        ]);
+        redirect(ui::progressurl(['accesskey' => $backup->get_model()->accesskey]));
+    }
 
-        if ($action === 'newcheck' && confirm_sesskey()) {
-            check_base::schedule(['type' => required_param('type', PARAM_ALPHANUMEXT)]);
-            redirect($PAGE->url);
-        }
+    /**
+     * Get URL for the current action
+     *
+     * @param array $params
+     */
+    public static function url(array $params = []) {
+        return parent::url($params + ['sesskey' => sesskey()]);
     }
 }

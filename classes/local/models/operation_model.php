@@ -294,6 +294,8 @@ abstract class operation_model {
      * @param string $sql
      * @param array $params
      * @param string $sort
+     * @param int $offset
+     * @param int $limit
      * @return operation_model[]
      */
     protected static function get_records_select(string $sql, array $params = [],
@@ -368,7 +370,9 @@ abstract class operation_model {
      * Get records with specified statuses
      *
      * @param array|null $statuses
-     * @param string $sort
+     * @param string|null $sort
+     * @param int $offset
+     * @param int $limit
      * @return static[]
      */
     public static function get_records(?array $statuses = null, ?string $sort = null, int $offset = 0, int $limit = 0): array {
@@ -458,11 +462,16 @@ abstract class operation_model {
             $this->get_last_modified() < time() - constants::LOCK_TIMEOUT;
     }
 
+    /**
+     * Should be shown as the last operation
+     *
+     * @return bool
+     */
     public function show_as_last_operation(): bool {
         if (in_array($this->status, [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
             return true;
         }
-        return $this->get_last_modified() >= time() - 4*WEEKSECS;  // Finished within last week. TODO constant?
+        return $this->get_last_modified() >= time() - WEEKSECS;  // Finished within last week. TODO constant?
     }
 
     /**

@@ -14,33 +14,35 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+namespace tool_vault\local\uiactions;
+
+use tool_vault\output\check_display;
+
 /**
- * Add API key (callback from the lmsvault.io)
+ * Details of a backup pre-check
  *
  * @package     tool_vault
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+class overview_details extends base {
 
-require(__DIR__ . '/../../../config.php');
-require_once($CFG->libdir . '/adminlib.php');
+    /**
+     * Display
+     *
+     * @param \renderer_base $output
+     * @return string
+     */
+    public function display(\renderer_base $output) {
+        $id = optional_param('id', null, PARAM_INT);
 
-$apikey = required_param('apikey', PARAM_RAW);
+        if ($id && ($check = \tool_vault\local\checks\check_base::load($id)) && $check->has_details()) {
+            $data = (new check_display($check, true))->export_for_template($output);
+            $data['details'] = $check->detailed_report();
+            return $output->render_from_template('tool_vault/check_details', $data);
+        }
 
-admin_externalpage_setup('tool_vault_addapikey', '', null, '', ['nosearch' => true]);
-
-$PAGE->set_pagelayout('embedded');
-$PAGE->set_heading(get_string('addapikey', 'tool_vault'));
-if (method_exists($PAGE, 'set_secondary_navigation')) {
-    $PAGE->set_secondary_navigation(false);
+        // TODO show error?
+        return '';
+    }
 }
-
-echo $OUTPUT->header();
-
-if (!\tool_vault\api::validate_api_key($apikey)) {
-    throw new moodle_exception('errorapikeynotvalid', 'tool_vault');
-}
-\tool_vault\api::set_api_key($apikey);
-echo $OUTPUT->render_from_template('tool_vault/registercallback', ['apikey' => substr($apikey, -8)]);
-
-echo $OUTPUT->footer();

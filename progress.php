@@ -42,10 +42,6 @@ echo <<<EOF
 <body>
 EOF;
 
-
-/** @var tool_vault\output\renderer $renderer */
-$renderer = $PAGE->get_renderer('tool_vault');
-
 echo html_writer::start_div('p-3');
 
 $isoldoperation = $operation &&
@@ -54,19 +50,19 @@ $isoldoperation = $operation &&
 
 if ($operation instanceof \tool_vault\local\models\backup_model) {
     if ($isoldoperation) {
-        $url = \tool_vault\local\helpers\ui::backupurl(['action' => 'details', 'id' => $operation->id]);
+        $url = tool_vault\local\uiactions\backup_details::url(['id' => $operation->id]);
         echo "<p>This backup has already finished. You can access the logs <a href=\"$url\">here</a></p>";
     } else {
-        $data = (new \tool_vault\output\backup_details($operation))->export_for_template($renderer);
-        echo $renderer->render_from_template('tool_vault/backup_details', $data);
+        $data = (new \tool_vault\output\backup_details($operation))->export_for_template($OUTPUT);
+        echo $OUTPUT->render_from_template('tool_vault/backup_details', $data);
     }
 } else if ($operation instanceof \tool_vault\local\models\restore_model) {
     if ($isoldoperation) {
-        $url = \tool_vault\local\helpers\ui::restoreurl(['action' => 'details', 'id' => $operation->id]);
+        $url = \tool_vault\local\uiactions\restore_details::url(['id' => $operation->id]);
         echo "<p>This restore has already finished. You can access the logs <a href=\"$url\">here</a></p>";
     } else {
-        $data = (new \tool_vault\output\restore_details($operation))->export_for_template($renderer);
-        echo $renderer->render_from_template('tool_vault/restore_details', $data);
+        $data = (new \tool_vault\output\restore_details($operation))->export_for_template($OUTPUT);
+        echo $OUTPUT->render_from_template('tool_vault/restore_details', $data);
     }
 } else {
     echo 'Accesskey is not valid';

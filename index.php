@@ -35,13 +35,10 @@ if (method_exists($PAGE, 'set_secondary_navigation')) {
     $PAGE->set_secondary_navigation(false);
 }
 
-$section = $tabtree->get_section();
-$rv = $section->process();
+$section = \tool_vault\local\uiactions\base::get_handler();
+$section->process();
 
-/** @var tool_vault\output\renderer $renderer */
-$renderer = $PAGE->get_renderer('tool_vault');
-
-echo $renderer->header();
-echo $renderer->render($tabtree);
-echo $renderer->render($section);
-echo $renderer->footer();
+echo $OUTPUT->header();
+echo $OUTPUT->render($tabtree);
+echo $section->display($OUTPUT);
+echo $OUTPUT->footer();

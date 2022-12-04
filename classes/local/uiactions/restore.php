@@ -14,18 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace tool_vault\output;
+namespace tool_vault\local\uiactions;
 
 use renderer_base;
-use stdClass;
 use tool_vault\api;
-use tool_vault\constants;
 use tool_vault\form\general_settings_form;
 use tool_vault\local\exceptions\api_exception;
 use tool_vault\local\helpers\ui;
 use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\restore_model;
-use tool_vault\site_restore;
+use tool_vault\output\error_with_backtrace;
+use tool_vault\output\last_operation;
+use tool_vault\output\past_restore;
+use tool_vault\output\remote_backup;
 
 /**
  * Tab restore
@@ -34,44 +35,7 @@ use tool_vault\site_restore;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class section_restore extends section_base implements \templatable {
-
-    /**
-     * Process tab actions
-     */
-    public function process() {
-        $action = optional_param('action', null, PARAM_ALPHANUMEXT);
-
-        if ($action === 'restore' && confirm_sesskey()) {
-            $backupkey = required_param('backupkey', PARAM_ALPHANUMEXT);
-            $passphrase = optional_param('passphrase', '', PARAM_RAW);
-            try {
-                api::validate_backup($backupkey, $passphrase);
-            } catch (api_exception $e) {
-                redirect(ui::restoreurl(), $e->getMessage(), 0, \core\output\notification::NOTIFY_ERROR);
-            }
-            $restore = \tool_vault\site_restore::schedule(['backupkey' => $backupkey, 'passphrase' => $passphrase]);
-            redirect(ui::progressurl(['accesskey' => $restore->get_model()->accesskey]));
-        }
-
-        if ($action === 'dryrun' && confirm_sesskey()) {
-            $backupkey = required_param('backupkey', PARAM_ALPHANUMEXT);
-            $passphrase = optional_param('passphrase', '', PARAM_RAW);
-            $viewurl = ui::restoreurl(['action' => 'remotedetails', 'backupkey' => $backupkey]);
-            try {
-                api::validate_backup($backupkey, $passphrase);
-            } catch (api_exception $e) {
-                redirect(ui::restoreurl(), $e->getMessage(), 0, \core\output\notification::NOTIFY_ERROR);
-            }
-            \tool_vault\site_restore_dryrun::schedule(['backupkey' => $backupkey, 'passphrase' => $passphrase]);
-            redirect($viewurl);
-        }
-
-        if ($action === 'updateremote' && confirm_sesskey()) {
-            api::store_config('cachedremotebackups', null);
-            redirect(ui::restoreurl());
-        }
-    }
+class restore extends base {
 
     /**
      * Function to export the renderer data in a format that is suitable for a
@@ -80,7 +44,7 @@ class section_restore extends section_base implements \templatable {
      * 2. Any additional info that is required for the template is pre-calculated (e.g. capability checks).
      *
      * @param renderer_base $output Used to do a final render of any components that need to be rendered for export.
-     * @return stdClass|array
+     * @return array
      */
     public function export_for_template(renderer_base $output) {
         $result = ['isregistered' => (int)api::is_registered()];
@@ -116,8 +80,7 @@ class section_restore extends section_base implements \templatable {
                 $result['errormessage'] = error_with_backtrace::create_from_exception($e)->export_for_template($output);
             }
 
-            $url = ui::restoreurl(['action' => 'updateremote', 'sesskey' => sesskey()]);
-            $result['remotebackupsupdateurl'] = $url->out(false);
+            $result['remotebackupsupdateurl'] = restore_updateremote::url()->out(false);
         }
 
         $restores = restore_model::get_records(null, null, 1, 20);
@@ -127,5 +90,16 @@ class section_restore extends section_base implements \templatable {
         }
         $result['haspastrestores'] = !empty($result['restores']);
         return $result;
+    }
+
+    /**
+     * Display
+     *
+     * @param \renderer_base $output
+     * @return string
+     */
+    public function display(\renderer_base $output) {
+        return $output->render_from_template('tool_vault/section_restore',
+            $this->export_for_template($output));
     }
 }

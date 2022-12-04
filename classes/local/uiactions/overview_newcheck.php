@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -12,39 +12,36 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace tool_vault\local\helpers;
+namespace tool_vault\local\uiactions;
+
+use tool_vault\local\checks\check_base;
 
 /**
- * Helper class for UI elements
+ * Schedule new backup pre-check
  *
  * @package     tool_vault
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class ui {
+class overview_newcheck extends base {
 
     /**
-     * Base URL
-     *
-     * @param array $params
-     * @return \moodle_url
+     * Process action
      */
-    public static function baseurl(array $params = []): \moodle_url {
-        if (!empty($params['section']) && $params['section'] === 'overview') {
-            unset($params['section']);
-        }
-        return new \moodle_url('/admin/tool/vault/index.php', $params);
+    public function process() {
+        require_sesskey();
+        check_base::schedule(['type' => required_param('type', PARAM_ALPHANUMEXT)]);
+        redirect(overview::url());
     }
 
     /**
-     * Link to progress page of backup/restore
+     * Get URL for the current action
      *
      * @param array $params
-     * @return \moodle_url
      */
-    public static function progressurl(array $params = []): \moodle_url {
-        return new \moodle_url('/admin/tool/vault/progress.php', ['accesskey' => $params['accesskey']]);
+    public static function url(array $params = []) {
+        return parent::url($params + ['sesskey' => sesskey()]);
     }
 }

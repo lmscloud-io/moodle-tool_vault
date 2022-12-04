@@ -17,6 +17,7 @@
 namespace tool_vault\form;
 
 use tool_vault\api;
+use tool_vault\local\uiactions\settings_restore;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -40,12 +41,11 @@ class restore_settings_form extends \moodleform {
     /**
      * Constructor
      *
-     * @param \moodle_url $action
      * @param bool $editable
      */
-    public function __construct(\moodle_url $action, bool $editable = true) {
+    public function __construct(bool $editable = true) {
         $this->editable = $editable;
-        $this->action = new \moodle_url($action, ['action' => 'restore']);
+        $this->action = settings_restore::url();
         parent::__construct(new \moodle_url($this->action), null, 'post', '', null, $this->editable);
     }
 

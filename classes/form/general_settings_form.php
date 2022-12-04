@@ -18,6 +18,8 @@ namespace tool_vault\form;
 
 use tool_vault\api;
 use tool_vault\local\helpers\ui;
+use tool_vault\local\uiactions\settings_forgetapikey;
+use tool_vault\local\uiactions\settings_general;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -45,8 +47,7 @@ class general_settings_form extends \moodleform {
      */
     public function __construct(bool $editable = false) {
         $this->editable = $editable;
-        $this->action = ui::settingsurl(['action' => 'general',
-            'returnurl' => $this->get_redirect_url()->out_as_local_url(false)]);
+        $this->action = settings_general::url(['returnurl' => $this->get_redirect_url()->out_as_local_url(false)]);
         parent::__construct(new \moodle_url($this->action), null, 'post', '', null, $this->editable);
     }
 
@@ -74,7 +75,7 @@ class general_settings_form extends \moodleform {
             $mform->addElement('text', 'apikey', 'API key');
             $mform->setType('apikey', PARAM_RAW);
         } else if (api::is_registered()) {
-            $forgeturl = ui::settingsurl(['sesskey' => sesskey(), 'action' => 'forgetapikey']);
+            $forgeturl = settings_forgetapikey::url();
             $mform->addElement('static', 'staticapikey', 'API key',
                 substr(api::get_api_key(), 0, 8) . '... ' .
                 \html_writer::link(api::get_frontend_url(), get_string('managelsmvault', 'tool_vault'), ['target' => '_blank']) .

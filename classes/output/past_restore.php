@@ -46,7 +46,7 @@ class past_restore implements \templatable {
     /**
      * Export for output
      *
-     * @param \tool_vault\output\renderer|renderer_base $output
+     * @param renderer_base $output
      * @return array
      */
     public function export_for_template($output) {
@@ -67,18 +67,7 @@ class past_restore implements \templatable {
         if (!in_array($this->restore->status, [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
             $rv['finished'] = $finished;
         }
-        $rv['restoredetailsurl'] = ui::restoreurl(['action' => 'details', 'id' => $this->restore->id])->out(false);
-
-//        if (api::is_registered()) {
-//            $remotebackups = api::get_remote_backups(api::get_remote_backups_time() > $this->restore->get_last_modified());
-//            if (isset($remotebackups[$this->restore->backupkey])) {
-//                $rv['restoreurl'] = ui::restoreurl(['action' => 'restore',
-//                    'backupkey' => $this->restore->backupkey, 'sesskey' => sesskey()])->out(false);
-//                $rv['dryrunurl'] = ui::restoreurl(['action' => 'dryrun',
-//                    'backupkey' => $this->restore->backupkey, 'sesskey' => sesskey()])->out(false);
-//                $rv['showactions'] = true;
-//            }
-//        }
+        $rv['restoredetailsurl'] = \tool_vault\local\uiactions\restore_details::url(['id' => $this->restore->id])->out(false);
 
         return $rv;
     }

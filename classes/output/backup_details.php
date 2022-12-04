@@ -22,6 +22,9 @@ use tool_vault\constants;
 use tool_vault\local\helpers\ui;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\remote_backup;
+use tool_vault\local\uiactions\backup;
+use tool_vault\local\uiactions\restore_dryrun;
+use tool_vault\local\uiactions\restore_restore;
 use tool_vault\site_restore_dryrun;
 
 /**
@@ -40,7 +43,8 @@ class backup_details implements \templatable {
     /**
      * Constructor
      *
-     * @param backup_model $backup
+     * @param backup_model|null $backup
+     * @param remote_backup|null $remotebackup
      */
     public function __construct(?backup_model $backup, ?remote_backup $remotebackup = null) {
         $this->backup = $backup;
@@ -50,6 +54,13 @@ class backup_details implements \templatable {
         }
     }
 
+    /**
+     * Get property
+     *
+     * @param string $key
+     * @param bool $frominfo
+     * @return mixed|null
+     */
     protected function get_property(string $key, bool $frominfo = false) {
         if ($frominfo) {
             return $this->remotebackup ? ($this->remotebackup->info[$key] ?? null) :
@@ -59,6 +70,11 @@ class backup_details implements \templatable {
         }
     }
 
+    /**
+     * Get description
+     *
+     * @return mixed|string
+     */
     protected function get_description() {
         if ($this->remotebackup) {
             return $this->remotebackup->info['description'] ?? '';
@@ -71,12 +87,12 @@ class backup_details implements \templatable {
     /**
      * Export for output
      *
-     * @param \tool_vault\output\renderer|\renderer_base $output
+     * @param \renderer_base $output
      * @return array
      */
     public function export_for_template($output) {
         $rv = [
-            'sectionurl' => ui::backupurl()->out(false),
+            'sectionurl' => backup::url()->out(false),
             'title' => 'Backup '.$this->get_property('backupkey'), // TODO string.
             'metadata' => [],
             'samesite' => $this->get_property('samesite', true),
@@ -107,7 +123,7 @@ class backup_details implements \templatable {
             $rv['metadata'][] = ['name' => 'Finished on', 'value' => $finished];
         }
         $rv['metadata'][] = ['name' => 'Encrypted', 'value' =>
-            $this->get_property('encrypted', true) ? get_string('yes') :  get_string('no')];
+            $this->get_property('encrypted', true) ? get_string('yes') : get_string('no')];
         if ($totalsize = $this->get_property('totalsize', true)) {
             $rv['metadata'][] = ['name' => 'Total size (archived)', 'value' => display_size($totalsize)];
         }
@@ -128,10 +144,8 @@ class backup_details implements \templatable {
             }
             $rv['isfinished'] = ($this->remotebackup->status === \tool_vault\constants::STATUS_FINISHED);
             $rv['showactions'] = $rv['isfinished'] && empty($rv['lastdryrun']['inprogress']);
-            $restoreurl = ui::restoreurl(['action' => 'restore',
-                'backupkey' => $this->remotebackup->backupkey, 'sesskey' => sesskey()]);
-            $dryrunurl = ui::restoreurl(['action' => 'dryrun',
-                'backupkey' => $this->remotebackup->backupkey, 'sesskey' => sesskey()]);
+            $restoreurl = restore_restore::url(['backupkey' => $this->remotebackup->backupkey]);
+            $dryrunurl = restore_dryrun::url(['backupkey' => $this->remotebackup->backupkey]);
             $rv['showactions'] = $rv['isfinished'] && empty($rv['lastdryrun']['inprogress']);
             $rv += [
                 'dryrunurl' => $dryrunurl->out(false),

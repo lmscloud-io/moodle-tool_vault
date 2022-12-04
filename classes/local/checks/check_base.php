@@ -22,6 +22,8 @@ use tool_vault\local\helpers\ui;
 use tool_vault\local\models\check_model;
 use tool_vault\local\models\operation_model;
 use tool_vault\local\operations\operation_base;
+use tool_vault\local\uiactions\overview_details;
+use tool_vault\local\uiactions\overview_newcheck;
 use tool_vault\site_backup;
 use tool_vault\task\check_task;
 
@@ -271,7 +273,7 @@ abstract class check_base extends operation_base {
         if ($this->get_model()->parentid && !in_array(get_class($this), site_backup::backup_prechecks())) {
             return null;
         }
-        return ui::overviewurl(['action' => 'newcheck', 'type' => $this->get_name(), 'sesskey' => sesskey()]);
+        return overview_newcheck::url(['type' => $this->get_name()]);
     }
 
     /**
@@ -281,7 +283,7 @@ abstract class check_base extends operation_base {
      */
     public function get_fullreport_url(): ?\moodle_url {
         // TODO link for the restore checks.
-        return ui::overviewurl(['action' => 'details', 'id' => $this->get_model()->id]);
+        return overview_details::url(['id' => $this->get_model()->id]);
     }
 
     /**

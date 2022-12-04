@@ -44,13 +44,11 @@ if ($clihelper->get_cli_option('help')) {
 $clihelper->validate_cli_options();
 
 $PAGE->set_url(\tool_vault\local\helpers\ui::baseurl());
-/** @var tool_vault\output\renderer $renderer */
-$renderer = $PAGE->get_renderer('tool_vault');
 
 $backups = \tool_vault\api::get_remote_backups(false);
 $table = [];
 foreach ($backups as $backup) {
-    $result = (new \tool_vault\output\backup_details(null, $backup))->export_for_template($renderer);
+    $result = (new \tool_vault\output\backup_details(null, $backup))->export_for_template($OUTPUT);
     $table[$result['backupkey']] = trim($result['status'] . ' - ' . $result['started'] . "\n" .
         ($result['info']['description'] ?? '')) .
         (!empty($result['info']['encrypted']) ? "\nEncrypted" : '');
