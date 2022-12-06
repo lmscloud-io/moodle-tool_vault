@@ -40,7 +40,7 @@ class backup extends base {
     public function export_for_template($output): array {
         global $CFG, $USER;
         $activeprocesses = operation_model::get_active_processes(true);
-        $lastbackup = backup_model::get_last();
+        $lastbackup = backup_model::get_last_of([backup_model::class]);
         $result = [
             'canstartbackup' => empty($activeprocesses),
             'lastoperation' => ($lastbackup && $lastbackup->show_as_last_operation()) ?

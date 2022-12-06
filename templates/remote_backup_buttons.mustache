@@ -27,13 +27,14 @@
 }}
 
 <form action="#" data-url="{{dryrunurl}}" method="POST" data-action="startdryrun"
-      data-backupkey="{{backupkey}}" data-encrypted="{{info.encrypted}}" style="display: inline;">
+      data-backupkey="{{backupkey}}" data-encrypted="{{encrypted}}" style="display: inline;">
     <input type="hidden" name="passphrase" value="">
-    <input type="submit" value="{{#str}}startdryrun, tool_vault{{/str}}" class="btn btn-secondary" style="display: inline;">
+    <input type="submit" value="{{#str}}startdryrun, tool_vault{{/str}}" class="btn btn-secondary"
+           style="display: inline;" {{^restoreallowed}}disabled{{/restoreallowed}}>
 </form>
 
 <form action="#" data-url="{{restoreurl}}" method="POST" data-action="startrestore"
-      data-backupkey="{{backupkey}}" data-encrypted="{{info.encrypted}}" style="display: inline;">
+      data-backupkey="{{backupkey}}" data-encrypted="{{encrypted}}" style="display: inline;">
     <input type="hidden" name="passphrase" value="">
     <input type="submit" value="{{#str}}startrestore, tool_vault{{/str}}" class="btn btn-secondary"
            style="display: inline;" {{^restoreallowed}}disabled{{/restoreallowed}}>

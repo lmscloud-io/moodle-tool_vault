@@ -508,14 +508,19 @@ abstract class operation_model {
     }
 
     /**
-     * Get the last operation of this type
+     * Get the last operation of given types
      *
+     * @param array $classes
      * @return ?operation_model
      */
-    public static function get_last(): ?operation_model {
-        /** @var operation_model[] $backups */
-        $backups = self::get_records(null, null, 0, 1);
-        return $backups ? reset($backups) : null;
+    public static function get_last_of(array $classes): ?operation_model {
+        global $DB;
+        $types = array_filter(array_map(function($class) {
+            return is_subclass_of($class, operation_model::class) ? ($class::$defaulttype) : null;
+        }, $classes));
+        [$sql, $params] = $DB->get_in_or_equal($types, SQL_PARAMS_NAMED);
+        $records = static::get_records_select('type '.$sql, $params, 'timecreated DESC', 0, 1);
+        return $records ? reset($records) : null;
     }
 
     /**

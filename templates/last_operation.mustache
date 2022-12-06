@@ -29,6 +29,8 @@
         <p class="card-text">{{{text}}}</p>
     </div>
     <div class="card-footer bg-transparent border-{{class}}">
-        <a href="{{detailsurl}}" class="btn btn-secondary">View details</a>
+        {{#detailsurl}}
+            <a href="{{detailsurl}}" class="btn btn-secondary">View details</a>
+        {{/detailsurl}}
     </div>
 </div>

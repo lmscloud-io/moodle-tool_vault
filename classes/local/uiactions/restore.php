@@ -21,6 +21,7 @@ use tool_vault\api;
 use tool_vault\form\general_settings_form;
 use tool_vault\local\exceptions\api_exception;
 use tool_vault\local\models\dryrun_model;
+use tool_vault\local\models\operation_model;
 use tool_vault\local\models\restore_model;
 use tool_vault\output\error_with_backtrace;
 use tool_vault\output\last_operation;
@@ -46,16 +47,7 @@ class restore extends base {
     public function export_for_template(renderer_base $output) {
         $result = ['isregistered' => (int)api::is_registered()];
 
-        $restore = restore_model::get_last();
-        $dryrun = dryrun_model::get_last();
-        if ($restore && $dryrun && $restore->show_as_last_operation() && $dryrun->show_as_last_operation()) {
-            $lastoperation = $restore->get_last_modified() > $dryrun->get_last_modified() ? $restore : $dryrun;
-        } else if (!$dryrun || !$dryrun->show_as_last_operation()) {
-            $lastoperation = $restore;
-        } else {
-            $lastoperation = $dryrun;
-        }
-
+        $lastoperation = operation_model::get_last_of([restore_model::class, dryrun_model::class]);
         if ($lastoperation && $lastoperation->show_as_last_operation()) {
             $result['lastoperation'] = (new last_operation($lastoperation))->export_for_template($output);
         }

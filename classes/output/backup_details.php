@@ -21,7 +21,6 @@ use tool_vault\constants;
 use tool_vault\local\helpers\ui;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\remote_backup;
-use tool_vault\local\uiactions\backup;
 use tool_vault\local\uiactions\restore_dryrun;
 use tool_vault\local\uiactions\restore_remotedetails;
 use tool_vault\local\uiactions\restore_restore;
@@ -106,19 +105,10 @@ class backup_details implements \templatable {
             }
             if ($this->fulldetails && ($dryrun = site_restore_dryrun::get_last_dryrun($backupkey))) {
                 $rv['lastdryrun'] = (new last_operation($dryrun->get_model()))->export_for_template($output);
-                if (!isset($error) && !$dryrun->prechecks_succeeded()) {
-                    $error = 'Restore can not be performed until all pre-checkes have passed';
-                }
-                $rv['errormessage'] = error_with_backtrace::create_from_model($dryrun->get_model())->export_for_template($output);
             }
             $rv['showactions'] = true;
             $rv['dryrunurl'] = restore_dryrun::url(['backupkey' => $backupkey])->out(false);
             $rv['restoreurl'] = restore_restore::url(['backupkey' => $backupkey])->out(false);
-            if (isset($error)) {
-                $rv['restorenotallowedreason'] = (new \core\output\notification($error, null, false))->export_for_template($output);
-            } else {
-                $rv['restoreallowed'] = true;
-            }
         } else if ($this->fulldetails && $this->backup->status === constants::STATUS_FINISHED) {
             $error = 'This backup is not available on the server';
             // TODO explanation why:
@@ -126,8 +116,9 @@ class backup_details implements \templatable {
             // - was deleted
             // - performed in a different account
             // - API key in use does not allow restores.
-            $rv['restorenotallowedreason'] =
-                (new \core\output\notification($error, null, false))->export_for_template($output);
+        }
+        if (isset($error)) {
+            $rv['restorenotallowedreason'] = (new \core\output\notification($error, null, false))->export_for_template($output);
         }
         return $rv;
     }

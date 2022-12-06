@@ -19,10 +19,12 @@ namespace tool_vault\output;
 use renderer_base;
 use stdClass;
 use tool_vault\constants;
+use tool_vault\local\helpers\ui;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\operation_model;
 use tool_vault\local\models\restore_model;
+use tool_vault\site_restore_dryrun;
 
 /**
  * Last operation
@@ -40,6 +42,8 @@ class last_operation implements \templatable {
     protected $title;
     /** @var \moodle_url */
     protected $detailsurl;
+    /** @var bool */
+    protected $isfailed = false;
 
     /**
      * Constructor
@@ -47,16 +51,22 @@ class last_operation implements \templatable {
      * @param operation_model $operation
      */
     public function __construct(operation_model $operation) {
+        // TODO.
         $this->operation = $operation;
         if ($operation instanceof backup_model) {
             if ($operation->status === constants::STATUS_SCHEDULED) {
+                $this->title = 'Backup scheduled';
                 $this->text = 'You backup is now scheduled and will be executed during the next cron run';
             } else if ($operation->status === constants::STATUS_INPROGRESS) {
+                $this->title = 'Backup in progress';
                 $this->text = 'You have a backup in progress';
+            } else if ($operation->status === constants::STATUS_FINISHED) {
+                $this->title = 'Backup completed';
+                $this->text = sprintf('Backup %s started on %s and finished on %s', $this->operation->backupkey,
+                    ui::format_time($this->operation->timecreated), ui::format_time($this->operation->get_finished_time()));
             } else {
-                // TODO.
-                $this->text = 'Status '.$this->operation->status.' : '.
-                    userdate($this->operation->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
+                $this->title = 'Backup failed';
+                $this->text = sprintf('Backup performed on %s has failed', ui::format_time($this->operation->timecreated));
             }
             if ($operation->status === constants::STATUS_INPROGRESS || $operation->status === constants::STATUS_SCHEDULED) {
                 $this->detailsurl = new \moodle_url('/admin/tool/vault/progress.php', ['accesskey' => $operation->accesskey]);
@@ -67,6 +77,20 @@ class last_operation implements \templatable {
         } else if ($operation instanceof restore_model) {
             $this->title = $operation->get_title(); // TODO.
             $this->text = $operation->get_subtitle(); // TODO.
+            if ($operation->status === constants::STATUS_SCHEDULED) {
+                $this->title = 'Restore scheduled';
+                $this->text = 'You restore is scheduled and will be executed during the next cron run';
+            } else if ($operation->status === constants::STATUS_INPROGRESS) {
+                $this->title = 'Restore in progress';
+                $this->text = 'You have a restore in progress';
+            } else if ($operation->status === constants::STATUS_FINISHED) {
+                $this->title = 'Restore completed';
+                $this->text = sprintf('Restore from backup %s started on %s and finished on %s', $this->operation->backupkey,
+                    ui::format_time($this->operation->timecreated), ui::format_time($this->operation->get_finished_time()));
+            } else {
+                $this->title = 'Restore failed';
+                $this->text = sprintf('Restore performed on %s has failed', ui::format_time($this->operation->timecreated));
+            }
             if ($operation->status === constants::STATUS_INPROGRESS || $operation->status === constants::STATUS_SCHEDULED) {
                 $this->detailsurl = new \moodle_url('/admin/tool/vault/progress.php', ['accesskey' => $operation->accesskey]);
             } else {
@@ -74,9 +98,27 @@ class last_operation implements \templatable {
             }
 
         } else if ($operation instanceof dryrun_model) {
-            $this->title = 'Restore pre-check'; // TODO.
-            $this->text = 'Status '.$this->operation->status.' : '.
-                userdate($this->operation->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
+            if ($operation->status === constants::STATUS_SCHEDULED) {
+                $this->title = 'Restore pre-check scheduled';
+                $this->text = 'You restore pre-check is now scheduled and will be executed during the next cron run';
+            } else if ($operation->status === constants::STATUS_INPROGRESS) {
+                $this->title = 'Restore pre-check in progress';
+                $this->text = 'You have a pre-check in progress';
+            } else if ($operation->status === constants::STATUS_FINISHED) {
+                $dryrun = new site_restore_dryrun($operation);
+                if ($dryrun->prechecks_succeeded()) {
+                    $this->title = 'Restore pre-check succeeded';
+                    $this->text = sprintf('Restore pre-check completed at %s. Backup %s can be restored on this site now',
+                        ui::format_time($operation->get_finished_time()), $operation->backupkey);
+                } else {
+                    $this->title = 'Restore pre-check failed';
+                    $this->text = sprintf('Restore pre-check failed at %s', ui::format_time($operation->get_finished_time()));
+                    $this->isfailed = true;
+                }
+            } else {
+                $this->title = 'Restore pre-check failed';
+                $this->text = 'Click View details to see the error';
+            }
             $this->detailsurl = \tool_vault\local\uiactions\restore_details::url(['id' => $operation->id]);
         }
     }
@@ -87,7 +129,7 @@ class last_operation implements \templatable {
      * @return bool
      */
     protected function is_success(): bool {
-        return $this->operation->status === constants::STATUS_FINISHED; // TODO.
+        return !$this->isfailed && $this->operation->status === constants::STATUS_FINISHED; // TODO.
     }
 
     /**
@@ -96,7 +138,8 @@ class last_operation implements \templatable {
      * @return bool
      */
     protected function is_error(): bool {
-        return $this->operation->status === constants::STATUS_FAILED ||
+        return $this->isfailed ||
+            $this->operation->status === constants::STATUS_FAILED ||
             $this->operation->status === constants::STATUS_FAILEDTOSTART;
     }
 
@@ -114,7 +157,7 @@ class last_operation implements \templatable {
             'class' => $this->is_success() ? 'success' : ($this->is_error() ? 'danger' : 'info'),
             'title' => $this->title ?? get_class($this->operation), // TODO.
             'text' => $this->text,
-            'detailsurl' => $this->detailsurl ? ($this->detailsurl->out(false)) : '#', // TODO.
+            'detailsurl' => $this->detailsurl ? ($this->detailsurl->out(false)) : '', // TODO.
         ];
         return $rv;
     }
