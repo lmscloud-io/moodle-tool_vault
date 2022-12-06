@@ -336,21 +336,38 @@ abstract class operation_model {
         return $usehtml ? \html_writer::span($message, $class) : $message;
     }
 
+    /** @var array */
+    protected $logs = null;
+
+    /**
+     * Get logs as array
+     *
+     * @return array
+     */
+    protected function get_logs_as_array(): array {
+        global $DB;
+        if ($this->logs === null) {
+            $this->logs = array_values($DB->get_records(self::LOGTABLE, ['operationid' => $this->id], 'timecreated, id'));
+        }
+        return $this->logs;
+    }
+
     /**
      * Get logs, no more than 4 lines
      *
      * @return string
      */
     public function get_logs_shortened(): string {
-        global $DB;
-        $logs = $DB->get_records(self::LOGTABLE, ['operationid' => $this->id], 'timecreated, id', '*', 0, 5);
+        $logs = $this->get_logs_as_array();
         if (count($logs) >= 5) {
             // Display first two logs and last two logs.
-            $logs2 = $DB->get_records(self::LOGTABLE, ['operationid' => $this->id], 'timecreated DESC, id DESC', '*', 0, 2);
-            $logs = array_slice($logs, 0, 2);
-            $logs[] = null;
-            $logs[] = array_pop($logs2);
-            $logs[] = array_pop($logs2);
+            $logs = [
+                $logs[0],
+                $logs[1],
+                null,
+                $logs[count($logs) - 2],
+                $logs[count($logs) - 1],
+            ];
         }
         return join("\n", array_map([$this, 'format_log_line'], $logs));
     }
@@ -361,9 +378,25 @@ abstract class operation_model {
      * @return string
      */
     public function get_logs(): string {
-        global $DB;
-        $logs = $DB->get_records(self::LOGTABLE, ['operationid' => $this->id], 'timecreated, id');
-        return join("\n", array_map([$this, 'format_log_line'], $logs));
+        return join("\n", array_map([$this, 'format_log_line'], $this->get_logs_as_array()));
+    }
+
+    /**
+     * Get shortened logs
+     *
+     * @return bool
+     */
+    public function has_logs_shortneded(): bool {
+        return count($this->get_logs_as_array()) > 5;
+    }
+
+    /**
+     * Has logs
+     *
+     * @return bool
+     */
+    public function has_logs(): bool {
+        return count($this->get_logs_as_array()) > 0;
     }
 
     /**
@@ -481,7 +514,19 @@ abstract class operation_model {
      */
     public static function get_last(): ?operation_model {
         /** @var operation_model[] $backups */
-        $backups = self::get_records(null, null, 1, 1);
+        $backups = self::get_records(null, null, 0, 1);
         return $backups ? reset($backups) : null;
+    }
+
+    /**
+     * Get finished time
+     *
+     * @return int
+     */
+    public function get_finished_time(): int {
+        if (!in_array($this->status, [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
+            return $this->timemodified;
+        }
+        return 0;
     }
 }

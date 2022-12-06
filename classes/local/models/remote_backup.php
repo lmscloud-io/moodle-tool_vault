@@ -62,4 +62,61 @@ class remote_backup {
     public function to_object(): \stdClass {
         return (object)$this->data;
     }
+
+    /**
+     * Get description
+     *
+     * @return string
+     */
+    public function get_description(): string {
+        return $this->info['description'] ?? '';
+    }
+
+    /**
+     * Get is encrypted
+     *
+     * @return bool
+     */
+    public function get_encrypted(): bool {
+        return $this->info['encrypted'] ?? false;
+    }
+
+    /**
+     * Get finished time (if the process finished)
+     *
+     * @return int
+     */
+    public function get_finished_time(): int {
+        if (!in_array($this->status, [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
+            return $this->timemodified;
+        }
+        return 0;
+    }
+
+    /**
+     * Get tags
+     *
+     * @return array
+     */
+    public function get_tags(): array {
+        return $this->info['tags'] ?? [];
+    }
+
+    /**
+     * Is same site
+     *
+     * @return bool
+     */
+    public function is_same_site(): bool {
+        return $this->info['samesite'] ?? false;
+    }
+
+    /**
+     * Get total size
+     *
+     * @return int
+     */
+    public function get_total_size(): int {
+        return $this->info['totalsize'] ?? 0;
+    }
 }

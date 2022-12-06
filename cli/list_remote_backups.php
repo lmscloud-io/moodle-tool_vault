@@ -25,7 +25,6 @@
 define('CLI_SCRIPT', true);
 
 use \tool_vault\local\cli_helper;
-use tool_vault\output\remote_backup;
 
 require_once(__DIR__ . '/../../../../config.php');
 
@@ -44,14 +43,15 @@ if ($clihelper->get_cli_option('help')) {
 $clihelper->validate_cli_options();
 
 $PAGE->set_url(\tool_vault\local\helpers\ui::baseurl());
+$renderer = $PAGE->get_renderer('tool_vault');
 
 $backups = \tool_vault\api::get_remote_backups(false);
 $table = [];
 foreach ($backups as $backup) {
-    $result = (new \tool_vault\output\backup_details(null, $backup))->export_for_template($OUTPUT);
-    $table[$result['backupkey']] = trim($result['status'] . ' - ' . $result['started'] . "\n" .
-        ($result['info']['description'] ?? '')) .
-        (!empty($result['info']['encrypted']) ? "\nEncrypted" : '');
+    $timestarted = \tool_vault\local\helpers\ui::format_time_cli($backup->timecreated);
+    $description = $backup->get_description();
+    $table[$backup->backupkey] = trim($timestarted . "\n" . $description) .
+        ($backup->get_encrypted() ? "\nEncrypted" : '');
 }
 $table = array_reverse($table, true);
 echo $clihelper->print_table($table);

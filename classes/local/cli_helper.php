@@ -39,6 +39,9 @@ require_once($CFG->libdir . '/clilib.php');
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class cli_helper {
+    /** @var int */
+    const OUTPUTWIDTH = 120;
+
     /** @var string */
     const SCRIPT_RESTORE = 'restore';
     /** @var string */
@@ -243,7 +246,7 @@ class cli_helper {
                 $maxlengthleft = max($maxlengthleft, strlen($l) + $indent);
             }
         }
-        $maxlengthright = 80 - $maxlengthleft - 1;
+        $maxlengthright = self::OUTPUTWIDTH - $maxlengthleft - 1;
         $output = '';
         foreach ($column2 as $i => $r) {
             if (!strlen('' . $r)) {

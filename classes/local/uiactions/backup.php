@@ -18,11 +18,9 @@ namespace tool_vault\local\uiactions;
 
 use tool_vault\api;
 use tool_vault\form\general_settings_form;
-use tool_vault\local\helpers\ui;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\operation_model;
 use tool_vault\output\last_operation;
-use tool_vault\output\past_backup;
 
 /**
  * Tab backup
@@ -58,10 +56,10 @@ class backup extends base {
             $result['canstartbackup'] = false;
         }
 
-        $backups = backup_model::get_records(null, null, 1, 20);
+        $backups = backup_model::get_records(null, null, 0, 20); // TODO pagination?
         $result['backups'] = [];
         foreach ($backups as $backup) {
-            $result['backups'][] = (new past_backup($backup))->export_for_template($output);
+            $result['backups'][] = (new \tool_vault\output\backup_details($backup, null, false))->export_for_template($output);
         }
         $result['haspastbackups'] = !empty($result['backups']);
         $result['restoreallowed'] = api::are_restores_allowed();

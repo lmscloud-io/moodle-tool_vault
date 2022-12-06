@@ -25,66 +25,82 @@
     }
 
 }}
-{{#sectionurl}}
-    <p>
-        <a href="{{sectionurl}}">Back to Site backup</a>
-    </p>
-{{/sectionurl}}
 
 <h4>{{{title}}}</h4>
 
-{{^metadata}}
-    <p>Backup information not available</p>
-{{/metadata}}
-
 <table class="generaltable">
-    {{#metadata}}
+    <tr>
+        <th>Description</th>
+        <td>{{{description}}}</td>
+    </tr>
+    <tr>
+        <th>Status</th>
+        <td>{{{statusstr}}}</td>
+    </tr>
+    {{#performedby}}
         <tr>
-            <th>{{name}}</th>
-            <td>{{{value}}}</td>
+            <th>Performed by</th>
+            <td>{{{.}}}</td>
         </tr>
-    {{/metadata}}
-    {{#haslogs}}
+    {{/performedby}}
+    {{#timestarted}}
+        <tr>
+            <th>Started on</th>
+            <td>{{{.}}}</td>
+        </tr>
+    {{/timestarted}}
+    {{#timefinished}}
+        <tr>
+            <th>Finished on</th>
+            <td>{{{.}}}</td>
+        </tr>
+    {{/timefinished}}
+    <tr>
+        <th>Encrypted</th>
+        <td>{{{encryptedstr}}}</td>
+    </tr>
+    {{#totalsize}}
+        <tr>
+            <th>Total size (archived)</th>
+            <td>{{{totalsizestr}}}</td>
+        </tr>
+    {{/totalsize}}
+    {{^isprogresspage}}
         <tr>
             <th>Logs</th>
             <td>
-<div data-vault-purpose="logsshort">
-<pre>
-{{{logsshort}}}
-</pre>
-<p><a href="#" data-vault-purpose="togglelogs">Expand logs</a></p>
-</div>
-<div data-vault-purpose="logslong" style="display: none">
+{{#haslogs}}
+{{> tool_vault/logs_with_short}}
+{{/haslogs}}
+                {{^haslogs}}
+                    Not available (backup was performed on a different site)
+                {{/haslogs}}
+            </td>
+        </tr>
+    {{/isprogresspage}}
+</table>
+
+{{#haslogs}}
+    {{#isprogresspage}}
+        <h4>Backup process log</h4>
 <pre>
 {{{logs}}}
 </pre>
-<p><a href="#" data-vault-purpose="togglelogs">Collapse logs</a></p>
-</div>
-            </td>
-        </tr>
-    {{/haslogs}}
-</table>
+    {{/isprogresspage}}
+{{/haslogs}}
 
 {{#lastdryrun}}
     {{> tool_vault/last_operation }}
 {{/lastdryrun}}
 
-{{#isfinished}}
-    {{#restorenotallowedreason}}
-        <div class="mt-2">
-            {{> core/notification_error}}
-        </div>
-    {{/restorenotallowedreason}}
-{{/isfinished}}
+{{#restorenotallowedreason}}
+    <div class="mt-2">
+        {{> core/notification_error}}
+    </div>
+{{/restorenotallowedreason}}
 
 <div>
     {{#showactions}}
         {{> tool_vault/remote_backup_buttons}}
     {{/showactions}}
 </div>
-
-{{#js}}
-    require(['tool_vault/vault'], function(Vault) {
-        Vault.initCollapseExpandBackupLogs();
-    });
-{{/js}}

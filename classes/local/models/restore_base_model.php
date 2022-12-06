@@ -53,4 +53,35 @@ abstract class restore_base_model extends operation_model {
     public function get_dbstructure_xml(): string {
         return ($this->get_remote_details()['dbstructure'] ?? '');
     }
+
+    /**
+     * Get description
+     *
+     * @return string
+     */
+    public function get_description(): string {
+        return $this->get_remote_details()['info']['description'] ?? '';
+    }
+
+    /**
+     * Get is encrypted
+     *
+     * @return bool
+     */
+    public function get_encrypted(): bool {
+        return $this->get_remote_details()['info']['encrypted'] ?? false;
+    }
+
+    /**
+     * Get performed by
+     *
+     * @return string
+     */
+    public function get_performedby(): string {
+        $performedby = $this->get_details()['fullname'] ?? '';
+        if (!empty($this->get_details()['email'])) {
+            $performedby .= " <{$this->get_details()['email']}>";
+        }
+        return $performedby;
+    }
 }

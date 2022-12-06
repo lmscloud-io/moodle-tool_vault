@@ -38,6 +38,27 @@ echo <<<EOF
 <html>
 <head>
     <title>$title</title>
+    <style>
+    body {
+        padding: 1rem;
+    }
+    .generaltable {
+        width: 100%;
+        margin-bottom: 1rem;
+        color: #1d2125;
+    }
+    .generaltable tbody tr:nth-of-type(odd) {
+        background-color: rgba(0,0,0,.03);
+    }
+    .generaltable th, .generaltable td {
+        padding: 0.75rem;
+        vertical-align: top;
+        border-top: 1px solid #dee2e6;
+    }
+    .generaltable th {
+        text-align: -webkit-match-parent;
+    }
+    </style>
 </head>
 <body>
 EOF;
@@ -46,14 +67,16 @@ echo html_writer::start_div('p-3');
 
 $isoldoperation = $operation &&
     !in_array($operation->status, [\tool_vault\constants::STATUS_INPROGRESS, \tool_vault\constants::STATUS_SCHEDULED]) &&
-    $operation->get_last_modified() < time() - HOURSECS;
+    $operation->timemodified < time() - HOURSECS;
 
 if ($operation instanceof \tool_vault\local\models\backup_model) {
     if ($isoldoperation) {
         $url = tool_vault\local\uiactions\backup_details::url(['id' => $operation->id]);
         echo "<p>This backup has already finished. You can access the logs <a href=\"$url\">here</a></p>";
     } else {
-        $data = (new \tool_vault\output\backup_details($operation))->export_for_template($OUTPUT);
+        $data = (new \tool_vault\output\backup_details($operation, null))->export_for_template($OUTPUT);
+        $data['isprogresspage'] = 1;
+        unset($data['lastdryrun']);
         echo $OUTPUT->render_from_template('tool_vault/backup_details', $data);
     }
 } else if ($operation instanceof \tool_vault\local\models\restore_model) {
@@ -62,6 +85,7 @@ if ($operation instanceof \tool_vault\local\models\backup_model) {
         echo "<p>This restore has already finished. You can access the logs <a href=\"$url\">here</a></p>";
     } else {
         $data = (new \tool_vault\output\restore_details($operation))->export_for_template($OUTPUT);
+        $data['isprogresspage'] = 1;
         echo $OUTPUT->render_from_template('tool_vault/restore_details', $data);
     }
 } else {

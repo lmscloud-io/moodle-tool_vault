@@ -25,30 +25,53 @@
     }
 
 }}
-{{#sectionurl}}
-    <p>
-        <a href="{{sectionurl}}">Back to Site restore</a>
-    </p>
-{{/sectionurl}}
 
 <h3>{{{title}}}</h3>
 
 <table class="generaltable">
-    {{#metadata}}
+    <tr>
+        <th>Status</th>
+        <td>{{{statusstr}}}</td>
+    </tr>
+    <tr>
+        <th>Performed by</th>
+        <td>{{{performedby}}}</td>
+    </tr>
+    <tr>
+        <th>Started on</th>
+        <td>{{{timestarted}}}</td>
+    </tr>
+    {{#timefinished}}
         <tr>
-            <th>{{name}}</th>
-            <td>{{{value}}}</td>
+            <th>Finished on</th>
+            <td>{{{timefinished}}}</td>
         </tr>
-    {{/metadata}}
+    {{/timefinished}}
+    <tr>
+        <th>Remote backup</th>
+        <td><a href="{{backupdetailsurl}}">{{{backupkey}}}</a></td>
+    </tr>
+    {{#haslogs}}
+        {{^isprogresspage}}
+            <tr>
+                <th>Logs</th>
+                <td>
+{{> tool_vault/logs_with_short}}
+                </td>
+            </tr>
+        {{/isprogresspage}}
+    {{/haslogs}}
 </table>
 
 {{#errormessage}}
-    {{> tool_vault/error_with_backtrace }}
+{{> tool_vault/error_with_backtrace }}
 {{/errormessage}}
 
-<h3>Logs</h3>
-
+{{#haslogs}}
+    {{#isprogresspage}}
+        <h4>Backup process log</h4>
 <pre>
 {{{logs}}}
 </pre>
-
+    {{/isprogresspage}}
+{{/haslogs}}

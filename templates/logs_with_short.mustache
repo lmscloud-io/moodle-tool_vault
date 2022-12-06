@@ -1,0 +1,31 @@
+{{#haslogsshort}}
+    <div data-vault-purpose="logsshort">
+<pre>
+{{{logsshort}}}
+</pre>
+    <p><a href="#" data-vault-purpose="togglelogs">Expand logs</a></p>
+    </div>
+    <div data-vault-purpose="logslong" style="display: none">
+<pre>
+{{{logs}}}
+</pre>
+    <p><a href="#" data-vault-purpose="togglelogs">Collapse logs</a></p>
+</div>
+{{/haslogsshort}}
+
+{{^haslogsshort}}
+<pre>
+{{{logs}}}
+</pre>
+{{/haslogsshort}}
+
+
+{{^isprogresspage}}
+    {{#haslogsshort}}
+        {{#js}}
+            require(['tool_vault/vault'], function(Vault) {
+            Vault.initCollapseExpandBackupLogs();
+            });
+        {{/js}}
+    {{/haslogsshort}}
+{{/isprogresspage}}

@@ -97,7 +97,7 @@ class backup_model extends operation_model {
      */
     public static function get_last_backup(): ?backup_model {
         /** @var backup_model[] $backups */
-        $backups = self::get_records(null, null, 1, 1);
+        $backups = self::get_records(null, null, 0, 1);
         return $backups ? reset($backups) : null;
     }
 
@@ -111,5 +111,36 @@ class backup_model extends operation_model {
             $this->generate_access_key();
         }
         return parent::save();
+    }
+
+    /**
+     * Get description
+     *
+     * @return string
+     */
+    public function get_description(): string {
+        return $this->get_details()['description'] ?? '';
+    }
+
+    /**
+     * Get is encrypted
+     *
+     * @return bool
+     */
+    public function get_encrypted(): bool {
+        return $this->get_details()['encrypted'] ?? false;
+    }
+
+    /**
+     * Get performed by
+     *
+     * @return string
+     */
+    public function get_performedby(): string {
+        $performedby = $this->get_details()['fullname'] ?? '';
+        if (!empty($this->get_details()['email'])) {
+            $performedby .= " <{$this->get_details()['email']}>";
+        }
+        return $performedby;
     }
 }

@@ -47,4 +47,54 @@ class ui {
     public static function progressurl(array $params = []): \moodle_url {
         return new \moodle_url('/admin/tool/vault/progress.php', ['accesskey' => $params['accesskey']]);
     }
+
+    /**
+     * Format time
+     *
+     * @param int $time
+     * @return string
+     */
+    public static function format_time(int $time): string {
+        return $time ? userdate($time, get_string('strftimedatetimeshort', 'langconfig')) : '';
+    }
+
+    /**
+     * Format time for CLI
+     *
+     * @param int $time
+     * @return string
+     */
+    public static function format_time_cli(int $time): string {
+        return $time ? userdate($time, '%Y-%m-%d %H:%M', 99, false, false) : '';
+    }
+
+    /**
+     * Format status
+     *
+     * @param string $status
+     * @return string
+     */
+    public static function format_status(string $status): string {
+        return ucfirst($status); // TODO lang string.
+    }
+
+    /**
+     * Format is encrypted info
+     *
+     * @param int $value
+     * @return string
+     */
+    public static function format_encrypted(int $value): string {
+        return $value ? get_string('yes') : get_string('no');
+    }
+
+    /**
+     * Format description
+     *
+     * @param string|null $value
+     * @return string
+     */
+    public static function format_description(?string $value): string {
+        return s($value ?? '');
+    }
 }

@@ -50,31 +50,22 @@ class restore_details implements \templatable {
      */
     public function export_for_template($output) {
         $rv = [
-            'sectionurl' => restore::url()->out(false),
             'title' => $this->restore->get_title(),
+            'backupkey' => $this->restore->backupkey,
+            'description' => s($this->restore->get_description()),
             'logs' => $this->restore->get_logs(),
-            'metadata' => [],
+            'haslogs' => $this->restore->has_logs(),
+            'logsshort' => $this->restore->get_logs_shortened(),
+            'haslogsshort' => $this->restore->has_logs_shortneded(),
             'errormessage' => error_with_backtrace::create_from_model($this->restore)->export_for_template($output),
+            'statusstr' => ui::format_status($this->restore->status),
+            'encryptedstr' => ui::format_encrypted($this->restore->get_encrypted()),
+            'timestarted' => ui::format_time($this->restore->timecreated),
+            'timefinished' => ui::format_time($this->restore->get_finished_time()),
+            'performedby' => s($this->restore->get_performedby()),
+            'restoredetailsurl' => \tool_vault\local\uiactions\restore_details::url(['id' => $this->restore->id])->out(false),
+            'backupdetailsurl' => restore_remotedetails::url(['backupkey' => $this->restore->backupkey])->out(false),
         ];
-
-        $started = userdate($this->restore->timecreated, get_string('strftimedatetimeshort', 'langconfig'));
-        $finished = userdate($this->restore->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
-        $backupurl = restore_remotedetails::url(['backupkey' => $this->restore->backupkey]);
-        $performedby = $this->restore->get_details()['fullname'] ?? '';
-        if (!empty($this->restore->get_details()['email'])) {
-            $performedby .= " <{$this->restore->get_details()['email']}>";
-        }
-
-        $rv['metadata'][] = ['name' => 'Status', 'value' => $this->restore->status];
-        $rv['metadata'][] = ['name' => 'Performed by', 'value' => s($performedby)];
-        $rv['metadata'][] = ['name' => 'Started on', 'value' => $started];
-        if (!in_array($this->restore->status, [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
-            $rv['metadata'][] = ['name' => 'Finished on', 'value' => $finished];
-        }
-        $rv['metadata'][] = ['name' => 'Remote backup', 'value' =>
-            ($this->restore->get_metadata()['description'] ?? '').
-            '<br>'.\html_writer::link($backupurl, $this->restore->backupkey)];
-
         return $rv;
     }
 }

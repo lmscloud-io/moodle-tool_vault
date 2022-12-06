@@ -20,13 +20,10 @@ use renderer_base;
 use tool_vault\api;
 use tool_vault\form\general_settings_form;
 use tool_vault\local\exceptions\api_exception;
-use tool_vault\local\helpers\ui;
 use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\restore_model;
 use tool_vault\output\error_with_backtrace;
 use tool_vault\output\last_operation;
-use tool_vault\output\past_restore;
-use tool_vault\output\remote_backup;
 
 /**
  * Tab restore
@@ -72,8 +69,8 @@ class restore extends base {
                 $backupstime = \tool_vault\api::get_remote_backups_time();
                 $result['remotebackups'] = [];
                 foreach ($backups as $backup) {
-                    // TODO use class backup_details.
-                    $result['remotebackups'][] = (new remote_backup($backup))->export_for_template($output);
+                    $result['remotebackups'][] =
+                        (new \tool_vault\output\backup_details(null, $backup, false))->export_for_template($output);
                 }
                 $result['remotebackupstime'] = userdate($backupstime, get_string('strftimedatetimeshort', 'langconfig'));
             } catch (api_exception $e) {
@@ -83,10 +80,10 @@ class restore extends base {
             $result['remotebackupsupdateurl'] = restore_updateremote::url()->out(false);
         }
 
-        $restores = restore_model::get_records(null, null, 1, 20);
+        $restores = restore_model::get_records(null, null, 0, 20);
         $result['restores'] = [];
         foreach ($restores as $restore) {
-            $result['restores'][] = (new past_restore($restore))->export_for_template($output);
+            $result['restores'][] = (new \tool_vault\output\restore_details($restore))->export_for_template($output);
         }
         $result['haspastrestores'] = !empty($result['restores']);
         return $result;

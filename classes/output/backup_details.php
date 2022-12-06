@@ -16,7 +16,6 @@
 
 namespace tool_vault\output;
 
-use renderer_base;
 use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\helpers\ui;
@@ -24,6 +23,7 @@ use tool_vault\local\models\backup_model;
 use tool_vault\local\models\remote_backup;
 use tool_vault\local\uiactions\backup;
 use tool_vault\local\uiactions\restore_dryrun;
+use tool_vault\local\uiactions\restore_remotedetails;
 use tool_vault\local\uiactions\restore_restore;
 use tool_vault\site_restore_dryrun;
 
@@ -39,49 +39,23 @@ class backup_details implements \templatable {
     protected $backup;
     /** @var remote_backup */
     protected $remotebackup;
+    /** @var bool */
+    protected $fulldetails;
 
     /**
      * Constructor
      *
      * @param backup_model|null $backup
      * @param remote_backup|null $remotebackup
+     * @param bool $fulldetails
      */
-    public function __construct(?backup_model $backup, ?remote_backup $remotebackup = null) {
+    public function __construct(?backup_model $backup, ?remote_backup $remotebackup = null, bool $fulldetails = true) {
         $this->backup = $backup;
         $this->remotebackup = $remotebackup;
         if (!$backup && !$remotebackup) {
             throw new \coding_exception('Missing arguments');
         }
-    }
-
-    /**
-     * Get property
-     *
-     * @param string $key
-     * @param bool $frominfo
-     * @return mixed|null
-     */
-    protected function get_property(string $key, bool $frominfo = false) {
-        if ($frominfo) {
-            return $this->remotebackup ? ($this->remotebackup->info[$key] ?? null) :
-                ($this->backup->get_details()[$key] ?? null);
-        } else {
-            return $this->remotebackup ? ($this->remotebackup->$key ?? null) : ($this->backup->$key ?? null);
-        }
-    }
-
-    /**
-     * Get description
-     *
-     * @return mixed|string
-     */
-    protected function get_description() {
-        if ($this->remotebackup) {
-            return $this->remotebackup->info['description'] ?? '';
-        } else if ($this->backup) {
-            return $this->backup->get_details()['description'] ?? '';
-        }
-        return '';
+        $this->fulldetails = $fulldetails;
     }
 
     /**
@@ -91,73 +65,70 @@ class backup_details implements \templatable {
      * @return array
      */
     public function export_for_template($output) {
+        $backupkey = $this->remotebackup->backupkey ?? $this->backup->backupkey ?? '';
+        $status = $this->remotebackup->status ?? $this->backup->status ?? '';
+        $encrypted = $this->remotebackup ? $this->remotebackup->get_encrypted() : $this->backup->get_encrypted();
+        $timestarted = $this->remotebackup->timecreated ?? $this->backup->timecreated ?? 0;
+        $timefinished = $this->remotebackup ? $this->remotebackup->get_finished_time() : $this->backup->get_finished_time();
+        $description = $this->remotebackup ? $this->remotebackup->get_description() : $this->backup->get_description();
         $rv = [
-            'sectionurl' => backup::url()->out(false),
-            'title' => 'Backup '.$this->get_property('backupkey'), // TODO string.
-            'metadata' => [],
-            'samesite' => $this->get_property('samesite', true),
+            'backupkey' => $backupkey,
+            'statusstr' => ui::format_status($status),
+            'encrypted' => $encrypted,
+            'encryptedstr' => ui::format_encrypted($encrypted),
+            'title' => 'Backup '.$backupkey, // TODO string.
+            'timestarted' => ui::format_time($timestarted),
+            'timefinished' => ui::format_time($timefinished),
+            'description' => ui::format_description($description),
         ];
-        if ($logs = ($this->backup ? $this->backup->get_logs() : [])) {
-            $rv['logsshort'] = $this->backup->get_logs_shortened();
-            $rv['logs'] = $logs;
-            $rv['haslogs'] = !empty($rv['logs']);
-        }
-
-        $started = userdate($this->get_property('timecreated'), get_string('strftimedatetimeshort', 'langconfig'));
-        $finished = userdate($this->get_property('timemodified'), get_string('strftimedatetimeshort', 'langconfig'));
-        $rv['metadata'][] = ['name' => 'Description', 'value' => s($this->get_property('description', true))];
-        $status = $this->get_property('status');
-        if ($this->backup && $this->backup->status === 'finished' && !$this->remotebackup) {
-            $status .= ', Not available for restore'; // TODO string, help tip.
-        }
-        $rv['metadata'][] = ['name' => 'Status', 'value' => $status];
         if ($this->backup) {
-            $performedby = $this->backup->get_details()['fullname'] ?? '';
-            if (!empty($this->backup->get_details()['email'])) {
-                $performedby .= " <{$this->backup->get_details()['email']}>";
+            $rv['performedby'] = s($this->backup->get_performedby());
+            $rv['backupdetailsurl'] = \tool_vault\local\uiactions\backup_details::url(['id' => $this->backup->id])->out(false);
+            if ($this->fulldetails && $this->backup->has_logs()) {
+                $rv += [
+                    'logs' => $this->backup->get_logs(),
+                    'haslogs' => $this->backup->has_logs(),
+                    'logsshort' => $this->backup->get_logs_shortened(),
+                    'haslogsshort' => $this->backup->has_logs_shortneded(),
+                ];
             }
-            $rv['metadata'][] = ['name' => 'Performed by', 'value' => s($performedby)];
         }
-        $rv['metadata'][] = ['name' => 'Started on', 'value' => $started];
-        if (!in_array($this->get_property('status'), [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
-            $rv['metadata'][] = ['name' => 'Finished on', 'value' => $finished];
-        }
-        $rv['metadata'][] = ['name' => 'Encrypted', 'value' =>
-            $this->get_property('encrypted', true) ? get_string('yes') : get_string('no')];
-        if ($totalsize = $this->get_property('totalsize', true)) {
-            $rv['metadata'][] = ['name' => 'Total size (archived)', 'value' => display_size($totalsize)];
-        }
-        if ($this->remotebackup && ($tags = $this->get_property('tags', true))) {
-            $rv['metadata'][] = ['name' => 'Tags', 'value' => s(join(', ', $tags))];
-        }
-
         if ($this->remotebackup) {
+            // If there is information in the remote backup AND in the local backup, the remote one overrides.
+            // All remote backups have status 'finished' and are available for restore.
+            $rv['backupdetailsurl'] = restore_remotedetails::url(['backupkey' => $backupkey])->out(false);
+            $rv['totalsize'] = $this->remotebackup->get_total_size();
+            $rv['totalsizestr'] = display_size($this->remotebackup->get_total_size());
+            $rv['samesite'] = $this->remotebackup->is_same_site();
+            $rv['tags'] = s(join(', ', $this->remotebackup->get_tags()));
             if (!api::are_restores_allowed()) {
                 $error = get_string('restoresnotallowed', 'tool_vault');
             }
-            if ($dryrun = site_restore_dryrun::get_last_dryrun($this->remotebackup->backupkey)) {
+            if ($this->fulldetails && ($dryrun = site_restore_dryrun::get_last_dryrun($backupkey))) {
                 $rv['lastdryrun'] = (new last_operation($dryrun->get_model()))->export_for_template($output);
                 if (!isset($error) && !$dryrun->prechecks_succeeded()) {
                     $error = 'Restore can not be performed until all pre-checkes have passed';
                 }
                 $rv['errormessage'] = error_with_backtrace::create_from_model($dryrun->get_model())->export_for_template($output);
             }
-            $rv['isfinished'] = ($this->remotebackup->status === \tool_vault\constants::STATUS_FINISHED);
-            $rv['showactions'] = $rv['isfinished'] && empty($rv['lastdryrun']['inprogress']);
-            $restoreurl = restore_restore::url(['backupkey' => $this->remotebackup->backupkey]);
-            $dryrunurl = restore_dryrun::url(['backupkey' => $this->remotebackup->backupkey]);
-            $rv['showactions'] = $rv['isfinished'] && empty($rv['lastdryrun']['inprogress']);
-            $rv += [
-                'dryrunurl' => $dryrunurl->out(false),
-                'restoreurl' => $restoreurl->out(false),
-            ];
+            $rv['showactions'] = true;
+            $rv['dryrunurl'] = restore_dryrun::url(['backupkey' => $backupkey])->out(false);
+            $rv['restoreurl'] = restore_restore::url(['backupkey' => $backupkey])->out(false);
             if (isset($error)) {
                 $rv['restorenotallowedreason'] = (new \core\output\notification($error, null, false))->export_for_template($output);
             } else {
                 $rv['restoreallowed'] = true;
             }
+        } else if ($this->fulldetails && $this->backup->status === constants::STATUS_FINISHED) {
+            $error = 'This backup is not available on the server';
+            // TODO explanation why:
+            // - expired
+            // - was deleted
+            // - performed in a different account
+            // - API key in use does not allow restores.
+            $rv['restorenotallowedreason'] =
+                (new \core\output\notification($error, null, false))->export_for_template($output);
         }
-
         return $rv;
     }
 }
