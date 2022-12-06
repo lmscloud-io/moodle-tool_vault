@@ -25,8 +25,8 @@
 require(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
-$tabtree = new tool_vault\output\tabtree();
-admin_externalpage_setup('tool_vault_index', '', null, $tabtree->get_url(), ['nosearch' => true]);
+$section = \tool_vault\local\uiactions\base::get_handler();
+admin_externalpage_setup('tool_vault_index', '', null, $section->url(), ['nosearch' => true]);
 if (moodle_needs_upgrading()) {
     redirect(new moodle_url('/admin/index.php'));
 }
@@ -35,10 +35,12 @@ if (method_exists($PAGE, 'set_secondary_navigation')) {
     $PAGE->set_secondary_navigation(false);
 }
 
-$section = \tool_vault\local\uiactions\base::get_handler();
 $section->process();
+/** @var tool_vault\output\renderer $renderer */
+$renderer = $PAGE->get_renderer('tool_vault');
 
-echo $OUTPUT->header();
-echo $OUTPUT->render($tabtree);
-echo $section->display($OUTPUT);
-echo $OUTPUT->footer();
+echo $renderer->header();
+$tabtree = new tool_vault\output\tabtree();
+echo $renderer->render($tabtree);
+echo $section->display($renderer);
+echo $renderer->footer();

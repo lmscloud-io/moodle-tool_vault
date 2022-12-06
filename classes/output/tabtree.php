@@ -16,9 +16,7 @@
 
 namespace tool_vault\output;
 
-use moodle_url;
 use tabobject;
-use tool_vault\local\helpers\ui;
 use tool_vault\local\uiactions\backup;
 use tool_vault\local\uiactions\overview;
 use tool_vault\local\uiactions\restore;
@@ -32,41 +30,25 @@ use tool_vault\local\uiactions\settings;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class tabtree extends \tabtree {
-    /** @var string */
-    protected $currenttab = null;
 
     /**
      * Constructor
      */
     public function __construct() {
-        $section = optional_param('section', null, PARAM_ALPHANUMEXT);
+        $section = optional_param('section', null, PARAM_ALPHANUMEXT) ?? 'overview';
+        $action = optional_param('action', null, PARAM_ALPHANUMEXT);
+        $linkwhenselected = !empty($action);
 
         $tabs = [];
         $tabs[] = new tabobject('overview', overview::url(),
-            get_string('taboverview', 'tool_vault'));
+            get_string('taboverview', 'tool_vault'), '', $linkwhenselected);
         $tabs[] = new tabobject('backup', backup::url(),
-            get_string('tabbackup', 'tool_vault'));
+            get_string('tabbackup', 'tool_vault'), '', $linkwhenselected);
         $tabs[] = new tabobject('restore', restore::url(),
-            get_string('tabrestore', 'tool_vault'));
+            get_string('tabrestore', 'tool_vault'), '', $linkwhenselected);
         $tabs[] = new tabobject('settings', settings::url(),
-            get_string('tabsettings', 'tool_vault'));
+            get_string('tabsettings', 'tool_vault'), '', $linkwhenselected);
 
-        $this->currenttab = 'overview';
-        foreach ($tabs as $tab) {
-            if ($section === $tab->link->param('section')) {
-                $this->currenttab = $tab->id;
-            }
-        }
-
-        parent::__construct($tabs, $this->currenttab);
-    }
-
-    /**
-     * Current page URL
-     *
-     * @return moodle_url
-     */
-    public function get_url(): moodle_url {
-        return ui::baseurl(['section' => $this->currenttab]);
+        parent::__construct($tabs, $section);
     }
 }

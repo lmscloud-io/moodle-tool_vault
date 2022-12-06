@@ -23,6 +23,5 @@ namespace tool_vault\output;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class renderer extends \renderer_base {
-
+class renderer extends \plugin_renderer_base {
 }
