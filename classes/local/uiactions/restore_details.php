@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\uiactions;
 
+use tool_vault\api;
 use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\restore_model;
 use tool_vault\output\dryrun;
@@ -43,7 +44,8 @@ class restore_details extends base {
             $data = (new \tool_vault\output\restore_details($restore))->export_for_template($output);
             return $output->render_from_template('tool_vault/restore_details', $data);
         } else if ($dryrun = dryrun_model::get_by_id($id)) {
-            $data = (new dryrun(new site_restore_dryrun($dryrun)))->export_for_template($output);
+            $remotebackup = api::get_remote_backups()[$dryrun->backupkey] ?? null;
+            $data = (new dryrun(new site_restore_dryrun($dryrun), $remotebackup))->export_for_template($output);
             return $output->render_from_template('tool_vault/dryrun', $data);
         } else {
             // Neither restore nor dryrun were found.

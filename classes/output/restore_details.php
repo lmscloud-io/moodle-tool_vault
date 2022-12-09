@@ -48,7 +48,7 @@ class restore_details implements \templatable {
      * @param \renderer_base $output
      * @return array
      */
-    public function export_for_template($output) {
+    public function export_for_template(\renderer_base $output) {
         $rv = [
             'title' => $this->restore->get_title(),
             'backupkey' => $this->restore->backupkey,

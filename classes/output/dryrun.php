@@ -17,9 +17,13 @@
 namespace tool_vault\output;
 
 use renderer_base;
+use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\helpers\ui;
+use tool_vault\local\models\remote_backup;
+use tool_vault\local\uiactions\restore_dryrun;
 use tool_vault\local\uiactions\restore_remotedetails;
+use tool_vault\local\uiactions\restore_restore;
 use tool_vault\site_restore_dryrun;
 
 /**
@@ -32,14 +36,18 @@ use tool_vault\site_restore_dryrun;
 class dryrun implements \templatable {
     /** @var site_restore_dryrun */
     protected $dryrun;
+    /** @var remote_backup */
+    protected $remotebackup;
 
     /**
      * Constructor
      *
      * @param site_restore_dryrun $dryrun
+     * @param remote_backup|null $remotebackup
      */
-    public function __construct(site_restore_dryrun $dryrun) {
+    public function __construct(site_restore_dryrun $dryrun, ?remote_backup $remotebackup = null) {
         $this->dryrun = $dryrun;
+        $this->remotebackup = $remotebackup;
     }
 
     /**
@@ -61,19 +69,37 @@ class dryrun implements \templatable {
      */
     public function export_for_template(renderer_base $output) {
         $model = $this->dryrun->get_model();
-        $isfinished = $model->status === constants::STATUS_FINISHED;
         $inprogress = $model->status === constants::STATUS_SCHEDULED || $model->status === constants::STATUS_INPROGRESS;
         $prechecks = [];
         foreach ($this->dryrun->get_prechecks() as $check) {
             $prechecks[] = (new check_display($check))->export_for_template($output);
         }
-        return [
+        $rv = [
             'backupkey' => $model->backupkey,
             'backupurl' => restore_remotedetails::url(['backupkey' => $model->backupkey])->out(false),
             'subtitle' => $this->get_subtitle(),
-            'logs' => $isfinished ? '' : $model->get_logs(),
             'inprogress' => $inprogress,
             'prechecks' => $prechecks,
         ];
+        $hidelogs = $model->status === constants::STATUS_FINISHED ||
+            ($model->status === constants::STATUS_FAILED && $prechecks && !$model->has_error());
+        if (!$hidelogs) {
+            $rv += [
+                'logs' => $model->get_logs(),
+                'haslogs' => $model->has_logs(),
+                'errormessage' => error_with_backtrace::create_from_model($model)->export_for_template($output),
+            ];
+        }
+        if ($this->remotebackup) {
+            $rv['showactions'] = true;
+            $rv['restoreallowed'] = api::are_restores_allowed();
+            $rv['dryrunurl'] = restore_dryrun::url(['backupkey' => $model->backupkey])->out(false);
+            $rv['restoreurl'] = restore_restore::url(['backupkey' => $model->backupkey])->out(false);
+            $rv['startdryrunlabel'] = 'Repeat pre-check'; // TODO string.
+            $rv['encrypted'] = (int)$this->remotebackup->get_encrypted();
+        }
+        return $rv;
     }
+
+
 }

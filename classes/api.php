@@ -392,7 +392,9 @@ class api {
         $backups = [];
         foreach ($records as $record) {
             $backup = new remote_backup($record);
-            $backups[$backup->backupkey] = $backup;
+            if ($backup->status === constants::STATUS_FINISHED) {
+                $backups[$backup->backupkey] = $backup;
+            }
         }
         uasort($backups, function($a, $b) {
             return - $a->timecreated + $b->timecreated;
@@ -640,6 +642,29 @@ class api {
             return;
         }
         self::api_call("restores/{$restorekey}", 'PATCH', $params);
+    }
+
+    /**
+     * Updates restore on the server but never throws any errors
+     *
+     * This function is often called in the end of the restore process and the failure to update remote restore
+     * should not raise an exception and fail the local restore.
+     *
+     * @param string $restorekey
+     * @param array|null $info
+     * @param string|null $status
+     * @return bool
+     */
+    public static function update_restore_ignoring_errors(string $restorekey, ?array $info = [], ?string $status = null): bool {
+        // One of the reason for the failed backup - impossible to communicate with the API,
+        // in which case this request will also fail.
+        try {
+            self::update_restore($restorekey, $info, $status);
+        } catch (\Throwable $tapi) {
+            // If for some reason we could not mark remote restore as finished.
+            return false;
+        }
+        return true;
     }
 
     /**

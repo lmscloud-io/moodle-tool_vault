@@ -21,6 +21,7 @@ use tool_vault\local\checks\configoverride;
 use tool_vault\local\checks\dbstatus;
 use tool_vault\local\checks\diskspace;
 use tool_vault\local\helpers\files_backup;
+use tool_vault\local\helpers\siteinfo;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
 use tool_vault\local\operations\operation_base;
@@ -131,6 +132,8 @@ class site_backup extends operation_base {
     protected function get_metadata() {
         global $CFG, $USER, $DB;
         $precheck = $this->prechecks[diskspace::get_name()] ?? null;
+        $excludedplugins = ['tool_vault']; // TODO more from settings.
+        $pluginlist = array_diff_key(siteinfo::get_plugins_list_full(), array_fill_keys($excludedplugins, true));
         return [
             // TODO - what other metadata do we want - languages, installed plugins, estimated size?
             'wwwroot' => $CFG->wwwroot,
@@ -141,6 +144,7 @@ class site_backup extends operation_base {
             'email' => $USER->email ?? '',
             'name' => $USER ? fullname($USER) : '',
             'dbtotalsize' => $precheck ? $precheck->get_model()->get_details()['dbtotalsize'] : 0,
+            'plugins' => $pluginlist,
         ];
     }
 

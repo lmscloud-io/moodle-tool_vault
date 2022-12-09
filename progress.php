@@ -64,6 +64,8 @@ echo <<<EOF
 EOF;
 
 echo html_writer::start_div('p-3');
+/** @var tool_vault\output\renderer $renderer */
+$renderer = $PAGE->get_renderer('tool_vault');
 
 $isoldoperation = $operation &&
     !in_array($operation->status, [\tool_vault\constants::STATUS_INPROGRESS, \tool_vault\constants::STATUS_SCHEDULED]) &&
@@ -74,19 +76,19 @@ if ($operation instanceof \tool_vault\local\models\backup_model) {
         $url = tool_vault\local\uiactions\backup_details::url(['id' => $operation->id]);
         echo "<p>This backup has already finished. You can access the logs <a href=\"$url\">here</a></p>";
     } else {
-        $data = (new \tool_vault\output\backup_details($operation, null))->export_for_template($OUTPUT);
+        $data = (new \tool_vault\output\backup_details($operation, null))->export_for_template($renderer);
         $data['isprogresspage'] = 1;
         unset($data['lastdryrun']);
-        echo $OUTPUT->render_from_template('tool_vault/backup_details', $data);
+        echo $renderer->render_from_template('tool_vault/backup_details', $data);
     }
 } else if ($operation instanceof \tool_vault\local\models\restore_model) {
     if ($isoldoperation) {
         $url = \tool_vault\local\uiactions\restore_details::url(['id' => $operation->id]);
         echo "<p>This restore has already finished. You can access the logs <a href=\"$url\">here</a></p>";
     } else {
-        $data = (new \tool_vault\output\restore_details($operation))->export_for_template($OUTPUT);
+        $data = (new \tool_vault\output\restore_details($operation))->export_for_template($renderer);
         $data['isprogresspage'] = 1;
-        echo $OUTPUT->render_from_template('tool_vault/restore_details', $data);
+        echo $renderer->render_from_template('tool_vault/restore_details', $data);
     }
 } else {
     echo 'Accesskey is not valid';

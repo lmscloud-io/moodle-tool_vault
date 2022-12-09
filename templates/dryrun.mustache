@@ -14,8 +14,8 @@
     {{> tool_vault/error_with_backtrace }}
 {{/errormessage}}
 
-{{#logs}}
-    <div class="card mt-2">
+{{#haslogs}}
+    <div class="card mt-2 mb-2">
         <div class="card-body">
             <div class="card-text">
                 <pre>{{{logs}}}</pre>
@@ -23,8 +23,15 @@
         </div>
     </div>
 
-{{/logs}}
+{{/haslogs}}
 
 {{#prechecks}}
     {{> tool_vault/check_summary}}
 {{/prechecks}}
+
+<div>
+    <a href="{{backupurl}}" class="btn btn-secondary">View backup details</a>
+    {{#showactions}}
+        {{> tool_vault/remote_backup_buttons}}
+    {{/showactions}}
+</div>

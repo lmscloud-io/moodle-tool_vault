@@ -18,6 +18,7 @@ namespace tool_vault;
 
 use tool_vault\local\checks\check_base;
 use tool_vault\local\checks\diskspace_restore;
+use tool_vault\local\checks\plugins_restore;
 use tool_vault\local\checks\version_restore;
 use tool_vault\local\helpers\files_restore;
 use tool_vault\local\logger;
@@ -107,11 +108,10 @@ class site_restore_dryrun extends operation_base {
      * @param files_restore $restorehelper
      * @param restore_base_model $model
      * @param logger $logger
-     * @param bool $exceptiononfailure throw exception if one of the prechecks fails
      * @return check_base[] array of executed prechecks
      */
     public static function execute_prechecks(files_restore $restorehelper, restore_base_model $model,
-                                             logger $logger, bool $exceptiononfailure = false): array {
+                                             logger $logger): array {
         $backupmetadata = api::get_remote_backup($model->backupkey, constants::STATUS_FINISHED);
 
         files_restore::populate_backup_files($model->id, $backupmetadata->files ?? []);
@@ -138,6 +138,7 @@ class site_restore_dryrun extends operation_base {
         /** @var check_base[] $precheckclasses */
         $precheckclasses = [
             version_restore::class,
+            plugins_restore::class,
             diskspace_restore::class,
         ];
         $prechecks = [];
@@ -146,12 +147,9 @@ class site_restore_dryrun extends operation_base {
             $chk = $classname::create_and_run($model);
             $prechecks[$chk->get_name()] = $chk;
             if ($chk->success()) {
-                $logger->add_to_log('...OK');
-            } else if ($exceptiononfailure) {
-                $restorehelper->finish();
-                throw new \moodle_exception('... pre-check '.$classname::get_display_name().' failed');
+                $logger->add_to_log('... OK');
             } else {
-                $logger->add_to_log('... pre-check '.$classname::get_display_name().' failed');
+                $logger->add_to_log('... Failed: '.$chk->get_status_message());
             }
         }
         return $prechecks;
@@ -169,17 +167,22 @@ class site_restore_dryrun extends operation_base {
         $helper = new files_restore($this, constants::FILENAME_DBSTRUCTURE);
         $this->prechecks = self::execute_prechecks($helper, $this->model, $this);
         $helper->finish();
+        $this->model->set_details(['encryptionkey' => '']);
+
+        foreach ($this->prechecks as $chk) {
+            if (!$chk->success()) {
+                $this->add_to_log('Restore pre-check finished with failure', constants::LOGLEVEL_ERROR);
+                $this->model
+                    ->set_status(constants::STATUS_FAILED)
+                    ->save();
+                return;
+            }
+        }
 
         $this->model
             ->set_status(constants::STATUS_FINISHED)
-            ->set_details(['encryptionkey' => ''])
             ->save();
-        try {
-            api::update_restore($this->model->get_details()['restorekey'], [], constants::STATUS_FINISHED);
-        } catch (\Throwable $tapi) {
-            // If for some reason we could not mark remote restore as finished, ignore the error.
-            null;
-        }
+        api::update_restore_ignoring_errors($this->model->get_details()['restorekey'], [], constants::STATUS_FINISHED);
         $this->add_to_log('Restore pre-check finished');
     }
 
@@ -227,15 +230,9 @@ class site_restore_dryrun extends operation_base {
     public function mark_as_failed(\Throwable $t) {
         parent::mark_as_failed($t);
         $this->model->set_details(['encryptionkey' => ''])->save();
-        try {
-            $restorekey = $this->model->get_details()['restorekey'] ?? '';
-            if ($restorekey) {
-                api::update_restore($restorekey, ['faileddetails' => $t->getMessage()], constants::STATUS_FAILED);
-            }
-        } catch (\Throwable $tapi) {
-            // One of the reason for the failed backup - impossible to communicate with the API,
-            // in which case this request will also fail.
-            $this->add_to_log('Could not mark remote restore as failed: '.$tapi->getMessage(), constants::LOGLEVEL_WARNING);
+        $restorekey = $this->model->get_details()['restorekey'] ?? '';
+        if ($restorekey) {
+            api::update_restore_ignoring_errors($restorekey, ['faileddetails' => $t->getMessage()], constants::STATUS_FAILED);
         }
     }
 }

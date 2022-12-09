@@ -25,6 +25,7 @@
 
 }}
 
+<form action="#">
 {{#dryrun}}
     <p>Restore pre-check will be executed on the next cron run.</p>
 {{/dryrun}}
@@ -36,4 +37,4 @@
     <p><label for="passphrase_startrestore_{{dryrun}}_{{backupkey}}">Passphrase:</label>
         <input type="text" name="passphrase" id="passphrase_startrestore_{{dryrun}}_{{backupkey}}"></p>
 {{/encrypted}}
-
+</form>

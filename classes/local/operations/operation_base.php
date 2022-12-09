@@ -56,9 +56,9 @@ abstract class operation_base implements logger {
      */
     public function mark_as_failed(\Throwable $t) {
         if ($this->model->status === constants::STATUS_INPROGRESS) {
-            $this->model->set_status(constants::STATUS_FAILEDTOSTART);
-        } else {
             $this->model->set_status(constants::STATUS_FAILED);
+        } else {
+            $this->model->set_status(constants::STATUS_FAILEDTOSTART);
         }
         $this->model->set_error($t)->save();
         $this->add_to_log('Operation failed: '.$t->getMessage(), constants::LOGLEVEL_ERROR);

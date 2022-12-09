@@ -79,7 +79,7 @@ class last_operation implements \templatable {
             $this->text = $operation->get_subtitle(); // TODO.
             if ($operation->status === constants::STATUS_SCHEDULED) {
                 $this->title = 'Restore scheduled';
-                $this->text = 'You restore is scheduled and will be executed during the next cron run';
+                $this->text = 'Your restore is scheduled and will be executed during the next cron run';
             } else if ($operation->status === constants::STATUS_INPROGRESS) {
                 $this->title = 'Restore in progress';
                 $this->text = 'You have a restore in progress';
@@ -100,24 +100,19 @@ class last_operation implements \templatable {
         } else if ($operation instanceof dryrun_model) {
             if ($operation->status === constants::STATUS_SCHEDULED) {
                 $this->title = 'Restore pre-check scheduled';
-                $this->text = 'You restore pre-check is now scheduled and will be executed during the next cron run';
+                $this->text = 'Your restore pre-check is now scheduled and will be executed during the next cron run';
             } else if ($operation->status === constants::STATUS_INPROGRESS) {
                 $this->title = 'Restore pre-check in progress';
                 $this->text = 'You have a pre-check in progress';
             } else if ($operation->status === constants::STATUS_FINISHED) {
-                $dryrun = new site_restore_dryrun($operation);
-                if ($dryrun->prechecks_succeeded()) {
-                    $this->title = 'Restore pre-check succeeded';
-                    $this->text = sprintf('Restore pre-check completed at %s. Backup %s can be restored on this site now',
-                        ui::format_time($operation->get_finished_time()), $operation->backupkey);
-                } else {
-                    $this->title = 'Restore pre-check failed';
-                    $this->text = sprintf('Restore pre-check failed at %s', ui::format_time($operation->get_finished_time()));
-                    $this->isfailed = true;
-                }
+                $this->title = 'Restore pre-check succeeded';
+                $this->text = sprintf('Restore pre-check completed at %s. Backup %s can be restored on this site now',
+                    ui::format_time($operation->get_finished_time()), $operation->backupkey);
             } else {
                 $this->title = 'Restore pre-check failed';
-                $this->text = 'Click View details to see the error';
+                $this->text = sprintf('Restore pre-check finished at %s. '.
+                    'Restore will not be possible until all problems are fixed',
+                    ui::format_time($operation->get_finished_time()));
             }
             $this->detailsurl = \tool_vault\local\uiactions\restore_details::url(['id' => $operation->id]);
         }

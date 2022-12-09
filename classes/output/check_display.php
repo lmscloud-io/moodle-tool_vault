@@ -58,7 +58,6 @@ class check_display implements \templatable {
         $fullreporturl = $this->check->get_fullreport_url();
         $rv = [
             'title' => $this->check->get_display_name(),
-            'overviewurl' => overview::url()->out(false),
             'subtitle' => 'Status: '.$this->check->get_model()->status.', '.
                 userdate($this->check->get_model()->timemodified, get_string('strftimedatetimeshort', 'langconfig')),
             'inprogress' => $this->check->is_in_progress(),

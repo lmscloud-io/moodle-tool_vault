@@ -148,7 +148,19 @@ class site_restore extends operation_base {
         $this->add_to_log('Preparing to restore');
 
         $this->prechecks = site_restore_dryrun::execute_prechecks(
-            $this->get_files_restore(constants::FILENAME_DBSTRUCTURE), $this->model, $this, true);
+            $this->get_files_restore(constants::FILENAME_DBSTRUCTURE), $this->model, $this);
+
+        foreach ($this->prechecks as $chk) {
+            if (!$chk->success()) {
+                $this->add_to_log('Aborting restore process. Restore pre-checks failed.', constants::LOGLEVEL_ERROR);
+                $this->model
+                    ->set_status(constants::STATUS_FAILED)
+                    ->set_details(['encryptionkey' => ''])
+                    ->save();
+                api::update_restore_ignoring_errors($this->model->get_details()['restorekey'], [], constants::STATUS_FAILED);
+                return;
+            }
+        }
 
         $this->prepare_restore_db();
 
@@ -168,12 +180,7 @@ class site_restore extends operation_base {
             ->set_details(['encryptionkey' => ''])
             ->save();
         $this->get_files_restore(constants::FILENAME_DBSTRUCTURE)->finish();
-        try {
-            api::update_restore($this->model->get_details()['restorekey'], [], constants::STATUS_FINISHED);
-        } catch (\Throwable $tapi) {
-            // If for some reason we could not mark remote restore as finished.
-            $this->add_to_log('Could not mark remote restore as finished: '.$tapi->getMessage(), constants::LOGLEVEL_WARNING);
-        }
+        api::update_restore_ignoring_errors($this->model->get_details()['restorekey'], [], constants::STATUS_FINISHED);
         $this->add_to_log('Restore finished');
     }
 
@@ -433,15 +440,9 @@ class site_restore extends operation_base {
     public function mark_as_failed(\Throwable $t) {
         parent::mark_as_failed($t);
         $this->model->set_details(['encryptionkey' => ''])->save();
-        try {
-            $restorekey = $this->model->get_details()['restorekey'] ?? '';
-            if ($restorekey) {
-                api::update_restore($restorekey, ['faileddetails' => $t->getMessage()], constants::STATUS_FAILED);
-            }
-        } catch (\Throwable $tapi) {
-            // One of the reason for the failed backup - impossible to communicate with the API,
-            // in which case this request will also fail.
-            $this->add_to_log('Could not mark remote restore as failed: '.$tapi->getMessage(), constants::LOGLEVEL_WARNING);
+        $restorekey = $this->model->get_details()['restorekey'] ?? '';
+        if ($restorekey) {
+            api::update_restore_ignoring_errors($restorekey, ['faileddetails' => $t->getMessage()], constants::STATUS_FAILED);
         }
     }
 }

@@ -511,15 +511,21 @@ abstract class operation_model {
      * Get the last operation of given types
      *
      * @param array $classes
+     * @param array $extra
      * @return ?operation_model
      */
-    public static function get_last_of(array $classes): ?operation_model {
+    public static function get_last_of(array $classes, array $extra = []): ?operation_model {
         global $DB;
         $types = array_filter(array_map(function($class) {
             return is_subclass_of($class, operation_model::class) ? ($class::$defaulttype) : null;
         }, $classes));
         [$sql, $params] = $DB->get_in_or_equal($types, SQL_PARAMS_NAMED);
-        $records = static::get_records_select('type '.$sql, $params, 'timecreated DESC', 0, 1);
+        $sql = 'type '.$sql;
+        if (!empty($extra['backupkey'])) {
+            $sql .= ' AND backupkey = :backupkey';
+            $params['backupkey'] = $extra['backupkey'];
+        }
+        $records = static::get_records_select($sql, $params, 'timecreated DESC', 0, 1);
         return $records ? reset($records) : null;
     }
 

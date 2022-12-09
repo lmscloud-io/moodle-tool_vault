@@ -14,34 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace tool_vault\local\uiactions;
+namespace tool_vault\local\helpers;
 
-use tool_vault\output\check_display;
+use tool_vault\constants;
+use tool_vault\fixtures\site_backup_mock;
+use tool_vault\local\models\backup_model;
+use tool_vault\local\models\restore_model;
+use tool_vault\site_restore;
 
 /**
- * Details of a backup pre-check
+ * The siteinfo_test test class.
  *
+ * @covers      \tool_vault\local\helpers\siteinfo
  * @package     tool_vault
+ * @category    test
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class overview_details extends base {
-
-    /**
-     * Display
-     *
-     * @param \renderer_base $output
-     * @return string
-     */
-    public function display(\renderer_base $output) {
-        $id = optional_param('id', null, PARAM_INT);
-
-        if ($id && ($check = \tool_vault\local\checks\check_base::load($id)) && $check->has_details()) {
-            $data = (new check_display($check, true))->export_for_template($output);
-            return $output->render_from_template('tool_vault/check_details', $data);
-        }
-
-        // TODO show error?
-        return '';
+class siteinfo_test extends \advanced_testcase {
+    public function test_get_plugins_list_full() {
+        $list = siteinfo::get_plugins_list_full(true);
+        $this->assertNotEmpty($list);
     }
 }

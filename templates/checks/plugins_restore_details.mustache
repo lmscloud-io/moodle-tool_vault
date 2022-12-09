@@ -1,0 +1,52 @@
+{{#hasproblems}}
+<p>
+    <span class="badge badge-danger">Error</span>
+    The following plugins have lower version on this site than in the backup. You must upgrade the code
+    for these plugins before restoring from this backup.
+</p>
+{{#problemplugins}}
+    {{> tool_vault/checks/plugins_restore_details_table}}
+{{/problemplugins}}
+{{/hasproblems}}
+
+{{#hasextra}}
+    <p>
+        <span class="badge badge-warning">Extra plugins</span>
+        The following plugins are present on this site but not present in the backup. All data associated with
+        these plugins will be deleted during the restore process. After the restore process is finished you will
+        be prompted to run Moodle upgrade process that will re-install these plugins.
+    </p>
+    {{#extraplugins}}
+        {{> tool_vault/checks/plugins_restore_details_table}}
+    {{/extraplugins}}
+{{/hasextra}}
+
+{{#hastobeupgraded}}
+    <p>
+        <span class="badge badge-warning">Will require upgrade</span>
+        The following plugins have higher version than in the backup. After the restore process is finished
+        you will be prompted to run Moodle upgrade process.
+    </p>
+    {{#tobeupgraded}}
+        {{> tool_vault/checks/plugins_restore_details_table}}
+    {{/tobeupgraded}}
+{{/hastobeupgraded}}
+
+{{#hasmissing}}
+<p>
+    <span class="badge {{#removemissing}}badge-info{{/removemissing}}{{^removemissing}}badge-warning{{/removemissing}}">Missing plugins</span>
+    The following plugins are present in the backup but are not installed on this site. After the restore
+    these plugins will be listed as "Missing form disk", you can choose to uninstall them or keep the
+    data until you add the code for the plugins. Until then, you may experience errors, for example,
+    missing scheduled tasks.
+</p>
+{{#removemissing}}
+    <p><strong>Missing plugins will be automatically removed after restore. <a href="{{settingsurl}}">Change</a></strong></p>
+{{/removemissing}}
+{{^removemissing}}
+    <p><strong>You can choose to automatically remove missing plugins after restore in the <a href="{{settingsurl}}">settings</a></strong></p>
+{{/removemissing}}
+{{#missingplugins}}
+    {{> tool_vault/checks/plugins_restore_details_table}}
+{{/missingplugins}}
+{{/hasmissing}}

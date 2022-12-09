@@ -20,7 +20,10 @@ use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\helpers\ui;
 use tool_vault\local\models\backup_model;
+use tool_vault\local\models\dryrun_model;
+use tool_vault\local\models\operation_model;
 use tool_vault\local\models\remote_backup;
+use tool_vault\local\models\restore_model;
 use tool_vault\local\uiactions\restore_dryrun;
 use tool_vault\local\uiactions\restore_remotedetails;
 use tool_vault\local\uiactions\restore_restore;
@@ -100,11 +103,17 @@ class backup_details implements \templatable {
             $rv['totalsizestr'] = display_size($this->remotebackup->get_total_size());
             $rv['samesite'] = $this->remotebackup->is_same_site();
             $rv['tags'] = s(join(', ', $this->remotebackup->get_tags()));
-            if (!api::are_restores_allowed()) {
+            if (api::are_restores_allowed()) {
+                $rv['restoreallowed'] = true;
+            } else {
                 $error = get_string('restoresnotallowed', 'tool_vault');
             }
-            if ($this->fulldetails && ($dryrun = site_restore_dryrun::get_last_dryrun($backupkey))) {
-                $rv['lastdryrun'] = (new last_operation($dryrun->get_model()))->export_for_template($output);
+            if ($this->fulldetails) {
+                $lastoperation = operation_model::get_last_of([restore_model::class, dryrun_model::class],
+                    ['backupkey' => $backupkey]);
+                if ($lastoperation) {
+                    $rv['lastdryrun'] = (new last_operation($lastoperation))->export_for_template($output);
+                }
             }
             $rv['showactions'] = true;
             $rv['dryrunurl'] = restore_dryrun::url(['backupkey' => $backupkey])->out(false);

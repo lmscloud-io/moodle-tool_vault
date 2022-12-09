@@ -1,0 +1,43 @@
+
+<table class="generaltable">
+    <tr>
+        <th>Name</th>
+        {{#showparents}}
+            <th>Subplugin of</th>
+        {{/showparents}}
+        <th>Version in the backup</th>
+        <th>Current version on this site</th>
+        <th></th>
+    </tr>
+    {{#plugins}}
+        <tr>
+            <td>
+                {{#hasname}}
+                    <div class="displayname">
+                        {{{name}}}
+                    </div>
+                {{/hasname}}
+                <div style="color: #6a737b;" class="componentname">
+                    {{{pluginname}}}
+                </div>
+            </td>
+            {{#showparents}}
+                <td>
+                    {{#parent}}
+                        {{#hasname}}
+                            <div class="displayname">
+                                {{{name}}}
+                            </div>
+                        {{/hasname}}
+                        <div style="color: #6a737b;" class="componentname">
+                            {{{pluginname}}}
+                        </div>
+                    {{/parent}}
+                </td>
+            {{/showparents}}
+            <td>{{versionbackup}}</td>
+            <td>{{versionlocal}}</td>
+            <td><a href="https://moodle.org/plugins/{{pluginname}}" target="_blank">Plugins directory</a> </td>
+        </tr>
+    {{/plugins}}
+</table>
