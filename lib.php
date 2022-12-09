@@ -36,6 +36,10 @@ function tool_vault_after_config() {
     }
 
     if (class_exists(\tool_vault\api::class) && \tool_vault\api::is_maintenance_mode()) {
+        if (defined('CLI_SCRIPT') && CLI_SCRIPT) {
+            echo "Site backup or restore is currently in progress. Aborting\n";
+            exit(1);
+        }
         $url = new moodle_url($FULLME);
         if (!$url->compare(new moodle_url('/admin/tool/vault/progress.php'), URL_MATCH_BASE)) {
             $PAGE->set_context(context_system::instance());
