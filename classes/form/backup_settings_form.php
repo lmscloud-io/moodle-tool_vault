@@ -31,7 +31,6 @@ class backup_settings_form extends base_settings_form {
     /** @var string[] */
     const BACKUPSETTINGSNAMES = [
         'backupexcludetables',
-        'backupexcludeindexes',
         'backupexcludedataroot',
         'backupexcludeplugins',
     ];
@@ -58,10 +57,6 @@ class backup_settings_form extends base_settings_form {
             $CFG->prefix.'" and include them in the backup. You can specify here the list of tables '.
             'that should not be backed up. The tables that are defined in xmldb schema of the core or '.
             'of any installed plugins can not be excluded.');
-
-        $this->add_textarea('backupexcludeindexes',
-            'Exclude indexes',
-            'To exclude extra indexes from the backup list them here as TABLENAME.INDEXNAME.');
 
         $this->add_textarea('backupexcludedataroot',
             'Exclude paths in dataroot',
@@ -100,31 +95,6 @@ class backup_settings_form extends base_settings_form {
     }
 
     /**
-     * Validate index name
-     *
-     * @param string $index
-     * @param array $dbtables
-     * @return string|null
-     */
-    protected function validate_index_name($index, $dbtables) {
-        global $DB;
-        $parts = preg_split('/\\./', $index);
-        if (count($parts) != 2) {
-            return $index . ' : index must have format: "TABLENAME.INDEXNAME"';
-        } else if ($error = $this->validate_table_name($parts[0], $dbtables)) {
-            return $error;
-        } else {
-            $tablewithoutprefix = $this->strip_db_prefix($parts[0]);
-            $indexnames = array_keys($DB->get_indexes($tablewithoutprefix));
-            if (!in_array($parts[1], $indexnames)) {
-                return 'Index "' . $parts[1] . '" is not found in table "' . $parts[0] . '"' .
-                    '; available indexes: ' . join(', ', $indexnames);
-            }
-        }
-        return null;
-    }
-
-    /**
      * Form validation
      *
      * @param array $data
@@ -140,16 +110,6 @@ class backup_settings_form extends base_settings_form {
             foreach ($tables as $table) {
                 if ($error = $this->validate_table_name($table, $dbtables)) {
                     $errors['backupexcludetables'] = $error;
-                }
-            }
-        }
-
-        $indexes = $this->split_list($data['backupexcludeindexes']);
-        if ($indexes) {
-            $dbtables = $dbtables ?? $DB->get_tables();
-            foreach ($indexes as $index) {
-                if ($error = $this->validate_index_name($index, $dbtables)) {
-                    $errors['backupexcludeindexes'] = $error;
                 }
             }
         }
@@ -196,7 +156,6 @@ class backup_settings_form extends base_settings_form {
      * @return bool
      */
     public static function has_backup_settings(): bool {
-        return !empty(api::get_config('backupexcludetables')) ||
-            !empty(api::get_config('backupexcludeindexes'));
+        return !empty(api::get_config('backupexcludetables'));
     }
 }

@@ -46,13 +46,6 @@ class specialrules {
                 return true;
             }
         }
-        $indexes = preg_split('/[\\s,]/', trim(strtolower(api::get_config('backupexcludeindexes'))), -1, PREG_SPLIT_NO_EMPTY);
-        foreach ($indexes as $exclindex) {
-            $parts = preg_split('/\\./', $exclindex);
-            if ($CFG->prefix.$table->getName() === $parts[0] && $dbindexname === $parts[1]) {
-                return true;
-            }
-        }
 
         return false;
     }
