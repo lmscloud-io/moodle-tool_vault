@@ -50,7 +50,8 @@ class diskspace extends check_base {
         $freespace = disk_free_space(make_request_directory());
         $structure = dbstructure::load();
         foreach ($structure->get_tables_actual() as $tablename => $table) {
-            if (!site_backup::is_table_skipped($table)) {
+            $deftable = $structure->find_table_definition($tablename);
+            if (!siteinfo::is_table_excluded_from_backup($tablename, $deftable)) {
                 $this->tablerowscnt[$tablename] = $DB->count_records_select($tablename, '1=1');
             }
         }

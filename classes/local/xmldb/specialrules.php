@@ -56,35 +56,4 @@ class specialrules {
 
         return false;
     }
-
-    /**
-     * Ignore actual table
-     *
-     * @param string $tablename
-     * @return bool
-     */
-    public static function is_actual_table_ignored(string $tablename): bool {
-        global $CFG;
-        if (preg_match('/^tool_vault_/', $tablename)) {
-            return true;
-        }
-        $tables = preg_split('/[\\s,]/', trim(strtolower(api::get_config('backupexcludetables'))), -1, PREG_SPLIT_NO_EMPTY);
-        if (in_array($CFG->prefix . $tablename, $tables)) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Ignore table definition
-     *
-     * @param string $tablename
-     * @return bool
-     */
-    public static function is_definition_table_ignored(string $tablename): bool {
-        if (preg_match('/^tool_vault_/', $tablename)) {
-            return true;
-        }
-        return false;
-    }
 }

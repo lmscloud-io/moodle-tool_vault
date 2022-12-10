@@ -18,6 +18,7 @@ namespace tool_vault\local\checks;
 
 use tool_vault\constants;
 use tool_vault\form\backup_settings_form;
+use tool_vault\local\helpers\siteinfo;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\local\xmldb\dbtable;
 
@@ -50,23 +51,31 @@ class dbstatus extends check_base {
             constants::DIFF_CHANGEDTABLES => [],
             constants::DIFF_INVALIDTABLES => [],
         ];
-        foreach (array_diff_key($s->get_tables_actual(), $s->get_tables_definitions()) as $tablename => $table) {
+
+        $actualtables = array_filter($s->get_tables_actual(), function($tableobj, $tablename) use ($s) {
+            return !siteinfo::is_table_excluded_from_backup($tablename, $s->find_table_definition($tablename));
+        }, ARRAY_FILTER_USE_BOTH);
+        $deftables = array_filter($s->get_tables_definitions(), function($deftable, $tablename) {
+            return !siteinfo::is_table_excluded_from_backup($tablename, $deftable);
+        }, ARRAY_FILTER_USE_BOTH);
+
+        foreach (array_diff_key($actualtables, $deftables) as $tablename => $table) {
             $result[constants::DIFF_EXTRATABLES][$tablename] = [null, $table, null];
         }
-        foreach (array_diff_key($s->get_tables_definitions(), $s->get_tables_actual()) as $tablename => $table) {
+        foreach (array_diff_key($deftables, $actualtables) as $tablename => $table) {
             $result[constants::DIFF_MISSINGTABLES][$tablename] = [$table, null, null];
         }
-        foreach (array_intersect_key($s->get_tables_actual(), $s->get_tables_definitions()) as $tablename => $table) {
-            $deftable = $s->get_tables_definitions()[$tablename];
+        foreach (array_intersect_key($actualtables, $deftables) as $tablename => $table) {
+            $deftable = $deftables[$tablename];
             $diff = $table->compare_with_other_table($deftable);
             if ($diff) {
                 $result[constants::DIFF_CHANGEDTABLES][$tablename] = [$deftable, $table, $diff];
             }
         }
-        foreach ($s->get_tables_actual() as $tablename => $table) {
+        foreach ($actualtables as $tablename => $table) {
             $errors = $table->validate_definition();
             if ($errors) {
-                $deftable = $s->get_tables_definitions()[$tablename] ?? null;
+                $deftable = $deftables[$tablename] ?? null;
                 $result[constants::DIFF_INVALIDTABLES][$tablename] = [$deftable, $table, $errors];
             }
         }

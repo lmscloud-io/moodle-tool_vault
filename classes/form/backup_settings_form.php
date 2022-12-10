@@ -165,7 +165,6 @@ class backup_settings_form extends base_settings_form {
         }
 
         $plugins = $this->split_list($data['backupexcludeplugins']);
-        // TODO ! this setting is not used anywhere yet
         if ($plugins) {
             foreach ($plugins as $plugin) {
                 if ($error = $this->validate_plugin_name($plugin)) {

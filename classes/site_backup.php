@@ -53,16 +53,6 @@ class site_backup extends operation_base {
     }
 
     /**
-     * Should the table be skipped from the backup
-     *
-     * @param dbtable $table
-     * @return bool
-     */
-    public static function is_table_skipped(dbtable $table): bool {
-        return preg_match('/^tool_vault[$_]/', strtolower($table->get_xmldb_table()->getName()));
-    }
-
-    /**
      * Schedules new backup
      *
      * @param array $params
@@ -367,7 +357,8 @@ class site_backup extends operation_base {
         $structure = $this->get_db_structure();
         $tables = [];
         foreach ($structure->get_tables_actual() as $table => $tableobj) {
-            if (!$this->is_table_skipped($tableobj)) {
+            $deftable = $structure->find_table_definition($table);
+            if (!siteinfo::is_table_excluded_from_backup($table, $deftable)) {
                 $tables[$table] = $tableobj;
             }
         }

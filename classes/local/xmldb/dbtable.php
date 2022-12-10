@@ -565,4 +565,13 @@ class dbtable {
         $res = preg_replace('|( *<TABLE NAME="[^"]*")|', '$1'.' '.$component, $res);
         return $res;
     }
+
+    /**
+     * Return the name of the plugin or core component definiting this table
+     *
+     * @return void
+     */
+    public function get_component(): string {
+        return $this->component;
+    }
 }

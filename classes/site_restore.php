@@ -25,6 +25,7 @@ use tool_vault\local\models\restore_model;
 use tool_vault\local\operations\operation_base;
 use tool_vault\local\restoreactions\restore_action;
 use tool_vault\local\xmldb\dbstructure;
+use tool_vault\local\xmldb\dbtable;
 
 /**
  * Perform site restore
@@ -234,21 +235,32 @@ class site_restore extends operation_base {
      */
     public function restore_db() {
         global $DB;
-        $tables = $this->dbstructure->get_backup_tables();
+
+        $tables = array_filter($this->dbstructure->get_backup_tables(), function(dbtable $tableobj, $tablename) {
+            return !siteinfo::is_table_preserved_in_restore($tablename, $tableobj);
+        }, ARRAY_FILTER_USE_BOTH);
+
         $this->add_to_log('Starting database restore ('.count($tables).' tables)...');
 
         $structurefiles = $this->get_files_restore(constants::FILENAME_DBSTRUCTURE)->get_all_files();
         $filepath = $structurefiles[constants::FILE_SEQUENCE] ?? null;
         $sequences = $filepath ? json_decode(file_get_contents($filepath), true) : [];
 
-        $totaltables = count($this->dbstructure->get_backup_tables());
+        $totaltables = count($tables);
         $tablescnt = $lasttablescnt = 0;
         $lastlog = time();
 
         $helper = $this->get_files_restore(constants::FILENAME_DBDUMP);
         while (($tabledata = $helper->get_next_table()) !== null) {
             [$tablename, $filesfortable] = $tabledata;
+            if (!array_key_exists($tablename, $tables)) {
+                // Must be skipped.
+                continue;
+            }
             $table = $tables[$tablename];
+
+            // Truncate table.
+            $DB->execute('TRUNCATE TABLE {'.$tablename.'}');
 
             // Alter table structure in the DB if needed.
             if ($altersql = $table->get_alter_sql($this->dbstructure->get_tables_actual()[$tablename] ?? null)) {
@@ -261,8 +273,7 @@ class site_restore extends operation_base {
                 }
             }
 
-            // Truncate and insert new data.
-            $DB->execute('TRUNCATE TABLE {'.$tablename.'}');
+            // Insert new data.
             foreach ($filesfortable as $filepath) {
                 $data = json_decode(file_get_contents($filepath), true);
                 if ($data) {

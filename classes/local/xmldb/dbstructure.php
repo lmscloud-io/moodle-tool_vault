@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\xmldb;
 
+use tool_vault\local\helpers\siteinfo;
 use xmldb_field;
 use xmldb_index;
 use xmldb_key;
@@ -142,9 +143,6 @@ class dbstructure {
                 if ($loaded && ($plugintables = $structure->getTables())) {
                     foreach ($plugintables as $table) {
                         $tablename = strtolower($table->getName());
-                        if (specialrules::is_definition_table_ignored($tablename)) {
-                            continue;
-                        }
                         $this->deftables[$tablename] = new dbtable($table, $pluginname);
                     }
                 }
@@ -207,9 +205,6 @@ class dbstructure {
         $tablesnames = $DB->get_tables();
         foreach ($tablesnames as $tablename) {
             $deftable = $this->find_table_definition($tablename);
-            if (!$deftable && specialrules::is_actual_table_ignored($tablename)) {
-                continue;
-            }
             $table = dbtable::create_from_actual_db(strtolower(trim($tablename)), $this);
             $this->actualtables[$tablename] = $table;
             // Fix indexes/keys and order of elements.

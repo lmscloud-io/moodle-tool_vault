@@ -62,7 +62,7 @@ class site_backup_test extends \advanced_testcase {
     public function test_get_all_tables() {
         $this->resetAfterTest();
         $tables = $this->create_site_backup()->get_db_structure()->get_tables_actual();
-        $this->assertFalse(array_key_exists('tool_vault_config', $tables));
+        $this->assertTrue(array_key_exists('tool_vault_config', $tables));
         $this->assertTrue(array_key_exists('config', $tables));
     }
 

@@ -18,6 +18,7 @@ namespace tool_vault\local\helpers;
 
 use core_component;
 use tool_vault\api;
+use tool_vault\local\xmldb\dbtable;
 
 /**
  * Helper class for site information
@@ -194,5 +195,79 @@ class siteinfo {
         }
         $paths = preg_split('/[\\s,]/', api::get_config('restorepreservedataroot'), -1, PREG_SPLIT_NO_EMPTY);
         return in_array($path, $paths);
+    }
+
+    /**
+     * List of plugins that should be excluded during backup
+     *
+     * @return array
+     */
+    public static function get_excluded_plugins_backup(): array {
+        $plugins = preg_split('/[\\s,]/',
+            trim(strtolower(api::get_config('backupexcludeplugins') ?? '')), -1, PREG_SPLIT_NO_EMPTY);
+        $plugins[] = 'tool_vault';
+        return array_unique($plugins);
+    }
+
+    /**
+     * List of plugins that should be excluded during restore
+     * @return array
+     */
+    public static function get_excluded_plugins_restore(): array {
+        $plugins = preg_split('/[\\s,]/',
+            trim(strtolower(api::get_config('restorepreserveplugins') ?? '')), -1, PREG_SPLIT_NO_EMPTY);
+        $plugins[] = 'tool_vault';
+        return array_unique($plugins);
+    }
+
+    /**
+     * Is given table excluded from backup
+     *
+     * @param string $tablename
+     * @param dbtable|null $deftable
+     * @return bool
+     */
+    public static function is_table_excluded_from_backup(string $tablename, ?dbtable $deftable): bool {
+        global $CFG;
+        if (!$deftable) {
+            // This is a table that is not present in the install.xml files of core or any plugins.
+            // Exclude this table if it's name is in the 'backupexcludetables' setting.
+            $tables = preg_split('/[\\s,]/', trim(strtolower(api::get_config('backupexcludetables'))), -1, PREG_SPLIT_NO_EMPTY);
+            if (in_array($CFG->prefix . $tablename, $tables)) {
+                return true;
+            }
+        } else {
+            // This table has a definition. Check if it belongs to an excluded plugin.
+            if (in_array($deftable->get_component(), self::get_excluded_plugins_backup())) {
+                return true;
+            }
+        }
+        return false;
+
+    }
+
+    /**
+     * Is given table excluded from restore
+     *
+     * @param string $tablename
+     * @param dbtable|null $deftable
+     * @return bool
+     */
+    public static function is_table_preserved_in_restore(string $tablename, ?dbtable $deftable): bool {
+        global $CFG;
+        if (!$deftable) {
+            // This is a table that is not present in the install.xml files of core or any plugins.
+            // Exclude this table if it's name is in the 'backupexcludetables' setting.
+            $tables = preg_split('/[\\s,]/', trim(strtolower(api::get_config('restorepreservetables'))), -1, PREG_SPLIT_NO_EMPTY);
+            if (in_array($CFG->prefix . $tablename, $tables)) {
+                return true;
+            }
+        } else {
+            // This table has a definition. Check if it belongs to an excluded plugin.
+            if (in_array($deftable->get_component(), self::get_excluded_plugins_restore())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
