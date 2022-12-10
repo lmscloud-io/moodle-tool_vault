@@ -17,6 +17,7 @@
 namespace tool_vault\local\checks;
 
 use tool_vault\constants;
+use tool_vault\local\helpers\siteinfo;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\site_backup;
 
@@ -92,7 +93,7 @@ class diskspace extends check_base {
         $size = 0;
         $maxfile = 0;
         while (($file = readdir($handle)) !== false) {
-            if (!site_backup::is_dataroot_path_skipped($file) && $file !== '.' && $file !== '..') {
+            if (!siteinfo::is_dataroot_path_skipped_backup($file) && $file !== '.' && $file !== '..') {
                 $filepath = $CFG->dataroot . DIRECTORY_SEPARATOR . $file;
                 if (is_dir($filepath)) {
                     $it = new \RecursiveDirectoryIterator($filepath, \RecursiveDirectoryIterator::SKIP_DOTS);

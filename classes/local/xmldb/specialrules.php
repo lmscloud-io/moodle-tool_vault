@@ -35,6 +35,7 @@ class specialrules {
      * @return bool
      */
     public static function is_actual_index_ignored(\xmldb_table $table, $dbindexname, $dbindex) {
+        global $CFG;
         if ($table->getName() === 'search_simpledb_index') {
             // Hack - skip for table 'search_simpledb_index' as this plugin adds indexes dynamically on install
             // which are not included in install.xml. See search/engine/simpledb/db/install.php.
@@ -48,7 +49,7 @@ class specialrules {
         $indexes = preg_split('/[\\s,]/', trim(strtolower(api::get_config('backupexcludeindexes'))), -1, PREG_SPLIT_NO_EMPTY);
         foreach ($indexes as $exclindex) {
             $parts = preg_split('/\\./', $exclindex);
-            if ($table->getName() === $parts[0] && $dbindexname === $parts[1]) {
+            if ($CFG->prefix.$table->getName() === $parts[0] && $dbindexname === $parts[1]) {
                 return true;
             }
         }
@@ -63,11 +64,12 @@ class specialrules {
      * @return bool
      */
     public static function is_actual_table_ignored(string $tablename): bool {
+        global $CFG;
         if (preg_match('/^tool_vault_/', $tablename)) {
             return true;
         }
         $tables = preg_split('/[\\s,]/', trim(strtolower(api::get_config('backupexcludetables'))), -1, PREG_SPLIT_NO_EMPTY);
-        if (in_array($tablename, $tables)) {
+        if (in_array($CFG->prefix . $tablename, $tables)) {
             return true;
         }
         return false;

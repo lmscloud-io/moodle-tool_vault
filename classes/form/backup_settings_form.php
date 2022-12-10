@@ -17,12 +17,8 @@
 namespace tool_vault\form;
 
 use tool_vault\api;
+use tool_vault\local\helpers\siteinfo;
 use tool_vault\local\uiactions\settings_backup;
-
-defined('MOODLE_INTERNAL') || die();
-
-global $CFG;
-require_once($CFG->libdir . '/formslib.php');
 
 /**
  * Backup settings
@@ -31,12 +27,14 @@ require_once($CFG->libdir . '/formslib.php');
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class backup_settings_form extends \moodleform {
-
-    /** @var bool */
-    protected $editable = true;
-    /** @var \moodle_url */
-    protected $action = null;
+class backup_settings_form extends base_settings_form {
+    /** @var string[] */
+    const BACKUPSETTINGSNAMES = [
+        'backupexcludetables',
+        'backupexcludeindexes',
+        'backupexcludedataroot',
+        'backupexcludeplugins',
+    ];
 
     /**
      * Constructor
@@ -44,44 +42,42 @@ class backup_settings_form extends \moodleform {
      * @param bool $editable
      */
     public function __construct(bool $editable = true) {
-        $this->editable = $editable;
         $this->action = settings_backup::url();
-        parent::__construct(new \moodle_url($this->action), null, 'post', '', null, $this->editable);
+        $this->settingsnames = self::BACKUPSETTINGSNAMES;
+        parent::__construct($editable);
     }
 
     /**
      * Form definition
      */
     protected function definition() {
-        $mform = $this->_form;
+        global $CFG;
+        $this->add_textarea('backupexcludetables',
+            'Exclude tables',
+            'Backup process will analyse all tables which names start with the prefix "'.
+            $CFG->prefix.'" and include them in the backup. You can specify here the list of tables '.
+            'that should not be backed up. The tables that are defined in xmldb schema of the core or '.
+            'of any installed plugins can not be excluded.');
 
-        $mform->addElement($this->editable ? 'textarea' : 'static', 'backupexcludetables',
-            'Exclude tables');
-        $mform->setType('backupexcludetables', PARAM_RAW);
-        // TODO Help: List of tables that will not be included in the backup. Do not include prefix.
+        $this->add_textarea('backupexcludeindexes',
+            'Exclude indexes',
+            'To exclude extra indexes from the backup list them here as TABLENAME.INDEXNAME.');
 
-        $mform->addElement($this->editable ? 'textarea' : 'static', 'backupexcludeindexes',
-            'Exclude indexes');
-        $mform->setType('backupexcludeindexes', PARAM_RAW);
-        // TODO Help: List of tables that will not be included in the backup. Do not include prefix.
+        $this->add_textarea('backupexcludedataroot',
+            'Exclude paths in dataroot',
+            'All paths within dataroot folder will be included in the backup except for: '.
+            'filedir (backed up separately), '.join(', ', siteinfo::common_excluded_dataroot_paths()).
+            '. If you want to exclude more paths list them here.');
 
-        $mform->addElement($this->editable ? 'textarea' : 'static', 'backupexcludedataroot',
-            'Exclude paths in dataroot');
-        $mform->setType('backupexcludedataroot', PARAM_RAW);
-        // TODO Help: Show the list of paths that are already excluded.
+        $this->add_textarea('backupexcludeplugins',
+            'Exclude plugins',
+            'Only for plugins with server-specific configuration, for example, file storage or session management. '.
+            'For other plugins include them in backup and uninstall after restore. '.
+            'Note that this will only exclude data in plugin\'s own tables, settings, associated files, scheduled '.
+            'tasks and other known common types of plugin-related data. It may not be accurate for complicated plugins '.
+            'or plugins with dependencies.');
 
-        $this->set_data([
-            'backupexcludetables' => api::get_config('backupexcludetables'),
-            'backupexcludeindexes' => api::get_config('backupexcludeindexes'),
-            'backupexcludedataroot' => api::get_config('backupexcludedataroot'),
-        ]);
-        if (!$this->editable) {
-            $mform->addElement('html',
-                \html_writer::div(\html_writer::link($this->action, 'Edit backup settings', ['class' => 'btn btn-secondary']),
-                'pb-3'));
-        } else {
-            $this->add_action_buttons();
-        }
+        $this->set_data_and_add_buttons('Edit backup settings');
     }
 
     /**
@@ -93,11 +89,36 @@ class backup_settings_form extends \moodleform {
      */
     protected function validate_table_name($table, $dbtables) {
         global $CFG;
-        if (!in_array($table, $dbtables)) {
-            if (!empty($CFG->prefix) && strpos($table, $CFG->prefix) === 0) {
-                return 'Table {' . $table . '} does not exist in the database. Do not include prefix ' . $CFG->prefix;
-            } else {
-                return 'Table {' . $table . '} does not exist in the database';
+        $tablewithoutprefix = $this->strip_db_prefix($table);
+        if (!empty($CFG->prefix) && $table === $tablewithoutprefix) {
+            return 'Table "' . $table . '" does not start with prefix "' . $CFG->prefix.
+                '", this table will not be included in the backup anyway.';
+        } else if (!in_array(strtolower($tablewithoutprefix), $dbtables)) {
+            return 'Table "' . $tablewithoutprefix . '" does not exist in the database';
+        }
+        return null;
+    }
+
+    /**
+     * Validate index name
+     *
+     * @param string $index
+     * @param array $dbtables
+     * @return string|null
+     */
+    protected function validate_index_name($index, $dbtables) {
+        global $DB;
+        $parts = preg_split('/\\./', $index);
+        if (count($parts) != 2) {
+            return $index . ' : index must have format: "TABLENAME.INDEXNAME"';
+        } else if ($error = $this->validate_table_name($parts[0], $dbtables)) {
+            return $error;
+        } else {
+            $tablewithoutprefix = $this->strip_db_prefix($parts[0]);
+            $indexnames = array_keys($DB->get_indexes($tablewithoutprefix));
+            if (!in_array($parts[1], $indexnames)) {
+                return 'Index "' . $parts[1] . '" is not found in table "' . $parts[0] . '"' .
+                    '; available indexes: ' . join(', ', $indexnames);
             }
         }
         return null;
@@ -113,7 +134,7 @@ class backup_settings_form extends \moodleform {
     public function validation($data, $files) {
         global $CFG, $DB;
         $errors = parent::validation($data, $files);
-        $tables = preg_split('/[\\s,]/', trim($data['backupexcludetables']), -1, PREG_SPLIT_NO_EMPTY);
+        $tables = $this->split_list($data['backupexcludetables']);
         if ($tables) {
             $dbtables = $DB->get_tables();
             foreach ($tables as $table) {
@@ -123,30 +144,32 @@ class backup_settings_form extends \moodleform {
             }
         }
 
-        $indexes = preg_split('/[\\s,]/', trim($data['backupexcludeindexes']), -1, PREG_SPLIT_NO_EMPTY);
+        $indexes = $this->split_list($data['backupexcludeindexes']);
         if ($indexes) {
             $dbtables = $dbtables ?? $DB->get_tables();
             foreach ($indexes as $index) {
-                $parts = preg_split('/\\./', $index);
-                if (count($parts) != 2) {
-                    $errors['backupexcludeindexes'] = $index.' : index must have format: "tablename.indexname"';
-                } else if ($error = $this->validate_table_name($parts[0], $dbtables)) {
+                if ($error = $this->validate_index_name($index, $dbtables)) {
                     $errors['backupexcludeindexes'] = $error;
-                } else {
-                    $indexnames = array_keys($DB->get_indexes($parts[0]));
-                    if (!in_array($parts[1], $indexnames)) {
-                        $errors['backupexcludeindexes'] = 'Index '.$parts[1].' is not found in table {'.$parts[0].'}'.
-                            '; available indexes: '. join(', ', $indexnames);
-                    }
                 }
             }
         }
 
-        $paths = preg_split('/[\\s,]/', trim($data['backupexcludedataroot']), -1, PREG_SPLIT_NO_EMPTY);
+        $paths = $this->split_list($data['backupexcludedataroot']);
         if ($paths) {
             foreach ($paths as $path) {
-                if (preg_replace("#[/\\\\]#", '', clean_param($path, PARAM_FILE)) !== $path) {
-                    $errors['backupexcludedataroot'] = "Path '".s($path)."' is not a valid file path";
+                if ($error = $this->validate_path($path)) {
+                    $errors['backupexcludedataroot'] = $error;
+                    break;
+                }
+            }
+        }
+
+        $plugins = $this->split_list($data['backupexcludeplugins']);
+        // TODO ! this setting is not used anywhere yet
+        if ($plugins) {
+            foreach ($plugins as $plugin) {
+                if ($error = $this->validate_plugin_name($plugin)) {
+                    $errors['backupexcludeplugins'] = $error;
                     break;
                 }
             }
@@ -162,12 +185,10 @@ class backup_settings_form extends \moodleform {
      */
     public function process() {
         $data = $this->get_data();
-        $tables = preg_split('/[\\s,]/', trim($data->backupexcludetables), -1, PREG_SPLIT_NO_EMPTY);
-        api::store_config('backupexcludetables', join(', ', $tables));
-        $indexes = preg_split('/[\\s,]/', trim($data->backupexcludeindexes), -1, PREG_SPLIT_NO_EMPTY);
-        api::store_config('backupexcludeindexes', join(', ', $indexes));
-        $paths = preg_split('/[\\s,]/', trim($data->backupexcludedataroot), -1, PREG_SPLIT_NO_EMPTY);
-        api::store_config('backupexcludedataroot', join(', ', $paths));
+        foreach ($this->settingsnames as $name) {
+            $elements = preg_split('/[\\s,]/', trim($data->$name), -1, PREG_SPLIT_NO_EMPTY);
+            api::store_config($name, join(', ', $elements));
+        }
     }
 
     /**

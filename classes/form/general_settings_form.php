@@ -21,11 +21,6 @@ use tool_vault\local\helpers\ui;
 use tool_vault\local\uiactions\settings_forgetapikey;
 use tool_vault\local\uiactions\settings_general;
 
-defined('MOODLE_INTERNAL') || die();
-
-global $CFG;
-require_once($CFG->libdir . '/formslib.php');
-
 /**
  * General settings
  *
@@ -33,12 +28,7 @@ require_once($CFG->libdir . '/formslib.php');
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class general_settings_form extends \moodleform {
-
-    /** @var bool */
-    protected $editable = true;
-    /** @var \moodle_url */
-    protected $action = null;
+class general_settings_form extends base_settings_form {
 
     /**
      * Constructor
@@ -46,9 +36,8 @@ class general_settings_form extends \moodleform {
      * @param bool $editable
      */
     public function __construct(bool $editable = false) {
-        $this->editable = $editable;
         $this->action = settings_general::url(['returnurl' => $this->get_redirect_url()->out_as_local_url(false)]);
-        parent::__construct(new \moodle_url($this->action), null, 'post', '', null, $this->editable);
+        parent::__construct($editable);
     }
 
     /**

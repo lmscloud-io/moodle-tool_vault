@@ -17,12 +17,8 @@
 namespace tool_vault\form;
 
 use tool_vault\api;
+use tool_vault\local\helpers\siteinfo;
 use tool_vault\local\uiactions\settings_restore;
-
-defined('MOODLE_INTERNAL') || die();
-
-global $CFG;
-require_once($CFG->libdir . '/formslib.php');
 
 /**
  * Restore settings
@@ -31,12 +27,14 @@ require_once($CFG->libdir . '/formslib.php');
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class restore_settings_form extends \moodleform {
-
-    /** @var bool */
-    protected $editable = true;
-    /** @var \moodle_url */
-    protected $action = null;
+class restore_settings_form extends base_settings_form {
+    /** @var string[] */
+    protected $settingsnames = [
+        'allowrestore',
+        'removemissing',
+        'restorepreserveplugins',
+        'restorepreservedataroot'
+    ];
 
     /**
      * Constructor
@@ -44,9 +42,8 @@ class restore_settings_form extends \moodleform {
      * @param bool $editable
      */
     public function __construct(bool $editable = true) {
-        $this->editable = $editable;
         $this->action = settings_restore::url();
-        parent::__construct(new \moodle_url($this->action), null, 'post', '', null, $this->editable);
+        parent::__construct($editable);
     }
 
     /**
@@ -65,17 +62,56 @@ class restore_settings_form extends \moodleform {
             1 => get_string('yes'),
         ]);
 
-        $this->set_data([
-            'allowrestore' => (int)(bool)api::get_config('allowrestore'),
-            'removemissing' => (int)(bool)api::get_config('removemissing'),
-        ]);
-        if (!$this->editable) {
-            $mform->addElement('html',
-                \html_writer::div(\html_writer::link($this->action, 'Edit restore settings', ['class' => 'btn btn-secondary']),
-                    'pb-3'));
-        } else {
-            $this->add_action_buttons();
+        $this->add_textarea('restorepreservedataroot',
+            'Preserve paths in dataroot',
+            'All paths within dataroot folder will be removed except for: '.
+            'filedir (backed up separately), '.join(', ', siteinfo::common_excluded_dataroot_paths()).
+            '. If you want to keep more paths list them here.');
+
+        $this->add_textarea('restorepreserveplugins',
+            'Preserve plugins',
+            'Only for plugins with server-specific configuration, for example, file storage or session management. '.
+            'Restore process will attempt to preserve existing data associated with these plugins and not restore data from the '.
+            'backup if the same plugin is included. '.
+            'Note that this will only process data in plugin\'s own tables, settings, associated files, scheduled '.
+            'tasks and other known common types of plugin-related data. It may not be accurate for complicated plugins '.
+            'or plugins with dependencies.');
+
+        $this->set_data_and_add_buttons('Edit restore settings');
+    }
+
+    /**
+     * Form validation
+     *
+     * @param array $data
+     * @param array $files
+     * @return array
+     */
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+
+        $paths = $this->split_list($data['restorepreservedataroot']);
+        if ($paths) {
+            foreach ($paths as $path) {
+                if ($error = $this->validate_path($path)) {
+                    $errors['restorepreservedataroot'] = $error;
+                    break;
+                }
+            }
         }
+
+        $plugins = $this->split_list($data['restorepreserveplugins']);
+        // TODO ! this setting is not used anywhere yet
+        if ($plugins) {
+            foreach ($plugins as $plugin) {
+                if ($error = $this->validate_plugin_name($plugin)) {
+                    $errors['restorepreserveplugins'] = $error;
+                    break;
+                }
+            }
+        }
+
+        return $errors;
     }
 
     /**
@@ -85,7 +121,14 @@ class restore_settings_form extends \moodleform {
      */
     public function process() {
         $data = $this->get_data();
-        api::store_config('allowrestore', $data->allowrestore);
-        api::store_config('removemissing', $data->removemissing);
+        foreach ($this->settingsnames as $name) {
+            if (in_array('name', ['allowrestore', 'removemissing'])) {
+                $value = $data->$name;
+            } else {
+                $elements = preg_split('/[\\s,]/', trim($data->$name), -1, PREG_SPLIT_NO_EMPTY);
+                $value = join(', ', $elements);
+            }
+            api::store_config($name, $value);
+        }
     }
 }

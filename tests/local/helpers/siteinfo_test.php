@@ -16,11 +16,7 @@
 
 namespace tool_vault\local\helpers;
 
-use tool_vault\constants;
-use tool_vault\fixtures\site_backup_mock;
-use tool_vault\local\models\backup_model;
-use tool_vault\local\models\restore_model;
-use tool_vault\site_restore;
+use tool_vault\api;
 
 /**
  * The siteinfo_test test class.
@@ -35,5 +31,36 @@ class siteinfo_test extends \advanced_testcase {
     public function test_get_plugins_list_full() {
         $list = siteinfo::get_plugins_list_full(true);
         $this->assertNotEmpty($list);
+    }
+
+    public function test_unsupported_plugin_types_to_exclude() {
+        $this->assertTrue(in_array('mod', siteinfo::unsupported_plugin_types_to_exclude()));
+    }
+
+    public function test_plugin_has_xmldb_uninstall_function() {
+        $this->assertTrue(siteinfo::plugin_has_xmldb_uninstall_function('search_simpledb'));
+        $this->assertFalse(siteinfo::plugin_has_xmldb_uninstall_function('media_videojs'));
+    }
+
+    public function test_plugin_has_subplugins() {
+        $this->assertTrue(siteinfo::plugin_has_subplugins('tool_log'));
+        $this->assertFalse(siteinfo::plugin_has_subplugins('tool_mobile'));
+        $this->assertFalse(siteinfo::plugin_has_subplugins('qformat_xml'));
+    }
+
+    public function test_is_dataroot_path_skipped_backup() {
+        $this->resetAfterTest();
+        $this->assertTrue(siteinfo::is_dataroot_path_skipped_backup('sessions'));
+        $this->assertFalse(siteinfo::is_dataroot_path_skipped_backup('hellothere'));
+        api::store_config('backupexcludedataroot', 'hellothere');
+        $this->assertTrue(siteinfo::is_dataroot_path_skipped_backup('hellothere'));
+    }
+
+    public function test_is_dataroot_path_skipped_restore() {
+        $this->resetAfterTest();
+        $this->assertTrue(siteinfo::is_dataroot_path_skipped_restore('sessions'));
+        $this->assertFalse(siteinfo::is_dataroot_path_skipped_restore('hellothere'));
+        api::store_config('restorepreservedataroot', 'hellothere');
+        $this->assertTrue(siteinfo::is_dataroot_path_skipped_restore('hellothere'));
     }
 }

@@ -19,6 +19,7 @@ namespace tool_vault;
 use tool_vault\local\checks\check_base;
 use tool_vault\local\helpers\files_backup;
 use tool_vault\local\helpers\files_restore;
+use tool_vault\local\helpers\siteinfo;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
 use tool_vault\local\operations\operation_base;
@@ -331,7 +332,7 @@ class site_restore extends operation_base {
             // Delete everything from the current dataroot (this will not be executed if we resume restore).
             $handle = opendir($CFG->dataroot);
             while (($file = readdir($handle)) !== false) {
-                if (!site_backup::is_dataroot_path_skipped($file) && $file !== '.' && $file !== '..') {
+                if (!siteinfo::is_dataroot_path_skipped_restore($file) && $file !== '.' && $file !== '..') {
                     $cnt = self::remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.$file);
                     if (!file_exists($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
                         continue;

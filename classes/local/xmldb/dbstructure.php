@@ -206,15 +206,13 @@ class dbstructure {
         $DB->reset_caches();
         $tablesnames = $DB->get_tables();
         foreach ($tablesnames as $tablename) {
-            if (specialrules::is_actual_table_ignored($tablename)) {
+            $deftable = $this->find_table_definition($tablename);
+            if (!$deftable && specialrules::is_actual_table_ignored($tablename)) {
                 continue;
             }
             $table = dbtable::create_from_actual_db(strtolower(trim($tablename)), $this);
             $this->actualtables[$tablename] = $table;
-        }
-        // Fix indexes/keys and order of elements.
-        foreach ($this->get_tables_actual() as $table) {
-            $deftable = $this->find_table_definition($table->get_xmldb_table()->getName());
+            // Fix indexes/keys and order of elements.
             $table->compare_with_other_table($deftable);
         }
     }

@@ -63,35 +63,6 @@ class site_backup extends operation_base {
     }
 
     /**
-     * Should the dataroot subfolder/file be skipped from the backup
-     *
-     * @param string $path relative path under $CFG->dataroot
-     * @return bool
-     */
-    public static function is_dataroot_path_skipped(string $path): bool {
-        $defaultexcluded = in_array($path, [
-                'filedir', // Files are retrieved separately.
-                'cache',
-                'localcache',
-                'temp',
-                'sessions',
-                'trashdir',
-                'lock',
-                // For phpunit.
-                'phpunit',
-                'phpunittestdir.txt',
-                'originaldatafiles.json',
-                // Vault temp dir.
-                '__vault_restore__'
-            ]) || preg_match('/^\\./', $path);
-        if ($defaultexcluded) {
-            return true;
-        }
-        $paths = preg_split('/[\\s,]/', api::get_config('backupexcludedataroot'), -1, PREG_SPLIT_NO_EMPTY);
-        return in_array($path, $paths);
-    }
-
-    /**
      * Schedules new backup
      *
      * @param array $params
@@ -423,7 +394,7 @@ class site_backup extends operation_base {
         $pathstoexport = [];
         $handle = opendir($CFG->dataroot);
         while (($file = readdir($handle)) !== false) {
-            if (!$this->is_dataroot_path_skipped($file)
+            if (!siteinfo::is_dataroot_path_skipped_backup($file)
                     && $file !== '.' && $file !== '..'
                     && ($lastfile === null || strcmp($file, $lastfile) > 0)) {
                 $pathstoexport[] = $file;
