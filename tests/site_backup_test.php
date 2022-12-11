@@ -129,6 +129,19 @@ class site_backup_test extends \advanced_testcase {
         // Retrieve user file, just for checks.
         $userlist = json_decode(file_get_contents($dir.'/'.'user.0.json'), true);
         $this->assertEquals('admin', $userlist[2][7]);
+
+        // Retrieve config_plugins, make sure the version number for tool_vault is not included there.
+        $config = json_decode(file_get_contents($dir.'/'.'config_plugins.0.json'), true);
+        $this->assertEquals(['id', 'plugin', 'name', 'value'],
+            array_shift($config)); // Fist row are column names.
+        $f1 = array_filter($config, function($entry) {
+            return $entry[1] === 'tool_vault';
+        });
+        $f2 = array_filter($config, function($entry) {
+            return $entry[1] === 'tool_monitor';
+        });
+        $this->assertEmpty($f1);
+        $this->assertNotEmpty($f2);
     }
 
     public function test_export_dataroot() {

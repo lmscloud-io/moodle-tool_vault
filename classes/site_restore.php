@@ -17,8 +17,10 @@
 namespace tool_vault;
 
 use tool_vault\local\checks\check_base;
+use tool_vault\local\checks\plugins_restore;
 use tool_vault\local\helpers\files_backup;
 use tool_vault\local\helpers\files_restore;
+use tool_vault\local\helpers\plugindata;
 use tool_vault\local\helpers\siteinfo;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
@@ -222,9 +224,53 @@ class site_restore extends operation_base {
         foreach ($confs as $conf) {
             if ($tablename === 'config' && empty($conf['plugin'])) {
                 set_config($conf['name'], $conf['value']);
-            } else if ($tablename === 'config_plugins' && !empty($conf['plugin'])) {
+            } else if ($tablename === 'config_plugins' && !empty($conf['plugin'])
+                    && !in_array($conf['plugin'], siteinfo::get_excluded_plugins_restore())) {
                 set_config($conf['name'], $conf['value'], $conf['plugin']);
             }
+        }
+    }
+
+    /**
+     * Allows to preserve data associated with the selected plugins before the table is truncated
+     *
+     * @param dbtable $table
+     * @return array
+     * @throws \dml_exception
+     */
+    protected function preserve_some_plugins_data(dbtable $table) {
+        global $DB;
+        $tablename = $table->get_xmldb_table()->getName();
+        if (!in_array($tablename, plugindata::get_tables_with_possible_plugin_data_to_preserve())) {
+            return [];
+        }
+        $plugins = siteinfo::get_excluded_plugins_restore();
+        $backupuserid = $this->model->get_metadata()['userid'] ?? 2;
+        [$sql, $params, $fields] = plugindata::get_sql_for_plugins_data_in_table_to_preserve($tablename, $plugins, $backupuserid);
+        // TODO what if the process was aborted in the middle of this table's restore - this should better be saved in a file.
+        return $DB->get_records_select($tablename, $sql, $params, 'id', $fields);
+    }
+
+    /**
+     * Adds back preserved data associated with the selected plugins
+     *
+     * This will also remove all data associated with the selected plugins from the backup data
+     *
+     * @param dbtable $table
+     * @param array $records
+     * @return void
+     */
+    protected function restore_preserved_plugins_data(dbtable $table, array $records) {
+        global $DB;
+        $tablename = $table->get_xmldb_table()->getName();
+        if (!in_array($tablename, plugindata::get_tables_with_possible_plugin_data())) {
+            return;
+        }
+        $plugins = siteinfo::get_excluded_plugins_restore();
+        [$sql, $params] = plugindata::get_sql_for_plugins_data_in_table($tablename, $plugins);
+        $DB->delete_records_select($tablename, $sql, $params);
+        if (!empty($records)) {
+            $DB->insert_records($tablename, $records);
         }
     }
 
@@ -259,14 +305,26 @@ class site_restore extends operation_base {
             }
             $table = $tables[$tablename];
 
-            // Truncate table.
-            $DB->execute('TRUNCATE TABLE {'.$tablename.'}');
+            // The existing respective table on this site.
+            $originaltable = $this->dbstructure->get_tables_actual()[$tablename] ?? null;
+
+            if ($originaltable) {
+                // If some plugins are marked as "Preserve during restore" (tool_vault is one of them) - save the current
+                // data from this table.
+                $preservedrecords = $this->preserve_some_plugins_data($table);
+                // Truncate table.
+                $DB->delete_records($tablename);
+            } else {
+                $preservedrecords = [];
+            }
 
             // Alter table structure in the DB if needed.
-            if ($altersql = $table->get_alter_sql($this->dbstructure->get_tables_actual()[$tablename] ?? null)) {
+            if ($altersql = $table->get_alter_sql($originaltable)) {
                 try {
                     $DB->change_database_structure($altersql);
-                    $this->add_to_log('- table '.$tablename.' structure is modified');
+                    if ($originaltable) {
+                        $this->add_to_log('- table '.$tablename.' structure is modified');
+                    }
                 } catch (\Throwable $t) {
                     $this->add_to_log('- table '.$tablename.' structure is modified, failed to apply modifications: '.
                         $t->getMessage(), constants::LOGLEVEL_WARNING);
@@ -305,6 +363,9 @@ class site_restore extends operation_base {
                 $this->apply_config_overrides($tablename);
             }
 
+            // Delete data associated with the preserved plugins and re-insert their data.
+            $this->restore_preserved_plugins_data($table, $preservedrecords);
+
             // Add to log.
             $tablescnt++;
             if (time() - $lastlog > constants::LOG_FREQUENCY) {
@@ -326,7 +387,48 @@ class site_restore extends operation_base {
             ]));
         }
 
+        // Drop all extra tables.
+        $this->drop_tables_from_extra_plugins();
+
         $this->add_to_log('Finished database restore');
+    }
+
+    /**
+     * Drop tables all plugins that are "extra" (code present on this site but data absent in the backup)
+     *
+     * Because the 'config_plugins' table does not have the 'version' for these plugins,
+     * next time admin logs in to the site they will be prompted to upgrade and install them.
+     * If the database tables are present, the upgrade process will throw an exception.
+     *
+     * @return void
+     */
+    protected function drop_tables_from_extra_plugins() {
+        global $DB;
+
+        /** @var plugins_restore $precheck */
+        $precheck = $this->prechecks[plugins_restore::get_name()] ?? null;
+        if (!$precheck) {
+            return;
+        }
+        $extraplugins = $precheck->extra_plugins();
+        $extrapluginswithtables = [];
+        $extratables = [];
+        $preservedplugins = siteinfo::get_excluded_plugins_restore();
+        foreach ($this->dbstructure->get_tables_definitions() as $tablename => $table) {
+            if (array_key_exists($table->get_component(), $extraplugins)
+                    && !in_array($table->get_component(), $preservedplugins)) {
+                $extratables[$tablename] = $table;
+                $extrapluginswithtables[$table->get_component()] = 1;
+            }
+        }
+        if ($extratables) {
+            $this->add_to_log('Dropping database tables from plugins that are not present in the backup: ' .
+                join(', ', array_keys($extrapluginswithtables)).'...');
+            foreach ($extratables as $table) {
+                $DB->get_manager()->drop_table($table->get_xmldb_table());
+            }
+            $this->add_to_log('...done');
+        }
     }
 
     /**

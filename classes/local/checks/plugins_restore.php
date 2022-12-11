@@ -103,7 +103,7 @@ class plugins_restore extends check_base {
      *
      * @return array
      */
-    protected function extra_plugins(): array {
+    public function extra_plugins(): array {
         return array_filter($this->model->get_details()['list'], function($info) {
             return empty($info[0]) && !empty($info[1]);
         });

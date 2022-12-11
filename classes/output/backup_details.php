@@ -24,6 +24,7 @@ use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\operation_model;
 use tool_vault\local\models\remote_backup;
 use tool_vault\local\models\restore_model;
+use tool_vault\local\uiactions\restore;
 use tool_vault\local\uiactions\restore_dryrun;
 use tool_vault\local\uiactions\restore_remotedetails;
 use tool_vault\local\uiactions\restore_restore;
@@ -43,6 +44,8 @@ class backup_details implements \templatable {
     protected $remotebackup;
     /** @var bool */
     protected $fulldetails;
+    /** @var bool */
+    protected $isprogresspage;
 
     /**
      * Constructor
@@ -50,14 +53,17 @@ class backup_details implements \templatable {
      * @param backup_model|null $backup
      * @param remote_backup|null $remotebackup
      * @param bool $fulldetails
+     * @param bool $isprogresspage
      */
-    public function __construct(?backup_model $backup, ?remote_backup $remotebackup = null, bool $fulldetails = true) {
+    public function __construct(?backup_model $backup, ?remote_backup $remotebackup = null,
+                                bool $fulldetails = true, bool $isprogresspage = false) {
         $this->backup = $backup;
         $this->remotebackup = $remotebackup;
         if (!$backup && !$remotebackup) {
             throw new \coding_exception('Missing arguments');
         }
         $this->fulldetails = $fulldetails;
+        $this->isprogresspage = $isprogresspage;
     }
 
     /**
@@ -82,6 +88,7 @@ class backup_details implements \templatable {
             'timestarted' => ui::format_time($timestarted),
             'timefinished' => ui::format_time($timefinished),
             'description' => ui::format_description($description),
+            'isprogresspage' => $this->isprogresspage,
         ];
         if ($this->backup) {
             $rv['performedby'] = s($this->backup->get_performedby());
@@ -118,7 +125,7 @@ class backup_details implements \templatable {
             $rv['showactions'] = true;
             $rv['dryrunurl'] = restore_dryrun::url(['backupkey' => $backupkey])->out(false);
             $rv['restoreurl'] = restore_restore::url(['backupkey' => $backupkey])->out(false);
-        } else if ($this->fulldetails && $this->backup->status === constants::STATUS_FINISHED) {
+        } else if ($this->fulldetails && !$this->isprogresspage && $this->backup->status === constants::STATUS_FINISHED) {
             $error = 'This backup is not available on the server';
             // TODO explanation why:
             // - expired

@@ -76,9 +76,7 @@ if ($operation instanceof \tool_vault\local\models\backup_model) {
         $url = tool_vault\local\uiactions\backup_details::url(['id' => $operation->id]);
         echo "<p>This backup has already finished. You can access the logs <a href=\"$url\">here</a></p>";
     } else {
-        $data = (new \tool_vault\output\backup_details($operation, null))->export_for_template($renderer);
-        $data['isprogresspage'] = 1;
-        unset($data['lastdryrun']);
+        $data = (new \tool_vault\output\backup_details($operation, null, true, true))->export_for_template($renderer);
         echo $renderer->render_from_template('tool_vault/backup_details', $data);
     }
 } else if ($operation instanceof \tool_vault\local\models\restore_model) {

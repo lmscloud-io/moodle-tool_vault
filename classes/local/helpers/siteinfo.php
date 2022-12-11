@@ -37,7 +37,7 @@ class siteinfo {
     public static function get_plugins_list_full(bool $withnames = false): array {
         $list = [];
         foreach (\core_component::get_plugin_types() as $type => $unused1) {
-            $standard = \core_plugin_manager::standard_plugins_list($type);
+            $standard = \core_plugin_manager::standard_plugins_list($type) ?: [];
             foreach (\core_component::get_plugin_list($type) as $plug => $dir) {
                 $pluginname = $type.'_'.$plug;
                 $isaddon = in_array($plug, $standard) ? null : true;

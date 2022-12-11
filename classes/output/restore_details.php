@@ -32,14 +32,18 @@ use tool_vault\local\uiactions\restore_remotedetails;
 class restore_details implements \templatable {
     /** @var restore_model */
     protected $restore;
+    /** @var bool */
+    protected $isprogresspage;
 
     /**
      * Constructor
      *
      * @param restore_model $restore
+     * @param bool $isprogresspage
      */
-    public function __construct(restore_model $restore) {
+    public function __construct(restore_model $restore, bool $isprogresspage = false) {
         $this->restore = $restore;
+        $this->isprogresspage = $isprogresspage;
     }
 
     /**
@@ -49,6 +53,7 @@ class restore_details implements \templatable {
      * @return array
      */
     public function export_for_template(\renderer_base $output) {
+        global $CFG;
         $rv = [
             'title' => $this->restore->get_title(),
             'backupkey' => $this->restore->backupkey,
@@ -65,6 +70,8 @@ class restore_details implements \templatable {
             'performedby' => s($this->restore->get_performedby()),
             'restoredetailsurl' => \tool_vault\local\uiactions\restore_details::url(['id' => $this->restore->id])->out(false),
             'backupdetailsurl' => restore_remotedetails::url(['backupkey' => $this->restore->backupkey])->out(false),
+            'siteurl' => $CFG->wwwroot,
+            'isprogresspage' => $this->isprogresspage,
         ];
         return $rv;
     }
