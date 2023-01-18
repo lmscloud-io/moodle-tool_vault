@@ -136,7 +136,6 @@ export const initCollapseExpandBackupLogs = () => {
     const logslong = document.querySelector(`[data-vault-purpose="logslong"]`);
     const logsshort = document.querySelector(`[data-vault-purpose="logsshort"]`);
     if (logslong && logsshort) {
-        console.log('cp0');
         logslong.querySelector(`[data-vault-purpose="togglelogs"]`).addEventListener('click', event => {
             event.preventDefault();
             logsshort.style.display = 'block';
