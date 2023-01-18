@@ -1,7 +1,7 @@
 image: moodlehq/moodle-php-apache:7.4
 
 services:
-  - postgres:10
+  - postgres:12
   #- mysql:5.7.26
   - name: selenium/standalone-chrome:3
     alias: selenium-standalone-chrome
@@ -19,8 +19,7 @@ variables:
 #  DB: "mysqli"
 
 lms:
-  script:
-    # Dockerfile
+  before_script:
     - |
       cd ~
       apt update && apt install -y -q --no-install-recommends \
@@ -31,7 +30,7 @@ lms:
         postgresql-client \
         rsync \
         && apt clean
-      export NODE_VERSION_INSTALL=16.15.1
+      export NODE_VERSION_INSTALL=16.19.0
       mkdir $NVM_DIR || true
       curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.1/install.sh | bash \
          && . $NVM_DIR/nvm.sh \
@@ -39,11 +38,10 @@ lms:
       export NODE_PATH=$NVM_DIR/versions/node/v$NODE_VERSION_INSTALL/lib/node_modules
       export PATH=$NVM_DIR/versions/node/v$NODE_VERSION_INSTALL/bin:$PATH
       curl -sS https://getcomposer.org/installer | php -- --filename=composer --install-dir=/usr/local/bin
-      composer create-project -v -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci 3.2.1
+      composer create-project -v -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^3
       chmod u+x ci/bin/*
       umask u+x
       ln -s `pwd`/ci/bin/moodle-plugin-ci /usr/local/bin
-    # Prepare
     - export TRAVIS_BUILD_DIR="$CI_PROJECT_DIR"
     - |
       if [[ "$DB" == "mysqli" ]]; then
@@ -57,7 +55,7 @@ lms:
     - export MOODLE_BEHAT_WWWROOT="http://${IPADDRESS}:8000"
     - export MOODLE_START_BEHAT_SERVERS="NO"
     - . $NVM_DIR/nvm.sh
-    # Script
+  script:
     - cd $CI_PROJECT_DIR/..
     - moodle-plugin-ci install --db-host="$DB_HOST" --no-init -vvv
     - cd moodle
