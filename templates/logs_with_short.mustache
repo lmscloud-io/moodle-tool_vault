@@ -45,13 +45,12 @@
 </pre>
 {{/haslogsshort}}
 
-
 {{^isprogresspage}}
-    {{#haslogsshort}}
-        {{#js}}
-            require(['tool_vault/vault'], function(Vault) {
-            Vault.initCollapseExpandBackupLogs();
-            });
-        {{/js}}
-    {{/haslogsshort}}
+{{#haslogsshort}}
+{{#js}}
+    require(['tool_vault/vault'], function(Vault) {
+        Vault.initCollapseExpandBackupLogs();
+    });
+{{/js}}
+{{/haslogsshort}}
 {{/isprogresspage}}
