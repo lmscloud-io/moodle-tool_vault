@@ -15,7 +15,7 @@ Feature: Using tool vault
     And I follow "Edit restore settings"
     And I press "Cancel"
     And I click on "Overview" "link" in the "ul.nav-tabs" "css_element"
-    And I trigger cron
+    And I run the scheduled task "\tool_vault\task\cron_task"
     And I am on homepage
     And I navigate to "Server > Vault - Site migration" in site administration
     And I follow "See full report"
