@@ -263,5 +263,30 @@ function xmldb_tool_vault_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2022073000, 'tool', 'vault');
     }
 
+    if ($oldversion < 2023011800) {
+
+        // Define table tool_vault_table_files_data to be created.
+        $table = new xmldb_table('tool_vault_table_files_data');
+
+        // Adding fields to table tool_vault_table_files_data.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('restoreid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('contenthash', XMLDB_TYPE_CHAR, '40', null, null, null, null);
+
+        // Adding keys to table tool_vault_table_files_data.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Adding indexes to table tool_vault_table_files_data.
+        $table->add_index('contenthash', XMLDB_INDEX_UNIQUE, ['restoreid', 'contenthash']);
+
+        // Conditionally launch create table for tool_vault_table_files_data.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Vault savepoint reached.
+        upgrade_plugin_savepoint(true, 2023011800, 'tool', 'vault');
+    }
+
     return true;
 }

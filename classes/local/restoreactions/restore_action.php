@@ -38,6 +38,7 @@ abstract class restore_action {
     const ACTIONS = [
         'before' => [
             clear_caches::class,
+            cleanup_existing_files::class,
         ],
         'afterdb' => [
             kill_sessions::class,
@@ -48,6 +49,7 @@ abstract class restore_action {
         ],
         'afterall' => [
             uninstall_missing_plugins::class,
+            cleanup_existing_files::class,
         ],
     ];
 

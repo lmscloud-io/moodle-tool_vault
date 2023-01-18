@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="admin/tool/vault/db" VERSION="20220730" COMMENT="XMLDB file for Moodle admin/tool/vault"
+<XMLDB PATH="admin/tool/vault/db" VERSION="20230118" COMMENT="XMLDB file for Moodle admin/tool/vault"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
 >
@@ -75,6 +75,19 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="operation" TYPE="foreign" FIELDS="operationid" REFTABLE="tool_vault_operation" REFFIELDS="id"/>
       </KEYS>
+    </TABLE>
+    <TABLE NAME="tool_vault_table_files_data" COMMENT="Temporary stores data from the tables during restore">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="restoreid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="contenthash" TYPE="char" LENGTH="40" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="contenthash" UNIQUE="true" FIELDS="restoreid, contenthash"/>
+      </INDEXES>
     </TABLE>
   </TABLES>
 </XMLDB>
