@@ -27,12 +27,10 @@
 <p>You can close this window now and return to your site</p>
 
 {{#js}}
-    console.log("opener = ");
-    const opener = window.opener;
-    if (opener) {
+    if (window.opener) {
         // If we can access the opener we can reload it and close this window immediately.
         // TODO additional checks that the opener actually contains necessary elements.
-        opener.location.reload();
+        window.opener.location.reload();
         window.close();
     }
 {{/js}}
