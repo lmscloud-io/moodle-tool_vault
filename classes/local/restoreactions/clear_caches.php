@@ -35,8 +35,8 @@ class clear_caches extends restore_action {
      * @return void
      */
     public function execute(site_restore $logger, string $stage) {
-        $logger->add_to_log('Killing all sessions...');
-        \core\session\manager::kill_all_sessions();
+        $logger->add_to_log('Purging caches...');
+        purge_caches();
         $logger->add_to_log('...done');
     }
 }
