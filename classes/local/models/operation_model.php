@@ -62,7 +62,7 @@ abstract class operation_model {
     /**
      * Constructor
      *
-     * @param \stdClass $record
+     * @param \stdClass|null $record
      */
     public function __construct(?\stdClass $record = null) {
         $record = $record ?? new \stdClass();

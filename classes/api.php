@@ -132,7 +132,7 @@ class api {
      * Store a value in the special plugin config (not included in backups)
      *
      * @param string $name
-     * @param string $value
+     * @param string|null $value
      * @return void
      */
     public static function store_config(string $name, ?string $value) {

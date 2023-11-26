@@ -24,7 +24,7 @@
 
 define('CLI_SCRIPT', true);
 
-use \tool_vault\local\cli_helper;
+use tool_vault\local\cli_helper;
 
 require_once(__DIR__ . '/../../../../config.php');
 

@@ -104,7 +104,7 @@ class cli_helper {
                         if (!$backupkey) {
                             $this->cli_error(get_string('climissingargument', 'tool_vault', 'backupkey'));
                         }
-                    }
+                    },
                 ],
             ];
         }
@@ -119,7 +119,7 @@ class cli_helper {
                     } else if (!api::validate_api_key($apikey)) {
                         $this->cli_error(get_string('errorapikeynotvalid', 'tool_vault'));
                     }
-                }
+                },
             ],
         ];
         if ($this->script === self::SCRIPT_BACKUP) {
@@ -135,7 +135,7 @@ class cli_helper {
                             $this->cli_error('Description should not be longer than '.
                                 constants::DESCRIPTION_MAX_LENGTH.' characters');
                         }
-                    }
+                    },
                 ],
             ];
         }
@@ -149,7 +149,7 @@ class cli_helper {
                 'passphrase' => [
                     'description' => 'Passphrase to use for encryption',
                     'hasvalue' => 'PHRASE',
-                ]
+                ],
             ];
         }
         if ($this->script === self::SCRIPT_RESTORE) {

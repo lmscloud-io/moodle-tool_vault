@@ -302,8 +302,8 @@ class dbtable {
     /**
      * Replace fields, keys and/or indexes in this table.
      *
-     * @param \xmldb_field[] $fields
-     * @param \xmldb_object[] $keysandindexes
+     * @param \xmldb_field[]|null $fields
+     * @param \xmldb_object[]|null $keysandindexes
      * @return void
      */
     protected function replace_in_table(?array $fields = null, ?array $keysandindexes = null) {

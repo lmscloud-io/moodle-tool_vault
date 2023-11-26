@@ -40,7 +40,7 @@ class diskspace_restore extends check_base {
         $parent = $this->get_parent();
         $largestarchive = 0;
         $filetypes = [constants::FILENAME_DBSTRUCTURE, constants::FILENAME_DATAROOT, constants::FILENAME_FILEDIR,
-            constants::FILENAME_DBDUMP];
+            constants::FILENAME_DBDUMP, ];
         $origsizes = array_fill_keys($filetypes, 0);
         $sizes = array_fill_keys($filetypes, 0);
         foreach ($parent->get_files() as $file) {

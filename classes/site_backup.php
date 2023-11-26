@@ -488,16 +488,16 @@ class site_backup extends operation_base {
     private static function instance_sql_fields($filesprefix, $filesreferenceprefix) {
         // Note, these fieldnames MUST NOT overlap between the two tables,
         // else problems like MDL-33172 occur.
-        $filefields = array('contenthash', 'pathnamehash', 'contextid', 'component', 'filearea',
+        $filefields = ['contenthash', 'pathnamehash', 'contextid', 'component', 'filearea',
             'itemid', 'filepath', 'filename', 'userid', 'filesize', 'mimetype', 'status', 'source',
-            'author', 'license', 'timecreated', 'timemodified', 'sortorder', 'referencefileid');
+            'author', 'license', 'timecreated', 'timemodified', 'sortorder', 'referencefileid', ];
 
-        $referencefields = array('repositoryid' => 'repositoryid',
+        $referencefields = ['repositoryid' => 'repositoryid',
             'reference' => 'reference',
-            'lastsync' => 'referencelastsync');
+            'lastsync' => 'referencelastsync', ];
 
         // Id is specifically named to prevent overlaping between the two tables.
-        $fields = array();
+        $fields = [];
         $fields[] = $filesprefix.'.id AS id';
         foreach ($filefields as $field) {
             $fields[] = "{$filesprefix}.{$field}";

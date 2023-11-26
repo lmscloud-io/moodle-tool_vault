@@ -165,7 +165,7 @@ class files_restore_test extends \advanced_testcase {
         global $CFG;
         return $this->create_archive(constants::FILENAME_DBSTRUCTURE.'.zip',
             [constants::FILE_STRUCTURE => file_get_contents(
-                $CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/dbstructure1.xml')]);
+                $CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/dbstructure1.xml'), ]);
     }
 
     /**

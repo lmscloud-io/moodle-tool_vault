@@ -33,7 +33,7 @@ class restore_settings_form extends base_settings_form {
         'allowrestore',
         'removemissing',
         'restorepreserveplugins',
-        'restorepreservedataroot'
+        'restorepreservedataroot',
     ];
 
     /**

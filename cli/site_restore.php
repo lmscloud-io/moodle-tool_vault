@@ -25,7 +25,7 @@
 define('CLI_SCRIPT', true);
 
 use tool_vault\api;
-use \tool_vault\local\cli_helper;
+use tool_vault\local\cli_helper;
 use tool_vault\local\exceptions\api_exception;
 use tool_vault\local\helpers\ui;
 

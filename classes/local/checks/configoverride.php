@@ -36,7 +36,7 @@ class configoverride extends check_base {
         'dirroot', 'libdir',
         'yui2version', 'yui3version', 'yuipatchlevel', 'yuipatchedmodules',
         'phpunit_dataroot', 'phpunit_prefix',
-        'behat_wwwroot', 'behat_prefix', 'behat_dataroot', 'behat_dbname', 'behat_dbuser', 'behat_dbpass', 'behat_dbhost'
+        'behat_wwwroot', 'behat_prefix', 'behat_dataroot', 'behat_dbname', 'behat_dbuser', 'behat_dbpass', 'behat_dbhost',
     ];
     /** @var string[] */
     protected $usuallyexcluded = [
@@ -44,7 +44,7 @@ class configoverride extends check_base {
     ];
     /** @var string[] */
     protected $usuallyincluded = [
-        'supportemail'
+        'supportemail',
     ];
 
     /**

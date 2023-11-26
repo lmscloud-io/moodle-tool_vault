@@ -165,7 +165,7 @@ class siteinfo {
                 'phpunittestdir.txt',
                 'originaldatafiles.json',
                 // Vault temp dir.
-                '__vault_restore__'
+                '__vault_restore__',
             ]) || preg_match('/^\\./', $path);
     }
 

@@ -43,7 +43,7 @@ class restore_remotedetails extends base {
         } else {
             // Neither local nor remote backup is found.
             $data = [
-                'title' => 'Backup '.s($backupkey)
+                'title' => 'Backup '.s($backupkey),
             ];
             return $output->render_from_template('tool_vault/backup_details', $data);
         }

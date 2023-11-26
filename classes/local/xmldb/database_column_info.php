@@ -135,7 +135,7 @@ class database_column_info extends \database_column_info {
      * Fix field properties, for example default value
      *
      * @param \xmldb_field $actualfield
-     * @param dbtable $deftable
+     * @param dbtable|null $deftable
      * @return void
      */
     protected function fix_field_properties(\xmldb_field $actualfield, ?dbtable $deftable) {

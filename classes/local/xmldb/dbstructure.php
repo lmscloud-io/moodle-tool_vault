@@ -282,7 +282,7 @@ class dbstructure {
         } catch (\Throwable $e) {
             $oldval = null;
         }
-        $rs = $DB->get_recordset_sql("SHOW TABLE STATUS LIKE ?", array($prefix.'%'));
+        $rs = $DB->get_recordset_sql("SHOW TABLE STATUS LIKE ?", [$prefix.'%']);
 
         foreach ($rs as $info) {
             $table = strtolower($info->name);
