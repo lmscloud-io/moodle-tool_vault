@@ -26,6 +26,16 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['addapikey'] = 'Add API key';
+$string['allowrestore'] = 'Allow restores on this site';
+$string['allowrestore_desc'] = 'Site restore will completely remove all contents of this site and replace with the restored contents. Double check everything before enabling this option';
+$string['backupexcludedataroot'] = 'Exclude paths in dataroot';
+$string['backupexcludedataroot_desc'] = 'All paths within dataroot folder will be included in the backup except for: <b>filedir</b> (backed up separately), <b>{$a->always}</b>. If you want to exclude more paths list them here. Examples of paths that can be excluded: <b>{$a->examples}</b>';
+$string['backupexcludeplugins'] = 'Exclude plugins';
+$string['backupexcludeplugins_desc'] = "Only for plugins with server-specific configuration, for example, file storage or session management.<br>
+For other plugins include them in backup and uninstall after restore.<br>
+Note that this will only exclude data in plugin\\'s own tables, settings, associated files, scheduled tasks and other known common types of plugin-related data. It may not be accurate for complicated plugins or plugins with dependencies.";
+$string['backupexcludetables'] = 'Exclude tables';
+$string['backupexcludetables_desc'] = "Vault will back up all tables that start with the prefix '{\$a->prefix}' even if they are not listed in xmldb schemas of the core or installed plugins.<br>You can list here the extra tables that should not be backed up an asterisk ('*') to exclude all extra tables.";
 $string['backupkey'] = 'Backup key';
 $string['backupsettingsheader'] = 'Backup settings';
 $string['clidefault'] = 'Default:';
@@ -43,6 +53,17 @@ $string['managelsmvault'] = 'Manage your account';
 $string['messageprovider:statusupdate'] = 'Status update for Vault - Site migration';
 $string['passphrasewrong'] = 'Backup passphrase is not correct';
 $string['pluginname'] = 'Vault - Site migration';
+$string['pluginsettings'] = 'Vault - Site migration settings';
+$string['restorepreservedataroot'] = 'Preserve paths in dataroot';
+$string['restorepreservedataroot_desc'] = 'During restore all paths within dataroot folder will be removed except for: <b>filedir</b> (restored separately), <b>{$a->always}</b>. If you want to keep more paths list them here. Examples of the paths that can be preserved: <b>{$a->examples}</b>';
+$string['restorepreserveplugins'] = 'Preserve plugins';
+$string['restorepreserveplugins_desc'] = "Only for plugins with server-specific configuration, for example, file storage or session management. <br>
+Restore process will attempt to preserve existing data associated with these plugins and not restore data from the backup if the same plugin is included.<br>
+Note that this will only process data in plugin's own tables, settings, associated files, scheduled tasks and other known common types of plugin-related data. It may not be accurate for complicated plugins or plugins with dependencies.";
+$string['restoreremovemissing'] = 'Automatically remove missing plugins after restore';
+$string['restoreremovemissing_desc'] = "If backup contains data for the plugins that are not present in this site codebase, they will be marked as \"Missing from disk\" in the plugin overview.<br>
+- Enabling this option will automatically uninstall these plugins and remove all data associated with them from the database and file storage<br>
+- Disabling this option will leave the data in the database and you will be able to add plugins code after the restore is finished or run the uninstall script them manually.";
 $string['restoresettingsheader'] = 'Restore settings';
 $string['restoresnotallowed'] = 'Restores are not allowed on this site';
 $string['site restore'] = 'Site restore';

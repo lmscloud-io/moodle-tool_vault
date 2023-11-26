@@ -16,9 +16,7 @@
 
 namespace tool_vault\local\uiactions;
 
-use tool_vault\form\backup_settings_form;
 use tool_vault\form\general_settings_form;
-use tool_vault\form\restore_settings_form;
 
 /**
  * Tab settings
@@ -39,12 +37,6 @@ class settings extends base {
         $rv = '';
         $rv .= $output->heading(get_string('generalsettingsheader', 'tool_vault'), 3);
         $rv .= (new general_settings_form(false))->render();
-
-        $rv .= $output->heading(get_string('backupsettingsheader', 'tool_vault'), 3);
-        $rv .= (new backup_settings_form(false))->render();
-
-        $rv .= $output->heading(get_string('restoresettingsheader', 'tool_vault'), 3);
-        $rv .= (new restore_settings_form(false))->render();
 
         return $rv;
     }

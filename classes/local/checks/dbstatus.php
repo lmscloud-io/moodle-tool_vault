@@ -16,8 +16,8 @@
 
 namespace tool_vault\local\checks;
 
+use tool_vault\api;
 use tool_vault\constants;
-use tool_vault\form\backup_settings_form;
 use tool_vault\local\helpers\siteinfo;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\local\xmldb\dbtable;
@@ -118,7 +118,7 @@ class dbstatus extends check_base {
             $status = self::STATUS_INVALID;
         } else if (array_filter($result)) {
             $status = self::STATUS_MODIFIED;
-        } else if (backup_settings_form::has_backup_settings()) {
+        } else if (!empty(api::get_setting_array('backupexcludetables'))) {
             $status = self::STATUS_NOMODIFICATIONS;
         } else {
             $status = self::STATUS_CLEAN;

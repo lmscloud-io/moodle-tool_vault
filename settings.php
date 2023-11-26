@@ -23,13 +23,113 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use tool_vault\local\helpers\siteinfo;
+
 defined('MOODLE_INTERNAL') || die();
+
+global $CFG;
 
 if ($hassiteconfig) {
 
+    // Main page for the Vault (under Site administration -> Server).
     $ADMIN->add('server', new admin_externalpage('tool_vault_index', new lang_string('pluginname', 'tool_vault'),
         \tool_vault\local\helpers\ui::baseurl()));
 
+    // Page to add API key (hidden from navigation, available via direct URL).
     $ADMIN->add('server', new admin_externalpage('tool_vault_addapikey', new lang_string('addapikey', 'tool_vault'),
         new \moodle_url('/admin/tool/vault/addpikey.php'), 'moodle/site:config', true));
+
+    // Vault plugin settings (under Site administration -> Plugins -> Admin tools).
+    $settings = new admin_settingpage('tool_vault', new lang_string('pluginsettings', 'tool_vault'));
+    $ADMIN->add('tools', $settings);
+
+    $yesnooptions = [
+        0 => get_string('no'),
+        1 => get_string('yes'),
+    ];
+
+    $datarootpaths = [
+        'always' => join(', ', siteinfo::common_excluded_dataroot_paths()),
+        'examples' => join(', ', siteinfo::skipped_dataroot_path_examples()),
+    ];
+
+    // Backup settings.
+    $settings->add(new admin_setting_heading(
+        'tool_vault/backupsettings',
+        get_string('backupsettingsheader', 'tool_vault'),
+        ''
+    ));
+
+    $settings->add(new admin_setting_configtextarea(
+        'tool_vault/backupexcludetables',
+        get_string('backupexcludetables', 'tool_vault'),
+        get_string('backupexcludetables_desc', 'tool_vault', ['prefix' => $CFG->prefix]),
+        '',
+        PARAM_RAW,
+        60,
+        2
+    ));
+
+    $settings->add(new admin_setting_configtextarea(
+        'tool_vault/backupexcludedataroot',
+        get_string('backupexcludedataroot', 'tool_vault'),
+        get_string('backupexcludedataroot_desc', 'tool_vault', $datarootpaths),
+        'muc, antivirus_quarantine',
+        PARAM_RAW,
+        60,
+        2
+    ));
+
+    $settings->add(new admin_setting_configtextarea(
+        'tool_vault/backupexcludeplugins',
+        get_string('backupexcludeplugins', 'tool_vault'),
+        get_string('backupexcludeplugins_desc', 'tool_vault'),
+        '',
+        PARAM_RAW,
+        60,
+        2
+    ));
+
+    // Restore settings.
+    $settings->add(new admin_setting_heading(
+        'tool_vault/restoresettings',
+        get_string('restoresettingsheader', 'tool_vault'),
+        ''
+    ));
+
+    $settings->add(new admin_setting_configselect(
+        'tool_vault/allowrestore',
+        get_string('allowrestore', 'tool_vault'),
+        get_string('allowrestore_desc', 'tool_vault'),
+        0,
+        $yesnooptions
+    ));
+
+    $settings->add(new admin_setting_configselect(
+        'tool_vault/restoreremovemissing',
+        get_string('restoreremovemissing', 'tool_vault'),
+        get_string('restoreremovemissing_desc', 'tool_vault'),
+        0,
+        $yesnooptions
+    ));
+
+    $settings->add(new admin_setting_configtextarea(
+        'tool_vault/restorepreservedataroot',
+        get_string('restorepreservedataroot', 'tool_vault'),
+        get_string('restorepreservedataroot_desc', 'tool_vault', $datarootpaths),
+        '',
+        PARAM_RAW,
+        60,
+        2
+    ));
+
+    $settings->add(new admin_setting_configtextarea(
+        'tool_vault/restorepreserveplugins',
+        get_string('restorepreserveplugins', 'tool_vault'),
+        get_string('restorepreserveplugins_desc', 'tool_vault'),
+        '',
+        PARAM_RAW,
+        60,
+        2
+    ));
 }

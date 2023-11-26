@@ -253,7 +253,7 @@ class plugins_restore extends check_base {
             $r['missingplugins'] = $this->prepare_for_template($p);
         }
 
-        $r['removemissing'] = (int)(bool)api::get_config('removemissing');
+        $r['restoreremovemissing'] = (int)api::get_setting_checkbox('restoreremovemissing');
         $r['settingsurl'] = settings::url()->out(false);
         return $renderer->render_from_template('tool_vault/checks/plugins_restore_details', $r);
     }

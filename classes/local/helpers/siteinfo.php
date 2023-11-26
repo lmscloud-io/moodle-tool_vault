@@ -179,7 +179,7 @@ class siteinfo {
         if (self::is_dataroot_path_skipped_always($path)) {
             return true;
         }
-        $paths = preg_split('/[\\s,]/', api::get_config('backupexcludedataroot'), -1, PREG_SPLIT_NO_EMPTY);
+        $paths = api::get_setting_array('backupexcludedataroot');
         return in_array($path, $paths);
     }
 
@@ -193,8 +193,28 @@ class siteinfo {
         if (self::is_dataroot_path_skipped_always($path)) {
             return true;
         }
-        $paths = preg_split('/[\\s,]/', api::get_config('restorepreservedataroot'), -1, PREG_SPLIT_NO_EMPTY);
+        $paths = api::get_setting_array('restorepreservedataroot');
         return in_array($path, $paths);
+    }
+
+    /**
+     * Examples of the dataroot path (for the admin settings)
+     *
+     * @return string[]
+     */
+    public static function skipped_dataroot_path_examples(): array {
+        global $CFG;
+        $result = [];
+        $handle = opendir($CFG->dataroot);
+        while (($file = readdir($handle)) !== false) {
+            if (self::is_dataroot_path_skipped_always($file)) {
+                continue;
+            }
+            $result[] = $file;
+        }
+        closedir($handle);
+        $examples = ['lang', 'muc', 'antivirus_quarantine'];
+        return array_merge($examples, array_diff($result, $examples));
     }
 
     /**
@@ -203,8 +223,7 @@ class siteinfo {
      * @return array
      */
     public static function get_excluded_plugins_backup(): array {
-        $plugins = preg_split('/[\\s,]/',
-            trim(strtolower(api::get_config('backupexcludeplugins') ?? '')), -1, PREG_SPLIT_NO_EMPTY);
+        $plugins = api::get_setting_array('backupexcludeplugins');
         $plugins[] = 'tool_vault';
         return array_unique($plugins);
     }
@@ -214,8 +233,7 @@ class siteinfo {
      * @return array
      */
     public static function get_excluded_plugins_restore(): array {
-        $plugins = preg_split('/[\\s,]/',
-            trim(strtolower(api::get_config('restorepreserveplugins') ?? '')), -1, PREG_SPLIT_NO_EMPTY);
+        $plugins = api::get_setting_array('restorepreserveplugins');
         $plugins[] = 'tool_vault';
         return array_unique($plugins);
     }
@@ -232,7 +250,7 @@ class siteinfo {
         if (!$deftable) {
             // This is a table that is not present in the install.xml files of core or any plugins.
             // Exclude this table if it's name is in the 'backupexcludetables' setting.
-            $tables = preg_split('/[\\s,]/', trim(strtolower(api::get_config('backupexcludetables'))), -1, PREG_SPLIT_NO_EMPTY);
+            $tables = api::get_setting_array('backupexcludetables');
             if (in_array($CFG->prefix . $tablename, $tables)) {
                 return true;
             }
@@ -258,7 +276,8 @@ class siteinfo {
         if (!$deftable) {
             // This is a table that is not present in the install.xml files of core or any plugins.
             // Exclude this table if it's name is in the 'backupexcludetables' setting.
-            $tables = preg_split('/[\\s,]/', trim(strtolower(api::get_config('restorepreservetables'))), -1, PREG_SPLIT_NO_EMPTY);
+            $tables = api::get_setting_array('restorepreservetables');
+            // TODO this setting does not exist!
             if (in_array($CFG->prefix . $tablename, $tables)) {
                 return true;
             }

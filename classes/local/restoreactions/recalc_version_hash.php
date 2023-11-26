@@ -52,7 +52,7 @@ class recalc_version_hash extends restore_action {
      */
     public function execute(site_restore $logger, string $stage) {
         global $CFG;
-        if (!api::get_config('removemissing') && $stage == self::STAGE_AFTER_ALL) {
+        if (!api::get_setting_checkbox('restoreremovemissing') && $stage == self::STAGE_AFTER_ALL) {
             return;
         }
 

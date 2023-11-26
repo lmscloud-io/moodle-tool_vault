@@ -19,7 +19,6 @@ namespace tool_vault\form;
 use tool_vault\api;
 use tool_vault\local\helpers\siteinfo;
 use tool_vault\local\uiactions\settings;
-use tool_vault\local\uiactions\settings_backup;
 
 defined('MOODLE_INTERNAL') || die();
 

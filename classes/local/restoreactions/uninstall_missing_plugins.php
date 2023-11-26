@@ -37,7 +37,7 @@ class uninstall_missing_plugins extends restore_action {
      * @return void
      */
     public function execute(site_restore $logger, string $stage) {
-        if (!api::get_config('removemissing')) {
+        if (!api::get_setting_checkbox('restoreremovemissing')) {
             return;
         }
 

@@ -37,6 +37,7 @@ function xmldb_tool_vault_upgrade($oldversion) {
     if ($oldversion < 2022070900) {
 
         // Define table tool_vault_checks to be created.
+        // Mdlcode-disable-next-line unknown-db-tablename.
         $table = new xmldb_table('tool_vault_checks');
 
         // Adding fields to table tool_vault_checks.
@@ -145,6 +146,7 @@ function xmldb_tool_vault_upgrade($oldversion) {
     if ($oldversion < 2022071510) {
 
         // Define table tool_vault_backups to be dropped.
+        // Mdlcode-disable-next-line unknown-db-tablename.
         $table = new xmldb_table('tool_vault_backups');
 
         // Conditionally launch drop table for tool_vault_backups.
@@ -153,6 +155,7 @@ function xmldb_tool_vault_upgrade($oldversion) {
         }
 
         // Define table tool_vault_restores to be dropped.
+        // Mdlcode-disable-next-line unknown-db-tablename.
         $table = new xmldb_table('tool_vault_restores');
 
         // Conditionally launch drop table for tool_vault_restores.
@@ -161,6 +164,7 @@ function xmldb_tool_vault_upgrade($oldversion) {
         }
 
         // Define table tool_vault_checks to be dropped.
+        // Mdlcode-disable-next-line unknown-db-tablename.
         $table = new xmldb_table('tool_vault_checks');
 
         // Conditionally launch drop table for tool_vault_checks.
@@ -172,17 +176,10 @@ function xmldb_tool_vault_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2022071510, 'tool', 'vault');
     }
 
-    if ($oldversion < 2022071702) {
-
-        \tool_vault\api::insert_default_config();
-
-        // Vault savepoint reached.
-        upgrade_plugin_savepoint(true, 2022071702, 'tool', 'vault');
-    }
-
     if ($oldversion < 2022072303) {
 
         // Define table tool_vault_backup_files to be dropped.
+        // Mdlcode-disable-next-line unknown-db-tablename.
         $table = new xmldb_table('tool_vault_backup_files');
 
         // Conditionally launch drop table for tool_vault_backup_files.

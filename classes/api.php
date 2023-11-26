@@ -36,10 +36,10 @@ class api {
     const FRONTENDURL = 'https://lmsvault.io';
 
     /**
-     * Get a value from the special plugin config (not included in backups)
+     * Get a value from the special plugin config
      *
      * @param string $name
-     * @return null
+     * @return string|null
      */
     public static function get_config(string $name) {
         global $DB, $CFG;
@@ -51,14 +51,27 @@ class api {
     }
 
     /**
-     * Default config on installation
+     * Get a value from the special plugin config as a list of unique values
      *
-     * @return void
+     * @param string $name
+     * @return string[]
      */
-    public static function insert_default_config() {
-        if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
-            self::store_config('backupexcludedataroot', 'muc, antivirus_quarantine');
-        }
+    public static function get_setting_array(string $name): array {
+        global $DB, $CFG;
+        $values = preg_split('/[\\s,]+/',
+            trim(strtolower(get_config('tool_vault', $name) ?? '')), -1, PREG_SPLIT_NO_EMPTY);
+        return array_values(array_unique($values));
+    }
+
+    /**
+     * Get a value from the special plugin config as a list of unique values
+     *
+     * @param string $name
+     * @return bool
+     */
+    public static function get_setting_checkbox(string $name): bool {
+        global $DB, $CFG;
+        return (bool)get_config('tool_vault', $name);
     }
 
     /**
@@ -85,7 +98,7 @@ class api {
     /**
      * Get currently stored API key
      *
-     * @return null
+     * @return string|null
      */
     public static function get_api_key() {
         return self::get_config('apikey');
@@ -125,7 +138,7 @@ class api {
      * @return bool
      */
     public static function are_restores_allowed(): bool {
-        return (bool)self::get_config('allowrestore');
+        return self::get_setting_checkbox('allowrestore');
     }
 
     /**

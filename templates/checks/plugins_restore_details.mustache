@@ -60,18 +60,18 @@
 
 {{#hasmissing}}
 <p>
-    <span class="badge {{#removemissing}}badge-info{{/removemissing}}{{^removemissing}}badge-warning{{/removemissing}}">Missing plugins</span>
+    <span class="badge {{#restoreremovemissing}}badge-info{{/restoreremovemissing}}{{^restoreremovemissing}}badge-warning{{/restoreremovemissing}}">Missing plugins</span>
     The following plugins are present in the backup but are not installed on this site. After the restore
     these plugins will be listed as "Missing form disk", you can choose to uninstall them or keep the
     data until you add the code for the plugins. Until then, you may experience errors, for example,
     missing scheduled tasks.
 </p>
-{{#removemissing}}
+{{#restoreremovemissing}}
     <p><strong>Missing plugins will be automatically removed after restore. <a href="{{settingsurl}}">Change</a></strong></p>
-{{/removemissing}}
-{{^removemissing}}
+{{/restoreremovemissing}}
+{{^restoreremovemissing}}
     <p><strong>You can choose to automatically remove missing plugins after restore in the <a href="{{settingsurl}}">settings</a></strong></p>
-{{/removemissing}}
+{{/restoreremovemissing}}
 {{#missingplugins}}
     {{> tool_vault/checks/plugins_restore_details_table}}
 {{/missingplugins}}
