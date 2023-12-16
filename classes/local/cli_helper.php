@@ -31,6 +31,8 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/clilib.php');
 
+// phpcs:disable Squiz.PHP.CommentedOutCode.Found
+
 /**
  * Help functions for CLI scripts
  *
@@ -168,7 +170,7 @@ class cli_helper {
      * Print help for export
      */
     public function print_help(): void {
-        // Mdlcode assume: $this->script ['backup', 'restore', 'list']
+        // Mdlcode assume: $this->script ['backup', 'restore', 'list'].
         $this->cli_writeln(get_string('clititle' . $this->script, 'tool_vault'));
         $this->cli_writeln('');
         $this->print_help_options($this->options_definitions());

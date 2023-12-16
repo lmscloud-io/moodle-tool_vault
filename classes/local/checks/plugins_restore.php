@@ -253,7 +253,7 @@ class plugins_restore extends check_base {
         }
 
         $r['restoreremovemissing'] = (int)api::get_setting_checkbox('restoreremovemissing');
-        $r['settingsurl'] = (new moodle_url('/admin/settings.php', ['section'=>'tool_vault']))->out(false);
+        $r['settingsurl'] = (new moodle_url('/admin/settings.php', ['section' => 'tool_vault']))->out(false);
         return $renderer->render_from_template('tool_vault/checks/plugins_restore_details', $r);
     }
 

@@ -50,7 +50,7 @@ class main extends base {
             'pixbaseurl' => $CFG->wwwroot . '/admin/tool/vault/pix',
             'mainurl' => $CFG->wwwroot . '/admin/tool/vault/index.php',
             'allowrestore' => api::are_restores_allowed(),
-            'settingsurl' => (new moodle_url('/admin/settings.php', ['section'=>'tool_vault']))->out(false),
+            'settingsurl' => (new moodle_url('/admin/settings.php', ['section' => 'tool_vault']))->out(false),
             'registrationform' => $this->registration_form($output),
             'isregistered' => api::is_registered(),
             'registrationinfo' => $registrationinfo ?? null,

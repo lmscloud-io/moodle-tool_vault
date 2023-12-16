@@ -84,7 +84,6 @@ class backup extends base {
         $rv = $output->render_from_template('tool_vault/section_backup',
             $this->export_for_template($output));
 
-
         foreach (\tool_vault\local\checks\check_base::get_all_checks() as $check) {
             $data = (new check_display($check))->export_for_template($output);
             $rv .= $output->render_from_template('tool_vault/check_summary', $data);

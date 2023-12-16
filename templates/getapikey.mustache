@@ -29,9 +29,9 @@
     <p>Create an account on {{vaulturl}} to be able to backup or restore the site.
     With the <b>free account</b> you will be able to backup and restore small sites and store them up to 7 days on the server.</p>
     <div>
-        <input type="button" id="getapikey_signin" data-target="{{loginsrc}}" value="Sign In" />
-        <input type="button" id="getapikey_signup" data-target="{{loginsrc}}&tab=signup" value="Create account" />
-        <input type="button" id="getapikey_enterapikey" value="I have an API key" />
+        <input type="button" id="getapikey_signin" data-target="{{loginsrc}}" value="{{#str}} remotesignin, tool_vault {{/str}}" >
+        <input type="button" id="getapikey_signup" data-target="{{loginsrc}}&tab=signup" value="{{#str}} remotesignup, tool_vault {{/str}}" >
+        <input type="button" id="getapikey_enterapikey" value="{{#str}} enterapikey, tool_vault {{/str}}" >
     </div>
     <div>
         <iframe id="getapikey_iframe" src="about:blank" width="800" height="500" style="display:none">
