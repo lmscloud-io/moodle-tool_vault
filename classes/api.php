@@ -337,7 +337,8 @@ class api {
         $encryptionkey = $sitebackup->get_model()->get_details()['encryptionkey'] ?? '';
         $options = [
             'CURLOPT_TIMEOUT' => constants::REQUEST_S3_TIMEOUT,
-            'CURLOPT_HTTPHEADER' => array_merge(self::prepare_s3_headers($encryptionkey), ["Content-type: $contenttype"]),
+            'CURLOPT_HTTPHEADER' => array_merge(self::prepare_s3_headers($encryptionkey),
+                $result['uploadheaders'] ?? []),
             'CURLOPT_RETURNTRANSFER' => 1,
             'CURLOPT_USERPWD' => '',
         ];
