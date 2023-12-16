@@ -168,7 +168,8 @@ class cli_helper {
      * Print help for export
      */
     public function print_help(): void {
-        $this->cli_writeln(get_string('clititle'.$this->script, 'tool_vault'));
+        // Mdlcode assume: $this->script ['backup', 'restore', 'list']
+        $this->cli_writeln(get_string('clititle' . $this->script, 'tool_vault'));
         $this->cli_writeln('');
         $this->print_help_options($this->options_definitions());
         $this->cli_writeln('');

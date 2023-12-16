@@ -33,12 +33,11 @@ $string['backupexcludedataroot_desc'] = 'All paths within dataroot folder will b
 $string['backupexcludeplugins'] = 'Exclude plugins';
 $string['backupexcludeplugins_desc'] = "Only for plugins with server-specific configuration, for example, file storage or session management.<br>
 For other plugins include them in backup and uninstall after restore.<br>
-Note that this will only exclude data in plugin\\'s own tables, settings, associated files, scheduled tasks and other known common types of plugin-related data. It may not be accurate for complicated plugins or plugins with dependencies.";
+Note that this will only exclude data in plugin's own tables, settings, associated files, scheduled tasks and other known common types of plugin-related data. It may not be accurate for complicated plugins or plugins with dependencies.";
 $string['backupexcludetables'] = 'Exclude tables';
 $string['backupexcludetables_desc'] = "Vault will back up all tables that start with the prefix '{\$a->prefix}' even if they are not listed in xmldb schemas of the core or installed plugins.<br>You can list here the extra tables that should not be backed up an asterisk ('*') to exclude all extra tables.";
 $string['backupkey'] = 'Backup key';
 $string['backupsettingsheader'] = 'Backup settings';
-$string['clidefault'] = 'Default:';
 $string['clihelp'] = 'Print out this help';
 $string['climissingargument'] = 'Argument --{$a} is required';
 $string['clititlebackup'] = 'Command line site backup';
@@ -46,7 +45,6 @@ $string['clititlelist'] = 'Command line remote backup list';
 $string['clititlerestore'] = 'Command line site restore';
 $string['errorapikeynotvalid'] = 'API key not valid';
 $string['errorrestorenotallowed'] = 'Restores are not allowed on this site.';
-$string['generalsettingsheader'] = 'General';
 $string['history'] = 'History';
 $string['logoutfromvault'] = 'Forget API key';
 $string['logrestoredtables'] = 'Restored {$a->cnt}/{$a->totalcnt} tables ({$a->percent}%)';

@@ -36,15 +36,15 @@ class siteinfo {
      */
     public static function get_plugins_list_full(bool $withnames = false): array {
         $list = [];
-        foreach (\core_component::get_plugin_types() as $type => $unused1) {
+        foreach (core_component::get_plugin_types() as $type => $unused1) {
             $standard = \core_plugin_manager::standard_plugins_list($type) ?: [];
-            foreach (\core_component::get_plugin_list($type) as $plug => $dir) {
+            foreach (core_component::get_plugin_list($type) as $plug => $dir) {
                 $pluginname = $type.'_'.$plug;
                 $isaddon = in_array($plug, $standard) ? null : true;
                 $list[$pluginname] = array_filter([
                     'version' => get_config($pluginname, 'version'),
                     'isaddon' => $isaddon,
-                    'parent' => \core_component::get_subtype_parent($type),
+                    'parent' => core_component::get_subtype_parent($type),
                     'name' => ($withnames || $isaddon) ? self::get_plugin_name($pluginname) : null,
                 ]);
             }
@@ -94,6 +94,7 @@ class siteinfo {
             if (file_exists($uninstalllib)) {
                 require_once($uninstalllib);
                 $uninstallfunction = 'xmldb_' . $plugin . '_uninstall';
+                // Mdlcode-disable-next-line cannot-parse-callback.
                 if (function_exists($uninstallfunction)) {
                     return true;
                 }

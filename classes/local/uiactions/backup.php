@@ -17,7 +17,6 @@
 namespace tool_vault\local\uiactions;
 
 use tool_vault\api;
-use tool_vault\form\general_settings_form;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\operation_model;
 use tool_vault\output\check_display;
@@ -61,8 +60,7 @@ class backup extends base {
         $result['defaultbackupdescription'] = $CFG->wwwroot.' by '.fullname($USER); // TODO string?
 
         if (!api::is_registered()) {
-            $form = new general_settings_form(false);
-            $result['registrationform'] = $form->render();
+            $result['registrationform'] = $this->registration_form($output);
             $result['canstartbackup'] = false;
         }
 

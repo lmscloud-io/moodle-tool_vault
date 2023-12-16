@@ -300,6 +300,7 @@ class site_backup extends operation_base {
             if ($lastvalue !== null) {
                 $sql .= (strlen($sql) ? ' AND ' : '') . $sortby. ' > :lastvalue';
             }
+            // Mdlcode-disable-next-line cannot-parse-db-tablename.
             $rs = $DB->get_recordset_select($table->get_xmldb_table()->getName(), $sql, $params + ['lastvalue' => $lastvalue],
                 $sortby, $fieldslist, 0, $chunksize);
             $hasrows = $rs->valid();

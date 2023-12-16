@@ -260,6 +260,7 @@ class plugindata {
                 $cols = array_map(function(\database_column_info $columninfo) use ($substituteuserid) {
                     $name = strtolower($columninfo->name);
                     return $name === 'userid' ? "{$substituteuserid} AS userid" : $name;
+                    // Mdlcode-disable-next-line cannot-parse-db-tablename.
                 }, $DB->get_columns($tablename));
                 $fields = join(', ', $cols);
             }

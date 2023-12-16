@@ -172,6 +172,7 @@ class dbstructure {
         if (isset($xmlarr['XMLDB']['#']['TABLES']['0']['#']['TABLE'])) {
             foreach ($xmlarr['XMLDB']['#']['TABLES']['0']['#']['TABLE'] as $xmltable) {
                 $name = strtolower(trim($xmltable['@']['NAME']));
+                // Mdlcode-disable-next-line cannot-parse-db-tablename.
                 $table = new xmldb_table($name);
                 $table->arr2xmldb_table($xmltable);
                 $this->backuptables[$name] = new dbtable($table, trim($xmltable['@']['COMPONENT'] ?? ''));

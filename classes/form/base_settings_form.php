@@ -18,7 +18,7 @@ namespace tool_vault\form;
 
 use tool_vault\api;
 use tool_vault\local\helpers\siteinfo;
-use tool_vault\local\uiactions\settings;
+use tool_vault\local\uiactions\main;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -27,6 +27,8 @@ require_once($CFG->libdir . '/formslib.php');
 
 /**
  * Base settings form
+ *
+ * TODO DELETE, no longer used
  *
  * @package     tool_vault
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
@@ -48,7 +50,7 @@ abstract class base_settings_form extends \moodleform {
      */
     public function __construct(bool $editable = true) {
         $this->editable = $editable;
-        $this->action = $this->action ?? settings::url();
+        $this->action = $this->action ?? main::url();
         parent::__construct(new \moodle_url($this->action), null, 'post', '', null, $this->editable);
     }
 

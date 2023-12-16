@@ -73,6 +73,7 @@ class plugindata_test extends \advanced_testcase {
             foreach ($this->pluginset_to_test() as $setname => $pluginset) {
                 // This does not assert anything, only checks for exceptions/debugging messages.
                 $r = plugindata::get_sql_for_plugins_data_in_table_to_preserve($table, $pluginset, 13);
+                // Mdlcode-disable-next-line cannot-parse-db-tablename.
                 $res = $DB->get_records_select($table, $r[0], $r[1], 'id', $r[2]);
             }
         }

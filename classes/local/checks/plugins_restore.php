@@ -16,11 +16,10 @@
 
 namespace tool_vault\local\checks;
 
+use moodle_url;
 use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\helpers\siteinfo;
-use tool_vault\local\models\dryrun_model;
-use tool_vault\local\uiactions\settings;
 
 /**
  * Check plugins version on restore
@@ -254,7 +253,7 @@ class plugins_restore extends check_base {
         }
 
         $r['restoreremovemissing'] = (int)api::get_setting_checkbox('restoreremovemissing');
-        $r['settingsurl'] = settings::url()->out(false);
+        $r['settingsurl'] = (new moodle_url('/admin/settings.php', ['section'=>'tool_vault']))->out(false);
         return $renderer->render_from_template('tool_vault/checks/plugins_restore_details', $r);
     }
 

@@ -16,28 +16,35 @@
 
 namespace tool_vault\local\uiactions;
 
-use tool_vault\form\general_settings_form;
+use tool_vault\api;
+use tool_vault\local\helpers\ui;
 
 /**
- * Tab settings
+ * Forget API key
  *
  * @package     tool_vault
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class settings extends base {
+class main_forgetapikey extends base {
 
     /**
-     * Display
-     *
-     * @param \renderer_base $output
-     * @return string
+     * Process action
      */
-    public function display(\renderer_base $output) {
-        $rv = '';
-        $rv .= $output->heading(get_string('generalsettingsheader', 'tool_vault'), 3);
-        $rv .= (new general_settings_form(false))->render();
+    public function process() {
+        require_sesskey();
+        api::set_api_key(null);
+        $returnurl = optional_param('returnurl', null, PARAM_LOCALURL);
+        $returnurl = $returnurl ? new \moodle_url($returnurl) : ui::baseurl();
+        redirect($returnurl);
+    }
 
-        return $rv;
+    /**
+     * Get URL for the current action
+     *
+     * @param array $params
+     */
+    public static function url(array $params = []) {
+        return parent::url($params + ['sesskey' => sesskey()]);
     }
 }

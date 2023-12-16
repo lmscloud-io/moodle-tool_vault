@@ -17,9 +17,12 @@
 namespace tool_vault\local\xmldb;
 
 use tool_vault\constants;
+use xmldb_field;
 use xmldb_index;
 use xmldb_key;
 use xmldb_table;
+
+// Mdlcode-disable cannot-parse-db-tablename.
 
 /**
  * Stores information about one DB table - either from definitions or from actual db
@@ -37,10 +40,10 @@ class dbtable {
     /**
      * Constructor
      *
-     * @param \xmldb_table $table
+     * @param xmldb_table $table
      * @param string $component
      */
-    public function __construct(\xmldb_table $table, string $component) {
+    public function __construct(xmldb_table $table, string $component) {
         $this->xmldbtable = $table;
         $this->component = $component;
     }
@@ -57,11 +60,11 @@ class dbtable {
     /**
      * Returns SQL used to compare the field definition
      *
-     * @param \xmldb_table $table
-     * @param \xmldb_field $field
+     * @param xmldb_table $table
+     * @param xmldb_field $field
      * @return string
      */
-    public function get_field_sql(\xmldb_table $table, \xmldb_field $field) {
+    public function get_field_sql(xmldb_table $table, xmldb_field $field) {
         global $DB;
         if ($error = $field->validateDefinition($table)) {
             // TODO do something here, otherwise getFieldSQL throws an exception.
@@ -107,7 +110,7 @@ class dbtable {
                 $sqls[] = 'PRIMARY KEY (' . implode(', ', $gen->getEncQuoted($key->getFields())) . ')';
             } else {
                 // Create the interim index, code copied from generator::getCreateTableSQL.
-                $index = new \xmldb_index('anyname');
+                $index = new xmldb_index('anyname');
                 $index->setFields($key->getFields());
                 switch ($key->getType()) {
                     case XMLDB_KEY_UNIQUE:
@@ -313,7 +316,7 @@ class dbtable {
         if ($keysandindexes === null) {
             $keysandindexes = array_merge($this->get_xmldb_table()->getKeys(), $this->get_xmldb_table()->getIndexes());
         }
-        $table = new \xmldb_table($this->get_xmldb_table()->getName());
+        $table = new xmldb_table($this->get_xmldb_table()->getName());
         foreach ($fields as $field) {
             $field->setPrevious(null);
             $field->setNext(null);
@@ -340,7 +343,7 @@ class dbtable {
      */
     public static function create_from_actual_db(string $tablename, dbstructure $structure): self {
         global $DB;
-        $xmldbtable = new \xmldb_table($tablename);
+        $xmldbtable = new xmldb_table($tablename);
         // Get fields info from ADODb.
         $dbfields = $DB->get_columns($tablename);
         if ($dbfields) {
@@ -542,7 +545,7 @@ class dbtable {
             if ($error !== null) {
                 $result[] = $error;
             }
-            if ($obj instanceof \xmldb_field) {
+            if ($obj instanceof xmldb_field) {
                 // Extra checks that are present in check_database_schema() but absent in validateDefinition().
                 if (empty($obj->getType()) || $obj->getType() == XMLDB_TYPE_DATETIME || $obj->getType() == XMLDB_TYPE_TIMESTAMP) {
                     $result[] = 'Invalid field definition in table {'.$this->get_xmldb_table()->getName().'}: field "'.

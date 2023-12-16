@@ -86,14 +86,17 @@
             </p>
         </div>
     </div>
-    {{#isregistered}}
+    {{#registrationinfo}}
     <div class="row">
         <div class="col-md-2">
             <img src="{{pixbaseurl}}/managecloud.svg" width="48" height="48">
         </div>
         <div class="col-md-10">
-            {{{registrationform}}}
+            <p>You are using API key {{apikey}} 
+            <a href="{{forgeturl}}">{{#str}} logoutfromvault, tool_vault {{/str}}</a>
+            </p>
+            <p><a href="{{vaulturl}}" target="_blank">{{#str}} managelsmvault, tool_vault {{/str}}</a><br>
         </div>
     </div>
-    {{/isregistered}}
+    {{/registrationinfo}}
 </div>

@@ -15,3 +15,30 @@
     font-size: 0.8em;
     max-width: 40%;
 }
+
+.tool_vault-apikeyrequired {
+    display: block;
+    margin-inline-start: 2px;
+    margin-inline-end: 2px;
+    padding-block-start: 0.35em;
+    padding-inline-start: 0.75em;
+    padding-inline-end: 0.75em;
+    padding-block-end: 0.625em;
+    min-inline-size: min-content;
+    border-width: 2px;
+    border-style: groove;
+    border-color: rgb(192, 192, 192);
+    border-image: initial;
+}
+
+/* .tool_vault-apikeyrequired .apiheader {
+    font-size: 1em;
+}
+
+.tool_vault-apikeyrequired .apiheader span {
+    display: inline;
+    background: #fff;
+    padding: 5px 10px;
+    position: relative;
+    top: -1.2em;
+} */

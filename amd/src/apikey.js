@@ -25,6 +25,14 @@ import DynamicForm from 'core_form/dynamicform';
 import Pending from 'core/pending';
 import Notification from 'core/notification';
 
+const SELECTORS = {
+    APIKEY_FORM_CONTAINER: '#getapikey_formplaceholder',
+    APIKEY_IFRAME: '#getapikey_iframe',
+    SIGNIN_BUTTON: '#getapikey_signin',
+    SIGNUP_BUTTON: '#getapikey_signup',
+    ENTER_KEY_BUTTON: '#getapikey_enterapikey',
+};
+
 /**
  * Open form to enter API key
  *
@@ -35,7 +43,7 @@ const openApikeyForm = (apikey = '', autoSubmit = false) => {
     const pendingPromise = new Pending('tool_vault/apikeyform:open');
     closeLoginSignupModal();
 
-    const formContainer = document.getElementById('getapikey_formplaceholder');
+    const formContainer = document.querySelector(SELECTORS.APIKEY_FORM_CONTAINER);
     const apikeyForm = new DynamicForm(formContainer, '\\tool_vault\\form\\apikey_form');
 
     // After submitting reresh the page.
@@ -51,40 +59,58 @@ const openApikeyForm = (apikey = '', autoSubmit = false) => {
         .catch(Notification.exception);
 };
 
+/**
+ * Close form to enter API key
+ */
 const closeApikeyForm = () => {
-    const formContainer = document.getElementById('getapikey_formplaceholder');
+    const formContainer = document.querySelector(SELECTORS.APIKEY_FORM_CONTAINER);
     formContainer.innerHTML = '';
 };
 
-const openLoginSignupModal = () => {
+/**
+ * Open iframe with the remote login/signup form
+ *
+ * @param {Event} e
+ */
+const openLoginSignupModal = (e) => {
     closeApikeyForm();
 
-    const loginSignupButton = document.getElementById('getapikey_loginsignup');
-    const loginSignupIframe = document.getElementById('getapikey_iframe');
-    const url = (loginSignupButton && loginSignupIframe) ? loginSignupButton.dataset.target : null;
+    const signInButton = e.target;
+    const loginSignupIframe = document.querySelector(SELECTORS.APIKEY_IFRAME);
+    const url = (signInButton && loginSignupIframe) ? signInButton.dataset.target : null;
 
     loginSignupIframe.src = url;
     loginSignupIframe.style.display = 'block';
 };
 
+/**
+ * Close iframe with the remote login/signup form
+ */
 const closeLoginSignupModal = () => {
-    const loginSignupIframe = document.getElementById('getapikey_iframe');
+    const loginSignupIframe = document.querySelector(SELECTORS.APIKEY_IFRAME);
     loginSignupIframe.style.display = 'none';
     loginSignupIframe.src = 'about:blank';
 };
 
+/**
+ * Initialise listeners on the page
+ */
 export const init = () => {
-    const loginSignupButton = document.getElementById('getapikey_loginsignup');
-    const enterApikeyButton = document.getElementById('getapikey_enterapikey');
-    const loginSignupIframe = document.getElementById('getapikey_iframe');
-    const url = (loginSignupButton && loginSignupIframe) ? loginSignupButton.dataset.target : null;
+    const signInButton = document.querySelector(SELECTORS.SIGNIN_BUTTON);
+    const signUpButton = document.querySelector(SELECTORS.SIGNUP_BUTTON);
+    const enterApikeyButton = document.querySelector(SELECTORS.ENTER_KEY_BUTTON);
+    const loginSignupIframe = document.querySelector(SELECTORS.APIKEY_IFRAME);
+    const url = (signInButton && loginSignupIframe) ? signInButton.dataset.target : null;
 
     if (!url) {
         return;
     }
     const urlHost = url.match(/^(https?:\/\/[^/]+)(.*)$/)[1];
 
-    loginSignupButton.onclick = openLoginSignupModal;
+    signInButton.onclick = openLoginSignupModal;
+    if (signUpButton) {
+        signUpButton.onclick = openLoginSignupModal;
+    }
 
     enterApikeyButton.onclick = () => openApikeyForm();
 
@@ -101,6 +127,4 @@ export const init = () => {
             }
         },
         false);
-
-
 };

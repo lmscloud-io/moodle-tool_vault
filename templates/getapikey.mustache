@@ -21,20 +21,23 @@
 
     Example context (json):
     {
+        "vaulturl": "https://lmsvault.io",
+        "loginsrc": "https://lmsvault.io/getapikey"
     }
 }}
-<p>You need to register with Vault cloud to be able to backup or restore the site.</p>
-<div>
-    <input type="button" id="getapikey_loginsignup" data-target="{{loginsrc}}" value="Login / Sign up" />
-    <input type="button" id="getapikey_enterapikey" value="I have an API key" />
-</div>
-<div>{{loginsrc}}</div>
-<div>
-    <iframe id="getapikey_iframe" src="about:blank" width="600" height="500" style="display:none">
-    </iframe>
-</div>
-<div id="getapikey_formplaceholder">
-
+<div class="tool_vault-apikeyrequired">
+    <p>Create an account on {{vaulturl}} to be able to backup or restore the site.
+    With the <b>free account</b> you will be able to backup and restore small sites and store them up to 7 days on the server.</p>
+    <div>
+        <input type="button" id="getapikey_signin" data-target="{{loginsrc}}" value="Sign In" />
+        <input type="button" id="getapikey_signup" data-target="{{loginsrc}}&tab=signup" value="Create account" />
+        <input type="button" id="getapikey_enterapikey" value="I have an API key" />
+    </div>
+    <div>
+        <iframe id="getapikey_iframe" src="about:blank" width="800" height="500" style="display:none">
+        </iframe>
+    </div>
+    <div id="getapikey_formplaceholder"></div>
 </div>
 
 {{#js}}

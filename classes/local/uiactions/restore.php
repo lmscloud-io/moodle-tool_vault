@@ -18,7 +18,6 @@ namespace tool_vault\local\uiactions;
 
 use renderer_base;
 use tool_vault\api;
-use tool_vault\form\general_settings_form;
 use tool_vault\local\exceptions\api_exception;
 use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\operation_model;
@@ -62,12 +61,11 @@ class restore extends base {
         }
 
         if (!api::is_registered()) {
-            $form = new general_settings_form(false);
-            $result['registrationform'] = $form->render();
+            $result['registrationform'] = $this->registration_form($output);
         } else {
             try {
-                $backups = \tool_vault\api::get_remote_backups();
-                $backupstime = \tool_vault\api::get_remote_backups_time();
+                $backups = api::get_remote_backups();
+                $backupstime = api::get_remote_backups_time();
                 $result['remotebackups'] = [];
                 foreach ($backups as $backup) {
                     $result['remotebackups'][] =
@@ -86,10 +84,10 @@ class restore extends base {
     /**
      * Display
      *
-     * @param \renderer_base $output
+     * @param renderer_base $output
      * @return string
      */
-    public function display(\renderer_base $output) {
+    public function display(renderer_base $output) {
         return $output->render_from_template('tool_vault/section_restore',
             $this->export_for_template($output));
     }

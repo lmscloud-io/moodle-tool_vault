@@ -75,6 +75,7 @@ class dbtable_test extends \advanced_testcase {
         $xmlarr = xmlize($xml);
         foreach ($xmlarr['XMLDB']['#']['TABLE'] as $xmltable) {
             $name = strtolower(trim($xmltable['@']['NAME']));
+            // Mdlcode-disable-next-line cannot-parse-db-tablename.
             $table = new \xmldb_table($name);
             $table->arr2xmldb_table($xmltable);
         }

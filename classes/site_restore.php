@@ -18,7 +18,6 @@ namespace tool_vault;
 
 use tool_vault\local\checks\check_base;
 use tool_vault\local\checks\plugins_restore;
-use tool_vault\local\helpers\files_backup;
 use tool_vault\local\helpers\files_restore;
 use tool_vault\local\helpers\plugindata;
 use tool_vault\local\helpers\siteinfo;
@@ -28,6 +27,8 @@ use tool_vault\local\operations\operation_base;
 use tool_vault\local\restoreactions\restore_action;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\local\xmldb\dbtable;
+
+// Mdlcode-disable cannot-parse-db-tablename.
 
 /**
  * Perform site restore

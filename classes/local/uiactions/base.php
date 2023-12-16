@@ -17,6 +17,8 @@
 namespace tool_vault\local\uiactions;
 
 use moodle_page;
+use moodle_url;
+use tool_vault\api;
 use tool_vault\local\helpers\ui;
 
 /**
@@ -126,10 +128,30 @@ abstract class base {
     /**
      * URL to return to
      *
-     * @return \moodle_url|null
+     * @return moodle_url|null
      */
-    protected function get_return_url(): ?\moodle_url {
+    protected function get_return_url(): ?moodle_url {
         $returnurl = optional_param('returnurl', null, PARAM_LOCALURL);
-        return $returnurl ? new \moodle_url($returnurl) : null;
+        return $returnurl ? new moodle_url($returnurl) : null;
+    }
+
+    /**
+     * Renders the registration form if there is no API key stored on this site
+     *
+     * @param \renderer_base $output
+     * @return string
+     */
+    protected function registration_form(\renderer_base $output): string {
+        global $CFG;
+
+        if (!api::is_registered()) {
+            $registerurl = new moodle_url(api::get_frontend_url() . '/getapikey',
+                ['siteid' => api::get_site_id(), 'siteurl' => $CFG->wwwroot]);
+            return $output->render_from_template('tool_vault/getapikey', [
+                'vaulturl' => api::get_frontend_url(),
+                'loginsrc' => $registerurl->out(false),
+            ]);
+        }
+        return '';
     }
 }
