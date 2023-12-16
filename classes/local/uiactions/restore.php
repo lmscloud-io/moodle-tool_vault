@@ -36,6 +36,15 @@ use tool_vault\output\last_operation;
 class restore extends base {
 
     /**
+     * Display name of the section (for the breadcrumb)
+     *
+     * @return string
+     */
+    public static function get_display_name(): string {
+        return get_string('siterestore', 'tool_vault');
+    }
+
+    /**
      * Function to export the renderer data in a format that is suitable for a
      * mustache template. This means:
      * 1. No complex types - only stdClass, array, int, string, float, bool
@@ -71,13 +80,6 @@ class restore extends base {
 
             $result['remotebackupsupdateurl'] = restore_updateremote::url()->out(false);
         }
-
-        $restores = restore_model::get_records(null, null, 0, 20);
-        $result['restores'] = [];
-        foreach ($restores as $restore) {
-            $result['restores'][] = (new \tool_vault\output\restore_details($restore))->export_for_template($output);
-        }
-        $result['haspastrestores'] = !empty($result['restores']);
         return $result;
     }
 

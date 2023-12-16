@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\uiactions;
 
+use moodle_page;
 use tool_vault\local\helpers\ui;
 
 /**
@@ -33,13 +34,48 @@ abstract class base {
      * @return static
      */
     public static function get_handler(): self {
-        $section = optional_param('section', '', PARAM_ALPHANUMEXT) ?: 'overview';
-        $section = class_exists('tool_vault\local\uiactions\\' . $section) ? $section : 'overview';
+        $section = optional_param('section', '', PARAM_ALPHANUMEXT) ?: 'main';
+        $section = class_exists('tool_vault\local\uiactions\\' . $section) ? $section : 'main';
 
         $action = optional_param('action', '', PARAM_ALPHANUMEXT);
         $class2 = 'tool_vault\local\uiactions\\'.$section.'_'.$action;
         $class = (strlen($action) && class_exists($class2)) ? $class2 : 'tool_vault\local\uiactions\\' . $section;
         return new $class();
+    }
+
+    /**
+     * Setup the page
+     *
+     * @param moodle_page $page
+     * @return void
+     */
+    public function page_setup(moodle_page $page): void {
+        $parts = preg_split('|\\\\|', static::class);
+        $subparts = preg_split('/_/', end($parts), 2);
+        $section = $subparts[0];
+        $action = self::get_action();
+        if ($section === 'main') {
+            return;
+        }
+
+        if ($action) {
+            $sectionclass = 'tool_vault\local\uiactions\\' . $section;
+            $sectionname = class_exists($sectionclass) ? $sectionclass::get_display_name() : ucfirst($section);
+            $page->navbar->add($sectionname, ui::baseurl(['section' => $section]));
+        }
+
+        $page->navbar->add(static::get_display_name(), static::url());
+    }
+
+    /**
+     * Display name of the section (for the breadcrumb)
+     *
+     * @return string
+     */
+    public static function get_display_name(): string {
+        // TODO make abstract
+        $parts = preg_split('|\\\\|', static::class);
+        return end($parts); // TODO
     }
 
     /**
@@ -81,7 +117,7 @@ abstract class base {
         if ($action = self::get_action()) {
             $params = ['action' => $subparts[1]] + $params;
         }
-        if ($subparts[0] !== 'overview') {
+        if ($subparts[0] !== 'main') {
             $params = ['section' => $subparts[0]] + $params;
         }
         return ui::baseurl($params);

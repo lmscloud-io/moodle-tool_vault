@@ -32,7 +32,7 @@ class ui {
      * @return \moodle_url
      */
     public static function baseurl(array $params = []): \moodle_url {
-        if (!empty($params['section']) && $params['section'] === 'overview') {
+        if (!empty($params['section']) && $params['section'] === 'main') {
             unset($params['section']);
         }
         return new \moodle_url('/admin/tool/vault/index.php', $params);

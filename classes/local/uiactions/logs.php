@@ -17,20 +17,19 @@
 namespace tool_vault\local\uiactions;
 
 use tool_vault\api;
-use tool_vault\form\general_settings_form;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\operation_model;
-use tool_vault\output\check_display;
+use tool_vault\local\models\restore_model;
 use tool_vault\output\last_operation;
 
 /**
- * Tab backup
+ * Backup/restore logs
  *
  * @package     tool_vault
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class backup extends base {
+class logs extends base {
 
     /**
      * Display name of the section (for the breadcrumb)
@@ -38,7 +37,7 @@ class backup extends base {
      * @return string
      */
     public static function get_display_name(): string {
-        return get_string('sitebackup', 'tool_vault');
+        return get_string('history', 'tool_vault');
     }
 
     /**
@@ -49,22 +48,8 @@ class backup extends base {
      */
     public function export_for_template($output): array {
         global $CFG, $USER;
-        $activeprocesses = operation_model::get_active_processes(true);
-        $lastbackup = backup_model::get_last_of([backup_model::class]);
-        $result = [
-            'canstartbackup' => empty($activeprocesses),
-            'lastoperation' => ($lastbackup && $lastbackup->show_as_last_operation()) ?
-                (new last_operation($lastbackup))->export_for_template($output) : null,
-        ];
 
-        $result['startbackupurl'] = backup_startbackup::url()->out(false);
-        $result['defaultbackupdescription'] = $CFG->wwwroot.' by '.fullname($USER); // TODO string?
-
-        if (!api::is_registered()) {
-            $form = new general_settings_form(false);
-            $result['registrationform'] = $form->render();
-            $result['canstartbackup'] = false;
-        }
+        $result = [];
 
         $backups = backup_model::get_records(null, null, 0, 20); // TODO pagination?
         $result['backups'] = [];
@@ -72,7 +57,14 @@ class backup extends base {
             $result['backups'][] = (new \tool_vault\output\backup_details($backup, null, false))->export_for_template($output);
         }
         $result['haspastbackups'] = !empty($result['backups']);
-        $result['restoreallowed'] = api::are_restores_allowed();
+
+        $restores = restore_model::get_records(null, null, 0, 20);
+        $result['restores'] = [];
+        foreach ($restores as $restore) {
+            $result['restores'][] = (new \tool_vault\output\restore_details($restore))->export_for_template($output);
+        }
+        $result['haspastrestores'] = !empty($result['restores']);
+
         return $result;
     }
 
@@ -83,15 +75,7 @@ class backup extends base {
      * @return string
      */
     public function display(\renderer_base $output) {
-        $rv = $output->render_from_template('tool_vault/section_backup',
+        return $output->render_from_template('tool_vault/logs',
             $this->export_for_template($output));
-
-
-        foreach (\tool_vault\local\checks\check_base::get_all_checks() as $check) {
-            $data = (new check_display($check))->export_for_template($output);
-            $rv .= $output->render_from_template('tool_vault/check_summary', $data);
-        }
-
-        return $rv;
     }
 }

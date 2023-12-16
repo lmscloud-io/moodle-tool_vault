@@ -1,0 +1,88 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_vault/logs
+
+    TODO describe template logs
+
+    Example context (json):
+    {
+    }
+}}
+
+
+{{#haspastbackups}}
+    <h3>Past backups on this site</h3>
+    <table class="generaltable">
+        <tr>
+            <th>Backup</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Encrypted</th>
+            <th></th>
+        </tr>
+        {{#backups}}
+            <tr>
+                <td>
+                    {{{description}}}<br>
+                    <b>Backup key:</b> <a href="{{backupdetailsurl}}">{{backupkey}}</a>
+                </td>
+                <td>{{statusstr}}</td>
+                <td>{{timestarted}}</td>
+                <td>{{encryptedstr}}</td>
+                <td>
+                    <a href="{{backupdetailsurl}}" class="btn btn-secondary">View details</a>
+                </td>
+            </tr>
+        {{/backups}}
+    </table>
+{{/haspastbackups}}
+{{^haspastbackups}}
+    <p>You don't have any past backups</p>
+{{/haspastbackups}}
+
+
+
+{{#haspastrestores}}
+    <h3>Past restores on this site</h3>
+    <table class="generaltable">
+        <tr>
+            <th>Backup</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Encrypted</th>
+            <th></th>
+        </tr>
+        {{#restores}}
+            <tr>
+                <td>
+                    {{{description}}}<br>
+                    <b>Backup key:</b> {{backupkey}}
+                </td>
+                <td>{{statusstr}}</td>
+                <td>{{timestarted}}</td>
+                <td>{{encryptedstr}}</td>
+                <td>
+                    <a href="{{restoredetailsurl}}" class="btn btn-secondary">View details</a>
+                </td>
+            </tr>
+        {{/restores}}
+    </table>
+{{/haspastrestores}}
+{{^haspastrestores}}
+    <p>You don't have any past restores</p>
+{{/haspastrestores}}

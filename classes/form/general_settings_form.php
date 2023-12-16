@@ -87,7 +87,8 @@ class general_settings_form extends base_settings_form {
                     "','MyWindow','width=800,height=600,top=100,left=100'); return false;";
                 // TODO center/resize popup: https://stackoverflow.com/questions/4068373/center-a-popup-window-on-screen .
                 $buttonregister = \html_writer::link($registerurl,
-                    'Login / Sign up', ['class' => 'btn btn-secondary', 'onclick' => $onclick]);
+                    'Login / Sign up',
+                    ['class' => 'btn btn-secondary', 'onclick' => $onclick]);
                 $addapikey = \html_writer::link($this->action, 'I have an API key', ['class' => 'btn btn-secondary']);
                 $mform->addElement('html',
                     \html_writer::div($buttonregister . ' ' . $addapikey, 'pb-3'));

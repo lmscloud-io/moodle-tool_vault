@@ -36,11 +36,11 @@ if (method_exists($PAGE, 'set_secondary_navigation')) {
 }
 
 $section->process();
+
+$section->page_setup($PAGE);
 /** @var tool_vault\output\renderer $renderer */
 $renderer = $PAGE->get_renderer('tool_vault');
 
 echo $renderer->header();
-$tabtree = new tool_vault\output\tabtree();
-echo $renderer->render($tabtree);
 echo $section->display($renderer);
 echo $renderer->footer();
