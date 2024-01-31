@@ -18,6 +18,7 @@ namespace tool_vault;
 
 use tool_vault\local\checks\check_base;
 use tool_vault\local\checks\plugins_restore;
+use tool_vault\local\helpers\dbops;
 use tool_vault\local\helpers\files_restore;
 use tool_vault\local\helpers\plugindata;
 use tool_vault\local\helpers\siteinfo;
@@ -336,15 +337,10 @@ class site_restore extends operation_base {
             foreach ($filesfortable as $filepath) {
                 $data = json_decode(file_get_contents($filepath), true);
                 if ($data) {
+                    $this->add_to_log("- File ".basename($filepath)." -- table $tablename -- inserting ".count($data)." records",
+                        constants::LOGLEVEL_VERBOSE);
                     $fields = array_shift($data);
-                    foreach ($data as $row) {
-                        try {
-                            $DB->insert_record_raw($tablename, array_combine($fields, $row), false, true, true);
-                        } catch (\Throwable $t) {
-                            $this->add_to_log("- failed to insert record with id {$row['id']} into table $tablename: ".
-                                $t->getMessage(), constants::LOGLEVEL_WARNING);
-                        }
-                    }
+                    dbops::insert_records($tablename, $fields, $data, $this);
                 }
                 unlink($filepath);
             }

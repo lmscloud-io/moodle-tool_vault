@@ -313,7 +313,7 @@ class dbstructure {
         $keys = $this->retrieve_primary_keys_postgres();
         $sequences = [];
         foreach ($keys as $key) {
-            if (preg_match("/^nextval\('([a-z|_]*)'::regclass\)$/", $key->columndefault, $matches)) {
+            if (preg_match("/^nextval\('([a-z|_]*)'::regclass\)$/", (string)$key->columndefault, $matches)) {
                 $seqname = $matches[1];
                 try {
                     $value = $DB->get_field_sql(

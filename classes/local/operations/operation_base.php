@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\operations;
 
+use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\logger;
 use tool_vault\local\models\operation_model;
@@ -91,6 +92,9 @@ abstract class operation_base implements logger {
      * @return void
      */
     public function add_to_log(string $message, string $loglevel = constants::LOGLEVEL_INFO) {
+        if ($loglevel == constants::LOGLEVEL_VERBOSE && !api::get_config('debug')) {
+            return;
+        }
         if ($this->model && $this->model->id) {
             $logrecord = $this->model->add_log($message, $loglevel);
             if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {

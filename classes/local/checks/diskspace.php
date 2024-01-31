@@ -152,7 +152,7 @@ class diskspace extends check_base {
             '<ul>'.
             '<li>Total size of files in the file storage: '.display_size($details['totalfilesize']).'</li>'.
             '<li>The largest file in the file storage: '.display_size($details['maxfilesize']).'</li>'.
-            '<li>Number of files in the file storage: '.display_size($details['countfiles']).'</li>'.
+            '<li>Number of files in the file storage: '.number_format($details['countfiles'], 0).'</li>'.
             '<li>Total number of rows in DB tables: '.number_format($details['dbrecords'], 0).'</li>'.
             '<li>Total size of DB tables (approx): '.display_size($details['dbtotalsize']).'</li>'.
             '<li>The largest DB table size (approx): '.display_size($details['dbmaxsize']).'</li>'.

@@ -273,10 +273,10 @@ abstract class operation_model {
      * @return \stdClass
      */
     public function add_log(string $message, string $loglevel = constants::LOGLEVEL_INFO): \stdClass {
+        global $DB;
         if (!$this->id) {
             throw new \coding_exception('Can not add logs, save the record first');
         }
-        global $DB;
         $record = (object)[
             'operationid' => $this->id,
             'timecreated' => time(),

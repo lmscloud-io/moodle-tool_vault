@@ -76,7 +76,7 @@ class apikey_form extends dynamic_form {
         $mform = $this->_form;
         $mform->addElement('text', 'apikey', 'API key');
         $mform->setType('apikey', PARAM_RAW);
-        $mform->addRule('name', null, 'required', null, 'client');
+        $mform->addRule('apikey', null, 'required', null, 'client');
         $this->add_action_buttons();
     }
 
