@@ -35,7 +35,12 @@
     {{> tool_vault/last_operation }}
 {{/lastoperation}}
 
-{{#isregistered}}
+{{#whyrestoresdisabled}}
+    <div class="alert alert-warning mt-2">
+        {{{.}}}
+    </div>
+{{/whyrestoresdisabled}}
+{{#remotebackupsupdateurl}}
     <h4>Remote backups</h4>
     <p>Last updated: {{remotebackupstime}} <a href="{{remotebackupsupdateurl}}">{{#pix}} i/reload, core, Refresh {{/pix}}</a></p>
 
@@ -74,6 +79,6 @@
     {{/remotebackups}}
         </tbody>
     </table>
-{{/isregistered}}
+{{/remotebackupsupdateurl}}
 
 

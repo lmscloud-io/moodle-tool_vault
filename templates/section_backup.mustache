@@ -41,6 +41,11 @@
         <input type="hidden" name="description" value="{{defaultbackupdescription}}">
         <input type="submit" value="{{#str}}startbackup, tool_vault{{/str}}" class="btn btn-primary" {{^canstartbackup}}disabled{{/canstartbackup}}>
     </form>
+    {{#whybackupdisabled}}
+        <div class="alert alert-warning mt-2">
+            {{{.}}}
+        </div>
+    {{/whybackupdisabled}}
 </div>
 
 {{#js}}

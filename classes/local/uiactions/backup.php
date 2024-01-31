@@ -48,12 +48,22 @@ class backup extends base {
      */
     public function export_for_template($output): array {
         global $CFG, $USER;
+        $whybackupdisabled = null;
         $activeprocesses = operation_model::get_active_processes(true);
+        if (!api::is_registered()) {
+            // TODO add language strings.
+            $whybackupdisabled = 'You can not start backup because you do not have API key';
+        } else if (!api::get_config('apikeycanbackup')) {
+            $whybackupdisabled = 'You can not start backup because your API key does not have backup permission';
+        } else if ($activeprocesses) {
+            $whybackupdisabled = 'You can not start backup because there is another backup in progress.';
+        }
         $lastbackup = backup_model::get_last_of([backup_model::class]);
         $result = [
-            'canstartbackup' => empty($activeprocesses),
+            'canstartbackup' => !$whybackupdisabled,
             'lastoperation' => ($lastbackup && $lastbackup->show_as_last_operation()) ?
                 (new last_operation($lastbackup))->export_for_template($output) : null,
+            'whybackupdisabled' => $whybackupdisabled,
         ];
 
         $result['startbackupurl'] = backup_startbackup::url()->out(false);

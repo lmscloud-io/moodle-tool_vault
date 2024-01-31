@@ -122,11 +122,14 @@ class api {
      * Set or forget API key
      *
      * @param string|null $apikey
+     * @param array $permissions
      * @return void
      */
-    public static function set_api_key(?string $apikey) {
+    public static function set_api_key(?string $apikey, array $permissions) {
         if ($apikey !== self::get_api_key()) {
             self::store_config('apikey', $apikey);
+            self::store_config('apikeycanbackup', !empty($permissions['canbackup']));
+            self::store_config('apikeycanrestore', !empty($permissions['canrestore']));
             self::store_config('cachedremotebackupstime', null);
             self::store_config('cachedremotebackups', null);
         }
@@ -291,27 +294,6 @@ class api {
     }
 
     /**
-     * Register (TODO temporary)
-     *
-     * @return void
-     */
-    public static function register() {
-        global $USER, $CFG;
-        $params = [
-            'secret' => defined('TOOL_VAULT_SECRET') ? TOOL_VAULT_SECRET : ($CFG->tool_vault_secret ?? ''),
-            'email' => $USER->email,
-            'name' => fullname($USER),
-        ];
-        $result = self::api_call('register', 'POST', $params, null, false);
-        if (!empty($result['apikey'])) {
-            self::set_api_key($result['apikey']);
-        } else {
-            // This should never happen, if the http response code is not 200 api_call show throw an exception.
-            throw new api_exception('Vault API did not return new API key');
-        }
-    }
-
-    /**
      * Upload a backup file to the cloud
      *
      * @param site_backup $sitebackup
@@ -367,23 +349,25 @@ class api {
      * Validate API key
      *
      * @param string $apikey
-     * @return bool
+     * @return ?array on success an array with the key 'permissions' and the value of the permissions, null otherwise
      */
     public static function validate_api_key(string $apikey) {
         if ($apikey === 'phpunit' && defined('PHPUNIT_TEST') && PHPUNIT_TEST) {
-            return true;
+            return ['canbackup' => true, 'canrestore' => ['all']];
         }
         try {
-            $result = self::api_call('validateapikey', 'GET', [], null, true, $apikey);
-            // TODO $result['permissions'] will contain API keys permissions.
+            $res = self::api_call('validateapikey', 'GET', [], null, true, $apikey);
+            if (!empty($res['permissions'])) {
+                return $res['permissions'];
+            }
+            return null;
         } catch (api_exception $e) {
             // TODO request can return 403 "This API key is already used on a different site".
             if ($e->getCode() == 401) {
-                return false;
+                return null;
             }
             throw $e;
         }
-        return true;
     }
 
     /**

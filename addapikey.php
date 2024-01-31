@@ -37,10 +37,11 @@ if (method_exists($PAGE, 'set_secondary_navigation')) {
 
 echo $OUTPUT->header();
 
-if (!\tool_vault\api::validate_api_key($apikey)) {
+$permissions = \tool_vault\api::validate_api_key($apikey);
+if (!$permissions) {
     throw new moodle_exception('errorapikeynotvalid', 'tool_vault');
 }
-\tool_vault\api::set_api_key($apikey);
+\tool_vault\api::set_api_key($apikey, $permissions);
 echo $OUTPUT->render_from_template('tool_vault/registercallback', ['apikey' => substr($apikey, -8)]);
 
 echo $OUTPUT->footer();

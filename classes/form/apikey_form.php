@@ -49,7 +49,7 @@ class apikey_form extends dynamic_form {
      */
     public function process_dynamic_submission() {
         $data = $this->get_data();
-        api::set_api_key($data->apikey);
+        api::set_api_key($data->apikey, $this->apikeypermissions);
     }
 
     /**
@@ -74,11 +74,14 @@ class apikey_form extends dynamic_form {
      */
     protected function definition() {
         $mform = $this->_form;
-        $mform->addElement('text', 'apikey', 'API key');
+        $mform->addElement('text', 'apikey', 'API key', ['style' => 'width:100%']);
         $mform->setType('apikey', PARAM_RAW);
         $mform->addRule('apikey', null, 'required', null, 'client');
         $this->add_action_buttons();
     }
+
+    /** @var ?array $apikeypermissions */
+    protected $apikeypermissions = null;
 
     /**
      * Validation
@@ -91,8 +94,11 @@ class apikey_form extends dynamic_form {
         $errors = [];
         if (!strlen($data['apikey'])) {
             $errors['apikey'] = get_string('required');
-        } else if (strlen($data['apikey']) && !api::validate_api_key($data['apikey'])) {
-            $errors['apikey'] = get_string('errorapikeynotvalid', 'tool_vault');
+        } else {
+            $this->apikeypermissions = api::validate_api_key($data['apikey']);
+            if (!$this->apikeypermissions) {
+                $errors['apikey'] = get_string('errorapikeynotvalid', 'tool_vault');
+            }
         }
         return $errors;
     }

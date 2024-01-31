@@ -33,7 +33,7 @@ class main_forgetapikey extends base {
      */
     public function process() {
         require_sesskey();
-        api::set_api_key(null);
+        api::set_api_key(null, []);
         $returnurl = optional_param('returnurl', null, PARAM_LOCALURL);
         $returnurl = $returnurl ? new \moodle_url($returnurl) : ui::baseurl();
         redirect($returnurl);

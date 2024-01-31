@@ -54,6 +54,9 @@ class main extends base {
             'registrationform' => $this->registration_form($output),
             'isregistered' => api::is_registered(),
             'registrationinfo' => $registrationinfo ?? null,
+            // These last two are not really used in this template yet.
+            'apikeycanbackup' => api::get_config('apikeycanbackup'),
+            'apikeycanrestore' => api::get_config('apikeycanrestore'),
         ]);
 
         return $rv;
