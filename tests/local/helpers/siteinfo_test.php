@@ -52,7 +52,7 @@ class siteinfo_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->assertTrue(siteinfo::is_dataroot_path_skipped_backup('sessions'));
         $this->assertFalse(siteinfo::is_dataroot_path_skipped_backup('hellothere'));
-        api::store_config('backupexcludedataroot', 'hellothere');
+        set_config('backupexcludedataroot', 'hellothere', 'tool_vault');
         $this->assertTrue(siteinfo::is_dataroot_path_skipped_backup('hellothere'));
     }
 
@@ -60,7 +60,7 @@ class siteinfo_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->assertTrue(siteinfo::is_dataroot_path_skipped_restore('sessions'));
         $this->assertFalse(siteinfo::is_dataroot_path_skipped_restore('hellothere'));
-        api::store_config('restorepreservedataroot', 'hellothere');
+        set_config('restorepreservedataroot', 'hellothere', 'tool_vault');
         $this->assertTrue(siteinfo::is_dataroot_path_skipped_restore('hellothere'));
     }
 }
