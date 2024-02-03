@@ -88,18 +88,9 @@ class remote_backup {
      */
     public function get_finished_time(): int {
         if (!in_array($this->status, [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
-            return $this->timemodified;
+            return $this->info['timefinished'] ?? $this->timemodified;
         }
         return 0;
-    }
-
-    /**
-     * Get tags
-     *
-     * @return array
-     */
-    public function get_tags(): array {
-        return $this->info['tags'] ?? [];
     }
 
     /**

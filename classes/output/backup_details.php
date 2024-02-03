@@ -109,7 +109,6 @@ class backup_details implements \templatable {
             $rv['totalsize'] = $this->remotebackup->get_total_size();
             $rv['totalsizestr'] = display_size($this->remotebackup->get_total_size());
             $rv['samesite'] = $this->remotebackup->is_same_site();
-            $rv['tags'] = s(join(', ', $this->remotebackup->get_tags()));
             if (api::are_restores_allowed()) {
                 $rv['restoreallowed'] = true;
             } else {
