@@ -122,14 +122,11 @@ class api {
      * Set or forget API key
      *
      * @param string|null $apikey
-     * @param array $permissions
      * @return void
      */
-    public static function set_api_key(?string $apikey, array $permissions) {
+    public static function set_api_key(?string $apikey) {
         if ($apikey !== self::get_api_key()) {
             self::store_config('apikey', $apikey);
-            self::store_config('apikeycanbackup', !empty($permissions['canbackup']));
-            self::store_config('apikeycanrestore', !empty($permissions['canrestore']));
             self::store_config('cachedremotebackupstime', null);
             self::store_config('cachedremotebackups', null);
         }
@@ -349,25 +346,22 @@ class api {
      * Validate API key
      *
      * @param string $apikey
-     * @return ?array on success an array with the key 'permissions' and the value of the permissions, null otherwise
+     * @return bool
      */
-    public static function validate_api_key(string $apikey) {
+    public static function validate_api_key(string $apikey): bool {
         if ($apikey === 'phpunit' && defined('PHPUNIT_TEST') && PHPUNIT_TEST) {
-            return ['canbackup' => true, 'canrestore' => ['all']];
+            return true;
         }
         try {
-            $res = self::api_call('validateapikey', 'GET', [], null, true, $apikey);
-            if (!empty($res['permissions'])) {
-                return $res['permissions'];
-            }
-            return null;
+            self::api_call('validateapikey', 'GET', [], null, true, $apikey);
         } catch (api_exception $e) {
             // TODO request can return 403 "This API key is already used on a different site".
             if ($e->getCode() == 401) {
-                return null;
+                return false;
             }
             throw $e;
         }
+        return true;
     }
 
     /**

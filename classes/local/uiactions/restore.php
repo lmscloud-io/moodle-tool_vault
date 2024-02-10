@@ -62,9 +62,9 @@ class restore extends base {
 
         if (!api::is_registered()) {
             $result['registrationform'] = $this->registration_form($output);
-        } else if (!api::get_config('apikeycanrestore')) {
-            // TODD add language strings.
-            $result['whyrestoresdisabled'] = 'You can not see remote backups because your API key does not have restore permission';
+        // } else if (!api::get_config('apikeycanrestore')) {
+        //     // TODD add language strings.
+        //     $result['whyrestoresdisabled'] = 'You can not see remote backups because your API key does not have restore permission';
         } else {
             try {
                 $backups = api::get_remote_backups();

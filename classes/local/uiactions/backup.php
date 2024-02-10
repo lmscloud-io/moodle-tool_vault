@@ -53,8 +53,6 @@ class backup extends base {
         if (!api::is_registered()) {
             // TODO add language strings.
             $whybackupdisabled = 'You can not start backup because you do not have API key';
-        } else if (!api::get_config('apikeycanbackup')) {
-            $whybackupdisabled = 'You can not start backup because your API key does not have backup permission';
         } else if ($activeprocesses) {
             $whybackupdisabled = 'You can not start backup because there is another backup in progress.';
         }
