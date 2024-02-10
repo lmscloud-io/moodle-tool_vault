@@ -1,5 +1,4 @@
 <?php
-use tool_vault\api;
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -14,6 +13,8 @@ use tool_vault\api;
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+use tool_vault\api;
 
 /**
  * Callbacks in tool_vault
@@ -36,7 +37,7 @@ function tool_vault_after_config() {
         return;
     }
 
-    if (class_exists(\tool_vault\api::class) && \tool_vault\api::is_maintenance_mode()) {
+    if (class_exists(api::class) && api::is_maintenance_mode()) {
         if (defined('CLI_SCRIPT') && CLI_SCRIPT) {
             echo "Site backup or restore is currently in progress. Aborting\n";
             exit(1);
