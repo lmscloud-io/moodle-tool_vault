@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - https://moodle.org/
+// This file is part of plugin tool_vault - https://lmsvault.io
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -55,6 +55,7 @@ $string['passphrasewrong'] = 'Backup passphrase is not correct';
 $string['pleasewait'] = 'Please wait...';
 $string['pluginname'] = 'Vault - Site migration';
 $string['pluginsettings'] = 'Vault - Site migration settings';
+$string['privacy:metadata'] = 'The Vault plugin doesn\'t store any personal data.';
 $string['remotesignin'] = 'Sign In';
 $string['remotesignup'] = 'Create account';
 $string['restorepreservedataroot'] = 'Preserve paths in dataroot';

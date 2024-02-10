@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - https://moodle.org/
+// This file is part of plugin tool_vault - https://lmsvault.io
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,8 +25,9 @@
 defined('MOODLE_INTERNAL') || die();
 
 /** @var stdClass $plugin */
-$plugin->component = 'tool_vault';
-$plugin->release = '0.1.0';
-$plugin->version = 2023011800;
-$plugin->requires = 2020061500;
-$plugin->maturity = MATURITY_ALPHA;
+$plugin->component    = 'tool_vault';
+$plugin->release      = '0.2.0';
+$plugin->version      = 2024021000;
+$plugin->requires     = 2022041900;
+$plugin->supported    = [400, 403];
+$plugin->maturity     = MATURITY_ALPHA;
