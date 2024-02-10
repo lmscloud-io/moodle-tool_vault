@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-use tool_vault\api;
-
 /**
  * Callbacks in tool_vault
  *
@@ -23,6 +21,8 @@ use tool_vault\api;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+use tool_vault\api;
 
 /**
  * Callback executed from setup.php on every page.

@@ -57,7 +57,7 @@ const submitForm = (backupForm, modal) => {
  * @param {String} fragmentName
  * @param {Number} contextid
  * @param {Object} args
- * @returns Promise
+ * @returns {Promise}
  */
 const loadFragmentWithPopup = async(title, tempBody, fragmentName, contextid, args = {}) => {
     let activeModal = null;
