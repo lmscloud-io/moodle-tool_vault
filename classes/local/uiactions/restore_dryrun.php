@@ -36,13 +36,13 @@ class restore_dryrun extends base {
         require_sesskey();
         $backupkey = required_param('backupkey', PARAM_ALPHANUMEXT);
         $passphrase = optional_param('passphrase', '', PARAM_RAW);
-        $viewurl = restore_remotedetails::url(['backupkey' => $backupkey]);
         try {
             api::validate_backup($backupkey, $passphrase);
         } catch (api_exception $e) {
             redirect(restore::url(), $e->getMessage(), 0, \core\output\notification::NOTIFY_ERROR);
         }
-        \tool_vault\site_restore_dryrun::schedule(['backupkey' => $backupkey, 'passphrase' => $passphrase]);
+        $op = \tool_vault\site_restore_dryrun::schedule(['backupkey' => $backupkey, 'passphrase' => $passphrase]);
+        $viewurl = restore_details::url(['id' => $op->get_model()->id]);
         redirect($viewurl);
     }
 

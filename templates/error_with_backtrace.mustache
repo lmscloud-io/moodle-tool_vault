@@ -41,16 +41,20 @@
 </div>
 {{#js}}
     var el = document.getElementById('{{uniqueid}}');
-    el.querySelector('.action-backtrace-show').onclick = function(e) {
-        e.preventDefault();
-        el.querySelector('.action-backtrace-hide').classList.remove('hidden');
-        el.querySelector('.action-backtrace-show').classList.add('hidden');
-        el.querySelector('.backtrace').style.display = 'inherit';
-    };
-    el.querySelector('.action-backtrace-hide').onclick = function(e) {
-        e.preventDefault();
-        el.querySelector('.action-backtrace-show').classList.remove('hidden');
-        el.querySelector('.action-backtrace-hide').classList.add('hidden');
-        el.querySelector('.backtrace').style.display = 'none';
-    };
+    var showBacktrace = el.querySelector('.action-backtrace-show');
+    var hideBacktrace = el.querySelector('.action-backtrace-hide');
+    if (showBacktrace && hideBacktrace) {
+        showBacktrace.onclick = function(e) {
+            e.preventDefault();
+            hideBacktrace.classList.remove('hidden');
+            showBacktrace.classList.add('hidden');
+            el.querySelector('.backtrace').style.display = 'inherit';
+        };
+        hideBacktrace.onclick = function(e) {
+            e.preventDefault();
+            showBacktrace.classList.remove('hidden');
+            hideBacktrace.classList.add('hidden');
+            el.querySelector('.backtrace').style.display = 'none';
+        };
+    }
 {{/js}}

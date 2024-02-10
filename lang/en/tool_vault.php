@@ -66,7 +66,7 @@ Note that this will only process data in plugin's own tables, settings, associat
 $string['restoreremovemissing'] = 'Automatically remove missing plugins after restore';
 $string['restoreremovemissing_desc'] = "If backup contains data for the plugins that are not present in this site codebase, they will be marked as \"Missing from disk\" in the plugin overview.<br>
 - Enabling this option will automatically uninstall these plugins and remove all data associated with them from the database and file storage<br>
-- Disabling this option will leave the data in the database and you will be able to add plugins code after the restore is finished or run the uninstall script them manually.";
+- Disabling this option will leave the data in the database and you will be able to add plugins code after the restore is finished or run the uninstall script manually.";
 $string['restoresettingsheader'] = 'Restore settings';
 $string['restoresnotallowed'] = 'Restores are not allowed on this site';
 $string['sitebackup'] = 'Site backup';

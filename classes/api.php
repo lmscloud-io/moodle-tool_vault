@@ -445,7 +445,7 @@ class api {
     }
 
     /**
-     * Validates that the backup exists and the passphrase is correct
+     * Validates that the backup exists, restores allowed and the passphrase is correct
      *
      * @param string $backupkey
      * @param string $passphrase
