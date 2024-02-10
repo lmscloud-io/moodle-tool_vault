@@ -91,8 +91,8 @@ jobs:
 
       - name: Install moodle-plugin-ci
         run: |
-          moodle-plugin-ci add-config "define('PHPUNIT_LONGTEST', true);"
           moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
+          moodle-plugin-ci add-config "define('PHPUNIT_LONGTEST', true);"
         env:
           DB: ${{ matrix.database }}
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
