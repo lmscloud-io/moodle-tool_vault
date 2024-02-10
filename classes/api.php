@@ -581,6 +581,17 @@ class api {
     }
 
     /**
+     * When scheduling new backup check if server allows it
+     *
+     * @return mixed
+     * @throws \moodle_exception
+     */
+    public static function precheck_backup_allowed() {
+        $info = ['precheckonly' => 1];
+        return self::api_call('backups', 'PUT', $info);
+    }
+
+    /**
      * Request backup key
      *
      * @param array $info

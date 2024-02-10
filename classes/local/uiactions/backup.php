@@ -67,7 +67,7 @@ class backup extends base {
         ];
 
         $result['startbackupurl'] = backup_startbackup::url()->out(false);
-        $result['defaultbackupdescription'] = $CFG->wwwroot.' by '.fullname($USER); // TODO string?
+        $result['contextid'] = \context_system::instance()->id;
 
         if (!api::is_registered()) {
             $result['registrationform'] = $this->registration_form($output);

@@ -52,6 +52,7 @@ $string['logrestoredtables'] = 'Restored {$a->cnt}/{$a->totalcnt} tables ({$a->p
 $string['managelsmvault'] = 'Manage your account';
 $string['messageprovider:statusupdate'] = 'Status update for Vault - Site migration';
 $string['passphrasewrong'] = 'Backup passphrase is not correct';
+$string['pleasewait'] = 'Please wait...';
 $string['pluginname'] = 'Vault - Site migration';
 $string['pluginsettings'] = 'Vault - Site migration settings';
 $string['remotesignin'] = 'Sign In';

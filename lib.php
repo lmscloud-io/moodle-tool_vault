@@ -1,4 +1,5 @@
 <?php
+use tool_vault\api;
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -47,4 +48,24 @@ function tool_vault_after_config() {
             print_maintenance_message();
         }
     }
+}
+
+/**
+ * Fragment output for the start backup popup
+ *
+ * @param array $args
+ * @return string
+ */
+function tool_vault_output_fragment_start_backup($args): string {
+    global $OUTPUT, $CFG, $USER;
+
+    $context = context_system::instance();
+    require_capability('moodle/site:config', $context);
+
+    api::precheck_backup_allowed();
+
+    $description = $CFG->wwwroot.' by '.fullname($USER); // TODO string?
+    return $OUTPUT->render_from_template('tool_vault/start_backup_popup', [
+        'description' => $description,
+    ]);
 }
