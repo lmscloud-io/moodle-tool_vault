@@ -61,7 +61,7 @@ if ($clihelper->get_cli_option('dryrun')) {
     $operation = \tool_vault\site_restore_dryrun::schedule($params);
     $operation->start((int)getmypid());
 } else {
-    if (!\tool_vault\api::are_restores_allowed()) {
+    if (!api::are_restores_allowed()) {
         cli_error(get_string('errorrestorenotallowed', 'tool_vault') . ' ' .
             'You can enable site restore for this CLI script by adding the option --allow-restore');
     }

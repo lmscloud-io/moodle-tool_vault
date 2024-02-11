@@ -92,7 +92,7 @@ class api {
             && defined('TOOL_VAULT_TEST_API_URL')) {
             return TOOL_VAULT_TEST_API_URL;
         }
-        return self::get_config('apiurl') ?: preg_replace('|^(https?://)|', '\1api.', self::get_frontend_url());
+        return self::get_config('apiurl') ?: preg_replace('|^(https?://)|', '\1v1.api.', self::FRONTENDURL);
     }
 
     /**
@@ -498,7 +498,7 @@ class api {
         if ($logger) {
             $logger->add_to_log("Downloading file $filename ...");
         }
-        $result = self::api_call("backups/$backupkey/download/$filename", 'post', ['restorekey' => $restorekey], $logger);
+        $result = self::api_call("restores/$restorekey/download/$filename", 'get', [], $logger);
         $s3url = $result['downloadurl'] ?? null;
         $encrypted = $result['encrypted'] ?? false;
 
