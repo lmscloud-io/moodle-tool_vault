@@ -32,7 +32,7 @@
         <h5 class="mb-0">
             {{{title}}}
             {{^inprogress}}{{#reschedulelink}}<a href="{{reschedulelink}}">
-                {{#pix}} i/reload, core, Check again {{/pix}}
+                {{#pix}} i/reload, core, {{#str}} checkagain, tool_vault {{/str}} {{/pix}}
             </a>{{/reschedulelink}}{{/inprogress}}
         </h5>
     </div>
@@ -42,7 +42,7 @@
         {{/subtitle}}
         <div class="card-text">
             {{#inprogress}}
-                ... Wait for cron to finish to view report ...
+                {{#str}} waitforcron, tool_vault {{/str}}
             {{/inprogress}}
             {{#errormessage}}
                 {{> tool_vault/error_with_backtrace }}
@@ -50,7 +50,7 @@
             {{{summary}}}
         </div>
         {{#showdetailslink}}
-            <p><a href="{{fullreporturl}}" class="card-link">See full report</a></p>
+            <p><a href="{{fullreporturl}}" class="card-link">{{#str}} seefullreport, tool_vault {{/str}}</a></p>
         {{/showdetailslink}}
     </div>
 </div>

@@ -29,36 +29,36 @@
 <h3>{{{title}}}</h3>
 
 {{#isprogresspage}}
-    <p>During restore the site is placed in maintenance mode. Use this page to access logs about the current process</p>
+    <p>{{#str}} restoreinprogress, tool_vault {{/str}}</p>
 {{/isprogresspage}}
 
 <table class="generaltable">
     <tr>
-        <th>Status</th>
+        <th>{{#str}} status, moodle {{/str}}</th>
         <td>{{{statusstr}}}</td>
     </tr>
     <tr>
-        <th>Performed by</th>
+        <th>{{#str}} performedby, tool_vault {{/str}}</th>
         <td>{{{performedby}}}</td>
     </tr>
     <tr>
-        <th>Started on</th>
+        <th>{{#str}} timestarted, tool_vault {{/str}}</th>
         <td>{{{timestarted}}}</td>
     </tr>
     {{#timefinished}}
         <tr>
-            <th>Finished on</th>
+            <th>{{#str}} timefinished, tool_vault {{/str}}</th>
             <td>{{{timefinished}}}</td>
         </tr>
     {{/timefinished}}
     <tr>
-        <th>Remote backup</th>
+        <th>{{#str}} remotebackup, tool_vault {{/str}}</th>
         <td><a href="{{backupdetailsurl}}">{{{backupkey}}}</a></td>
     </tr>
     {{#haslogs}}
         {{^isprogresspage}}
             <tr>
-                <th>Logs</th>
+                <th>{{#str}} logs, moodle {{/str}}</th>
                 <td>
 {{> tool_vault/logs_with_short}}
                 </td>
@@ -73,7 +73,7 @@
 
 {{#haslogs}}
     {{#isprogresspage}}
-        <h4>Backup process log</h4>
+        <h4>{{#str}} backupprocesslog, tool_vault {{/str}}</h4>
 <pre>
 {{{logs}}}
 </pre>
@@ -81,5 +81,5 @@
 {{/haslogs}}
 
 {{#timefinished}}
-    <p><a href="{{siteurl}}">Return to the site</a></p>
+    <p><a href="{{siteurl}}">{{#str}} returntothesite, tool_vault {{/str}}</a></p>
 {{/timefinished}}

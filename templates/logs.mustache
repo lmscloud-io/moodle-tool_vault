@@ -17,7 +17,7 @@
 {{!
     @template tool_vault/logs
 
-    TODO describe template logs
+    Past backups and restores on this site
 
     Example context (json):
     {
@@ -26,63 +26,63 @@
 
 
 {{#haspastbackups}}
-    <h3>Past backups on this site</h3>
+    <h3>{{#str}} pastbackupslist, tool_vault {{/str}}</h3>
     <table class="generaltable">
         <tr>
-            <th>Backup</th>
-            <th>Status</th>
-            <th>Date</th>
-            <th>Encrypted</th>
+            <th>{{#str}} backup, tool_vault {{/str}}</th>
+            <th>{{#str}} status, moodle {{/str}}</th>
+            <th>{{#str}} date, moodle {{/str}}</th>
+            <th>{{#str}} isencrypted, tool_vault {{/str}}</th>
             <th></th>
         </tr>
         {{#backups}}
             <tr>
                 <td>
                     {{{description}}}<br>
-                    <b>Backup key:</b> <a href="{{backupdetailsurl}}">{{backupkey}}</a>
+                    <b>{{#str}} backupkey, tool_vault {{/str}}:</b> <a href="{{backupdetailsurl}}">{{backupkey}}</a>
                 </td>
                 <td>{{statusstr}}</td>
                 <td>{{timestarted}}</td>
                 <td>{{encryptedstr}}</td>
                 <td>
-                    <a href="{{backupdetailsurl}}" class="btn btn-secondary">View details</a>
+                    <a href="{{backupdetailsurl}}" class="btn btn-secondary">{{#str}} viewdetails, tool_vault {{/str}}</a>
                 </td>
             </tr>
         {{/backups}}
     </table>
 {{/haspastbackups}}
 {{^haspastbackups}}
-    <p>You don't have any past backups</p>
+    <p>{{#str}} nopastbackups, tool_vault {{/str}}</p>
 {{/haspastbackups}}
 
 
 
 {{#haspastrestores}}
-    <h3>Past restores on this site</h3>
+    <h3>{{#str}} pastrestoreslist, tool_vault {{/str}}</h3>
     <table class="generaltable">
         <tr>
-            <th>Backup</th>
-            <th>Status</th>
-            <th>Date</th>
-            <th>Encrypted</th>
+            <th>{{#str}} backup, tool_vault {{/str}}</th>
+            <th>{{#str}} status, moodle {{/str}}</th>
+            <th>{{#str}} date, moodle {{/str}}</th>
+            <th>{{#str}} isencrypted, tool_vault {{/str}}</th>
             <th></th>
         </tr>
         {{#restores}}
             <tr>
                 <td>
                     {{{description}}}<br>
-                    <b>Backup key:</b> {{backupkey}}
+                    <b>{{#str}} backupkey, tool_vault {{/str}}:</b> {{backupkey}}
                 </td>
                 <td>{{statusstr}}</td>
                 <td>{{timestarted}}</td>
                 <td>{{encryptedstr}}</td>
                 <td>
-                    <a href="{{restoredetailsurl}}" class="btn btn-secondary">View details</a>
+                    <a href="{{restoredetailsurl}}" class="btn btn-secondary">{{#str}} viewdetails, tool_vault {{/str}}</a>
                 </td>
             </tr>
         {{/restores}}
     </table>
 {{/haspastrestores}}
 {{^haspastrestores}}
-    <p>You don't have any past restores</p>
+    <p>{{#str}} nopastrestores, tool_vault {{/str}}</p>
 {{/haspastrestores}}

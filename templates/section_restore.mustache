@@ -41,8 +41,10 @@
     </div>
 {{/whyrestoresdisabled}}
 {{#remotebackupsupdateurl}}
-    <h4>Remote backups</h4>
-    <p>Last updated: {{remotebackupstime}} <a href="{{remotebackupsupdateurl}}">{{#pix}} i/reload, core, Refresh {{/pix}}</a></p>
+    <h4>{{#str}} remotebackups, tool_vault {{/str}}</h4>
+    <p>{{#str}} lastupdated, tool_vault {{/str}}: {{remotebackupstime}} 
+        <a href="{{remotebackupsupdateurl}}">{{#pix}} i/reload, core, {{#str}} refresh, moodle {{/str}} {{/pix}}</a>
+    </p>
 
     {{#errormessage}}
         {{> tool_vault/error_with_backtrace }}
@@ -51,10 +53,10 @@
     <table class="generaltable">
         <thead>
             <tr>
-                <th>Backup</th>
-                <th>Date</th>
-                <th>Size</th>
-                <th>Encrypted</th>
+                <th>{{#str}} backup, tool_vault {{/str}}</th>
+                <th>{{#str}} date, moodle {{/str}}</th>
+                <th>{{#str}} size, moodle {{/str}}</th>
+                <th>{{#str}} isencrypted, tool_vault {{/str}}</th>
                 <th></th>
             </tr>
         </thead>
@@ -63,13 +65,13 @@
         <tr>
             <td>
                 {{{description}}}<br>
-                <b>Backup key:</b> <a href="{{backupdetailsurl}}">{{backupkey}}</a>
+                <b>{{#str}} backupkey, tool_vault {{/str}}:</b> <a href="{{backupdetailsurl}}">{{backupkey}}</a>
             </td>
             <td>{{timestarted}}</td>
             <td>{{totalsizestr}}</td>
             <td>{{encryptedstr}}</td>
             <td>
-                <a href="{{backupdetailsurl}}" class="btn btn-secondary">View details</a>
+                <a href="{{backupdetailsurl}}" class="btn btn-secondary">{{#str}} viewdetails, tool_vault {{/str}}</a>
                 {{#showactions}}
                     {{> tool_vault/remote_backup_buttons}}
                 {{/showactions}}
@@ -77,7 +79,7 @@
         </tr>
     {{/remotebackups}}
     {{^remotebackups}}
-        <tr><td colspan="5"><em>There are no remote backups avaiable for restore</em></td></tr>
+        <tr><td colspan="5"><em>{{#str}} nobackupsavailable, tool_vault {{/str}}</em></td></tr>
     {{/remotebackups}}
         </tbody>
     </table>

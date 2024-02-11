@@ -34,7 +34,7 @@
 
 
 {{#inprogress}}
-    <p class="mt-3 mb-3">... Wait for cron to finish to view report ...</p>
+    <p class="mt-3 mb-3">{{#str}} waitforcron, tool_vault {{/str}}</p>
 {{/inprogress}}
 
 {{#errormessage}}
@@ -57,7 +57,7 @@
 {{/prechecks}}
 
 <div>
-    <a href="{{backupurl}}" class="btn btn-secondary">View backup details</a>
+    <a href="{{backupurl}}" class="btn btn-secondary">{{#str}} viewbackupdetails, tool_vault {{/str}}</a>
     {{#showactions}}
         {{> tool_vault/remote_backup_buttons}}
     {{/showactions}}

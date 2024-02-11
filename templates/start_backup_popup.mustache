@@ -28,8 +28,8 @@
 <p>Your backup will be scheduled and performed during the next cron run. You may choose to encrypt your backup with a passphrase,
     in this case you will need to enter the same passphrase on restore. Passphrase will only be stored on your moodle site
     until the end of the backup process.</p>
-<p><label for="passphrase_startbackup">Passphrase:</label> <input type="text" name="passphrase" id="passphrase_startbackup"></p>
-<p><label for="passphrase_startbackup">Description:</label><br>
+<p><label for="passphrase_startbackup">{{#str}} passphrase, tool_vault {{/str}}:</label> <input type="text" name="passphrase" id="passphrase_startbackup"></p>
+<p><label for="passphrase_startbackup">{{#str}} description, moodle {{/str}}:</label><br>
     <input type="text" name="description" value="{{description}}"
            id="description_startbackup" style="width: 100%" maxlength="255">
 </p>

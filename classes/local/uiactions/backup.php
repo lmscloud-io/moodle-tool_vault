@@ -52,9 +52,9 @@ class backup extends base {
         $activeprocesses = operation_model::get_active_processes(true);
         if (!api::is_registered()) {
             // TODO add language strings.
-            $whybackupdisabled = 'You can not start backup because you do not have API key';
+            $whybackupdisabled = get_string('backupdisablednoapikey', 'tool_vault');
         } else if ($activeprocesses) {
-            $whybackupdisabled = 'You can not start backup because there is another backup in progress.';
+            $whybackupdisabled = get_string('backupdisabledanotherinprogress', 'tool_vault');
         }
         $lastbackup = backup_model::get_last_of([backup_model::class]);
         $result = [

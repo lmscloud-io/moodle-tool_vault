@@ -273,6 +273,6 @@ class dbstatus extends check_base {
      * @return string
      */
     public static function get_display_name(): string {
-        return 'Database modifications'; // TODO string.
+        return get_string('databasemodifications', 'tool_vault');
     }
 }

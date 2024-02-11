@@ -148,6 +148,6 @@ class diskspace_restore extends check_base {
      * @return string
      */
     public static function get_display_name(): string {
-        return "Disk space";
+        return get_string('diskspace', 'tool_vault');
     }
 }

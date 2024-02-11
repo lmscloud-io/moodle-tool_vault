@@ -87,7 +87,7 @@ class backup_details implements \templatable {
             'encrypted' => $encrypted,
             'encryptedstr' => ui::format_encrypted($encrypted),
             'totalsizestr' => $totalsizestr,
-            'title' => 'Backup '.$backupkey, // TODO string.
+            'title' => get_string('backuptitle', 'tool_vault', $backupkey),
             'timestarted' => ui::format_time($timestarted),
             'timefinished' => ui::format_time($timefinished),
             'description' => ui::format_description($description),

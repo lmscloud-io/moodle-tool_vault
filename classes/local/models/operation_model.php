@@ -504,7 +504,7 @@ abstract class operation_model {
         if (in_array($this->status, [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
             return true;
         }
-        return $this->get_last_modified() >= time() - WEEKSECS;  // Finished within last week. TODO constant?
+        return $this->get_last_modified() >= time() - DAYSECS;  // Finished within the last day.
     }
 
     /**

@@ -30,50 +30,50 @@
 
 <table class="generaltable">
     <tr>
-        <th>Description</th>
+        <th>{{#str}} description, moodle {{/str}}</th>
         <td>{{{description}}}</td>
     </tr>
     <tr>
-        <th>Status</th>
+        <th>{{#str}} status, moodle {{/str}}</th>
         <td>{{{statusstr}}}</td>
     </tr>
     {{#performedby}}
         <tr>
-            <th>Performed by</th>
+            <th>{{#str}} performedby, tool_vault {{/str}}</th>
             <td>{{{.}}}</td>
         </tr>
     {{/performedby}}
     {{#timestarted}}
         <tr>
-            <th>Started on</th>
+            <th>{{#str}} timestarted, tool_vault {{/str}}</th>
             <td>{{{.}}}</td>
         </tr>
     {{/timestarted}}
     {{#timefinished}}
         <tr>
-            <th>Finished on</th>
+            <th>{{#str}} timefinished, tool_vault {{/str}}</th>
             <td>{{{.}}}</td>
         </tr>
     {{/timefinished}}
     <tr>
-        <th>Encrypted</th>
+        <th>{{#str}} isencrypted, tool_vault {{/str}}</th>
         <td>{{{encryptedstr}}}</td>
     </tr>
     {{#totalsize}}
         <tr>
-            <th>Total size (archived)</th>
+            <th>{{#str}} totalsizearchived, tool_vault {{/str}}</th>
             <td>{{{totalsizestr}}}</td>
         </tr>
     {{/totalsize}}
     {{^isprogresspage}}
         <tr>
-            <th>Logs</th>
+            <th>{{#str}} logs, moodle {{/str}}</th>
             <td>
 {{#haslogs}}
 {{> tool_vault/logs_with_short}}
 {{/haslogs}}
                 {{^haslogs}}
-                    Not available (backup was performed on a different site)
+                    {{#str}} logsnotavailable, tool_vault {{/str}}
                 {{/haslogs}}
             </td>
         </tr>
@@ -82,7 +82,7 @@
 
 {{#haslogs}}
     {{#isprogresspage}}
-        <h4>Backup process log</h4>
+        <h4>{{#str}} backupprocesslog, tool_vault {{/str}}</h4>
 <pre>
 {{{logs}}}
 </pre>

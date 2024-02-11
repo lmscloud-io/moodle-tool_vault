@@ -121,6 +121,6 @@ class version_restore extends check_base {
      * @return string
      */
     public static function get_display_name(): string {
-        return "Moodle version";
+        return get_string('moodleversion', 'moodle');
     }
 }

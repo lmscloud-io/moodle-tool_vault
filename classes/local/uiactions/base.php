@@ -77,7 +77,7 @@ abstract class base {
     public static function get_display_name(): string {
         // TODO make abstract .
         $parts = preg_split('|\\\\|', static::class);
-        return end($parts); // TODO .
+        return end($parts);
     }
 
     /**

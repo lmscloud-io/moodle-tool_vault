@@ -323,7 +323,6 @@ class api {
 
         // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
         if (!preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
-            // TODO string?
             throw new \moodle_exception('Vault API did not return a valid upload link '.$filename);
         }
 
@@ -369,7 +368,6 @@ class api {
         try {
             self::api_call('validateapikey', 'GET', [], null, true, $apikey);
         } catch (api_exception $e) {
-            // TODO request can return 403 "This API key is already used on a different site".
             if ($e->getCode() == 401) {
                 return false;
             }

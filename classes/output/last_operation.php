@@ -75,8 +75,8 @@ class last_operation implements \templatable {
             }
 
         } else if ($operation instanceof restore_model) {
-            $this->title = $operation->get_title(); // TODO.
-            $this->text = $operation->get_subtitle(); // TODO.
+            $this->title = $operation->get_title();
+            $this->text = $operation->get_subtitle();
             if ($operation->status === constants::STATUS_SCHEDULED) {
                 $this->title = 'Restore scheduled';
                 $this->text = 'Your restore is scheduled and will be executed during the next cron run';
@@ -124,7 +124,7 @@ class last_operation implements \templatable {
      * @return bool
      */
     protected function is_success(): bool {
-        return !$this->isfailed && $this->operation->status === constants::STATUS_FINISHED; // TODO.
+        return !$this->isfailed && $this->operation->status === constants::STATUS_FINISHED;
     }
 
     /**
@@ -150,9 +150,9 @@ class last_operation implements \templatable {
     public function export_for_template(renderer_base $output) {
         $rv = [
             'class' => $this->is_success() ? 'success' : ($this->is_error() ? 'danger' : 'info'),
-            'title' => $this->title ?? get_class($this->operation), // TODO.
+            'title' => $this->title ?? get_class($this->operation),
             'text' => $this->text,
-            'detailsurl' => $this->detailsurl ? ($this->detailsurl->out(false)) : '', // TODO.
+            'detailsurl' => $this->detailsurl ? ($this->detailsurl->out(false)) : '',
         ];
         return $rv;
     }

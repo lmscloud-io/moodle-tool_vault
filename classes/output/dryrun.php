@@ -95,7 +95,7 @@ class dryrun implements \templatable {
             $rv['restoreallowed'] = api::are_restores_allowed();
             $rv['dryrunurl'] = restore_dryrun::url(['backupkey' => $model->backupkey])->out(false);
             $rv['restoreurl'] = restore_restore::url(['backupkey' => $model->backupkey])->out(false);
-            $rv['startdryrunlabel'] = 'Repeat pre-check'; // TODO string.
+            $rv['startdryrunlabel'] = get_string('repeatprecheck', 'tool_vault');
             $rv['encrypted'] = (int)$this->remotebackup->get_encrypted();
         }
         return $rv;

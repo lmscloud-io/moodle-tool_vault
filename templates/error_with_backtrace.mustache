@@ -29,8 +29,8 @@
     <div class="alert alert-danger alert-block fade in ">
         {{{ error }}}
         {{#backtrace}}
-            <a href="#" class="action-backtrace-show">Show backtrace</a>
-            <a href="#" class="action-backtrace-hide hidden">Hide backtrace</a>
+            <a href="#" class="action-backtrace-show">{{#str}} showbacktrace, tool_vault {{/str}}</a>
+            <a href="#" class="action-backtrace-hide hidden">{{#str}} hidebacktrace, tool_vault {{/str}}</a>
         {{/backtrace}}
     </div>
     {{#backtrace}}

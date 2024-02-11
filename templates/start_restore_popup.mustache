@@ -34,7 +34,7 @@
 {{/dryrun}}
 {{#encrypted}}
     <p>This backup is encrypted, you need a passphrase:</p>
-    <p><label for="passphrase_startrestore_{{dryrun}}_{{backupkey}}">Passphrase:</label>
+    <p><label for="passphrase_startrestore_{{dryrun}}_{{backupkey}}">{{#str}} passphrase, tool_vault {{/str}}:</label>
         <input type="text" name="passphrase" id="passphrase_startrestore_{{dryrun}}_{{backupkey}}"></p>
 {{/encrypted}}
 </form>

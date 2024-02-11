@@ -34,7 +34,7 @@ class restore_remotedetails extends base {
      * @return string
      */
     public static function get_display_name(): string {
-        return 'Remote backup details';
+        return get_string('remotebackupdetails', 'tool_vault');
     }
 
     /**
@@ -52,7 +52,7 @@ class restore_remotedetails extends base {
         } else {
             // Neither local nor remote backup is found.
             $data = [
-                'title' => 'Backup '.s($backupkey),
+                'title' => get_string('backuptitle', 'tool_vault', s($backupkey)),
             ];
             return $output->render_from_template('tool_vault/backup_details', $data);
         }

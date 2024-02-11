@@ -263,6 +263,6 @@ class plugins_restore extends check_base {
      * @return string
      */
     public static function get_display_name(): string {
-        return "Plugins versions";
+        return get_string('pluginversions', 'tool_vault');
     }
 }

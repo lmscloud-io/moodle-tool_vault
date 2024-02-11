@@ -31,12 +31,12 @@
 }}
 <table class="generaltable">
     <tr>
-        <th>Name</th>
+        <th>{{#str}} pluginname, tool_vault {{/str}}</th>
         {{#showparents}}
-            <th>Subplugin of</th>
+            <th>{{#str}} subpluginof, tool_vault {{/str}}</th>
         {{/showparents}}
-        <th>Version in the backup</th>
-        <th>Current version on this site</th>
+        <th>{{#str}} pluginversioninbackup, tool_vault {{/str}}</th>
+        <th>{{#str}} pluginversiononsite, tool_vault {{/str}}</th>
         <th></th>
     </tr>
     {{#plugins}}
@@ -67,7 +67,7 @@
             {{/showparents}}
             <td>{{versionbackup}}</td>
             <td>{{versionlocal}}</td>
-            <td><a href="https://moodle.org/plugins/{{pluginname}}" target="_blank">Plugins directory</a> </td>
+            <td><a href="https://moodle.org/plugins/{{pluginname}}" target="_blank">{{#str}} pluginsdirectory, tool_vault {{/str}}</a> </td>
         </tr>
     {{/plugins}}
 </table>
