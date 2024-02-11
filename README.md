@@ -2,6 +2,8 @@
 
 Vault allows you to make a full backup of the site, push it to the cloud and then restore on the other Moodle site.
 
+See also https://lmsvault.io/
+
 ### Requirements:
 - The site where you restore also has to have **Moodle installed**, it can be a fresh installation;
 - Plugin **tool_vault** has to be installed on both sites - where you backup and where you restore;
@@ -29,18 +31,16 @@ Vault allows you to make a full backup of the site, push it to the cloud and the
 ## Site backup with Vault
 
 - Login as site administrator and navigate to **Site administration > Server > Vault - Site migration**
-- On the **"Overview" tab** you can see the results of the several bakckup pre-checks that are automatically
-  scheduled when the tool_vault plugin is intalled. You can re-run every check at any moment.
+- Before backup Vault performs a number of pre-checks. They can also
+  be executed independently. The results are displayed on the 'Backup' page.
 - Backup can be performed only when all pre-checks are successful, which means you have enough disk space,
   and do not have (or excluded) incompatible database schema modifications. The pre-checks will run
   again in the beginning of the backup process.
-- If you want to make some changes to what needs to be backed up, you can do it on the **"Settings" tab** of
-  the same page.
-- When everything is ready, open the **"Site backup" tab**, register with the Vault cloud (or enter existing
+- If you want to make some changes to what needs to be backed up, you can do it in the "Settings" section.
+- When everything is ready, open the **"Backup"** section, register with the Vault cloud (or enter existing
   API key) and schedule a backup.
 - Backup will be performed during the next cron run. Every step is logged and you can monitor the process
   on the backup page.
-- TODO: restricted site access during backup
 
 ### Protecting your backup site from accidental restores
 
@@ -59,17 +59,15 @@ $CFG->forced_plugin_settings['tool_vault'] = ['allowrestore' => 0];
 ## Site restore with Vault
 
 - Login as site administrator and navigate to **Site administration > Server > Vault - Site migration**
-- Go to the "Settings" tab and **enable restores** on this site.
-- Enter your **API key** that you received during registration when you performed backup. It can also be
-  found in the "Settings" tab of your Vault on the backup site.
-- On the **"Site restore" tab** you will see the list of all backups that are available for you to restore.
+- Go to the "Settings" secion and **enable restores** on this site.
+- Enter your **API key** that you received during registration when you performed backup.
+- In the **"Restore"** section you will see the list of all backups that are available for you to restore.
   This list is cached and you can re-fetch it again at any moment to look for the new backups.
 - **Choose the backup** you want to restore, execute pre-checks for it to make sure that you have enough
   disk space and maybe you need to adjust the restore settings.
 - **Schedule the restore**. It will provide you with a link to the restore progress page that can be accessed
   without authentication. Remember that during restore everything is erased from the database and
   nobody will be able to login.
-- TODO: lock access to all other pages during restore
 - Remember to check **the restore log** since it may not be possible to send a notification to the person who
   initiated restore after the restore process has finished because the site configuration will be overridden
   with the config of the other site.
@@ -91,8 +89,7 @@ $CFG->forced_plugin_settings['tool_vault'] = ['allowrestore' => 0];
   backed up in the **"Config overrides" pre-check** on the backed up site.
 - On the restored site if there is anything set in **config.php** it will take precedence over the restored
   config settings values.
-- TODO: option to "keep" some settings during restore.
-- Vault does not backup or restore cache and localcache directories and also 'muc' directory in the dataroot.
+- Vault does not backup or restore `cache` and `localcache` directories and also `muc` directory in the dataroot.
 
 ## Backup and restore of database modifications
 
@@ -107,7 +104,6 @@ $CFG->forced_plugin_settings['tool_vault'] = ['allowrestore' => 0];
   will fail and Vault **will not be able to perform backup**.
 - On the "Settings" tab you can specify that some **modifications should be excluded**. You can re-run
   the pre-check after you modified the settings to see if it passes.
-- TODO: ignore some modifications during restore.
 
 # Installation of the plugin tool_vault
 
@@ -123,7 +119,7 @@ $CFG->forced_plugin_settings['tool_vault'] = ['allowrestore' => 0];
 
 The plugin can be also installed by putting the contents of this directory to
 
-    {your/moodle/dirroot}/admin/tool/vault
+    {YOUR/MOODLE/ROOT}/admin/tool/vault
 
 Afterwards, log in to your Moodle site as an admin and go to _Site administration >
 Notifications_ to complete the installation.
