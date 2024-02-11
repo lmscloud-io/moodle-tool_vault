@@ -214,13 +214,25 @@ class api {
                 throw new \coding_exception('Unsupported method: '.$method);
         }
 
-        $curl = new \curl();
-        $curl->setHeader($headers);
-        $rv = $curl->$method($url, $params, $options);
-
-        if ($curl->errno || (($curl->get_info()['http_code'] ?? 0) != 200)) {
-            // TODO retry up to REQUEST_API_RETRIES.
-            throw self::prepare_api_exception($curl, $rv);
+        for ($i = 0; $i < constants::REQUEST_API_RETRIES; $i++) {
+            $curl = new \curl();
+            $curl->setHeader($headers);
+            $rv = $curl->$method($url, $params, $options);
+            $httpcode = (int)($curl->get_info()['http_code'] ?? 0);
+            if ($curl->errno || $httpcode != 200) {
+                $apiexception = self::prepare_api_exception($curl, $rv, strtoupper($method) . ' ' . $url);
+                if ($httpcode || $i == constants::REQUEST_API_RETRIES - 1) {
+                    // Non-zero httpcode means that there was an actual error coming from server (Unauthorized, Forbidden, etc).
+                    // In case of zero httpcode we will retry the request up to certain number of times.
+                    throw $apiexception;
+                }
+                if ($logger) {
+                    $logger->add_to_log($apiexception->getMessage() . " (attempt ".($i + 1)."/".
+                        constants::REQUEST_API_RETRIES.")", constants::LOGLEVEL_WARNING);
+                }
+            } else {
+                break;
+            }
         }
 
         return json_decode($rv, true);
@@ -231,9 +243,10 @@ class api {
      *
      * @param \curl $curl
      * @param string|null $response response from Vault API, usually JSON
+     * @param string $url URL of the request (used in the error message)
      * @return api_exception
      */
-    protected static function prepare_api_exception(\curl $curl, ?string $response): api_exception {
+    protected static function prepare_api_exception(\curl $curl, ?string $response, string $url): api_exception {
         $errno = $curl->get_errno();
         $error = $curl->error;
         $httpcode = (int)($curl->get_info()['http_code'] ?? 0);
@@ -255,7 +268,8 @@ class api {
         } else {
             // This is a connection error.
             // List of errno: https://www.php.net/manual/en/function.curl-errno.php , for example CURLE_OPERATION_TIMEDOUT.
-            return new api_exception("Can not connect to Vault API, errno $errno: ". $error, 0);
+            // Also, sometimes randomly Moodle reports that URL is blocked.
+            return new api_exception("Can not connect to Vault API while requesting $url, errno $errno: ". $error, 0);
         }
     }
 

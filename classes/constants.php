@@ -83,9 +83,9 @@ class constants {
     const LOGLEVEL_VERBOSE = 'verbose';
 
     /** @var int */
-    const REQUEST_API_TIMEOUT = 10; // 10 seconds.
+    const REQUEST_API_TIMEOUT = 20; // 20 seconds.
     /** @var int */
-    const REQUEST_S3_TIMEOUT = 20 * 60; // 20 minutes.
+    const REQUEST_S3_TIMEOUT = 60 * 60; // 60 minutes.
     /** @var int */
     const REQUEST_API_RETRIES = 4;
     /** @var int */

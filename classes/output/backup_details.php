@@ -79,11 +79,14 @@ class backup_details implements \templatable {
         $timestarted = $this->remotebackup->timecreated ?? $this->backup->timecreated ?? 0;
         $timefinished = $this->remotebackup ? $this->remotebackup->get_finished_time() : $this->backup->get_finished_time();
         $description = $this->remotebackup ? $this->remotebackup->get_description() : $this->backup->get_description();
+        $totalsizestr = $this->remotebackup ? display_size($this->remotebackup->get_total_size()) :
+            ($this->backup->get_details()['totalsize'] ?? '');
         $rv = [
             'backupkey' => $backupkey,
             'statusstr' => ui::format_status($status),
             'encrypted' => $encrypted,
             'encryptedstr' => ui::format_encrypted($encrypted),
+            'totalsizestr' => $totalsizestr,
             'title' => 'Backup '.$backupkey, // TODO string.
             'timestarted' => ui::format_time($timestarted),
             'timefinished' => ui::format_time($timefinished),
