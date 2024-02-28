@@ -35,6 +35,7 @@ class backup_model extends operation_model {
      * @return string
      */
     public function get_title() {
+        // TODO strings.
         if ($this->backupkey) {
             return 'Backup ' . $this->backupkey;
         } else if ($this->status === constants::STATUS_SCHEDULED) {
@@ -51,6 +52,7 @@ class backup_model extends operation_model {
      * @throws \coding_exception
      */
     public function get_subtitle() {
+        // TODO strings.
         return 'Status '.$this->status.' : '.userdate($this->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
     }
 

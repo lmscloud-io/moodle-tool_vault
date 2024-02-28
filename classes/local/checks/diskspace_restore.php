@@ -19,9 +19,6 @@ namespace tool_vault\local\checks;
 use tool_vault\constants;
 use tool_vault\local\models\backup_file;
 use tool_vault\local\models\dryrun_model;
-use tool_vault\local\xmldb\dbstructure;
-use tool_vault\site_backup;
-use tool_vault\site_restore;
 
 /**
  * Check disk space on restore
@@ -94,6 +91,7 @@ class diskspace_restore extends check_base {
      * @return string
      */
     public function get_status_message(): string {
+        // TODO strings.
         return $this->success() ?
             ($this->is_warning() ?
                 'There is enough disk space in the temporary directory however there may not be '.
@@ -108,6 +106,7 @@ class diskspace_restore extends check_base {
      * @return string
      */
     public function summary(): string {
+        // TODO strings.
         if ($this->model->status !== constants::STATUS_FINISHED) {
             return '';
         }

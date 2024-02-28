@@ -18,9 +18,6 @@ namespace tool_vault\output;
 
 use renderer_base;
 use tool_vault\local\checks\check_base;
-use tool_vault\local\helpers\ui;
-use tool_vault\local\uiactions\overview;
-use tool_vault\site_backup;
 
 /**
  * Display check results

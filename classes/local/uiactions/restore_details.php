@@ -50,6 +50,7 @@ class restore_details extends base {
         } else {
             // Neither restore nor dryrun were found.
             // TODO display a relevant error message.
+            // TODO strings.
             $data = ['title' => 'Operation '.$id];
             return $output->render_from_template('tool_vault/backup_details', $data);
         }

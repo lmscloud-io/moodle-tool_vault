@@ -51,6 +51,7 @@ class last_operation implements \templatable {
      * @param operation_model $operation
      */
     public function __construct(operation_model $operation) {
+        // TODO strings.
         // TODO.
         $this->operation = $operation;
         if ($operation instanceof backup_model) {

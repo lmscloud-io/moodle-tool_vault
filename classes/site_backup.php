@@ -60,6 +60,7 @@ class site_backup extends operation_base {
      * @return operation_base
      */
     public static function schedule(array $params = []): operation_base {
+        // TODO strings.
         global $USER;
         if ($records = backup_model::get_records([constants::STATUS_SCHEDULED])) {
             // Pressed button twice maybe?

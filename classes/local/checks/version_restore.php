@@ -63,6 +63,7 @@ class version_restore extends check_base {
      * @return string
      */
     public function get_status_message(): string {
+        // TODO strings.
         global $CFG;
         $details = $this->model->get_details();
         $branch = $details['backupbranch'] ?? null;
@@ -84,6 +85,7 @@ class version_restore extends check_base {
      * @return string
      */
     public function summary(): string {
+        // TODO strings.
         global $CFG;
         if ($this->model->status !== constants::STATUS_FINISHED) {
             return '';

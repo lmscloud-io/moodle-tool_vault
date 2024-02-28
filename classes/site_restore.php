@@ -88,6 +88,7 @@ class site_restore extends operation_base {
      * @return static
      */
     public static function schedule(array $params = []): operation_base {
+        // TODO strings.
         global $USER;
         if (empty($params['backupkey'])) {
             throw new \coding_exception('Parameter backupkey is required for site_restore::schedule()');

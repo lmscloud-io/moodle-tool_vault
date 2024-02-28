@@ -71,6 +71,7 @@ $isoldoperation = $operation &&
     !in_array($operation->status, [\tool_vault\constants::STATUS_INPROGRESS, \tool_vault\constants::STATUS_SCHEDULED]) &&
     $operation->timemodified < time() - HOURSECS;
 
+// TODO strings.
 if ($operation instanceof \tool_vault\local\models\backup_model) {
     if ($isoldoperation) {
         $url = tool_vault\local\uiactions\backup_details::url(['id' => $operation->id]);

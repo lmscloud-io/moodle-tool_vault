@@ -19,7 +19,6 @@ namespace tool_vault\local\checks;
 use tool_vault\constants;
 use tool_vault\local\helpers\siteinfo;
 use tool_vault\local\xmldb\dbstructure;
-use tool_vault\site_backup;
 
 /**
  * Check disk space
@@ -132,6 +131,7 @@ class diskspace extends check_base {
      * @return string
      */
     public function get_status_message(): string {
+        // TODO strings.
         return $this->success() ?
             'There is enough disk space to perform site backup' :
             'There is not enough disk space to perform site backup';
@@ -143,6 +143,7 @@ class diskspace extends check_base {
      * @return string
      */
     public function summary(): string {
+        // TODO strings.
         if ($this->model->status !== constants::STATUS_FINISHED) {
             return '';
         }

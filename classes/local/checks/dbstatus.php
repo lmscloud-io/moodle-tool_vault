@@ -88,6 +88,7 @@ class dbstatus extends check_base {
      * @return string
      */
     public function get_status_message(): string {
+        // TODO strings.
         if ($report = $this->get_report()) {
             $status = $this->get_status($report);
             switch ($status) {
@@ -179,6 +180,7 @@ class dbstatus extends check_base {
      * @return string
      */
     public function summary(): string {
+        // TODO strings.
         $report = $this->get_report();
         if ($report) {
             return

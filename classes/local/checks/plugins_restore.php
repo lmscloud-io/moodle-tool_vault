@@ -139,6 +139,7 @@ class plugins_restore extends check_base {
      * @return string
      */
     public function get_status_message(): string {
+        // TODO strings.
         if ($this->success()) {
             if ($this->extra_plugins() || $this->plugins_needing_upgrade()) {
                 return 'Some plugins will need to be upgraded after restore';
@@ -158,6 +159,7 @@ class plugins_restore extends check_base {
      * @return string
      */
     public function summary(): string {
+        // TODO strings.
         if ($this->model->status !== constants::STATUS_FINISHED) {
             return '';
         }

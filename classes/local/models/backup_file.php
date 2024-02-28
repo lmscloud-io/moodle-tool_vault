@@ -16,8 +16,6 @@
 
 namespace tool_vault\local\models;
 
-use tool_vault\constants;
-
 /**
  * Model for remote backup file
  *

@@ -170,6 +170,7 @@ class configoverride extends check_base {
         if (($details = $this->get_report()) === null) {
             return '';
         }
+        // TODO strings.
         return
             '<ul>'.
             '<li>Settings from config.php that will be included in backup: '.
@@ -205,6 +206,7 @@ class configoverride extends check_base {
      * @return array
      */
     protected function format_setting_value_for_details(string $name, ?string $plugin, $value, bool $included): array {
+        // TODO strings.
         if (!$included) {
             $value = '<em>Redacted</em>';
         } else {
@@ -276,6 +278,7 @@ class configoverride extends check_base {
      * @return string
      */
     public static function get_display_name(): string {
+        // TODO strings.
         return "Config overrides";
     }
 

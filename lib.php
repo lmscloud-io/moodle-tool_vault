@@ -39,6 +39,7 @@ function tool_vault_after_config() {
 
     if (class_exists(api::class) && api::is_maintenance_mode()) {
         if (defined('CLI_SCRIPT') && CLI_SCRIPT) {
+            // TODO strings.
             echo "Site backup or restore is currently in progress. Aborting\n";
             exit(1);
         }

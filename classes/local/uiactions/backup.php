@@ -51,7 +51,6 @@ class backup extends base {
         $whybackupdisabled = null;
         $activeprocesses = operation_model::get_active_processes(true);
         if (!api::is_registered()) {
-            // TODO add language strings.
             $whybackupdisabled = get_string('backupdisablednoapikey', 'tool_vault');
         } else if ($activeprocesses) {
             $whybackupdisabled = get_string('backupdisabledanotherinprogress', 'tool_vault');

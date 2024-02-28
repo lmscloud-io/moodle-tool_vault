@@ -16,16 +16,13 @@
 
 namespace tool_vault\local\checks;
 
-use renderer_base;
 use tool_vault\constants;
-use tool_vault\local\helpers\ui;
 use tool_vault\local\models\check_model;
 use tool_vault\local\models\operation_model;
 use tool_vault\local\operations\operation_base;
 use tool_vault\local\uiactions\overview_details;
 use tool_vault\local\uiactions\overview_newcheck;
 use tool_vault\site_backup;
-use tool_vault\task\check_task;
 
 /**
  * Base class for all health checks

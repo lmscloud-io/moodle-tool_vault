@@ -19,10 +19,8 @@ namespace tool_vault;
 use tool_vault\local\exceptions\api_exception;
 use tool_vault\local\logger;
 use tool_vault\local\models\backup_file;
-use tool_vault\local\models\backup_model;
 use tool_vault\local\models\operation_model;
 use tool_vault\local\models\remote_backup;
-use tool_vault\local\models\restore_model;
 
 /**
  * Main api
@@ -423,6 +421,7 @@ class api {
      * @return remote_backup
      */
     public static function get_remote_backup(string $backupkey, ?string $withstatus = null): remote_backup {
+        // TODO strings.
         try {
             $result = self::api_call("backups/{$backupkey}", 'GET');
         } catch (api_exception $t) {
@@ -475,6 +474,7 @@ class api {
 
         // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
         if (!preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
+            // TODO strings.
             throw new \moodle_exception('Vault API did not return a valid link: '.$s3url);
         }
 
@@ -620,6 +620,7 @@ class api {
      * @throws \moodle_exception
      */
     public static function request_new_restore_key(array $info): string {
+        // TODO strings.
         $res = self::api_call('restores', 'PUT', $info);
         if (empty($res['restorekey'])) {
             throw new \moodle_exception('Server returned no data');

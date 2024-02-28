@@ -75,7 +75,8 @@ class ui {
      * @return string
      */
     public static function format_status(string $status): string {
-        return ucfirst($status); // TODO lang string.
+        // TODO strings.
+        return ucfirst($status);
     }
 
     /**
