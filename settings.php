@@ -35,10 +35,6 @@ if ($hassiteconfig) {
     $ADMIN->add('server', new admin_externalpage('tool_vault_index', new lang_string('pluginname', 'tool_vault'),
         \tool_vault\local\helpers\ui::baseurl()));
 
-    // Page to add API key (hidden from navigation, available via direct URL).
-    $ADMIN->add('server', new admin_externalpage('tool_vault_addapikey', new lang_string('addapikey', 'tool_vault'),
-        new \moodle_url('/admin/tool/vault/addpikey.php'), 'moodle/site:config', true));
-
     // Vault plugin settings (under Site administration -> Plugins -> Admin tools).
     $settings = new admin_settingpage('tool_vault', new lang_string('pluginsettings', 'tool_vault'));
     $ADMIN->add('tools', $settings);

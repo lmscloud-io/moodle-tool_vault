@@ -25,7 +25,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['addapikey'] = 'Add API key';
 $string['allowrestore'] = 'Allow restores on this site';
 $string['allowrestore_desc'] = 'Site restore will completely remove all contents of this site and replace with the restored contents. Double check everything before enabling this option';
 $string['backup'] = 'Backup';
