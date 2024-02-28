@@ -26,8 +26,7 @@
     }
 }}
 <div class="tool_vault-apikeyrequired">
-    <p>Create an account on {{vaulturl}} to be able to backup or restore the site.
-    With the <b>free account</b> you will be able to backup and restore small sites and store them up to 7 days on the server.</p>
+    <p>{{#str}} loginexplanation, tool_vault, {{vaulturl}} {{/str}}</p>
     <div>
         <input type="button" id="getapikey_signin" data-target="{{loginsrc}}" value="{{#str}} remotesignin, tool_vault {{/str}}" >
         <input type="button" id="getapikey_signup" data-target="{{loginsrc}}&tab=signup" value="{{#str}} remotesignup, tool_vault {{/str}}" >

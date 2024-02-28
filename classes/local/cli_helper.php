@@ -91,7 +91,7 @@ class cli_helper {
         $options = [
             'help' => [
                 'hasvalue' => false,
-                'description' => get_string('clihelp', 'tool_vault'),
+                'description' => 'Print out this help',
                 'default' => 0,
                 'alias' => 'h',
             ],
@@ -100,11 +100,11 @@ class cli_helper {
             $options += [
                 'backupkey' => [
                     'hasvalue' => 'BACKUPKEY',
-                    'description' => get_string('backupkey', 'tool_vault'),
+                    'description' => 'Backup key',
                     'default' => null,
                     'validation' => function ($backupkey) {
                         if (!$backupkey) {
-                            $this->cli_error(get_string('climissingargument', 'tool_vault', 'backupkey'));
+                            $this->cli_error('Argument --backupkey is required');
                         }
                     },
                 ],
@@ -117,9 +117,9 @@ class cli_helper {
                 'validation' => function($apikey) {
                     $apikey = empty($apikey) ? api::get_api_key() : $apikey;
                     if (empty($apikey)) {
-                        $this->cli_error(get_string('climissingargument', 'tool_vault', 'apikey'));
+                        $this->cli_error('Argument --apikey is required');
                     } else if (!api::validate_api_key($apikey)) {
-                        $this->cli_error(get_string('errorapikeynotvalid', 'tool_vault'));
+                        $this->cli_error('API key not valid');
                     }
                 },
             ],
@@ -170,8 +170,12 @@ class cli_helper {
      * Print help for export
      */
     public function print_help(): void {
-        // Mdlcode assume: $this->script ['backup', 'restore', 'list'].
-        $this->cli_writeln(get_string('clititle' . $this->script, 'tool_vault'));
+        $titles = [
+            'backup' => 'Command line site backup',
+            'list' => 'Command line remote backup list',
+            'restore' => 'Command line site restore',
+        ];
+        $this->cli_writeln($titles[$this->script]);
         $this->cli_writeln('');
         $this->print_help_options($this->options_definitions());
         $this->cli_writeln('');
