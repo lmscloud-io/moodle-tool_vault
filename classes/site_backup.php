@@ -60,17 +60,16 @@ class site_backup extends operation_base {
      * @return operation_base
      */
     public static function schedule(array $params = []): operation_base {
-        // TODO strings.
         global $USER;
         if ($records = backup_model::get_records([constants::STATUS_SCHEDULED])) {
             // Pressed button twice maybe?
             return new static(reset($records));
         }
         if (backup_model::get_records([constants::STATUS_INPROGRESS])) {
-            throw new \moodle_exception('Another backup is in progress');
+            throw new \moodle_exception(get_string('anotherbackupisinprogress', 'tool_vault'));
         }
         if (restore_model::get_records([constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
-            throw new \moodle_exception('Another restore is in progress');
+            throw new \moodle_exception(get_string('anotherrestoreisinprogress', 'tool_vault'));
         }
 
         $model = new backup_model((object)[]);

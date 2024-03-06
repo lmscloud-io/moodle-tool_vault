@@ -114,11 +114,11 @@ class diskspace_restore extends check_base {
         return
             $this->display_status_message($this->get_status_message(), $this->is_warning()).
             '<ul>'.
-            '<li>Free space in temp dir: '.display_size($details['freespace']).'</li>'.
-            '<li>Minimum space required in temp dir: '.display_size($details['mintmpspace'] ?? 0).'</li>'.
-            '<li>Required space for dataroot (excluding filedir): '.display_size($details['datarootsize'] ?? 0).'</li>'.
-            '<li>Required space for files: '.display_size($details['filedirsize'] ?? 0).'</li>'.
-            '<li>Required space for database (*): '.display_size($details['dbtotalsize'] ?? 0).'</li>'.
+            '<li>'.'Free space in temp dir: '.display_size($details['freespace']).'</li>'.
+            '<li>'.'Minimum space required in temp dir: '.display_size($details['mintmpspace'] ?? 0).'</li>'.
+            '<li>'.'Required space for dataroot (excluding filedir): '.display_size($details['datarootsize'] ?? 0).'</li>'.
+            '<li>'.'Required space for files: '.display_size($details['filedirsize'] ?? 0).'</li>'.
+            '<li>'.'Required space for database (*): '.display_size($details['dbtotalsize'] ?? 0).'</li>'.
             '</ul>'.
             '<p>(*) Note, tool Vault is <b>not able to check</b> if there is enough space in the database to perform restore.</p>';
     }

@@ -278,8 +278,7 @@ class configoverride extends check_base {
      * @return string
      */
     public static function get_display_name(): string {
-        // TODO strings.
-        return "Config overrides";
+        return get_string('configoverrides', 'tool_vault');
     }
 
     /**

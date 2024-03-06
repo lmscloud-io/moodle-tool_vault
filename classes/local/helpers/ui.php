@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace tool_vault\local\helpers;
+use tool_vault\constants;
 
 /**
  * Helper class for UI elements
@@ -75,8 +76,20 @@ class ui {
      * @return string
      */
     public static function format_status(string $status): string {
-        // TODO strings.
-        return ucfirst($status);
+        if ($status === constants::STATUS_FAILED) {
+            return get_string('statusfailed', 'tool_vault');
+        } else if ($status === constants::STATUS_FAILEDTOSTART) {
+            return get_string('statusfailedtostart', 'tool_vault');
+        } else if ($status === constants::STATUS_INPROGRESS) {
+            return get_string('statusinprogress', 'tool_vault');
+        } else if ($status === constants::STATUS_FINISHED) {
+            return get_string('statusfinished', 'tool_vault');
+        } else if ($status === constants::STATUS_SCHEDULED) {
+            return get_string('statusscheduled', 'tool_vault');
+        } else {
+            // There should not be any other statuses but just in case.
+            return ucfirst($status);
+        }
     }
 
     /**

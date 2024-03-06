@@ -51,23 +51,23 @@ class last_operation implements \templatable {
      * @param operation_model $operation
      */
     public function __construct(operation_model $operation) {
-        // TODO strings.
-        // TODO.
         $this->operation = $operation;
         if ($operation instanceof backup_model) {
             if ($operation->status === constants::STATUS_SCHEDULED) {
-                $this->title = 'Backup scheduled';
-                $this->text = 'You backup is now scheduled and will be executed during the next cron run';
+                $this->title = get_string('lastop_backupscheduled_header', 'tool_vault');
+                $this->text = get_string('lastop_backupscheduled_text', 'tool_vault');
             } else if ($operation->status === constants::STATUS_INPROGRESS) {
-                $this->title = 'Backup in progress';
-                $this->text = 'You have a backup in progress';
+                $this->title = get_string('lastop_backupinprogress_header', 'tool_vault');
+                $this->text = get_string('lastop_backupinprogress_text', 'tool_vault');
             } else if ($operation->status === constants::STATUS_FINISHED) {
-                $this->title = 'Backup completed';
-                $this->text = sprintf('Backup %s started on %s and finished on %s', $this->operation->backupkey,
-                    ui::format_time($this->operation->timecreated), ui::format_time($this->operation->get_finished_time()));
+                $this->title = get_string('lastop_backupfinished_header', 'tool_vault');
+                $this->text = get_string('lastop_backupfinished_text', 'tool_vault',
+                (object)['backupkey' => $this->operation->backupkey,
+                    'started' => ui::format_time($this->operation->timecreated),
+                    'finished' => ui::format_time($this->operation->get_finished_time())]);
             } else {
-                $this->title = 'Backup failed';
-                $this->text = sprintf('Backup performed on %s has failed', ui::format_time($this->operation->timecreated));
+                $this->title = get_string('lastop_backupfailed_header', 'tool_vault');
+                $this->text = get_string('lastop_backupfailed_text', 'tool_vault', ui::format_time($this->operation->timecreated));
             }
             if ($operation->status === constants::STATUS_INPROGRESS || $operation->status === constants::STATUS_SCHEDULED) {
                 $this->detailsurl = new \moodle_url('/admin/tool/vault/progress.php', ['accesskey' => $operation->accesskey]);
@@ -79,18 +79,20 @@ class last_operation implements \templatable {
             $this->title = $operation->get_title();
             $this->text = $operation->get_subtitle();
             if ($operation->status === constants::STATUS_SCHEDULED) {
-                $this->title = 'Restore scheduled';
-                $this->text = 'Your restore is scheduled and will be executed during the next cron run';
+                $this->title = get_string('lastop_restorescheduled_header', 'tool_vault');
+                $this->text = get_string('lastop_restorescheduled_text', 'tool_vault');
             } else if ($operation->status === constants::STATUS_INPROGRESS) {
-                $this->title = 'Restore in progress';
-                $this->text = 'You have a restore in progress';
+                $this->title = get_string('lastop_restoreinprogress_header', 'tool_vault');
+                $this->text = get_string('lastop_restoreinprogress_text', 'tool_vault');
             } else if ($operation->status === constants::STATUS_FINISHED) {
-                $this->title = 'Restore completed';
-                $this->text = sprintf('Restore from backup %s started on %s and finished on %s', $this->operation->backupkey,
-                    ui::format_time($this->operation->timecreated), ui::format_time($this->operation->get_finished_time()));
+                $this->title = get_string('lastop_restorefinished_header', 'tool_vault');
+                $this->text = get_string('lastop_restorefinished_text', 'tool_vault',
+                    (object)['backupkey' => $this->operation->backupkey,
+                    'started' => ui::format_time($this->operation->timecreated),
+                    'finished' => ui::format_time($this->operation->get_finished_time())]);
             } else {
-                $this->title = 'Restore failed';
-                $this->text = sprintf('Restore performed on %s has failed', ui::format_time($this->operation->timecreated));
+                $this->title = get_string('lastop_restorefailed_header', 'tool_vault');
+                $this->text = get_string('lastop_restorefailed_text', 'tool_vault', ui::format_time($this->operation->timecreated));
             }
             if ($operation->status === constants::STATUS_INPROGRESS || $operation->status === constants::STATUS_SCHEDULED) {
                 $this->detailsurl = new \moodle_url('/admin/tool/vault/progress.php', ['accesskey' => $operation->accesskey]);
@@ -100,19 +102,18 @@ class last_operation implements \templatable {
 
         } else if ($operation instanceof dryrun_model) {
             if ($operation->status === constants::STATUS_SCHEDULED) {
-                $this->title = 'Restore pre-check scheduled';
-                $this->text = 'Your restore pre-check is now scheduled and will be executed during the next cron run';
+                $this->title = get_string('lastop_restoreprecheckscheduled_header', 'tool_vault');
+                $this->text = get_string('lastop_restoreprecheckscheduled_text', 'tool_vault');
             } else if ($operation->status === constants::STATUS_INPROGRESS) {
-                $this->title = 'Restore pre-check in progress';
-                $this->text = 'You have a pre-check in progress';
+                $this->title = get_string('lastop_restoreprecheckinprogress_header', 'tool_vault');
+                $this->text = get_string('lastop_restoreprecheckinprogress_text', 'tool_vault');
             } else if ($operation->status === constants::STATUS_FINISHED) {
-                $this->title = 'Restore pre-check succeeded';
-                $this->text = sprintf('Restore pre-check completed at %s. Backup %s can be restored on this site now',
-                    ui::format_time($operation->get_finished_time()), $operation->backupkey);
+                $this->title = get_string('lastop_restoreprecheckfinished_header', 'tool_vault');
+                $this->text = get_string('lastop_restoreprecheckfinished_text', 'tool_vault',
+                    (object)['finished' => ui::format_time($operation->get_finished_time()), 'backupkey' => $operation->backupkey]);
             } else {
-                $this->title = 'Restore pre-check failed';
-                $this->text = sprintf('Restore pre-check finished at %s. '.
-                    'Restore will not be possible until all problems are fixed',
+                $this->title = get_string('lastop_restoreprecheckfailed_header', 'tool_vault');
+                $this->text = get_string('lastop_restoreprecheckfailed_text', 'tool_vault',
                     ui::format_time($operation->get_finished_time()));
             }
             $this->detailsurl = \tool_vault\local\uiactions\restore_details::url(['id' => $operation->id]);

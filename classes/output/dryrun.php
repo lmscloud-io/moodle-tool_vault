@@ -57,9 +57,9 @@ class dryrun implements \templatable {
      * @throws \coding_exception
      */
     public function get_subtitle() {
-        // TODO strings.
         $model = $this->dryrun->get_model();
-        return 'Status '.$model->status.' : '.userdate($model->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
+        return get_string('status', 'moodle') . ' ' . ui::format_status($model->status) .
+            ' : ' . userdate($model->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
     }
 
     /**

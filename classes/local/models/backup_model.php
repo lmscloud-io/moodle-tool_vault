@@ -17,6 +17,7 @@
 namespace tool_vault\local\models;
 
 use tool_vault\constants;
+use tool_vault\local\helpers\ui;
 
 /**
  * Model for local backup
@@ -35,13 +36,12 @@ class backup_model extends operation_model {
      * @return string
      */
     public function get_title() {
-        // TODO strings.
         if ($this->backupkey) {
-            return 'Backup ' . $this->backupkey;
+            return get_string('backuptitle', 'tool_vault', s($this->backupkey));
         } else if ($this->status === constants::STATUS_SCHEDULED) {
-            return 'Backup (scheduled)';
+            return get_string('backupscheduled', 'tool_vault');
         } else {
-            return 'Backup';
+            return get_string('backup', 'tool_vault');
         }
     }
 
@@ -52,8 +52,8 @@ class backup_model extends operation_model {
      * @throws \coding_exception
      */
     public function get_subtitle() {
-        // TODO strings.
-        return 'Status '.$this->status.' : '.userdate($this->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
+        return get_string('status', 'moodle') . ' ' . ui::format_status($this->status) .
+            ' : ' . userdate($this->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
     }
 
     /**

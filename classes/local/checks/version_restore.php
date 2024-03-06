@@ -70,11 +70,11 @@ class version_restore extends check_base {
         $version = $details['backupversion'];
         if ($this->success()) {
             return 'Moodle version matches';
-        } else if ("{$branch}" !== "{$CFG->branch}") {
-            return "Can not restore backup made on a different branch (major version) of Moodle. ".
-                "This backup branch is '{$branch}' and this site branch is '{$CFG->branch}'";
+        // } else if ("{$branch}" !== "{$CFG->branch}") {
+        //     return "Can not restore backup made on a different branch (major version) of Moodle. ".
+        //         "This backup branch is '{$branch}' and this site branch is '{$CFG->branch}'";
         } else {
-            return "Site version number has to be not lower than the version in the backup. ".
+            return "Site version number has to be greater than or equal to the version in the backup. ".
                 "This backup is {$version} and this site is {$CFG->version}";
         }
     }

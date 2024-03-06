@@ -18,6 +18,7 @@ namespace tool_vault\output;
 
 use renderer_base;
 use tool_vault\local\checks\check_base;
+use tool_vault\local\helpers\ui;
 
 /**
  * Display check results
@@ -55,7 +56,8 @@ class check_display implements \templatable {
         $fullreporturl = $this->check->get_fullreport_url();
         $rv = [
             'title' => $this->check->get_display_name(),
-            'subtitle' => 'Status: '.$this->check->get_model()->status.', '.
+            'subtitle' => get_string('status', 'moodle') . ': '.
+                ui::format_status($this->check->get_model()->status) . ', ' .
                 userdate($this->check->get_model()->timemodified, get_string('strftimedatetimeshort', 'langconfig')),
             'inprogress' => $this->check->is_in_progress(),
             'reschedulelink' => $rescheduleurl ? $rescheduleurl->out(false) : '',

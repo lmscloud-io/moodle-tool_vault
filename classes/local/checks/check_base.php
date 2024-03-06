@@ -298,6 +298,6 @@ abstract class check_base extends operation_base {
      * @return string
      */
     public function get_status_message(): string {
-        return $this->success() ? get_string('success', 'moodle') : get_string('failed', 'tool_vault');
+        return $this->success() ? get_string('success', 'moodle') : get_string('statusfailed', 'tool_vault');
     }
 }
