@@ -23,6 +23,8 @@ use tool_vault\local\models\restore_model;
 use tool_vault\output\check_display;
 use tool_vault\output\last_operation;
 
+// TODO this is no longer used.
+
 /**
  * Tab overview
  *

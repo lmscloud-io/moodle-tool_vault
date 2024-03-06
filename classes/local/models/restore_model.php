@@ -17,6 +17,7 @@
 namespace tool_vault\local\models;
 
 use tool_vault\constants;
+use tool_vault\local\helpers\ui;
 
 /**
  * Model for local restore
@@ -35,9 +36,9 @@ class restore_model extends restore_base_model {
      * @return string
      */
     public function get_title() {
-        $title = 'Restore from backup ' . $this->backupkey;
+        $title = get_string('restorefrombackup', 'tool_vault', s($this->backupkey));
         if ($this->status === constants::STATUS_SCHEDULED) {
-            $title .= ' (scheduled)';
+            $title .= ' (' . ui::format_status($this->status) . ')';
         }
         return $title;
     }
@@ -49,7 +50,8 @@ class restore_model extends restore_base_model {
      * @throws \coding_exception
      */
     public function get_subtitle() {
-        return 'Status '.$this->status.' : '.userdate($this->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
+        return get_string('status', 'moodle') . ' ' . ui::format_status($this->status) .
+            ' : ' . userdate($this->timemodified, get_string('strftimedatetimeshort', 'langconfig'));
     }
 
     /**

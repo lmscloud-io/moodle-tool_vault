@@ -52,7 +52,7 @@ class check_display implements \templatable {
      * @return array
      */
     public function export_for_template(renderer_base $output) {
-        $rescheduleurl = $this->check->get_reschedule_url();
+        $rescheduleurl = $this->check->get_reschedule_url($this->detailed ? ['detailed' => 1] : []);
         $fullreporturl = $this->check->get_fullreport_url();
         $rv = [
             'title' => $this->check->get_display_name(),

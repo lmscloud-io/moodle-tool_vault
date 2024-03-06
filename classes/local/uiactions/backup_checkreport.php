@@ -25,7 +25,17 @@ use tool_vault\output\check_display;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class overview_details extends base {
+class backup_checkreport extends base {
+
+    /**
+     * Display name of the section (for the breadcrumb)
+     *
+     * @return string
+     */
+    public static function get_display_name(): string {
+        // TODO string.
+        return 'Pre-check details';
+    }
 
     /**
      * Display
@@ -36,12 +46,11 @@ class overview_details extends base {
     public function display(\renderer_base $output) {
         $id = optional_param('id', null, PARAM_INT);
 
-        if ($id && ($check = \tool_vault\local\checks\check_base::load($id)) && $check->has_details()) {
+        if ($id && ($check = \tool_vault\local\checks\check_base::load($id))) {
             $data = (new check_display($check, true))->export_for_template($output);
             return $output->render_from_template('tool_vault/check_details', $data);
         }
 
-        // TODO show error?
         return '';
     }
 }

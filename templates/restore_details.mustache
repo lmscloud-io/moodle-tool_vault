@@ -80,6 +80,8 @@
     {{/isprogresspage}}
 {{/haslogs}}
 
-{{#timefinished}}
-    <p><a href="{{siteurl}}">{{#str}} returntothesite, tool_vault {{/str}}</a></p>
-{{/timefinished}}
+{{#isprogresspage}}
+    {{#timefinished}}
+        <p><a href="{{siteurl}}">{{#str}} returntothesite, tool_vault {{/str}}</a></p>
+    {{/timefinished}}
+{{/isprogresspage}}

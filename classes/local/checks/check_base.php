@@ -20,8 +20,8 @@ use tool_vault\constants;
 use tool_vault\local\models\check_model;
 use tool_vault\local\models\operation_model;
 use tool_vault\local\operations\operation_base;
-use tool_vault\local\uiactions\overview_details;
-use tool_vault\local\uiactions\overview_newcheck;
+use tool_vault\local\uiactions\backup_checkreport;
+use tool_vault\local\uiactions\backup_newcheck;
 use tool_vault\site_backup;
 
 /**
@@ -264,13 +264,14 @@ abstract class check_base extends operation_base {
     /**
      * URL to reschedule this check (if applicable)
      *
+     * @param array $extraparams
      * @return \moodle_url|null
      */
-    public function get_reschedule_url(): ?\moodle_url {
+    public function get_reschedule_url(array $extraparams = []): ?\moodle_url {
         if ($this->get_model()->parentid && !in_array(get_class($this), site_backup::backup_prechecks())) {
             return null;
         }
-        return overview_newcheck::url(['type' => $this->get_name()]);
+        return backup_newcheck::url(['type' => $this->get_name()] + $extraparams);
     }
 
     /**
@@ -280,7 +281,7 @@ abstract class check_base extends operation_base {
      */
     public function get_fullreport_url(): ?\moodle_url {
         // TODO link for the restore checks.
-        return overview_details::url(['id' => $this->get_model()->id]);
+        return backup_checkreport::url(['id' => $this->get_model()->id]);
     }
 
     /**

@@ -73,6 +73,7 @@ class backup_details implements \templatable {
      * @return array
      */
     public function export_for_template($output) {
+        global $CFG;
         $backupkey = $this->remotebackup->backupkey ?? $this->backup->backupkey ?? '';
         $status = $this->remotebackup->status ?? $this->backup->status ?? '';
         $encrypted = $this->remotebackup ? $this->remotebackup->get_encrypted() : $this->backup->get_encrypted();
@@ -92,6 +93,7 @@ class backup_details implements \templatable {
             'timefinished' => ui::format_time($timefinished),
             'description' => ui::format_description($description),
             'isprogresspage' => $this->isprogresspage,
+            'siteurl' => $CFG->wwwroot,
         ];
         if ($this->backup) {
             $rv['performedby'] = s($this->backup->get_performedby());

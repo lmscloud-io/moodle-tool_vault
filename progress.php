@@ -74,7 +74,7 @@ $isoldoperation = $operation &&
 if ($operation instanceof \tool_vault\local\models\backup_model) {
     if ($isoldoperation) {
         $url = tool_vault\local\uiactions\backup_details::url(['id' => $operation->id]);
-        echo get_string('backupfinished', 'tool_vault', $url);
+        echo '<p>'.get_string('backupfinished', 'tool_vault', $url).'</p>';
     } else {
         $data = (new \tool_vault\output\backup_details($operation, null, true, true))->export_for_template($renderer);
         echo $renderer->render_from_template('tool_vault/backup_details', $data);

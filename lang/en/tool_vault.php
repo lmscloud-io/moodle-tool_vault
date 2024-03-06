@@ -31,7 +31,8 @@ $string['anotherrestoreisinprogress'] = 'Another restore is in progress';
 $string['backup'] = 'Backup';
 $string['backupdisabledanotherinprogress'] = 'You can not start backup because there is another backup in progress.';
 $string['backupdisablednoapikey'] = 'You can not start backup because you do not have API key';
-$string['backupfinished'] = '<p>This backup has already finished. You can access the logs <a href="{$a}">here</a></p>';
+$string['backupfinished'] = 'This backup has already finished. You can access the logs <a href="{$a}">here</a>';
+$string['backupinprogres'] = 'During backup the site is placed in maintenance mode. Use this page to access logs about the current process';
 $string['backupkey'] = 'Backup key';
 $string['backupprocesslog'] = 'Backup process log';
 $string['backupscheduled'] = 'Backup (scheduled)';
@@ -102,6 +103,7 @@ $string['remotesignin'] = 'Sign In';
 $string['remotesignup'] = 'Create account';
 $string['repeatprecheck'] = 'Repeat pre-check';
 $string['restorefinished'] = '<p>This restore has already finished. You can access the logs <a href="{$a}">here</a></p>';
+$string['restorefrombackup'] = 'Restore from backup {$a}';
 $string['restoreinprogress'] = 'During restore the site is placed in maintenance mode. Use this page to access logs about the current process';
 $string['restoreremovemissing'] = 'Automatically remove missing plugins after restore';
 $string['restoreremovemissing_desc'] = "If backup contains data for the plugins that are not present in this site codebase, they will be marked as \"Missing from disk\" in the plugin overview.<br>

@@ -29,6 +29,16 @@ use tool_vault\local\models\backup_model;
 class backup_details extends base {
 
     /**
+     * Display name of the section (for the breadcrumb)
+     *
+     * @return string
+     */
+    public static function get_display_name(): string {
+        // TODO string.
+        return 'Backup details';
+    }
+
+    /**
      * Display
      *
      * @param \renderer_base $output

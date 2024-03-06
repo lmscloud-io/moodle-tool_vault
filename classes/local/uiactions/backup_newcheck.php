@@ -25,15 +25,19 @@ use tool_vault\local\checks\check_base;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class overview_newcheck extends base {
+class backup_newcheck extends base {
 
     /**
      * Process action
      */
     public function process() {
         require_sesskey();
-        check_base::schedule(['type' => required_param('type', PARAM_ALPHANUMEXT)]);
-        redirect(overview::url());
+        $check = check_base::schedule(['type' => required_param('type', PARAM_ALPHANUMEXT)]);
+        if (optional_param('detailed', false, PARAM_BOOL)) {
+            redirect(backup_checkreport::url(['id' => $check->get_model()->id]));
+        }
+        //print_object($check);exit;
+        redirect(backup::url());
     }
 
     /**

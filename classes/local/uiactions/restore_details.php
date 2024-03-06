@@ -32,6 +32,16 @@ use tool_vault\site_restore_dryrun;
 class restore_details extends base {
 
     /**
+     * Display name of the section (for the breadcrumb)
+     *
+     * @return string
+     */
+    public static function get_display_name(): string {
+        // TODO string.
+        return 'Restore details';
+    }
+
+    /**
      * Display
      *
      * @param \renderer_base $output
