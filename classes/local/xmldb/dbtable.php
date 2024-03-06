@@ -323,12 +323,16 @@ class dbtable {
             $table->addField($field);
         }
         foreach ($keysandindexes as $obj) {
-            $obj->setPrevious(null);
-            $obj->setNext(null);
-            if ($obj instanceof xmldb_key) {
-                $table->addKey($obj);
-            } else if ($obj instanceof xmldb_index) {
-                $table->addIndex($obj);
+            try {
+                $obj->setPrevious(null);
+                $obj->setNext(null);
+                if ($obj instanceof xmldb_key) {
+                    $table->addKey($obj);
+                } else if ($obj instanceof xmldb_index) {
+                    $table->addIndex($obj);
+                }
+            } catch (\Throwable $e) {
+                continue;
             }
         }
         $this->xmldbtable = $table;
