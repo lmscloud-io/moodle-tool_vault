@@ -28,7 +28,7 @@ use tool_vault\local\helpers\siteinfo;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class plugins_restore extends check_base {
+class plugins_restore extends check_base_restore {
 
     /**
      * Evaluate check and store results in model details

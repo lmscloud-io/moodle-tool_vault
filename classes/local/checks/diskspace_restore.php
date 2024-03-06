@@ -27,7 +27,7 @@ use tool_vault\local\models\dryrun_model;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class diskspace_restore extends check_base {
+class diskspace_restore extends check_base_restore {
 
     /**
      * Evaluate check and store results in model details
