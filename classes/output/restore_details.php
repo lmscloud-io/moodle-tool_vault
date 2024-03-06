@@ -17,9 +17,9 @@
 namespace tool_vault\output;
 
 use tool_vault\constants;
+use tool_vault\local\checks\check_base;
 use tool_vault\local\helpers\ui;
 use tool_vault\local\models\restore_model;
-use tool_vault\local\uiactions\restore;
 use tool_vault\local\uiactions\restore_remotedetails;
 
 /**
@@ -72,7 +72,18 @@ class restore_details implements \templatable {
             'backupdetailsurl' => restore_remotedetails::url(['backupkey' => $this->restore->backupkey])->out(false),
             'siteurl' => $CFG->wwwroot,
             'isprogresspage' => $this->isprogresspage,
+            'prechecks' => [],
         ];
+
+        // Add failed pre-checks to the output.
+        if ($this->restore->status === constants::STATUS_FAILED) {
+            $prechecks = check_base::get_all_checks_for_operation($this->restore->id);
+            foreach ($prechecks as $check) {
+                if (!$check->success()) {
+                    $rv['prechecks'][] = (new check_display($check))->export_for_template($output);
+                }
+            }
+        }
         return $rv;
     }
 }

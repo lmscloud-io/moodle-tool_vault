@@ -80,6 +80,10 @@
     {{/isprogresspage}}
 {{/haslogs}}
 
+{{#prechecks}}
+    {{> tool_vault/check_summary}}
+{{/prechecks}}
+
 {{#isprogresspage}}
     {{#timefinished}}
         <p><a href="{{siteurl}}">{{#str}} returntothesite, tool_vault {{/str}}</a></p>
