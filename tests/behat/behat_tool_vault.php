@@ -38,11 +38,12 @@ class behat_tool_vault extends behat_base {
     /**
      * Skip tests if the test API url is not set
      *
-     * @Given /^test API url is specified for tool_vault$/
+     * @Given /^test API key is specified for tool_vault$/
      */
-    public function scheduled_vault_has_fail_delay_seconds() {
-        if (!defined('TOOL_VAULT_TEST_API_URL')) {
+    public function test_api_key_is_specified_for_tool_vault() {
+        if (!defined('TOOL_VAULT_TEST_API_KEY')) {
             throw new \Moodle\BehatExtension\Exception\SkippedException();
         }
+        \tool_vault\api::set_api_key(TOOL_VAULT_TEST_API_KEY);
     }
 }

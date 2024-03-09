@@ -66,12 +66,11 @@ const loadFragmentWithPopup = async(title, tempBody, fragmentName, contextid, ar
         activeModal = await ModalFactory.create({
             type: ModalFactory.types.CANCEL,
             title,
-            body: tempBody,
-            removeOnClose: true
+            body: tempBody
         });
         activeModal.show();
         fragment = await Fragment.loadFragment('tool_vault', fragmentName, contextid, args);
-        activeModal.hide();
+        activeModal.destroy();
     } catch (e) {
         if (activeModal) {
             activeModal.setBody(e.message);
@@ -118,7 +117,7 @@ export const initStartBackup = () => {
 
         modal.getRoot().on(ModalEvents.save, () => submitForm(backupForm, modal));
         modal.getRoot().on(ModalEvents.cancel, () => modal.hide());
-        modal.getRoot().on(ModalEvents.bodyRendered, () => pendingPromise.resolve());
+        pendingPromise.resolve();
     });
 };
 

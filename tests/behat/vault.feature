@@ -45,6 +45,15 @@ Feature: Using tool vault
     And I press "Save changes"
     And I should see "API key not valid"
 
+  Scenario: Vault forget API key
+    Given test API key is specified for tool_vault
+    When I log in as "admin"
+    And I navigate to "Server > Vault - Site migration" in site administration
+    And "I have an API key" "button" should not exist
+    And I should see "You are using API key"
+    And I follow "Forget API key"
+    And "I have an API key" "button" should exist
+
   # Scenario: Vault backup and restore pre-check
   #   Given test API url is specified for tool_vault
   #   When I log in as "admin"
