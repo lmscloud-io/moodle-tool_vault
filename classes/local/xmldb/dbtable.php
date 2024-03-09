@@ -542,7 +542,7 @@ class dbtable {
         $objs = array_merge(
             $this->get_xmldb_table()->getFields(),
             $this->get_xmldb_table()->getKeys(),
-            $this->get_xmldb_table()->getIndexes(),
+            $this->get_xmldb_table()->getIndexes()
         );
         foreach ($objs as $obj) {
             $error = $obj->validateDefinition($this->get_xmldb_table());
