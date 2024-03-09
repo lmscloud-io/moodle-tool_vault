@@ -65,7 +65,11 @@ function tool_vault_output_fragment_start_backup($args): string {
 
     api::precheck_backup_allowed();
 
-    $description = $CFG->wwwroot.' by '.fullname($USER); // TODO string?
+    $description = get_string('defaultbackupdescription', 'tool_vault',
+        (object)[
+            'site' => $CFG->wwwroot,
+            'name' => fullname($USER, true),
+        ]);
     return $OUTPUT->render_from_template('tool_vault/start_backup_popup', [
         'description' => $description,
     ]);

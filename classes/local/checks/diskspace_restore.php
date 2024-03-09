@@ -91,13 +91,11 @@ class diskspace_restore extends check_base_restore {
      * @return string
      */
     public function get_status_message(): string {
-        // TODO strings.
         return $this->success() ?
             ($this->is_warning() ?
-                'There is enough disk space in the temporary directory however there may not be '.
-                'enough space for all files and dataroot if they are in the same local disk partition' :
-                'There is enough disk space in the temporary directory to perform site restore') :
-            'There is not enough disk space in the temporary directory to perform site restore';
+                get_string('diskspace_success_warning', 'tool_vault') :
+                get_string('diskspace_success', 'tool_vault')) :
+            get_string('diskspace_fail', 'tool_vault');
     }
 
     /**
@@ -106,7 +104,6 @@ class diskspace_restore extends check_base_restore {
      * @return string
      */
     public function summary(): string {
-        // TODO strings.
         if ($this->model->status !== constants::STATUS_FINISHED) {
             return '';
         }
@@ -114,13 +111,18 @@ class diskspace_restore extends check_base_restore {
         return
             $this->display_status_message($this->get_status_message(), $this->is_warning()).
             '<ul>'.
-            '<li>'.'Free space in temp dir: '.display_size($details['freespace']).'</li>'.
-            '<li>'.'Minimum space required in temp dir: '.display_size($details['mintmpspace'] ?? 0).'</li>'.
-            '<li>'.'Required space for dataroot (excluding filedir): '.display_size($details['datarootsize'] ?? 0).'</li>'.
-            '<li>'.'Required space for files: '.display_size($details['filedirsize'] ?? 0).'</li>'.
-            '<li>'.'Required space for database (*): '.display_size($details['dbtotalsize'] ?? 0).'</li>'.
+            '<li>'.get_string('diskspace_freespace', 'tool_vault') . ': '.
+                display_size($details['freespace']).'</li>'.
+            '<li>'.get_string('diskspace_mintmpspace', 'tool_vault') . ': '.
+                display_size($details['mintmpspace'] ?? 0).'</li>'.
+            '<li>'.get_string('diskspace_datarootsize', 'tool_vault') . ': '.
+                display_size($details['datarootsize'] ?? 0).'</li>'.
+            '<li>'.get_string('diskspace_filedirsize', 'tool_vault') . ': '.
+                display_size($details['filedirsize'] ?? 0).'</li>'.
+            '<li>'.get_string('diskspace_dbtotalsize', 'tool_vault') . ' (*): '.
+                display_size($details['dbtotalsize'] ?? 0).'</li>'.
             '</ul>'.
-            '<p>(*) Note, tool Vault is <b>not able to check</b> if there is enough space in the database to perform restore.</p>';
+            '<p>(*) ' . get_string('diskspace_dbtotalsizefootnote', 'tool_vault') . '</p>';
     }
 
     /**

@@ -63,19 +63,21 @@ class version_restore extends check_base_restore {
      * @return string
      */
     public function get_status_message(): string {
-        // TODO strings.
         global $CFG;
         $details = $this->model->get_details();
         $branch = $details['backupbranch'] ?? null;
         $version = $details['backupversion'];
         if ($this->success()) {
-            return 'Moodle version matches';
+            return get_string('moodleversion_success', 'tool_vault');
         // } else if ("{$branch}" !== "{$CFG->branch}") {
         //     return "Can not restore backup made on a different branch (major version) of Moodle. ".
         //         "This backup branch is '{$branch}' and this site branch is '{$CFG->branch}'";
         } else {
-            return "Site version number has to be greater than or equal to the version in the backup. ".
-                "This backup is {$version} and this site is {$CFG->version}";
+            $a = (object)[
+                'version' => $version,
+                'siteversion' => $CFG->version,
+            ];
+            return get_string('moodleversion_fail', 'tool_vault', $a);
         }
     }
 
@@ -85,7 +87,6 @@ class version_restore extends check_base_restore {
      * @return string
      */
     public function summary(): string {
-        // TODO strings.
         global $CFG;
         if ($this->model->status !== constants::STATUS_FINISHED) {
             return '';
@@ -94,8 +95,14 @@ class version_restore extends check_base_restore {
         return
             $this->display_status_message($this->get_status_message()).
             '<ul>'.
-            '<li>Backup made in version '.$details['backupversion'].' (branch '.$details['backupbranch'].')</li>'.
-            '<li>This website has version '.$CFG->version.' (branch '.$CFG->branch.')</li>'.
+            '<li>' . get_string('moodleversion_backupinfo', 'tool_vault', (object)[
+                'version' => $details['backupversion'],
+                'branch' => $details['backupbranch'],
+            ]) . '</li>'.
+            '<li>' . get_string('moodleversion_siteinfo', 'tool_vault', (object)[
+                'version' => $CFG->version,
+                'branch' => $CFG->branch,
+            ]) . '</li>'.
             '</ul>';
     }
 

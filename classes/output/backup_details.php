@@ -130,8 +130,7 @@ class backup_details implements \templatable {
             $rv['dryrunurl'] = restore_dryrun::url(['backupkey' => $backupkey])->out(false);
             $rv['restoreurl'] = restore_restore::url(['backupkey' => $backupkey])->out(false);
         } else if ($this->fulldetails && !$this->isprogresspage && $this->backup->status === constants::STATUS_FINISHED) {
-            // TODO strings.
-            $error = 'This backup is not available on the server';
+            $error = get_string('errorbackupnotavailable', 'tool_vault');
             // TODO explanation why:
             // - expired
             // - was deleted

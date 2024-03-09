@@ -170,16 +170,15 @@ class configoverride extends check_base {
         if (($details = $this->get_report()) === null) {
             return '';
         }
-        // TODO strings.
         return
             '<ul>'.
-            '<li>Settings from config.php that will be included in backup: '.
+            '<li>' . get_string('configoverrides_willbeincluded', 'tool_vault') . ': '.
             count($details['config_php_settings_included']).'</li>'.
-            '<li>Settings from config.php that will NOT be included in backup: '.
+            '<li>' . get_string('configoverrides_willnotbeincluded', 'tool_vault') . ': '.
             count($details['config_php_settings_notincluded']).'</li>'.
-            '<li>Plugin settings from config.php that will be included in backup: '.
+            '<li>' . get_string('configoverrides_willbeincludedplugin', 'tool_vault') . ': '.
             count($details['forced_plugin_settings_included']).'</li>'.
-            '<li>Plugin settings from config.php that will NOT be included in backup: '.
+            '<li>' . get_string('configoverrides_willnotbeincludedplugin', 'tool_vault') . ': '.
             count($details['forced_plugin_settings_notincluded']).'</li>'.
             '</ul>';
     }
@@ -206,9 +205,8 @@ class configoverride extends check_base {
      * @return array
      */
     protected function format_setting_value_for_details(string $name, ?string $plugin, $value, bool $included): array {
-        // TODO strings.
         if (!$included) {
-            $value = '<em>Redacted</em>';
+            $value = '<em>' . get_string('configoverrides_valueredacted', 'tool_vault') . '</em>';
         } else {
             $value = is_array($value) ? 'Array' : s((string)$value);
         }

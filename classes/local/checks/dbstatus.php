@@ -88,23 +88,20 @@ class dbstatus extends check_base {
      * @return string
      */
     public function get_status_message(): string {
-        // TODO strings.
         if ($report = $this->get_report()) {
             $status = $this->get_status($report);
             switch ($status) {
                 case self::STATUS_CLEAN:
-                    return "Your database tables match descriptions in install.xml";
+                    return get_string('dbmodifications_status_clean', 'tool_vault');
                 case self::STATUS_NOMODIFICATIONS:
-                    return "Site backup can be performed without any database modifications";
+                    return get_string('dbmodifications_status_nomodifications', 'tool_vault');
                 case self::STATUS_MODIFIED:
-                    return "Your database state does not match specifications in install.xml. The site can be backed up, " .
-                        "the modifications will be included in the backup";
+                    return get_string('dbmodifications_status_modified', 'tool_vault');
                 case self::STATUS_INVALID:
-                    return "Your database has modifications that can not be processed by Moodle. You need to adjust the " .
-                        "'Backup settings' and exclude some entities if you want to perform site backup";
+                    return get_string('dbmodifications_status_invalid', 'tool_vault');
             }
         }
-        return "Unknown";
+        return get_string('statusunknown', 'moodle');
     }
 
     /**
@@ -180,16 +177,19 @@ class dbstatus extends check_base {
      * @return string
      */
     public function summary(): string {
-        // TODO strings.
         $report = $this->get_report();
         if ($report) {
             return
                 $this->display_status_message($this->get_status_message(), !empty(array_filter($report))).
                 '<ul>'.
-                '<li>Missing tables: '.count($report[constants::DIFF_MISSINGTABLES]).'</li>'.
-                '<li>Extra tables: '.count($report[constants::DIFF_EXTRATABLES]).'</li>'.
-                '<li>Changed tables: '.count($report[constants::DIFF_CHANGEDTABLES]).'</li>'.
-                '<li>Invalid tables: '.count($report[constants::DIFF_INVALIDTABLES]).'</li>'.
+                '<li>' . get_string('dbmodifications_missingtables', 'tool_vault') . ': ' .
+                    count($report[constants::DIFF_MISSINGTABLES]).'</li>'.
+                '<li>' . get_string('dbmodifications_extratables', 'tool_vault') . ': ' .
+                    count($report[constants::DIFF_EXTRATABLES]).'</li>'.
+                '<li>' . get_string('dbmodifications_changedtables', 'tool_vault') . ': ' .
+                    count($report[constants::DIFF_CHANGEDTABLES]).'</li>'.
+                '<li>' . get_string('dbmodifications_invalidtables', 'tool_vault') . ': ' .
+                    count($report[constants::DIFF_INVALIDTABLES]).'</li>'.
                 '</ul>';
         }
         return '';
@@ -230,12 +230,11 @@ class dbstatus extends check_base {
         foreach ($report as $errortype => $r) {
             foreach ($r as $tablename => $details) {
                 if ($errortype === constants::DIFF_MISSINGTABLES) {
-                    // TODO strings.
                     $tables[$tablename]['tablewarnings'][] =
-                        'Missing table: Table is present in the definition but is absent in the actual database';
+                        get_string('dbmodifications_missingtable_warning', 'tool_vault');
                 } else if ($errortype === constants::DIFF_EXTRATABLES) {
                     $tables[$tablename]['tablewarnings'][] =
-                        'Extra table: Table is absent in the definition but is present in the actual database';
+                        get_string('dbmodifications_extratable_warning', 'tool_vault');
                 } else if ($errortype === constants::DIFF_CHANGEDTABLES) {
                     foreach ($details[2] as $changetype => $list) {
                         foreach ($list as $l) {
@@ -275,6 +274,6 @@ class dbstatus extends check_base {
      * @return string
      */
     public static function get_display_name(): string {
-        return get_string('databasemodifications', 'tool_vault');
+        return get_string('dbmodifications', 'tool_vault');
     }
 }

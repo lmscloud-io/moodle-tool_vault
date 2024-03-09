@@ -32,8 +32,7 @@ class restore_checkreport extends base {
      * @return string
      */
     public static function get_display_name(): string {
-        // TODO string.
-        return 'Pre-check details';
+        return get_string('precheckdetails', 'tool_vault');
     }
 
     /**

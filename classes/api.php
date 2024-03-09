@@ -421,23 +421,22 @@ class api {
      * @return remote_backup
      */
     public static function get_remote_backup(string $backupkey, ?string $withstatus = null): remote_backup {
-        // TODO strings.
         try {
             $result = self::api_call("backups/{$backupkey}", 'GET');
         } catch (api_exception $t) {
             if ($t->getCode() == 404) {
-                throw new api_exception("Backup with the key {$backupkey} is no longer avaialable", 404, $t);
+                throw new api_exception(get_string('error_backupnotavailable', 'tool_vault', $backupkey), 404, $t);
             } else {
                 throw $t;
             }
         }
         if (isset($withstatus) && $result['status'] !== $withstatus) {
             if ($result['status'] === constants::STATUS_INPROGRESS) {
-                $error = "Backup with the key {$backupkey} has not finished yet";
+                $error = get_string('error_backupnotfinished', 'tool_vault', $backupkey);
             } else if ($result['status'] === constants::STATUS_FAILED) {
-                $error = "Backup with the key {$backupkey} has failed";
+                $error = get_string('error_backupfailed', 'tool_vault', $backupkey);
             } else {
-                $error = "Backup with the key {$backupkey} has a wrong status";
+                $error = get_string('error_backuphaswrongstatus', 'tool_vault', $backupkey);
             }
             throw new api_exception($error, 404);
         }
@@ -474,8 +473,7 @@ class api {
 
         // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
         if (!preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
-            // TODO strings.
-            throw new \moodle_exception('Vault API did not return a valid link: '.$s3url);
+            throw new \moodle_exception(get_string('error_notavalidlink', 'tool_vault', s($s3url)));
         }
 
         $encryptionkey = self::prepare_encryption_key($passphrase);
@@ -620,10 +618,9 @@ class api {
      * @throws \moodle_exception
      */
     public static function request_new_restore_key(array $info): string {
-        // TODO strings.
         $res = self::api_call('restores', 'PUT', $info);
         if (empty($res['restorekey'])) {
-            throw new \moodle_exception('Server returned no data');
+            throw new \moodle_exception(get_string('error_serverreturnednodata', 'tool_vault'));
         }
         return $res['restorekey'];
     }

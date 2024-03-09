@@ -139,17 +139,16 @@ class plugins_restore extends check_base_restore {
      * @return string
      */
     public function get_status_message(): string {
-        // TODO strings.
         if ($this->success()) {
             if ($this->extra_plugins() || $this->plugins_needing_upgrade()) {
-                return 'Some plugins will need to be upgraded after restore';
+                return get_string('addonplugins_success_needsupgrade', 'tool_vault');
             } else if ($this->missing_plugins()) {
-                return 'Some plugins are missing but the restore is possible';
+                return get_string('addonplugins_success_withmissing', 'tool_vault');
             } else {
-                return 'Plugins versions in the backup and on this site match';
+                return get_string('addonplugins_success', 'tool_vault');
             }
         } else {
-            return 'Some plugins have lower version than the same plugins in the backup';
+            return get_string('addonplugins_fail', 'tool_vault');
         }
     }
 
@@ -159,22 +158,25 @@ class plugins_restore extends check_base_restore {
      * @return string
      */
     public function summary(): string {
-        // TODO strings.
         if ($this->model->status !== constants::STATUS_FINISHED) {
             return '';
         }
         $r = [];
         if ($p = $this->problem_plugins()) {
-            $r[] = "Plugins have lower version than the same plugins in the backup: ".join(', ', array_keys($p));
+            $r[] = get_string('addonplugins_withlowerversion', 'tool_vault') . ": " .
+                join(', ', array_keys($p));
         }
         if ($p = $this->extra_plugins()) {
-            $r[] = "Plugins found on this site but not present in the backup: ".join(', ', array_keys($p));
+            $r[] = get_string('addonplugins_notpresent', 'tool_vault') . ": " .
+                join(', ', array_keys($p));
         }
         if ($p = $this->plugins_needing_upgrade()) {
-            $r[] = "Plugins have higher version than the same plugins in the backup: ".join(', ', array_keys($p));
+            $r[] = get_string('addonplugins_withhigherversion', 'tool_vault') . ": " .
+                join(', ', array_keys($p));
         }
         if ($p = $this->missing_plugins()) {
-            $r[] = "Missing plugins: ".join(', ', array_keys($p));
+            $r[] = get_string('addonplugins_missing', 'tool_vault') . ": " .
+                join(', ', array_keys($p));
         }
         return
             $this->display_status_message($this->get_status_message(), !empty($r)).
@@ -265,6 +267,6 @@ class plugins_restore extends check_base_restore {
      * @return string
      */
     public static function get_display_name(): string {
-        return get_string('pluginversions', 'tool_vault');
+        return get_string('addonplugins', 'tool_vault');
     }
 }

@@ -131,10 +131,9 @@ class diskspace extends check_base {
      * @return string
      */
     public function get_status_message(): string {
-        // TODO strings.
         return $this->success() ?
-            'There is enough disk space to perform site backup' :
-            'There is not enough disk space to perform site backup';
+            get_string('discspace_success', 'tool_vault') :
+            get_string('discspace_fail', 'tool_vault');
     }
 
     /**
@@ -143,7 +142,6 @@ class diskspace extends check_base {
      * @return string
      */
     public function summary(): string {
-        // TODO strings.
         if ($this->model->status !== constants::STATUS_FINISHED) {
             return '';
         }
@@ -151,15 +149,24 @@ class diskspace extends check_base {
         return
             $this->display_status_message($this->get_status_message()).
             '<ul>'.
-            '<li>Total size of files in the file storage: '.display_size($details['totalfilesize']).'</li>'.
-            '<li>The largest file in the file storage: '.display_size($details['maxfilesize']).'</li>'.
-            '<li>Number of files in the file storage: '.number_format($details['countfiles'], 0).'</li>'.
-            '<li>Total number of rows in DB tables: '.number_format($details['dbrecords'], 0).'</li>'.
-            '<li>Total size of DB tables (approx): '.display_size($details['dbtotalsize']).'</li>'.
-            '<li>The largest DB table size (approx): '.display_size($details['dbmaxsize']).'</li>'.
-            '<li>Total size of dataroot (excl. caches and filedir): '.display_size($details['datarootsize']).'</li>'.
-            '<li>The largest file in dataroot: '.display_size($details['maxdatarootfilesize'] ?? 0).'</li>'.
-            '<li>Free space in temp dir: '.display_size($details['freespace']).'</li>'.
+            '<li>' . get_string('diskspace_totalfilesize', 'tool_vault') . ': ' .
+                display_size($details['totalfilesize']).'</li>'.
+            '<li>' . get_string('diskspace_maxfilesize', 'tool_vault') . ': ' .
+                display_size($details['maxfilesize']).'</li>'.
+            '<li>' . get_string('diskspace_countfiles', 'tool_vault') . ': ' .
+                number_format($details['countfiles'], 0).'</li>'.
+            '<li>' . get_string('diskspace_dbrecords', 'tool_vault') . ': ' .
+                number_format($details['dbrecords'], 0).'</li>'.
+            '<li>' . get_string('diskspace_dbtotalsize', 'tool_vault') . ': ' .
+                display_size($details['dbtotalsize']).'</li>'.
+            '<li>' . get_string('diskspace_dbmaxsize', 'tool_vault') . ': ' .
+                display_size($details['dbmaxsize']).'</li>'.
+            '<li>' . get_string('diskspace_datarootsize', 'tool_vault') . ': ' .
+                display_size($details['datarootsize']).'</li>'.
+            '<li>' . get_string('diskspace_maxdatarootfilesize', 'tool_vault') . ': ' .
+                display_size($details['maxdatarootfilesize'] ?? 0).'</li>'.
+            '<li>' . get_string('diskspace_freespace', 'tool_vault') . ': ' .
+                display_size($details['freespace']).'</li>'.
             '</ul>';
     }
 

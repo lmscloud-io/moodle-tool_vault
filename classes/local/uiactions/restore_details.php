@@ -37,8 +37,7 @@ class restore_details extends base {
      * @return string
      */
     public static function get_display_name(): string {
-        // TODO string.
-        return 'Restore details';
+        return get_string('restoredetails', 'tool_vault');
     }
 
     /**
