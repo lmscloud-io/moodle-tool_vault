@@ -117,7 +117,7 @@ class backup_details implements \templatable {
             if (api::are_restores_allowed()) {
                 $rv['restoreallowed'] = true;
             } else {
-                $error = get_string('restoresnotallowed', 'tool_vault');
+                $error = get_string('error_restoresnotallowed', 'tool_vault');
             }
             if ($this->fulldetails) {
                 $lastoperation = operation_model::get_last_of([restore_model::class, dryrun_model::class],
@@ -130,7 +130,7 @@ class backup_details implements \templatable {
             $rv['dryrunurl'] = restore_dryrun::url(['backupkey' => $backupkey])->out(false);
             $rv['restoreurl'] = restore_restore::url(['backupkey' => $backupkey])->out(false);
         } else if ($this->fulldetails && !$this->isprogresspage && $this->backup->status === constants::STATUS_FINISHED) {
-            $error = get_string('errorbackupnotavailable', 'tool_vault');
+            $error = get_string('error_backupnotavailable', 'tool_vault', $backupkey);
             // TODO explanation why:
             // - expired
             // - was deleted

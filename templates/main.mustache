@@ -37,8 +37,7 @@
         <div class="col-md-10">
             <p>
                 <a href="{{mainurl}}?section=backup">{{#str}} sitebackup, tool_vault {{/str}}</a><br>
-                Backup your whole site to the cloud with possibility to restore it on the same or different
-                server, in a different database or different file system.
+                {{#str}} sitebackup_desc, tool_vault {{/str}}
             </p>
         </div>
     </div>
@@ -54,11 +53,10 @@
         <div class="col-md-10">
             <p>
                 <a href="{{mainurl}}?section=restore">{{#str}} siterestore, tool_vault {{/str}}</a><br>
-                Restore a site from the cloud backup that you have made yourself or somebody shared with you.<br>
-                Note that the whole content of the current site will be replaced with the content of the backup.
+                {{#str}} siterestore_desc, tool_vault {{/str}}
                 {{^allowrestore}}
                 <br>
-                Restoring on this site is not allowed. You can change it in the plugin settings.
+                {{#str}} siterestore_notallowed_desc, tool_vault {{/str}}
                 {{/allowrestore}}
             </p>
         </div>
@@ -70,7 +68,7 @@
         <div class="col-md-10">
             <p>
                 <a href="{{mainurl}}?section=logs">{{#str}} history, tool_vault {{/str}}</a><br>
-                Logs of past backups and restores on this site.
+                {{#str}} history_desc, tool_vault {{/str}}
             </p>
         </div>
     </div>
@@ -81,8 +79,7 @@
         <div class="col-md-10">
             <p>
                 <a href="{{settingsurl}}">{{#str}} settings, moodle {{/str}}</a><br>
-                Vault plugin settings where you can configure what to exclude during backup or
-                preserve during restore.
+                {{#str}} settings_desc, tool_vault {{/str}}
             </p>
         </div>
     </div>
@@ -92,10 +89,10 @@
             <img src="{{pixbaseurl}}/managecloud.svg" width="48" height="48" alt="">
         </div>
         <div class="col-md-10">
-            <p>You are using API key {{apikey}}
-            <a href="{{forgeturl}}">{{#str}} logoutfromvault, tool_vault {{/str}}</a>
+            <p>{{#str}} youareusingapikey, tool_vault, {{apikey}} {{/str}}
+            <a href="{{forgeturl}}">{{#str}} forgetapikey, tool_vault {{/str}}</a>
             </p>
-            <p><a href="{{vaulturl}}/dashboard" target="_blank">{{#str}} managelsmvault, tool_vault {{/str}}</a><br>
+            <p><a href="{{vaulturl}}/dashboard" target="_blank">{{#str}} manageremoteaccount, tool_vault {{/str}}</a><br>
         </div>
     </div>
     {{/registrationinfo}}

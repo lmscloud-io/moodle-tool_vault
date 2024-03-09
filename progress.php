@@ -74,7 +74,7 @@ $isoldoperation = $operation &&
 if ($operation instanceof \tool_vault\local\models\backup_model) {
     if ($isoldoperation) {
         $url = tool_vault\local\uiactions\backup_details::url(['id' => $operation->id]);
-        echo '<p>'.get_string('backupfinished', 'tool_vault', $url).'</p>';
+        echo '<p>' . get_string('backupfinished', 'tool_vault', $url) . '</p>';
     } else {
         $data = (new \tool_vault\output\backup_details($operation, null, true, true))->export_for_template($renderer);
         echo $renderer->render_from_template('tool_vault/backup_details', $data);
@@ -82,14 +82,14 @@ if ($operation instanceof \tool_vault\local\models\backup_model) {
 } else if ($operation instanceof \tool_vault\local\models\restore_model) {
     if ($isoldoperation) {
         $url = \tool_vault\local\uiactions\restore_details::url(['id' => $operation->id]);
-        echo get_string('restorefinished', 'tool_vault', $url);
+        echo '<p>' . get_string('restorefinished', 'tool_vault', $url) . '</p>';
     } else {
         $data = (new \tool_vault\output\restore_details($operation))->export_for_template($renderer);
         $data['isprogresspage'] = 1;
         echo $renderer->render_from_template('tool_vault/restore_details', $data);
     }
 } else {
-    echo get_string('accesskeyisnotvalid', 'tool_vault');
+    echo get_string('error_accesskeyisnotvalid', 'tool_vault');
 }
 echo html_writer::end_div();
 

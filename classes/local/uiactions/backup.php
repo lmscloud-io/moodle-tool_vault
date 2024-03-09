@@ -51,9 +51,9 @@ class backup extends base {
         $whybackupdisabled = null;
         $activeprocesses = operation_model::get_active_processes(true);
         if (!api::is_registered()) {
-            $whybackupdisabled = get_string('backupdisablednoapikey', 'tool_vault');
+            $whybackupdisabled = get_string('warning_backupdisablednoapikey', 'tool_vault');
         } else if ($activeprocesses) {
-            $whybackupdisabled = get_string('backupdisabledanotherinprogress', 'tool_vault');
+            $whybackupdisabled = get_string('warning_backupdisabledanotherinprogress', 'tool_vault');
         }
         $lastbackup = backup_model::get_last_of([backup_model::class]);
         $result = [

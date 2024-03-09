@@ -93,9 +93,9 @@ class diskspace_restore extends check_base_restore {
     public function get_status_message(): string {
         return $this->success() ?
             ($this->is_warning() ?
-                get_string('diskspace_success_warning', 'tool_vault') :
-                get_string('diskspace_success', 'tool_vault')) :
-            get_string('diskspace_fail', 'tool_vault');
+                get_string('diskspacerestore_success_warning', 'tool_vault') :
+                get_string('diskspacerestore_success', 'tool_vault')) :
+            get_string('diskspacerestore_fail', 'tool_vault');
     }
 
     /**
@@ -111,18 +111,18 @@ class diskspace_restore extends check_base_restore {
         return
             $this->display_status_message($this->get_status_message(), $this->is_warning()).
             '<ul>'.
-            '<li>'.get_string('diskspace_freespace', 'tool_vault') . ': '.
+            '<li>'.get_string('diskspacebackup_freespace', 'tool_vault') . ': '.
                 display_size($details['freespace']).'</li>'.
-            '<li>'.get_string('diskspace_mintmpspace', 'tool_vault') . ': '.
+            '<li>'.get_string('diskspacerestore_mintmpspace', 'tool_vault') . ': '.
                 display_size($details['mintmpspace'] ?? 0).'</li>'.
-            '<li>'.get_string('diskspace_datarootsize', 'tool_vault') . ': '.
+            '<li>'.get_string('diskspacebackup_datarootsize', 'tool_vault') . ': '.
                 display_size($details['datarootsize'] ?? 0).'</li>'.
-            '<li>'.get_string('diskspace_filedirsize', 'tool_vault') . ': '.
+            '<li>'.get_string('diskspacerestore_filedirsize', 'tool_vault') . ': '.
                 display_size($details['filedirsize'] ?? 0).'</li>'.
-            '<li>'.get_string('diskspace_dbtotalsize', 'tool_vault') . ' (*): '.
+            '<li>'.get_string('diskspacebackup_dbtotalsize', 'tool_vault') . ' (*): '.
                 display_size($details['dbtotalsize'] ?? 0).'</li>'.
             '</ul>'.
-            '<p>(*) ' . get_string('diskspace_dbtotalsizefootnote', 'tool_vault') . '</p>';
+            '<p>(*) ' . get_string('diskspacerestore_dbtotalsizefootnote', 'tool_vault') . '</p>';
     }
 
     /**
@@ -149,6 +149,6 @@ class diskspace_restore extends check_base_restore {
      * @return string
      */
     public static function get_display_name(): string {
-        return get_string('diskspace', 'tool_vault');
+        return get_string('diskspacerestore', 'tool_vault');
     }
 }

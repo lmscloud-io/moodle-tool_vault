@@ -69,9 +69,12 @@ class version_restore extends check_base_restore {
         $version = $details['backupversion'];
         if ($this->success()) {
             return get_string('moodleversion_success', 'tool_vault');
-        // } else if ("{$branch}" !== "{$CFG->branch}") {
-        //     return "Can not restore backup made on a different branch (major version) of Moodle. ".
-        //         "This backup branch is '{$branch}' and this site branch is '{$CFG->branch}'";
+            // phpcs:disable Squiz.PHP.CommentedOutCode.Found
+            // Probably not needed. Begin.
+            // } else if ("{$branch}" !== "{$CFG->branch}") {
+            // return "Can not restore backup made on a different branch (major version) of Moodle. ".
+            // "This backup branch is '{$branch}' and this site branch is '{$CFG->branch}'";
+            // End.
         } else {
             $a = (object)[
                 'version' => $version,

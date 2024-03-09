@@ -95,7 +95,7 @@ class files_backup {
         $this->ziparchive = new \zip_archive();
         if (!$this->ziparchive->open($this->get_archive_file_path(), \file_archive::CREATE)) {
             // TODO?
-            throw new \moodle_exception('Can not create ZIP file');
+            throw new \moodle_exception('error_cannotcreatezip', 'tool_vault');
         }
     }
 
@@ -221,7 +221,7 @@ class files_backup {
      */
     public function add_table_file(string $tablename, string $filepath): self {
         if (!$this->is_db_backup()) {
-            throw new \moodle_exception('This function can only be used for the DB backup');
+            throw new \coding_exception('This function can only be used for the DB backup');
         }
         $this->add_file($filepath, null, false);
         $uploadedtables = $this->currentbackupfile->get_detail('tables') ?? [];
@@ -238,7 +238,7 @@ class files_backup {
      */
     public function finish_table(): self {
         if (!$this->is_db_backup()) {
-            throw new \moodle_exception('This function can only be used for the DB backup');
+            throw new \coding_exception('This function can only be used for the DB backup');
         }
         $this->check_if_new_zip_needed();
         return $this;

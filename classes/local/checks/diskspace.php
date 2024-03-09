@@ -132,8 +132,8 @@ class diskspace extends check_base {
      */
     public function get_status_message(): string {
         return $this->success() ?
-            get_string('discspace_success', 'tool_vault') :
-            get_string('discspace_fail', 'tool_vault');
+            get_string('diskspacebackup_success', 'tool_vault') :
+            get_string('diskspacebackup_fail', 'tool_vault');
     }
 
     /**
@@ -149,23 +149,23 @@ class diskspace extends check_base {
         return
             $this->display_status_message($this->get_status_message()).
             '<ul>'.
-            '<li>' . get_string('diskspace_totalfilesize', 'tool_vault') . ': ' .
+            '<li>' . get_string('diskspacebackup_totalfilesize', 'tool_vault') . ': ' .
                 display_size($details['totalfilesize']).'</li>'.
-            '<li>' . get_string('diskspace_maxfilesize', 'tool_vault') . ': ' .
+            '<li>' . get_string('diskspacebackup_maxfilesize', 'tool_vault') . ': ' .
                 display_size($details['maxfilesize']).'</li>'.
-            '<li>' . get_string('diskspace_countfiles', 'tool_vault') . ': ' .
+            '<li>' . get_string('diskspacebackup_countfiles', 'tool_vault') . ': ' .
                 number_format($details['countfiles'], 0).'</li>'.
-            '<li>' . get_string('diskspace_dbrecords', 'tool_vault') . ': ' .
+            '<li>' . get_string('diskspacebackup_dbrecords', 'tool_vault') . ': ' .
                 number_format($details['dbrecords'], 0).'</li>'.
-            '<li>' . get_string('diskspace_dbtotalsize', 'tool_vault') . ': ' .
+            '<li>' . get_string('diskspacebackup_dbtotalsize', 'tool_vault') . ': ' .
                 display_size($details['dbtotalsize']).'</li>'.
-            '<li>' . get_string('diskspace_dbmaxsize', 'tool_vault') . ': ' .
+            '<li>' . get_string('diskspacebackup_dbmaxsize', 'tool_vault') . ': ' .
                 display_size($details['dbmaxsize']).'</li>'.
-            '<li>' . get_string('diskspace_datarootsize', 'tool_vault') . ': ' .
+            '<li>' . get_string('diskspacebackup_datarootsize', 'tool_vault') . ': ' .
                 display_size($details['datarootsize']).'</li>'.
-            '<li>' . get_string('diskspace_maxdatarootfilesize', 'tool_vault') . ': ' .
+            '<li>' . get_string('diskspacebackup_maxdatarootfilesize', 'tool_vault') . ': ' .
                 display_size($details['maxdatarootfilesize'] ?? 0).'</li>'.
-            '<li>' . get_string('diskspace_freespace', 'tool_vault') . ': ' .
+            '<li>' . get_string('diskspacebackup_freespace', 'tool_vault') . ': ' .
                 display_size($details['freespace']).'</li>'.
             '</ul>';
     }
@@ -194,7 +194,7 @@ class diskspace extends check_base {
      * @return string
      */
     public static function get_display_name(): string {
-        return get_string('diskspace', 'tool_vault');
+        return get_string('diskspacebackup', 'tool_vault');
     }
 
     /**

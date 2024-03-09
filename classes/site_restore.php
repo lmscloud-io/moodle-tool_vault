@@ -93,7 +93,7 @@ class site_restore extends operation_base {
             throw new \coding_exception('Parameter backupkey is required for site_restore::schedule()');
         }
         if (!api::are_restores_allowed()) {
-            throw new \moodle_exception('restoresnotallowed', 'tool_vault');
+            throw new \moodle_exception('error_restoresnotallowed', 'tool_vault');
         }
         $backupkey = $params['backupkey'];
         if ($records = restore_model::get_records([constants::STATUS_SCHEDULED])) {
@@ -101,10 +101,10 @@ class site_restore extends operation_base {
             return new static(reset($records));
         }
         if (restore_model::get_records([constants::STATUS_INPROGRESS])) {
-            throw new \moodle_exception(get_string('anotherrestoreisinprogress', 'tool_vault'));
+            throw new \moodle_exception('error_anotherrestoreisinprogress', 'tool_vault');
         }
         if (backup_model::get_records([constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
-            throw new \moodle_exception(get_string('anotherbackupisinprogress', 'tool_vault'));
+            throw new \moodle_exception('error_anotherbackupisinprogress', 'tool_vault');
         }
 
         $model = new restore_model();
@@ -131,10 +131,10 @@ class site_restore extends operation_base {
      */
     public function start(int $pid) {
         if (!api::is_registered()) {
-            throw new \moodle_exception('errorapikeynotvalid', 'tool_vault');
+            throw new \moodle_exception('error_apikeynotvalid', 'tool_vault');
         }
         if (!api::are_restores_allowed()) {
-            throw new \moodle_exception('restoresnotallowed', 'tool_vault');
+            throw new \moodle_exception('error_restoresnotallowed', 'tool_vault');
         }
         $restorekey = api::request_new_restore_key(['backupkey' => $this->model->backupkey]);
         $this->model->set_pid_for_logging($pid);
@@ -366,22 +366,20 @@ class site_restore extends operation_base {
             // Add to log.
             $tablescnt++;
             if (time() - $lastlog > constants::LOG_FREQUENCY) {
-                $this->add_to_log(get_string('logrestoredtables', 'tool_vault', (object)[
+                $a = (object)[
                     'cnt' => sprintf("%".strlen(''.$totaltables)."d", $tablescnt),
                     'totalcnt' => $totaltables,
                     'percent' => sprintf("%3d", (int)(100.0 * $tablescnt / $totaltables)),
-                ]));
+                ];
+                $this->add_to_log("Restored {$a->cnt}/{$a->totalcnt} tables ({$a->percent}%)");
                 $lastlog = time();
                 $lasttablescnt = $tablescnt;
             }
         }
 
         if ($lasttablescnt < $tablescnt) {
-            $this->add_to_log(get_string('logrestoredtables', 'tool_vault', (object)[
-                'cnt' => sprintf("%".strlen(''.$totaltables)."d", $tablescnt),
-                'totalcnt' => $tablescnt,
-                'percent' => '100',
-            ]));
+            $cnt = sprintf("%".strlen(''.$totaltables)."d", $tablescnt);
+            $this->add_to_log("Restored {$cnt}/{$tablescnt} tables (100%)");
         }
 
         // Drop all extra tables.

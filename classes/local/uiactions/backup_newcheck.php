@@ -36,7 +36,6 @@ class backup_newcheck extends base {
         if (optional_param('detailed', false, PARAM_BOOL)) {
             redirect(backup_checkreport::url(['id' => $check->get_model()->id]));
         }
-        //print_object($check);exit;
         redirect(backup::url());
     }
 

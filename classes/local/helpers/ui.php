@@ -77,15 +77,15 @@ class ui {
      */
     public static function format_status(string $status): string {
         if ($status === constants::STATUS_FAILED) {
-            return get_string('statusfailed', 'tool_vault');
+            return get_string('status_failed', 'tool_vault');
         } else if ($status === constants::STATUS_FAILEDTOSTART) {
-            return get_string('statusfailedtostart', 'tool_vault');
+            return get_string('status_failedtostart', 'tool_vault');
         } else if ($status === constants::STATUS_INPROGRESS) {
-            return get_string('statusinprogress', 'tool_vault');
+            return get_string('status_inprogress', 'tool_vault');
         } else if ($status === constants::STATUS_FINISHED) {
-            return get_string('statusfinished', 'tool_vault');
+            return get_string('status_finished', 'tool_vault');
         } else if ($status === constants::STATUS_SCHEDULED) {
-            return get_string('statusscheduled', 'tool_vault');
+            return get_string('status_scheduled', 'tool_vault');
         } else {
             // There should not be any other statuses but just in case.
             return ucfirst($status);

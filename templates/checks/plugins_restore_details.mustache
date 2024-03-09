@@ -27,8 +27,7 @@
 {{#hasproblems}}
 <p>
     <span class="badge badge-danger">{{#str}} error, moodle {{/str}}</span>
-    The following plugins have lower version on this site than in the backup. You must upgrade the code
-    for these plugins before restoring from this backup.
+    {{#str}} addonplugins_withlowerversion_desc, tool_vault {{/str}}
 </p>
 {{#problemplugins}}
     {{> tool_vault/checks/plugins_restore_details_table}}
@@ -37,10 +36,8 @@
 
 {{#hasextra}}
     <p>
-        <span class="badge badge-warning">Extra plugins</span>
-        The following plugins are present on this site but not present in the backup. All data associated with
-        these plugins will be deleted during the restore process. After the restore process is finished you will
-        be prompted to run Moodle upgrade process that will re-install these plugins.
+        <span class="badge badge-warning">{{#str}} addonplugins_extraplugins, tool_vault {{/str}}</span>
+        {{#str}} addonplugins_extraplugins_desc, tool_vault {{/str}}
     </p>
     {{#extraplugins}}
         {{> tool_vault/checks/plugins_restore_details_table}}
@@ -49,9 +46,8 @@
 
 {{#hastobeupgraded}}
     <p>
-        <span class="badge badge-warning">Will require upgrade</span>
-        The following plugins have higher version than in the backup. After the restore process is finished
-        you will be prompted to run Moodle upgrade process.
+        <span class="badge badge-warning">{{#str}} addonplugins_willrequireupgrade, tool_vault {{/str}}</span>
+        {{#str}} addonplugins_willrequireupgrade_desc, tool_vault {{/str}}
     </p>
     {{#tobeupgraded}}
         {{> tool_vault/checks/plugins_restore_details_table}}
@@ -60,17 +56,15 @@
 
 {{#hasmissing}}
 <p>
-    <span class="badge {{#restoreremovemissing}}badge-info{{/restoreremovemissing}}{{^restoreremovemissing}}badge-warning{{/restoreremovemissing}}">Missing plugins</span>
-    The following plugins are present in the backup but are not installed on this site. After the restore
-    these plugins will be listed as "Missing form disk", you can choose to uninstall them or keep the
-    data until you add the code for the plugins. Until then, you may experience errors, for example,
-    missing scheduled tasks.
+    <span class="badge {{#restoreremovemissing}}badge-info{{/restoreremovemissing}}{{^restoreremovemissing}}badge-warning{{/restoreremovemissing}}"
+        >{{#str}} addonplugins_missing, tool_vault {{/str}}</span>
+    {{#str}} addonplugins_missing_desc, tool_vault {{/str}}
 </p>
 {{#restoreremovemissing}}
-    <p><strong>Missing plugins will be automatically removed after restore. <a href="{{settingsurl}}">Change</a></strong></p>
+    <p><strong>{{#str}} addonplugins_missing_autoremove, tool_vault, {{settingsurl}} {{/str}}</strong></p>
 {{/restoreremovemissing}}
 {{^restoreremovemissing}}
-    <p><strong>You can choose to automatically remove missing plugins after restore in the <a href="{{settingsurl}}">settings</a></strong></p>
+    <p><strong>{{#str}} addonplugins_missing_noautoremove, tool_vault, {{settingsurl}} {{/str}}</strong></p>
 {{/restoreremovemissing}}
 {{#missingplugins}}
     {{> tool_vault/checks/plugins_restore_details_table}}

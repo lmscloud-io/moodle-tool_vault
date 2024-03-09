@@ -66,10 +66,10 @@ class site_backup extends operation_base {
             return new static(reset($records));
         }
         if (backup_model::get_records([constants::STATUS_INPROGRESS])) {
-            throw new \moodle_exception(get_string('anotherbackupisinprogress', 'tool_vault'));
+            throw new \moodle_exception('error_anotherbackupisinprogress', 'tool_vault');
         }
         if (restore_model::get_records([constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
-            throw new \moodle_exception(get_string('anotherrestoreisinprogress', 'tool_vault'));
+            throw new \moodle_exception('error_anotherrestoreisinprogress', 'tool_vault');
         }
 
         $model = new backup_model((object)[]);
@@ -118,7 +118,7 @@ class site_backup extends operation_base {
      */
     public function start(int $pid) {
         if (!api::is_registered()) {
-            throw new \moodle_exception('errorapikeynotvalid', 'tool_vault');
+            throw new \moodle_exception('error_apikeynotvalid', 'tool_vault');
         }
         $this->model->set_pid_for_logging($pid);
         $model = $this->model;
@@ -198,7 +198,7 @@ class site_backup extends operation_base {
                 $this->add_to_log('...OK');
             } else {
                 throw new \moodle_exception($chk ? $chk->get_status_message() :
-                    'Unable to run pre-check '.$classname::get_display_name());
+                    get_string('error_unabletorunprecheck', 'tool_vault', $classname::get_display_name()));
             }
         }
     }
@@ -210,7 +210,7 @@ class site_backup extends operation_base {
      */
     public function execute() {
         if (!$this->model || $this->model->status !== constants::STATUS_INPROGRESS) {
-            throw new \moodle_exception('Backup in progress not found');
+            throw new \moodle_exception('error_backupinprogressnotfound', 'tool_vault');
         }
 
         $this->prepare();

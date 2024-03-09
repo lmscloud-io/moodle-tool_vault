@@ -33,10 +33,10 @@
     <tr>
         <th>{{#str}} displayname, plugin {{/str}}</th>
         {{#showparents}}
-            <th>{{#str}} subpluginof, tool_vault {{/str}}</th>
+            <th>{{#str}} addonplugins_subpluginof, tool_vault {{/str}}</th>
         {{/showparents}}
-        <th>{{#str}} pluginversioninbackup, tool_vault {{/str}}</th>
-        <th>{{#str}} pluginversiononsite, tool_vault {{/str}}</th>
+        <th>{{#str}} addonplugins_pluginversioninbackup, tool_vault {{/str}}</th>
+        <th>{{#str}} addonplugins_pluginversiononsite, tool_vault {{/str}}</th>
         <th></th>
     </tr>
     {{#plugins}}
@@ -67,7 +67,8 @@
             {{/showparents}}
             <td>{{versionbackup}}</td>
             <td>{{versionlocal}}</td>
-            <td><a href="https://moodle.org/plugins/{{pluginname}}" target="_blank">{{#str}} pluginsdirectory, tool_vault {{/str}}</a> </td>
+            <td><a href="https://moodle.org/plugins/{{pluginname}}" target="_blank">
+                {{#str}} addonplugins_pluginsdirectory, tool_vault {{/str}}</a> </td>
         </tr>
     {{/plugins}}
 </table>

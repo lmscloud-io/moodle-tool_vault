@@ -27,13 +27,13 @@
 
 <form action="#">
 {{#dryrun}}
-    <p>Restore pre-check will be executed on the next cron run.</p>
+    <p>{{#str}} startrestoreprecheck_desc, tool_vault {{/str}}</p>
 {{/dryrun}}
 {{^dryrun}}
-    <p>Restore will be executed on the next cron run. Important! All data from this site will be deleted!</p>
+    <p>{{#str}} startrestore_desc, tool_vault {{/str}}</p>
 {{/dryrun}}
 {{#encrypted}}
-    <p>This backup is encrypted, you need a passphrase:</p>
+    <p>{{#str}} enterpassphrase, tool_vault {{/str}}:</p>
     <p><label for="passphrase_startrestore_{{dryrun}}_{{backupkey}}">{{#str}} passphrase, tool_vault {{/str}}:</label>
         <input type="text" name="passphrase" id="passphrase_startrestore_{{dryrun}}_{{backupkey}}"></p>
 {{/encrypted}}

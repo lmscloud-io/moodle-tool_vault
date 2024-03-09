@@ -27,13 +27,13 @@
 
 }}
 {{#hasincludedsettings}}
-<h4>Included in the backup</h4>
+<h4>{{#str}} configoverrides_willbeincluded, tool_vault {{/str}}</h4>
 <table class="generaltable">
     <thead>
         <tr>
-            <th class="col-3">Setting name</th>
-            <th class="col-3">Plugin</th>
-            <th class="col-6">Setting value</th>
+            <th class="col-3">{{#str}} configoverrides_settingname, tool_vault {{/str}}</th>
+            <th class="col-3">{{#str}} plugin, moodle {{/str}}</th>
+            <th class="col-6">{{#str}} configoverrides_settingvalue, tool_vault {{/str}}</th>
         </tr>
     </thead>
     <tbody>
@@ -49,13 +49,13 @@
 {{/hasincludedsettings}}
 
 {{#hasnotincludedsettings}}
-<h4>Not included in the backup</h4>
+<h4>{{#str}} configoverrides_willnotbeincluded, tool_vault {{/str}}</h4>
 <table class="generaltable">
     <thead>
     <tr>
-        <th class="col-3">Setting name</th>
-        <th class="col-3">Plugin</th>
-        <th class="col-6">Setting value</th>
+        <th class="col-3">{{#str}} configoverrides_settingname, tool_vault {{/str}}</th>
+        <th class="col-3">{{#str}} plugin, moodle {{/str}}</th>
+        <th class="col-6">{{#str}} configoverrides_settingvalue, tool_vault {{/str}}</th>
     </tr>
     </thead>
     <tbody>

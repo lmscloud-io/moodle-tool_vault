@@ -92,7 +92,7 @@ class site_restore_dryrun extends operation_base {
      */
     public function start(int $pid) {
         if (!api::is_registered()) {
-            throw new \moodle_exception('errorapikeynotvalid', 'tool_vault');
+            throw new \moodle_exception('error_apikeynotvalid', 'tool_vault');
         }
         $restorekey = api::request_new_restore_key(['backupkey' => $this->model->backupkey, 'dryrun' => true]);
         $this->model->set_pid_for_logging($pid);
@@ -122,10 +122,12 @@ class site_restore_dryrun extends operation_base {
         $files = $restorehelper->get_all_files();
 
         if (!array_key_exists(constants::FILE_STRUCTURE, $files)) {
-            throw new \moodle_exception('Archive '.constants::FILENAME_DBSTRUCTURE.'.zip does not contain database structure');
+            throw new \moodle_exception('error_dbstructurenotvalid', 'tool_vault', '',
+                constants::FILENAME_DBSTRUCTURE . '.zip');
         }
         if (!array_key_exists(constants::FILE_METADATA, $files)) {
-            throw new \moodle_exception('Archive '.constants::FILENAME_DBSTRUCTURE.'.zip does not contain backup metadata');
+            throw new \moodle_exception('error_metadatanotvalid', 'tool_vault', '',
+                constants::FILENAME_DBSTRUCTURE . '.zip');
         }
 
         $remotedetails = (array)$backupmetadata->to_object();

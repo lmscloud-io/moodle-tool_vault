@@ -321,7 +321,7 @@ class api {
 
         // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
         if (!preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
-            throw new \moodle_exception('Vault API did not return a valid upload link '.$filename);
+            throw new \moodle_exception('error_invaliduploadlink', 'tool_vault', '', $filename);
         }
 
         $encryptionkey = $sitebackup->get_model()->get_details()['encryptionkey'] ?? '';
@@ -473,7 +473,7 @@ class api {
 
         // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
         if (!preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
-            throw new \moodle_exception(get_string('error_notavalidlink', 'tool_vault', s($s3url)));
+            throw new \moodle_exception('error_notavalidlink', 'tool_vault', '', s($s3url));
         }
 
         $encryptionkey = self::prepare_encryption_key($passphrase);
@@ -486,7 +486,7 @@ class api {
         $res = $curl->head($s3url, $options);
         $httpcode = $curl->get_info()['http_code'] ?? 0;
         if ($httpcode == 403) {
-            throw new api_exception(get_string('passphrasewrong', 'tool_vault'));
+            throw new api_exception('passphrasewrong', 'tool_vault');
         }
         if ($curl->errno || ($httpcode != 200)) {
             throw self::prepare_s3_exception($curl, $res);
@@ -514,8 +514,8 @@ class api {
 
         // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
         if (!preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
-            throw new \moodle_exception('Vault API did not return a valid download link for '.$filename.
-                ': '.$s3url);
+            throw new \moodle_exception('error_invaliddownloadlink', 'tool_vault', '',
+                (object)['filename' => $filename, 'url' => $s3url]);
         }
 
         $encryptionkey = $encrypted ? ($model->get_details()['encryptionkey'] ?? '') : '';
@@ -605,7 +605,7 @@ class api {
     public static function request_new_backup_key(array $info): string {
         $res = self::api_call('backups', 'PUT', $info);
         if (empty($res['backupkey'])) {
-            throw new \moodle_exception('Server returned no data');
+            throw new \moodle_exception('error_serverreturnednodata', 'tool_vault');
         }
         return $res['backupkey'];
     }
@@ -620,7 +620,7 @@ class api {
     public static function request_new_restore_key(array $info): string {
         $res = self::api_call('restores', 'PUT', $info);
         if (empty($res['restorekey'])) {
-            throw new \moodle_exception(get_string('error_serverreturnednodata', 'tool_vault'));
+            throw new \moodle_exception('error_serverreturnednodata', 'tool_vault');
         }
         return $res['restorekey'];
     }

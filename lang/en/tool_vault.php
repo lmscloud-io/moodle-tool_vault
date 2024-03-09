@@ -25,22 +25,36 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['accesskeyisnotvalid'] = 'Accesskey is not valid';
-$string['addonplugins'] = 'Plugin versions';
+$string['addonplugins'] = 'Add-on plugins';
+$string['addonplugins_extraplugins'] = 'Extra plugins';
+$string['addonplugins_extraplugins_desc'] = "The following plugins are present on this site but not present in the backup. All data associated with
+these plugins will be deleted during the restore process. After the restore process is finished you will
+be prompted to run Moodle upgrade process that will re-install these plugins.";
 $string['addonplugins_fail'] = 'Some plugins have lower version than the same plugins in the backup';
 $string['addonplugins_missing'] = 'Missing plugins';
+$string['addonplugins_missing_autoremove'] = 'Missing plugins will be automatically removed after restore. <a href="{$a}">Change</a>';
+$string['addonplugins_missing_desc'] = "The following plugins are present in the backup but are not installed on this site. After the restore
+these plugins will be listed as \"Missing form disk\", you can choose to uninstall them or keep the
+data until you add the code for the plugins. Until then, you may experience errors, for example,
+missing scheduled tasks.";
+$string['addonplugins_missing_noautoremove'] = 'You can choose to automatically remove missing plugins after restore in the <a href="{$a}">settings</a>';
 $string['addonplugins_notpresent'] = 'Plugins found on this site but not present in the backup';
+$string['addonplugins_pluginsdirectory'] = 'Plugins directory';
+$string['addonplugins_pluginversioninbackup'] = 'Version in the backup';
+$string['addonplugins_pluginversiononsite'] = 'Current version on this site';
+$string['addonplugins_subpluginof'] = 'Subplugin of';
 $string['addonplugins_success'] = 'Plugins versions in the backup and on this site match';
 $string['addonplugins_success_needsupgrade'] = 'Some plugins will need to be upgraded after restore';
 $string['addonplugins_success_withmissing'] = 'Some plugins are missing but the restore is possible';
+$string['addonplugins_willrequireupgrade'] = 'Will require upgrade';
+$string['addonplugins_willrequireupgrade_desc'] = "The following plugins have higher version than in the backup. After the restore process is finished
+you will be prompted to run Moodle upgrade process.";
 $string['addonplugins_withhigherversion'] = 'Plugins have higher version than the same plugins in the backup';
 $string['addonplugins_withlowerversion'] = 'Plugins have lower version than the same plugins in the backup';
-$string['anotherbackupisinprogress'] = 'Another backup is in progress';
-$string['anotherrestoreisinprogress'] = 'Another restore is in progress';
+$string['addonplugins_withlowerversion_desc'] = "The following plugins have lower version on this site than in the backup.
+You must upgrade the code for these plugins before restoring from this backup.";
 $string['backup'] = 'Backup';
 $string['backupdetails'] = 'Backup details';
-$string['backupdisabledanotherinprogress'] = 'You can not start backup because there is another backup in progress.';
-$string['backupdisablednoapikey'] = 'You can not start backup because you do not have API key';
 $string['backupfinished'] = 'This backup has already finished. You can access the logs <a href="{$a}">here</a>';
 $string['backupinprogres'] = 'During backup the site is placed in maintenance mode. Use this page to access logs about the current process';
 $string['backupkey'] = 'Backup key';
@@ -50,6 +64,8 @@ $string['backuptitle'] = 'Backup {$a}';
 $string['checkagain'] = 'Check again';
 $string['collapselogs'] = 'Collapse logs';
 $string['configoverrides'] = 'Config overrides';
+$string['configoverrides_settingname'] = 'Setting name';
+$string['configoverrides_settingvalue'] = 'Setting value';
 $string['configoverrides_valueredacted'] = 'Redacted';
 $string['configoverrides_willbeincluded'] = 'Settings from config.php that will be included in backup';
 $string['configoverrides_willbeincludedplugin'] = 'Plugin settings from config.php that will be included in backup';
@@ -69,37 +85,51 @@ $string['dbmodifications_status_modified'] = "Your database state does not match
 The site can be backed up, the modifications will be included in the backup";
 $string['dbmodifications_status_nomodifications'] = 'Site backup can be performed without any database modifications';
 $string['defaultbackupdescription'] = '{$a->site} by {$a->name}';
-$string['discspace_fail'] = 'There is not enough disk space to perform site backup';
-$string['discspace_success'] = 'There is enough disk space to perform site backup';
-$string['diskspace'] = 'Disk space';
-$string['diskspace_countfiles'] = 'Number of files in the file storage';
-$string['diskspace_datarootsize'] = 'Required space for dataroot (excluding filedir)';
-$string['diskspace_dbmaxsize'] = 'The largest DB table size (approx)';
-$string['diskspace_dbrecords'] = 'Total number of rows in DB tables';
-$string['diskspace_dbtotalsize'] = 'Required space for database';
-$string['diskspace_dbtotalsizefootnote'] = 'Note, tool Vault is <b>not able to check</b> if there is enough space in the database to perform restore.';
-$string['diskspace_fail'] = 'There is not enough disk space in the temporary directory to perform site restore';
-$string['diskspace_filedirsize'] = 'Required space for files';
-$string['diskspace_freespace'] = 'Free space in temp dir';
-$string['diskspace_maxdatarootfilesize'] = 'The largest file in dataroot';
-$string['diskspace_maxfilesize'] = 'The largest file in the file storage';
-$string['diskspace_mintmpspace'] = 'Minimum space required in temp dir';
-$string['diskspace_success'] = 'There is enough disk space in the temporary directory to perform site restore';
-$string['diskspace_success_warning'] = "There is enough disk space in the temporary directory however
- there may not be enough space for all files and dataroot if they are in the same local disk partition";
-$string['diskspace_totalfilesize'] = 'Total size of files in the file storage';
+$string['diskspacebackup'] = 'Disk space';
+$string['diskspacebackup_countfiles'] = 'Number of files in the file storage';
+$string['diskspacebackup_datarootsize'] = 'Required space for dataroot (excluding filedir)';
+$string['diskspacebackup_dbmaxsize'] = 'The largest DB table size (approx)';
+$string['diskspacebackup_dbrecords'] = 'Total number of rows in DB tables';
+$string['diskspacebackup_dbtotalsize'] = 'Required space for database';
+$string['diskspacebackup_fail'] = 'There is not enough disk space to perform site backup';
+$string['diskspacebackup_freespace'] = 'Free space in temp dir';
+$string['diskspacebackup_maxdatarootfilesize'] = 'The largest file in dataroot';
+$string['diskspacebackup_maxfilesize'] = 'The largest file in the file storage';
+$string['diskspacebackup_success'] = 'There is enough disk space to perform site backup';
+$string['diskspacebackup_totalfilesize'] = 'Total size of files in the file storage';
+$string['diskspacerestore'] = 'Disk space';
+$string['diskspacerestore_dbtotalsizefootnote'] = 'Note, tool Vault is <b>not able to check</b> if there is enough space in the database to perform restore.';
+$string['diskspacerestore_fail'] = 'There is not enough disk space in the temporary directory to perform site restore';
+$string['diskspacerestore_filedirsize'] = 'Required space for files';
+$string['diskspacerestore_mintmpspace'] = 'Minimum space required in temp dir';
+$string['diskspacerestore_success'] = 'There is enough disk space in the temporary directory to perform site restore';
+$string['diskspacerestore_success_warning'] = "There is enough disk space in the temporary directory however
+there may not be enough space for all files and dataroot if they are in the same local disk partition";
 $string['enterapikey'] = 'I have an API key';
+$string['enterpassphrase'] = 'This backup is encrypted, you need a passphrase';
+$string['error_accesskeyisnotvalid'] = 'Accesskey is not valid';
+$string['error_anotherbackupisinprogress'] = 'Another backup is in progress';
+$string['error_anotherrestoreisinprogress'] = 'Another restore is in progress';
+$string['error_apikeynotvalid'] = 'API key not valid';
 $string['error_backupfailed'] = 'Backup with the key {$a} has failed';
 $string['error_backuphaswrongstatus'] = 'Backup with the key {$a} has a wrong status';
+$string['error_backupinprogressnotfound'] = 'Backup in progress not found';
 $string['error_backupnotavailable'] = 'Backup with the key {$a} is no longer avaialable';
 $string['error_backupnotfinished'] = 'Backup with the key {$a} is not yet completed';
+$string['error_cannotcreatezip'] = 'Can not create ZIP file';
+$string['error_dbstructurenotvalid'] = 'Archive {$a} does not contain database structure';
+$string['error_invaliddownloadlink'] = 'Vault API did not return a valid download link for {$a->filename}: {$a->url}';
+$string['error_invaliduploadlink'] = 'Vault API did not return a valid upload link {$a}';
+$string['error_metadatanotvalid'] = 'Archive {$a} does not contain backup metadata';
 $string['error_notavalidlink'] = 'Vault API did not return a valid link: {$a}';
+$string['error_restoresnotallowed'] = 'Restores are not allowed on this site';
 $string['error_serverreturnednodata'] = 'Server returned no data';
-$string['errorapikeynotvalid'] = 'API key not valid';
-$string['errorbackupnotavailable'] = 'This backup is not available on the server';
+$string['error_unabletorunprecheck'] = 'Unable to run pre-check {$a}';
 $string['expandlogs'] = 'Expand logs';
+$string['forgetapikey'] = 'Forget API key';
 $string['hidebacktrace'] = 'Hide backtrace';
 $string['history'] = 'History';
+$string['history_desc'] = 'Logs of past backups and restores on this site.';
 $string['isencrypted'] = 'Encrypted';
 $string['lastop_backupfailed_header'] = 'Backup failed';
 $string['lastop_backupfailed_text'] = 'Backup performed on {$a} has failed';
@@ -127,11 +157,8 @@ $string['lastop_restorescheduled_header'] = 'Restore scheduled';
 $string['lastop_restorescheduled_text'] = 'Your restore is scheduled and will be executed during the next cron run';
 $string['lastupdated'] = 'Last updated';
 $string['loginexplanation'] = "Create an account on {\$a} to be able to backup or restore the site.
- With the <b>free account</b> you will be able to backup and restore small sites and store them up to 7 days on the server.";
-$string['logoutfromvault'] = 'Forget API key';
-$string['logrestoredtables'] = 'Restored {$a->cnt}/{$a->totalcnt} tables ({$a->percent}%)';
-$string['logsnotavailable'] = 'Not available (backup was performed on a different site)';
-$string['managelsmvault'] = 'Manage your account';
+With the <b>free account</b> you will be able to backup and restore small sites and store them up to 7 days on the server.";
+$string['manageremoteaccount'] = 'Manage your account';
 $string['messageprovider:statusupdate'] = 'Status update for Vault - Site migration';
 $string['moodleversion_backupinfo'] = 'Backup made in version {$a->version} (branch {$a->branch})';
 $string['moodleversion_fail'] = "Site version number has to be greater than or equal to the version in the backup.
@@ -143,15 +170,11 @@ $string['nopastbackups'] = "You don't have any past backups";
 $string['nopastrestores'] = "You don't have any past restores";
 $string['operation'] = 'Operation {$a}';
 $string['passphrase'] = 'Passphrase';
-$string['passphrasewrong'] = 'Backup passphrase is not correct';
 $string['pastbackupslist'] = 'Past backups on this site';
 $string['pastrestoreslist'] = 'Past restores on this site';
 $string['performedby'] = 'Performed by';
 $string['pleasewait'] = 'Please wait...';
 $string['pluginname'] = 'Vault - Site migration';
-$string['pluginsdirectory'] = 'Plugins directory';
-$string['pluginversioninbackup'] = 'Version in the backup';
-$string['pluginversiononsite'] = 'Current version on this site';
 $string['precheckdetails'] = 'Pre-check details';
 $string['privacy:metadata'] = 'The Vault plugin doesn\'t store any personal data.';
 $string['remotebackup'] = 'Remote backup';
@@ -161,14 +184,14 @@ $string['remotesignin'] = 'Sign In';
 $string['remotesignup'] = 'Create account';
 $string['repeatprecheck'] = 'Repeat pre-check';
 $string['restoredetails'] = 'Restore details';
-$string['restorefinished'] = '<p>This restore has already finished. You can access the logs <a href="{$a}">here</a></p>';
+$string['restorefinished'] = 'This restore has already finished. You can access the logs <a href="{$a}">here</a>';
 $string['restorefrombackup'] = 'Restore from backup {$a}';
 $string['restoreinprogress'] = 'During restore the site is placed in maintenance mode. Use this page to access logs about the current process';
+$string['restoreprechecks'] = 'Restore pre-checks';
 $string['restoreremovemissing'] = 'Automatically remove missing plugins after restore';
 $string['restoreremovemissing_desc'] = "If backup contains data for the plugins that are not present in this site codebase, they will be marked as \"Missing from disk\" in the plugin overview.<br>
 - Enabling this option will automatically uninstall these plugins and remove all data associated with them from the database and file storage<br>
 - Disabling this option will leave the data in the database and you will be able to add plugins code after the restore is finished or run the uninstall script manually.";
-$string['restoresnotallowed'] = 'Restores are not allowed on this site';
 $string['returntothesite'] = 'Return to the site';
 $string['seefullreport'] = 'See full report';
 $string['settings_allowrestore'] = 'Allow restores on this site';
@@ -181,6 +204,8 @@ For other plugins include them in backup and uninstall after restore.<br>
 Note that this will only exclude data in plugin's own tables, settings, associated files, scheduled tasks and other known common types of plugin-related data. It may not be accurate for complicated plugins or plugins with dependencies.";
 $string['settings_backupexcludetables'] = 'Exclude tables';
 $string['settings_backupexcludetables_desc'] = "Vault will back up all tables that start with the prefix '{\$a->prefix}' even if they are not listed in xmldb schemas of the core or installed plugins.<br>You can list here the extra tables that should not be backed up an asterisk ('*') to exclude all extra tables.";
+$string['settings_desc'] = "Vault plugin settings where you can configure what to exclude during backup or
+preserve during restore.";
 $string['settings_header'] = 'Vault - Site migration settings';
 $string['settings_headerbackup'] = 'Backup settings';
 $string['settings_headerrestore'] = 'Restore settings';
@@ -192,19 +217,32 @@ Restore process will attempt to preserve existing data associated with these plu
 Note that this will only process data in plugin's own tables, settings, associated files, scheduled tasks and other known common types of plugin-related data. It may not be accurate for complicated plugins or plugins with dependencies.";
 $string['showbacktrace'] = 'Show backtrace';
 $string['sitebackup'] = 'Site backup';
+$string['sitebackup_desc'] = "Backup your whole site to the cloud with possibility to restore it on the same or different
+server, in a different database or different file system.";
 $string['siterestore'] = 'Site restore';
+$string['siterestore_desc'] = "Restore a site from the cloud backup that you have made yourself or somebody shared with you.<br>
+Note that the whole content of the current site will be replaced with the content of the backup.";
+$string['siterestore_notallowed_desc'] = 'Restoring on this site is not allowed. You can change it in the plugin settings.';
 $string['startbackup'] = 'Start backup';
+$string['startbackup_desc'] = "Your backup will be scheduled and performed during the next cron run. You may choose to encrypt your backup with a passphrase,
+in this case you will need to enter the same passphrase on restore. Passphrase will only be stored on your moodle site
+until the end of the backup process.";
 $string['startdryrun'] = 'Run pre-check';
 $string['startrestore'] = 'Restore this backup';
-$string['statusfailed'] = 'Failed';
-$string['statusfailedtostart'] = 'Failed to start';
-$string['statusfinished'] = 'Completed';
-$string['statusinprogress'] = 'In progress';
-$string['statusscheduled'] = 'Scheduled';
-$string['subpluginof'] = 'Subplugin of';
+$string['startrestore_desc'] = 'Restore will be executed on the next cron run. Important! All data from this site will be deleted!';
+$string['startrestoreprecheck_desc'] = 'Restore pre-check will be executed on the next cron run.';
+$string['status_failed'] = 'Failed';
+$string['status_failedtostart'] = 'Failed to start';
+$string['status_finished'] = 'Completed';
+$string['status_inprogress'] = 'In progress';
+$string['status_scheduled'] = 'Scheduled';
 $string['timefinished'] = 'Completed on';
 $string['timestarted'] = 'Started on';
 $string['totalsizearchived'] = 'Total size (archived)';
 $string['viewbackupdetails'] = 'View backup details';
 $string['viewdetails'] = 'View details';
 $string['waitforcron'] = '... Wait for cron to finish to view report ...';
+$string['warning_backupdisabledanotherinprogress'] = 'You can not start backup because there is another backup in progress.';
+$string['warning_backupdisablednoapikey'] = 'You can not start backup because you do not have API key';
+$string['warning_logsnotavailable'] = 'Not available (backup was performed on a different site)';
+$string['youareusingapikey'] = 'You are using API key {$a}';

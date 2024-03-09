@@ -92,7 +92,7 @@ class apikey_form extends dynamic_form {
         if (!strlen($data['apikey'])) {
             $errors['apikey'] = get_string('required');
         } else if (strlen($data['apikey']) && !api::validate_api_key($data['apikey'])) {
-            $errors['apikey'] = get_string('errorapikeynotvalid', 'tool_vault');
+            $errors['apikey'] = get_string('error_apikeynotvalid', 'tool_vault');
         }
         return $errors;
     }
