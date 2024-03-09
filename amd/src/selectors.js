@@ -1,4 +1,3 @@
-<?php
 // This file is part of plugin tool_vault - https://lmsvault.io
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -12,22 +11,21 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Selectors for API key form
  *
- * @package     tool_vault
- * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @module     tool_vault/selectors
+ * @copyright  2024 Marina Glancy
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
-/** @var stdClass $plugin */
-$plugin->component    = 'tool_vault';
-$plugin->release      = '0.2.0';
-$plugin->version      = 2024021000;
-$plugin->requires     = 2020061500;
-$plugin->supported    = [39, 403];
-$plugin->maturity     = MATURITY_ALPHA;
+export const SELECTORS = {
+    APIKEY_FORM_CONTAINER: '#getapikey_formplaceholder',
+    APIKEY_IFRAME: '#getapikey_iframe',
+    SIGNIN_BUTTON: '#getapikey_signin',
+    SIGNUP_BUTTON: '#getapikey_signup',
+    ENTER_KEY_BUTTON: '#getapikey_enterapikey',
+    LEGACY_FORM_CONTAINER: '#getapikey_legacyform',
+};

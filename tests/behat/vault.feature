@@ -22,6 +22,29 @@ Feature: Using tool vault
     And I follow "See full report"
     And I should see "Config overrides"
 
+  Scenario: Entering API key for Vault
+    When I log in as "admin"
+    And I navigate to "Server > Vault - Site migration" in site administration
+    And the "src" attribute of "#getapikey_iframe" "css_element" should contain "about:blank"
+    And I press "Sign in"
+    And I wait "2" seconds
+    And the "src" attribute of "#getapikey_iframe" "css_element" should not contain "about:blank"
+    And I switch to "getapikey_iframe" class iframe
+    And I should see "Forgot your password?"
+    And I switch to the main frame
+    And I press "Create account"
+    And I wait "2" seconds
+    And the "src" attribute of "#getapikey_iframe" "css_element" should not contain "about:blank"
+    And I switch to "getapikey_iframe" class iframe
+    And I should not see "Forgot your password?"
+    And I should see "Confirm Password"
+    And I switch to the main frame
+    And I press "I have an API key"
+    And the "src" attribute of "#getapikey_iframe" "css_element" should contain "about:blank"
+    And I set the field "API key" to "hellothere"
+    And I press "Save changes"
+    And I should see "API key not valid"
+
   # Scenario: Vault backup and restore pre-check
   #   Given test API url is specified for tool_vault
   #   When I log in as "admin"

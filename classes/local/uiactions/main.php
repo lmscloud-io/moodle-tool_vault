@@ -18,6 +18,7 @@ namespace tool_vault\local\uiactions;
 
 use moodle_url;
 use tool_vault\api;
+use tool_vault\form\apikey_form_legacy;
 
 /**
  * Class main
@@ -27,6 +28,20 @@ use tool_vault\api;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class main extends base {
+
+    /**
+     * Process action
+     */
+    public function process() {
+        if (!class_exists('\\core_form\\dynamic_form')) {
+            $form = new apikey_form_legacy(main::url());
+            if ($formdata = $form->get_data()) {
+                api::set_api_key($formdata->apikey);
+                $returnurl = $formdata->returnurl;
+                redirect($returnurl ?: main::url());
+            }
+        }
+    }
 
     /**
      * Display

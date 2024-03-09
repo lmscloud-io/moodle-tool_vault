@@ -14,16 +14,13 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Allows to enter API key
+ * Allows to enter API key (without using dynamic forms)
  *
- * @module     tool_vault/apikey
+ * @module     tool_vault/apikey_legacy
  * @copyright  2023 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-import DynamicForm from 'core_form/dynamicform';
-import Pending from 'core/pending';
-import Notification from 'core/notification';
 import * as Signon from './signon';
 import {SELECTORS} from './selectors';
 
@@ -34,23 +31,16 @@ import {SELECTORS} from './selectors';
  * @param {Boolean} autoSubmit
  */
 const openApikeyForm = (apikey = '', autoSubmit = false) => {
-    const pendingPromise = new Pending('tool_vault/apikeyform:open');
     Signon.closeLoginSignupModal();
+    const formContainer = document.querySelector(SELECTORS.LEGACY_FORM_CONTAINER);
+    formContainer.classList.remove('hidden');
 
-    const formContainer = document.querySelector(SELECTORS.APIKEY_FORM_CONTAINER);
-    const apikeyForm = new DynamicForm(formContainer, '\\tool_vault\\form\\apikey_form');
-
-    // After submitting reresh the page.
-    apikeyForm.addEventListener(apikeyForm.events.FORM_SUBMITTED, () => location.reload());
-
-    apikeyForm.load({apikey})
-        .then(() => {
-            if (autoSubmit) {
-                apikeyForm.submitFormAjax();
-            }
-            return pendingPromise.resolve();
-        })
-        .catch(Notification.exception);
+    if (apikey && apikey !== '') {
+        formContainer.querySelector('input[name="apikey"]').value = apikey;
+        if (autoSubmit) {
+            formContainer.querySelector('input[name="submitbutton"]').click();
+        }
+    }
 };
 
 /**
@@ -64,5 +54,7 @@ export const init = () => {
     });
 
     const enterApikeyButton = document.querySelector(SELECTORS.ENTER_KEY_BUTTON);
-    enterApikeyButton.addEventListener('click', () => openApikeyForm());
+    enterApikeyButton.addEventListener('click', () => {
+        openApikeyForm();
+    });
 };
