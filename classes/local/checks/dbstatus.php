@@ -100,11 +100,9 @@ class dbstatus extends check_base {
                 case self::STATUS_INVALID:
                     return get_string('dbmodifications_status_invalid', 'tool_vault');
             }
+            return get_string('unknownstatusa', 'tool_vault', $status);
         }
-        if (get_string_manager()->string_exists('statusunknown', 'moodle')) {
-            return get_string('statusunknown', 'moodle');
-        }
-        return 'Unknown';
+        return '';
     }
 
     /**

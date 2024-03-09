@@ -483,7 +483,7 @@ class dbtable {
         // such columns.
         return array_merge(
             $generator->getDropTableSQL($originaltable->get_xmldb_table()),
-            $generator->getCreateTableSQL($this->get_xmldb_table()),
+            $generator->getCreateTableSQL($this->get_xmldb_table())
         );
     }
 

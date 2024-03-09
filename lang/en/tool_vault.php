@@ -239,6 +239,7 @@ $string['status_scheduled'] = 'Scheduled';
 $string['timefinished'] = 'Completed on';
 $string['timestarted'] = 'Started on';
 $string['totalsizearchived'] = 'Total size (archived)';
+$string['unknownstatusa'] = 'Unknown status - {$a}';
 $string['viewbackupdetails'] = 'View backup details';
 $string['viewdetails'] = 'View details';
 $string['waitforcron'] = '... Wait for cron to finish to view report ...';

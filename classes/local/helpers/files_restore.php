@@ -365,7 +365,9 @@ class files_restore {
         if ($this->dir && file_exists($this->dir) && is_dir($this->dir)) {
             site_restore::remove_recursively($this->dir);
         }
-        if ($this->is_dataroot_backup() && $this->currentseq == array_key_last($this->backupfiles)) {
+        $keys = array_keys($this->backupfiles);
+        $lastkey = array_pop($keys);
+        if ($this->is_dataroot_backup() && $this->currentseq == $lastkey) {
             // If it's the last file, remove the whole __vault_restore__ folder.
             site_restore::remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__');
         }

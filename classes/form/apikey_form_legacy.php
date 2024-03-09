@@ -15,7 +15,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace tool_vault\form;
+
 use tool_vault\api;
+
+defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . "/formslib.php");
 
