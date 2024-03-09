@@ -54,6 +54,36 @@ Feature: Using tool vault
     And I follow "Forget API key"
     And "I have an API key" "button" should exist
 
+  # TODO this works but need to sort out the backup expiration time first before adding to GHA
+  # Scenario: Vault backup and restore
+  #   Given test API key is specified for tool_vault
+  #   And the following config values are set as admin:
+  #     | allowrestore | 1  | tool_vault |
+  #   When I log in as "admin"
+  #   And I navigate to "Server > Vault - Site migration" in site administration
+  #   And I click on "Site backup" "link" in the "region-main" "region"
+  #   And I press "Start backup"
+  #   And I set vault backup description field
+  #   And I click on "Start backup" "button" in the "Start backup" "dialogue"
+  #   And I wait "2" seconds
+  #   And I should see "[info] Backup scheduled"
+  #   And I run the scheduled task "tool_vault\task\cron_task"
+  #   And I reload the page
+  #   And I should see "Backup finished"
+  #   And I log in as "admin"
+  #   And I navigate to "Server > Vault - Site migration" in site administration
+  #   And I click on "Site restore" "link" in the "region-main" "region"
+  #   And I click on "Refresh" "link" in the "region-main" "region"
+  #   And I click on "Restore this backup" "button" in the row of my vault backup
+  #   And I click on "Restore this backup" "button" in the "Restore this backup" "dialogue"
+  #   And I should see "[info] Restore scheduled"
+  #   And I wait "2" seconds
+  #   And I run the scheduled task "tool_vault\task\cron_task"
+  #   And I log in as "admin"
+  #   And I navigate to "Server > Vault - Site migration" in site administration
+  #   And I click on "Site restore" "link" in the "region-main" "region"
+  #   And I should see "Restore completed"
+
   # Scenario: Vault backup and restore pre-check
   #   Given test API url is specified for tool_vault
   #   When I log in as "admin"

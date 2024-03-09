@@ -46,4 +46,38 @@ class behat_tool_vault extends behat_base {
         }
         \tool_vault\api::set_api_key(TOOL_VAULT_TEST_API_KEY);
     }
+
+    /**
+     * Generate a random backup name and set it in the form
+     *
+     * @Given /^I set vault backup description field$/
+     */
+    public function set_vault_backup_description_field() {
+        global $CFG;
+        $backupname = random_string(15) . ' (' . $CFG->branch . ')';
+        set_config('behat_backup_name', $backupname, 'tool_vault');
+        $this->execute('behat_forms::i_set_the_field_in_container_to', [
+            get_string('description', 'moodle'),
+            get_string('startbackup', 'tool_vault'),
+            "dialogue",
+            $backupname,
+        ]);
+    }
+
+    /**
+     * Locate a table row for the last backup we made
+     *
+     * @When /^I click on "(?P<element_string>(?:[^"]|\\")*)" "(?P<selector_string>[^"]*)" in the row of my vault backup$/
+     * @param string $element Element we look for
+     * @param string $selectortype The type of what we look for
+     */
+    public function i_click_on_in_the_row_of_my_vault_backup($element, $selectortype) {
+        $backupname = get_config('tool_vault', 'behat_backup_name');
+        $this->execute('behat_general::i_click_on_in_the', [
+            $element,
+            $selectortype,
+            $backupname,
+            "table_row",
+        ]);
+    }
 }
