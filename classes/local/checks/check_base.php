@@ -192,7 +192,6 @@ abstract class check_base extends operation_base {
         try {
             $obj->execute();
         } catch (\Throwable $t) {
-            // error_log(print_r($t,true));
             $obj->mark_as_failed($t);
         }
 

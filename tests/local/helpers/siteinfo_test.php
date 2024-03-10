@@ -28,6 +28,16 @@ use tool_vault\api;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class siteinfo_test extends \advanced_testcase {
+
+    /**
+     * Cleanup all temp files
+     *
+     * @return void
+     */
+    public function tearDown(): void {
+        tempfiles::cleanup();
+    }
+
     public function test_get_plugins_list_full() {
         $list = siteinfo::get_plugins_list_full(true);
         $this->assertNotEmpty($list);

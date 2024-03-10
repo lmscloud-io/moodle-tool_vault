@@ -25,6 +25,8 @@
 
 namespace tool_vault\fixtures;
 
+use tool_vault\local\helpers\tempfiles;
+
 /**
  * Mock class for files_backup helper
  */

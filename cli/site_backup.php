@@ -25,6 +25,7 @@
 define('CLI_SCRIPT', true);
 
 use tool_vault\local\cli_helper;
+use tool_vault\local\helpers\tempfiles;
 
 require_once(__DIR__ . '/../../../../config.php');
 
@@ -60,6 +61,7 @@ try {
     $operation->execute();
 } catch (\Throwable $t) {
     $operation->mark_as_failed($t);
+    tempfiles::cleanup();
     die(1);
 }
 

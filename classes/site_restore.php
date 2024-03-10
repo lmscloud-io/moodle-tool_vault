@@ -22,6 +22,7 @@ use tool_vault\local\helpers\dbops;
 use tool_vault\local\helpers\files_restore;
 use tool_vault\local\helpers\plugindata;
 use tool_vault\local\helpers\siteinfo;
+use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
 use tool_vault\local\operations\operation_base;
@@ -188,6 +189,7 @@ class site_restore extends operation_base {
         $this->get_files_restore(constants::FILENAME_DBSTRUCTURE)->finish();
         api::update_restore_ignoring_errors($this->model->get_details()['restorekey'], [], constants::STATUS_FINISHED);
         $this->add_to_log('Restore finished');
+        tempfiles::cleanup();
     }
 
     /**
@@ -222,7 +224,11 @@ class site_restore extends operation_base {
         if (!array_key_exists(constants::FILE_CONFIGOVERRIDE, $structurefiles)) {
             return;
         }
-        $confs = json_decode(file_get_contents($structurefiles[constants::FILE_CONFIGOVERRIDE]), true);
+        $filepath = $structurefiles[constants::FILE_CONFIGOVERRIDE];
+        if (!file_exists($filepath)) {
+            throw new \moodle_exception('error_filenotfound', 'tool_vault', '', $filepath);
+        }
+        $confs = json_decode(file_get_contents($filepath), true);
         foreach ($confs as $conf) {
             if ($tablename === 'config' && empty($conf['plugin'])) {
                 set_config($conf['name'], $conf['value']);
@@ -292,6 +298,9 @@ class site_restore extends operation_base {
 
         $structurefiles = $this->get_files_restore(constants::FILENAME_DBSTRUCTURE)->get_all_files();
         $filepath = $structurefiles[constants::FILE_SEQUENCE] ?? null;
+        if (!file_exists($filepath)) {
+            throw new \moodle_exception('error_filenotfound', 'tool_vault', '', $filepath);
+        }
         $sequences = $filepath ? json_decode(file_get_contents($filepath), true) : [];
 
         $totaltables = count($tables);
@@ -441,7 +450,7 @@ class site_restore extends operation_base {
             $handle = opendir($CFG->dataroot);
             while (($file = readdir($handle)) !== false) {
                 if (!siteinfo::is_dataroot_path_skipped_restore($file) && $file !== '.' && $file !== '..') {
-                    $cnt = self::remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.$file);
+                    $cnt = tempfiles::remove_temp_dir($CFG->dataroot.DIRECTORY_SEPARATOR.$file);
                     if (!file_exists($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
                         continue;
                     } else if (is_dir($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
@@ -510,34 +519,6 @@ class site_restore extends operation_base {
             }
         }
         $this->add_to_log('Finished files restore');
-    }
-
-    /**
-     * Remove directory recursively
-     *
-     * @param string $dir
-     * @return int count of removed files
-     */
-    public static function remove_recursively(string $dir): int {
-        if (!file_exists($dir)) {
-            return 0;
-        }
-        if (!is_dir($dir)) {
-            return (int)unlink($dir);
-        }
-        $cnt = 0;
-        $it = new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS);
-        $files = new \RecursiveIteratorIterator($it,
-            \RecursiveIteratorIterator::CHILD_FIRST);
-        foreach ($files as $file) {
-            if ($file->isDir()) {
-                rmdir($file->getRealPath());
-            } else {
-                $cnt += (int)unlink($file->getRealPath());
-            }
-        }
-        rmdir($dir);
-        return $cnt;
     }
 
     /**

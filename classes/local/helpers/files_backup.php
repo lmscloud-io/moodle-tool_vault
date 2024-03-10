@@ -60,7 +60,6 @@ class files_backup {
             $backupfile = new backup_file((array)$record);
             $this->backupfiles[] = $backupfile;
         }
-        $this->zipdir = make_request_directory();
         $this->start();
     }
 
@@ -80,6 +79,7 @@ class files_backup {
      * @throws \moodle_exception
      */
     public function start() {
+        $this->zipdir = tempfiles::make_temp_dir('filesbackup-'.$this->filetype.'-');
         // Prepare model but do not save, In case of backup we don't save unfinished files.
         $seq = $this->backupfiles ? ($this->backupfiles[count($this->backupfiles) - 1]->seq + 1) : 0;
         $this->currentbackupfile = new backup_file([
@@ -132,6 +132,7 @@ class files_backup {
             unlink($file);
         }
         $this->filestoremove = [];
+        tempfiles::remove_temp_dir($this->zipdir);
 
         if ($startnew) {
             $this->start();

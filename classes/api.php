@@ -17,6 +17,7 @@
 namespace tool_vault;
 
 use tool_vault\local\exceptions\api_exception;
+use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\logger;
 use tool_vault\local\models\backup_file;
 use tool_vault\local\models\operation_model;

@@ -16,6 +16,8 @@
 
 namespace tool_vault;
 
+use tool_vault\local\helpers\tempfiles;
+
 /**
  * The api_test test class.
  *
@@ -26,6 +28,15 @@ namespace tool_vault;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class api_test extends \advanced_testcase {
+
+    /**
+     * Cleanup all temp files
+     *
+     * @return void
+     */
+    public function tearDown(): void {
+        tempfiles::cleanup();
+    }
 
     /**
      * Dummy test.

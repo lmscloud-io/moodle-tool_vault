@@ -27,6 +27,7 @@ namespace tool_vault;
 
 use tool_vault\fixtures\site_backup_mock;
 use tool_vault\local\helpers\files_restore;
+use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
 
@@ -45,6 +46,14 @@ require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_back
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class site_restore_test extends \advanced_testcase {
+    /**
+     * Cleanup all temp files
+     *
+     * @return void
+     */
+    public function tearDown(): void {
+        tempfiles::cleanup();
+    }
 
     /**
      * Create mock site backup instance
@@ -128,6 +137,10 @@ class site_restore_test extends \advanced_testcase {
         // Assert sequences were restored.
         $book3 = $this->getDataGenerator()->create_module('book', ['course' => $course->id]);
         $this->assertEquals($book2->id, $book3->id);
+
+        // Clean up.
+        $siterestore->get_files_restore(constants::FILENAME_DBSTRUCTURE)->finish();
+        tempfiles::cleanup();
     }
 
     public function test_restore_dataroot() {
@@ -144,8 +157,9 @@ class site_restore_test extends \advanced_testcase {
         $sitebackup->export_dataroot();
         [$filepath] = $sitebackup->get_files_backup(constants::FILENAME_DATAROOT)->uploadedfiles;
 
-        // Remove file.
+        // Remove file and folder.
         unlink($hellofilepath);
+        rmdir($hellodir);
         $this->assertFalse(file_exists($hellofilepath));
 
         // Restore.
@@ -159,6 +173,7 @@ class site_restore_test extends \advanced_testcase {
         // File is now present.
         $this->assertTrue(file_exists($hellofilepath));
         $this->assertEquals('Hello world!', file_get_contents($hellofilepath));
+        tempfiles::cleanup();
     }
 
     public function test_site_restore_filedir() {
@@ -189,6 +204,7 @@ class site_restore_test extends \advanced_testcase {
         $siterestore->restore_filedir();
         $this->assertTrue(file_exists($filepathondisk));
         $this->assertEquals('helloworld', file_get_contents($filepathondisk));
+        tempfiles::cleanup();
     }
 
     /**

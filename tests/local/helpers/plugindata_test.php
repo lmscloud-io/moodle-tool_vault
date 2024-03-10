@@ -31,6 +31,15 @@ use tool_vault\local\xmldb\dbstructure;
 class plugindata_test extends \advanced_testcase {
 
     /**
+     * Cleanup all temp files
+     *
+     * @return void
+     */
+    public function tearDown(): void {
+        tempfiles::cleanup();
+    }
+
+    /**
      * Test with no exclusions, one and two exclusions
      *
      * @return array

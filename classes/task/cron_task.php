@@ -18,6 +18,7 @@ namespace tool_vault\task;
 
 use tool_vault\constants;
 use tool_vault\local\checks\check_base;
+use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\check_model;
 use tool_vault\local\models\dryrun_model;
@@ -197,6 +198,7 @@ class cron_task extends \core\task\scheduled_task {
             $operation->execute();
         } catch (\Throwable $t) {
             $operation->mark_as_failed($t);
+            tempfiles::cleanup();
         }
     }
 }

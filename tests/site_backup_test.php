@@ -26,6 +26,7 @@
 namespace tool_vault;
 
 use tool_vault\fixtures\site_backup_mock;
+use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\xmldb\dbtable;
 
@@ -44,6 +45,15 @@ require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_back
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class site_backup_test extends \advanced_testcase {
+
+    /**
+     * Cleanup all temp files
+     *
+     * @return void
+     */
+    public function tearDown(): void {
+        tempfiles::cleanup();
+    }
 
     /**
      * Create mock site backup instance
@@ -80,13 +90,15 @@ class site_backup_test extends \advanced_testcase {
         api::store_config('n5', 'value "with" quotes');
         api::store_config('n6', "value\nwith\nnewlines");
 
-        $dir = make_request_directory();
+        $dir = tempfiles::make_temp_dir('test-dbstruct-');
         $sitebackup->export_table_data($tableobj, $dir);
 
         $data = json_decode(file_get_contents($dir.DIRECTORY_SEPARATOR.'tool_vault_config.0.json'), true);
         $this->assertEquals(['name', 'n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6'], array_column($data, 1));
         $this->assertEquals(['value', 'value', null, '', 'null', 'NULL', 'value "with" quotes', "value\nwith\nnewlines"],
             array_column($data, 2));
+
+        tempfiles::remove_temp_dir($dir);
     }
 
     public function test_export_db() {
@@ -105,8 +117,8 @@ class site_backup_test extends \advanced_testcase {
 
         // Unpack and check contents.
         $x = new \zip_packer();
-        $dirstruct = make_request_directory();
-        $dir = make_request_directory();
+        $dirstruct = tempfiles::make_temp_dir('test-dbstruct-');
+        $dir = tempfiles::make_temp_dir('test-dbdump-');
         $x->extract_to_pathname($filepathstructure, $dirstruct);
         $x->extract_to_pathname($filepath, $dir);
         $handle = opendir($dir);
@@ -142,6 +154,9 @@ class site_backup_test extends \advanced_testcase {
         });
         $this->assertEmpty($f1);
         $this->assertNotEmpty($f2);
+
+        tempfiles::remove_temp_dir($dirstruct);
+        tempfiles::remove_temp_dir($dir);
     }
 
     public function test_export_dataroot() {
@@ -159,12 +174,14 @@ class site_backup_test extends \advanced_testcase {
 
         // Unpack and check contents.
         $x = new \zip_packer();
-        $dir = make_request_directory();
+        $dir = tempfiles::make_temp_dir('test-dataroot-');
         $x->extract_to_pathname($filepath, $dir);
 
         // Make sure a helloworld file was present in the archive.
         $this->assertTrue(file_exists($dir . '/helloworld/hello.txt'));
         $this->assertEquals('Hello world!', file_get_contents($dir . '/helloworld/hello.txt'));
+
+        tempfiles::remove_temp_dir($dir);
     }
 
     public function test_export_filedir() {
@@ -179,12 +196,14 @@ class site_backup_test extends \advanced_testcase {
 
         // Unpack and check contents.
         $x = new \zip_packer();
-        $dir = make_request_directory();
+        $dir = tempfiles::make_temp_dir('test-filedir-');
         $x->extract_to_pathname($filepath, $dir);
 
         // Make sure a file for empty file was present in the archive.
         $emptyfile = sha1('');
         $this->assertTrue(file_exists($dir . '/' . substr($emptyfile, 0, 2) . '/' .
             substr($emptyfile, 2, 2) . '/' . $emptyfile));
+
+        tempfiles::remove_temp_dir($dir);
     }
 }

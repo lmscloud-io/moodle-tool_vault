@@ -18,6 +18,7 @@ namespace tool_vault\local\checks;
 
 use tool_vault\constants;
 use tool_vault\local\helpers\siteinfo;
+use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\xmldb\dbstructure;
 
 /**
@@ -46,7 +47,7 @@ class diskspace extends check_base {
         $totalsize = $record->sumfilesize;
         $maxfilesize = $record->maxfilesize;
         $countfiles = $record->countfiles;
-        $freespace = disk_free_space(make_request_directory());
+        $freespace = tempfiles::get_free_space();
         $structure = dbstructure::load();
         foreach ($structure->get_tables_actual() as $tablename => $table) {
             $deftable = $structure->find_table_definition($tablename);

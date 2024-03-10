@@ -23,6 +23,7 @@ use tool_vault\local\checks\diskspace;
 use tool_vault\local\helpers\files_backup;
 use tool_vault\local\helpers\plugindata;
 use tool_vault\local\helpers\siteinfo;
+use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
 use tool_vault\local\operations\operation_base;
@@ -196,7 +197,7 @@ class site_backup extends operation_base {
             if (($chk = $classname::create_and_run($this->model)) && $chk->success()) {
                 $this->prechecks[$chk->get_name()] = $chk;
                 $this->add_to_log('...OK');
-            } elseif ($chk)  {
+            } else if ($chk) {
                 $a = (object)['name' => $classname::get_display_name(), 'message' => $chk->get_status_message()];
                 throw new \moodle_exception('error_backupprecheckfailed', 'tool_vault', '', $a);
             } else {
@@ -239,6 +240,8 @@ class site_backup extends operation_base {
         // Reset remote backups caches.
         api::store_config('cachedremotebackupstime', null);
         api::store_config('cachedremotebackups', null);
+
+        tempfiles::cleanup();
     }
 
     /**
@@ -365,7 +368,7 @@ class site_backup extends operation_base {
     public function export_db() {
 
         $this->add_to_log('Starting database backup');
-        $dir = make_request_directory();
+        $dir = tempfiles::make_temp_dir('dbbackup-');
 
         $structure = $this->get_db_structure();
         $tables = [];
@@ -384,6 +387,7 @@ class site_backup extends operation_base {
         $this->export_dbstructure(array_keys($tables));
 
         $this->add_to_log('Finished database backup');
+        tempfiles::remove_temp_dir($dir);
     }
 
     /**
@@ -456,7 +460,7 @@ class site_backup extends operation_base {
 
         $this->add_to_log('Starting files backup');
         $fs = get_file_storage();
-        $dir = make_request_directory();
+        $dir = tempfiles::make_temp_dir('mainfilesbackup-');
         $filesbackup = $this->get_files_backup(constants::FILENAME_FILEDIR);
         $lasthash = ($lastfile = $filesbackup->get_last_backedup_file()) ? basename($lastfile) : null;
         $cntexported = 0;
@@ -480,7 +484,7 @@ class site_backup extends operation_base {
         } while (count($records) >= constants::FILES_BATCH - 1);
 
         $filesbackup->finish();
-        site_restore::remove_recursively($dir);
+        tempfiles::remove_temp_dir($dir);
         $this->add_to_log('Finished files backup, '.$cntexported.' files exported');
     }
 

@@ -26,6 +26,7 @@
 namespace tool_vault\local\restoreactions;
 
 use tool_vault\constants;
+use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\models\restore_model;
 use tool_vault\site_restore;
 
@@ -44,6 +45,15 @@ require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_back
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class cleanup_existing_files_test extends \advanced_testcase {
+
+    /**
+     * Cleanup all temp files
+     *
+     * @return void
+     */
+    public function tearDown(): void {
+        tempfiles::cleanup();
+    }
 
     public function test_execute() {
         global $CFG, $DB;

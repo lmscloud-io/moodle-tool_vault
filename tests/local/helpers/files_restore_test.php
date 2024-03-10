@@ -48,6 +48,15 @@ require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_back
 class files_restore_test extends \advanced_testcase {
 
     /**
+     * Cleanup all temp files
+     *
+     * @return void
+     */
+    public function tearDown(): void {
+        tempfiles::cleanup();
+    }
+
+    /**
      * Create mock site backup instance
      *
      * @return site_backup_mock
@@ -79,7 +88,7 @@ class files_restore_test extends \advanced_testcase {
      */
     protected function create_archive(string $filename, array $files) {
         $ziparchive = new \zip_archive();
-        $path = make_request_directory().DIRECTORY_SEPARATOR.$filename;
+        $path = make_request_directory() . DIRECTORY_SEPARATOR . $filename;
         $ziparchive->open($path, \file_archive::CREATE);
 
         if (array_keys($files) === range(0, count($files) - 1)) {
@@ -127,6 +136,7 @@ class files_restore_test extends \advanced_testcase {
 
         $this->assertEquals($files1[0], $filesrestore->get_next_file()[1]);
         $this->assertNull($filesrestore->get_next_file());
+        $filesrestore->finish();
     }
 
     /**
@@ -156,6 +166,7 @@ class files_restore_test extends \advanced_testcase {
         $this->assertEquals('d/subdir', $filesrestore->get_next_file()[1]);
         $this->assertEquals('d/subdir/file.php', $filesrestore->get_next_file()[1]);
         $this->assertNull($filesrestore->get_next_file());
+        $filesrestore->finish();
     }
 
     /**
@@ -228,7 +239,7 @@ class files_restore_test extends \advanced_testcase {
         $siterestore->prepare_restore_db();
 
         // Start pulling tables one by one and check response.
-        $filesrestore = new files_restore($siterestore, constants::FILENAME_DBDUMP);
+        $filesrestore = $siterestore->get_files_restore(constants::FILENAME_DBDUMP);
         $nexttable = $filesrestore->get_next_table();
         $nexttable[1] = array_map('basename', $nexttable[1]);
         $this->assertEquals(['config', ['config.0.json']], $nexttable);
@@ -240,5 +251,9 @@ class files_restore_test extends \advanced_testcase {
         $this->assertEquals('forum', $filesrestore->get_next_table()[0]);
         $this->assertEquals('course', $filesrestore->get_next_table()[0]);
         $this->assertNull($filesrestore->get_next_table());
+
+        // Clean up.
+        $siterestore->get_files_restore(constants::FILENAME_DBSTRUCTURE)->finish();
+        $filesrestore->finish();
     }
 }

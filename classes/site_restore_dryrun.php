@@ -21,6 +21,7 @@ use tool_vault\local\checks\diskspace_restore;
 use tool_vault\local\checks\plugins_restore;
 use tool_vault\local\checks\version_restore;
 use tool_vault\local\helpers\files_restore;
+use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\logger;
 use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\operation_model;
@@ -186,6 +187,7 @@ class site_restore_dryrun extends operation_base {
             ->save();
         api::update_restore_ignoring_errors($this->model->get_details()['restorekey'], [], constants::STATUS_FINISHED);
         $this->add_to_log('Restore pre-check finished');
+        tempfiles::cleanup();
     }
 
     /**

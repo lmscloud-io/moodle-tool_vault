@@ -17,6 +17,7 @@
 namespace tool_vault\local\checks;
 
 use tool_vault\constants;
+use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\models\backup_file;
 use tool_vault\local\models\dryrun_model;
 
@@ -49,7 +50,7 @@ class diskspace_restore extends check_base_restore {
 
         $mintmpspace = $largestarchive + $sizes[constants::FILENAME_DBSTRUCTURE] + $origsizes[constants::FILENAME_DBSTRUCTURE];
 
-        $freespace = disk_free_space(make_request_directory());
+        $freespace = tempfiles::get_free_space();
 
         $enoughspace = $freespace > $mintmpspace;
 

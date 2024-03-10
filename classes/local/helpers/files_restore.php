@@ -44,8 +44,8 @@ class files_restore {
     protected $curenttables = [];
     /** @var int  */
     protected $nextfileidx = 0;
-    /** @var string  */
-    protected $dir = '';
+    /** @var ?string  */
+    protected $dir = null;
     /** @var \tool_vault\local\xmldb\dbstructure|null */
     protected $dbstructure = null;
 
@@ -176,6 +176,9 @@ class files_restore {
         if (!$this->is_dbstructure_backup()) {
             throw new \coding_exception('Can only be called for the dbstructure file type');
         }
+        if (!$this->dir) {
+            throw new \coding_exception('There is no open archive');
+        }
         $files = [];
         foreach ($this->curentfileslist as $localfilename) {
             $files[$localfilename] = $this->dir.DIRECTORY_SEPARATOR.$localfilename;
@@ -196,6 +199,9 @@ class files_restore {
         }
         if (($localpath = $this->get_next()) === null) {
             return null;
+        }
+        if (!$this->dir) {
+            throw new \coding_exception('There is no open archive');
         }
         return [$this->dir.DIRECTORY_SEPARATOR.$localpath, $localpath];
     }
@@ -229,6 +235,9 @@ class files_restore {
         }
         if (($tablename = $this->get_next()) === null) {
             return null;
+        }
+        if (!$this->dir) {
+            throw new \coding_exception('There is no open archive');
         }
         $tablefiles = array_map(function($file) {
             return $this->dir.DIRECTORY_SEPARATOR.$file;
@@ -269,6 +278,9 @@ class files_restore {
      * @return void
      */
     protected function retrieve_files_list(string $subpath = '') {
+        if (!$this->dir) {
+            throw new \coding_exception('There is no open archive');
+        }
         $path = $this->dir . DIRECTORY_SEPARATOR . $subpath;
 
         // Get list of files recursively.
@@ -305,12 +317,12 @@ class files_restore {
     /**
      * Download archive from API
      *
+     * @param string $tempdir
      * @return string
      * @throws \moodle_exception
      */
-    protected function download_backup_file(): string {
-        $zipdir = make_request_directory();
-        $zippath = $zipdir.DIRECTORY_SEPARATOR.$this->backupfiles[$this->currentseq]->get_file_name();
+    protected function download_backup_file(string $tempdir): string {
+        $zippath = $tempdir . DIRECTORY_SEPARATOR . $this->backupfiles[$this->currentseq]->get_file_name();
         api::download_backup_file($this->siterestore->get_model(), $zippath, $this->siterestore);
         return $zippath;
     }
@@ -327,6 +339,9 @@ class files_restore {
         if ($this->currentseq === null) {
             return false;
         }
+        if ($this->dir) {
+            debugging('Archive opened without closing the previous one', DEBUG_DEVELOPER);
+        }
         $this->dir = null;
         if ($this->is_dataroot_backup()) {
             // It is better to unzip the dataroot backup straight into dataroot directory so we can then
@@ -341,13 +356,14 @@ class files_restore {
                 $this->siterestore->add_to_log($t->getMessage(), constants::LOGLEVEL_WARNING);
             }
         }
-        $this->dir = $this->dir ?? make_request_directory();
-        $zippath = $this->download_backup_file();
+        $this->dir = $this->dir ?? tempfiles::make_temp_dir('filesrestore-'.$this->filetype.'-');
+        $tempdir = tempfiles::make_temp_dir('backupzip-');
+        $zippath = $this->download_backup_file($tempdir);
         $zippacker = new \zip_packer();
         $zippacker->extract_to_pathname($zippath, $this->dir);
         $this->retrieve_files_list();
         $this->nextfileidx = 0;
-        unlink($zippath);
+        tempfiles::remove_temp_dir($tempdir);
         return true;
     }
 
@@ -358,18 +374,19 @@ class files_restore {
      */
     protected function close_current_archive(): void {
         global $CFG;
+        if ($this->dir && file_exists($this->dir) && is_dir($this->dir)) {
+            tempfiles::remove_temp_dir($this->dir);
+        }
+        $this->dir = null;
         if (!array_key_exists($this->currentseq, $this->backupfiles)) {
             return;
         }
         $this->backupfiles[$this->currentseq]->set_status(constants::STATUS_FINISHED)->save();
-        if ($this->dir && file_exists($this->dir) && is_dir($this->dir)) {
-            site_restore::remove_recursively($this->dir);
-        }
         $keys = array_keys($this->backupfiles);
         $lastkey = array_pop($keys);
         if ($this->is_dataroot_backup() && $this->currentseq == $lastkey) {
             // If it's the last file, remove the whole __vault_restore__ folder.
-            site_restore::remove_recursively($CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__');
+            tempfiles::remove_temp_dir($CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__');
         }
     }
 
