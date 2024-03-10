@@ -98,7 +98,10 @@ class site_backup_test extends \advanced_testcase {
         $this->assertEquals(['value', 'value', null, '', 'null', 'NULL', 'value "with" quotes', "value\nwith\nnewlines"],
             array_column($data, 2));
 
+        // Cleanup (there is one temp file that will be removed and debugging is called).
         tempfiles::remove_temp_dir($dir);
+        tempfiles::cleanup();
+        $this->assertDebuggingCalled();
     }
 
     public function test_export_db() {
