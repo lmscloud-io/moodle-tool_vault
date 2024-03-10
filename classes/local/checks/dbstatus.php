@@ -102,7 +102,7 @@ class dbstatus extends check_base {
             }
             return get_string('unknownstatusa', 'tool_vault', $status);
         }
-        return '';
+        return parent::get_status_message();
     }
 
     /**

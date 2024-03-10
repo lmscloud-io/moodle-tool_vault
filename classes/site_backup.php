@@ -196,9 +196,12 @@ class site_backup extends operation_base {
             if (($chk = $classname::create_and_run($this->model)) && $chk->success()) {
                 $this->prechecks[$chk->get_name()] = $chk;
                 $this->add_to_log('...OK');
+            } elseif ($chk)  {
+                $a = (object)['name' => $classname::get_display_name(), 'message' => $chk->get_status_message()];
+                throw new \moodle_exception('error_backupprecheckfailed', 'tool_vault', '', $a);
             } else {
-                throw new \moodle_exception($chk ? $chk->get_status_message() :
-                    get_string('error_unabletorunprecheck', 'tool_vault', $classname::get_display_name()));
+                throw new \moodle_exception('error_unabletorunprecheck', 'tool_vault',
+                    '', $classname::get_display_name());
             }
         }
     }

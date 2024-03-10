@@ -116,6 +116,7 @@ $string['error_backuphaswrongstatus'] = 'Backup with the key {$a} has a wrong st
 $string['error_backupinprogressnotfound'] = 'Backup in progress not found';
 $string['error_backupnotavailable'] = 'Backup with the key {$a} is no longer avaialable';
 $string['error_backupnotfinished'] = 'Backup with the key {$a} is not yet completed';
+$string['error_backupprecheckfailed'] = "Error occurred while executing backup pre-check '{\$a->name}': {\$a->message}";
 $string['error_cannotcreatezip'] = 'Can not create ZIP file';
 $string['error_dbstructurenotvalid'] = 'Archive {$a} does not contain database structure';
 $string['error_invaliddownloadlink'] = 'Vault API did not return a valid download link for {$a->filename}: {$a->url}';
