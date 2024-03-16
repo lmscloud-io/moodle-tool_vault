@@ -1,4 +1,4 @@
-name: Moodle Plugin CI
+name: Moodle Plugin CI older versions
 
 on: [push, pull_request]
 
