@@ -356,7 +356,7 @@ class files_restore {
                 $this->siterestore->add_to_log($t->getMessage(), constants::LOGLEVEL_WARNING);
             }
         }
-        $this->dir ??= tempfiles::make_temp_dir("filesrestore-{$this->filetype}-{$this->currentseq}-");
+        $this->dir = $this->dir ?? tempfiles::make_temp_dir("filesrestore-{$this->filetype}-{$this->currentseq}-");
         $tempdir = tempfiles::make_temp_dir('backupzip-');
         $zippath = $this->download_backup_file($tempdir);
         $zippacker = new \zip_packer();
