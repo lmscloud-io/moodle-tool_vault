@@ -53,6 +53,20 @@ class plugindata_test extends \advanced_testcase {
         ];
     }
 
+    /**
+     * Asserts that two arrays are equal but the order is not important
+     *
+     * @param mixed  $expected
+     * @param mixed  $actual
+     * @param string $message
+     */
+    protected function assertArrEqualsCanonicalizing($expected, $actual, $message = '') {
+        // Function assertEqualsCanonicalizing was not present in older verions.
+        sort($expected);
+        sort($actual);
+        $this->assertEquals($expected, $actual, $message);
+    }
+
     public function test_get_sql_for_plugins_data_in_table() {
         global $DB;
         $tablestotest = array_merge(plugindata::get_tables_with_possible_plugin_data(), ['course']);
@@ -64,12 +78,12 @@ class plugindata_test extends \advanced_testcase {
                 $resyes[$setname] = $DB->get_records_select($table, $r[0], $r[1]);
                 $r = plugindata::get_sql_for_plugins_data_in_table($table, $pluginset, true);
                 $resno[$setname] = $DB->get_records_select($table, $r[0], $r[1]);
-                $this->assertEqualsCanonicalizing($resall[$setname], $resyes[$setname] + $resno[$setname],
+                $this->assertArrEqualsCanonicalizing($resall[$setname], $resyes[$setname] + $resno[$setname],
                     'Results do not add up for table '.$table.' for set '.$setname);
                 $this->assertEquals(count($resall[$setname]), count($resyes[$setname]) + count($resno[$setname]),
                     'Results count do not add up for table '.$table.' for set '.$setname);
             }
-            $this->assertEqualsCanonicalizing($resyes['pboth'], $resyes['p1'] + $resyes['p2'],
+            $this->assertArrEqualsCanonicalizing($resyes['pboth'], $resyes['p1'] + $resyes['p2'],
                 'Results do not add up for different sets for table '.$table);
             $this->assertTrue(count($resyes['pboth']) == count($resyes['p1']) + count($resyes['p2']),
                 'Results counts do not add up for different sets for table '.$table);
