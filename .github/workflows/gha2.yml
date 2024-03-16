@@ -1,4 +1,4 @@
-name: Moodle Plugin CI
+name: Moodle Plugin CI older versions
 
 on: [push, pull_request]
 
@@ -8,7 +8,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:13
+        image: postgres:10
         env:
           POSTGRES_USER: 'postgres'
           POSTGRES_HOST_AUTH_METHOD: 'trust'
@@ -31,56 +31,36 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - php: '7.4'
-            moodle-branch: 'MOODLE_39_STABLE'
-            database: 'pgsql'
           - php: '7.2'
-            moodle-branch: 'MOODLE_39_STABLE'
-            database: 'mariadb'
-          - php: '7.4'
-            moodle-branch: 'MOODLE_310_STABLE'
+            moodle-branch: 'MOODLE_34_STABLE'
+            database: 'pgsql'
+          - php: '7.1' # Running 3.4 on PHP 7.0 is possible but tool_vault will not work.
+            moodle-branch: 'MOODLE_34_STABLE'
             database: 'mariadb'
           - php: '7.2'
-            moodle-branch: 'MOODLE_310_STABLE'
-            database: 'pgsql'
-          - php: '8.0'
-            moodle-branch: 'MOODLE_311_STABLE'
+            moodle-branch: 'MOODLE_35_STABLE'
+            database: 'mariadb'
+          - php: '7.1' # Running 3.5 on PHP 7.0 is possible but tool_vault will not work.
+            moodle-branch: 'MOODLE_35_STABLE'
             database: 'pgsql'
           - php: '7.3'
-            moodle-branch: 'MOODLE_311_STABLE'
-            database: 'mariadb'
-          - php: '8.0'
-            moodle-branch: 'MOODLE_400_STABLE'
+            moodle-branch: 'MOODLE_36_STABLE'
+            database: 'pgsql'
+          - php: '7.1'
+            moodle-branch: 'MOODLE_36_STABLE'
             database: 'mariadb'
           - php: '7.3'
-            moodle-branch: 'MOODLE_400_STABLE'
-            database: 'pgsql'
-          - php: '8.1'
-            moodle-branch: 'MOODLE_401_STABLE'
+            moodle-branch: 'MOODLE_37_STABLE'
+            database: 'mariadb'
+          - php: '7.1'
+            moodle-branch: 'MOODLE_37_STABLE'
             database: 'pgsql'
           - php: '7.4'
-            moodle-branch: 'MOODLE_401_STABLE'
-            database: 'mariadb'
-          - php: '8.2'
-            moodle-branch: 'MOODLE_402_STABLE'
-            database: 'mariadb'
-          - php: '8.0'
-            moodle-branch: 'MOODLE_402_STABLE'
+            moodle-branch: 'MOODLE_38_STABLE'
             database: 'pgsql'
-          - php: '8.2'
-            moodle-branch: 'MOODLE_403_STABLE'
-            database: 'pgsql'
-          - php: '8.0'
-            # Main job. Run all checks that do not require setup and only need to be run once.
-            runchecks: 'all'
-            moodle-branch: 'MOODLE_403_STABLE'
+          - php: '7.1'
+            moodle-branch: 'MOODLE_38_STABLE'
             database: 'mariadb'
-          - php: '8.3'
-            moodle-branch: 'main'
-            database: 'mariadb'
-          - php: '8.1'
-            moodle-branch: 'main'
-            database: 'pgsql'
 
     steps:
       - name: Check out repository code

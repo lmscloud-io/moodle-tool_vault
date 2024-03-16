@@ -75,8 +75,9 @@ class plugindata {
      * @return string[]
      */
     protected static function tables_with_component_field(): array {
+        global $CFG;
         // We don't take into account exceptions for 'mod' plugin type because this type is never going to be supported.
-        return [
+        $tables = [
             'external_services',
             'external_functions',
             'event',
@@ -91,6 +92,10 @@ class plugindata {
             'capabilities',
             'files',
         ];
+        if ((int)($CFG->branch) < 39) {
+            $tables = array_diff($tables, ['event']); // Component field was added in 3.9.
+        }
+        return $tables;
     }
 
     /**
