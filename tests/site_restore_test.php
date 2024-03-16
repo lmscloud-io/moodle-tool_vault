@@ -110,6 +110,8 @@ class site_restore_test extends \advanced_testcase {
 
         // Perform backup.
         $sitebackup = $this->create_site_backup();
+        $sitebackup->get_db_structure();
+        $sitebackup->prepare();
         $sitebackup->export_db();
         [$filepathstructure] = $sitebackup->get_files_backup(constants::FILENAME_DBSTRUCTURE)->uploadedfiles;
         [$filepath] = $sitebackup->get_files_backup(constants::FILENAME_DBDUMP)->uploadedfiles;

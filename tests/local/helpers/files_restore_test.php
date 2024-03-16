@@ -209,4 +209,51 @@ class files_restore_test extends \advanced_testcase {
             $this->curl_mock_file_download($filepath);
         }
     }
+
+    /**
+     * Test helper for dbdump
+     */
+    public function test_dbdump() {
+        $this->resetAfterTest();
+
+        $filepathstructure = $this->prepare_db_structure();
+
+        $siterestore = $this->create_site_restore();
+
+        // Mock backup files and curl responses.
+        $usersfiles = [];
+        for ($i = 0; $i < 140; $i++) {
+            $usersfiles[] = "user.{$i}.json";
+        }
+        $files0 = array_merge($usersfiles, ['config.0.json']);
+        $files1 = ['forum.0.josn', 'nonexistingtable.0.json', 'course.0.json', 'course.1.json'];
+        shuffle($files0); // Test that the order will be correct later.
+
+        $this->mock_backup_files($siterestore->get_model()->id, [
+            [constants::FILENAME_DBSTRUCTURE, $filepathstructure],
+            [constants::FILENAME_DBDUMP, null, $files0],
+            [constants::FILENAME_DBDUMP.'-1', null, $files1],
+        ]);
+
+        // Read db structure.
+        $siterestore->prepare_restore_db();
+
+        // Start pulling tables one by one and check response.
+        $filesrestore = $siterestore->get_files_restore(constants::FILENAME_DBDUMP);
+        $nexttable = $filesrestore->get_next_table();
+        $nexttable[1] = array_map('basename', $nexttable[1]);
+        $this->assertEquals(['config', ['config.0.json']], $nexttable);
+
+        $nexttable = $filesrestore->get_next_table();
+        $nexttable[1] = array_map('basename', $nexttable[1]);
+        $this->assertEquals(['user', $usersfiles], $nexttable);
+
+        $this->assertEquals('forum', $filesrestore->get_next_table()[0]);
+        $this->assertEquals('course', $filesrestore->get_next_table()[0]);
+        $this->assertNull($filesrestore->get_next_table());
+
+        // Clean up.
+        $siterestore->get_files_restore(constants::FILENAME_DBSTRUCTURE)->finish();
+        $filesrestore->finish();
+    }
 }
