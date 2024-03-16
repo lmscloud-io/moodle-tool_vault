@@ -94,9 +94,9 @@ class site_restore_test extends \advanced_testcase {
         if (!PHPUNIT_LONGTEST) {
             $this->markTestSkipped('PHPUNIT_LONGTEST is not defined');
         }
-        if ((int)($CFG->branch) < 310) {
-            $this->markTestSkipped('This test is acting weird on Moodle 3.9 and I give up debugging it');
-        }
+        // if ((int)($CFG->branch) < 310) {
+        //     $this->markTestSkipped('This test is acting weird on Moodle 3.9 and I give up debugging it');
+        // }
         $this->resetAfterTest();
         $this->setAdminUser();
         // Create a course and an instance of book module.
