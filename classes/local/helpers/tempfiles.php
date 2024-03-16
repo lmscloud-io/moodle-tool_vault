@@ -34,7 +34,15 @@ class tempfiles {
      * @return string
      */
     public static function make_temp_dir(string $prefix = ''): string {
+        global $CFG;
+        if (defined('PHPUNIT_TEST') && PHPUNIT_TEST && defined('PHPUNIT_BACKUPTEMPDIR')) {
+            $oldvalue = $CFG->backuptempdir;
+            $CFG->backuptempdir = PHPUNIT_BACKUPTEMPDIR;
+        }
         $backupdir = make_backup_temp_directory('tool_vault');
+        if (isset($oldvalue)) {
+            $CFG->backuptempdir = $oldvalue;
+        }
         $dir = self::make_unique_writable_directory($backupdir, $prefix);
         self::$createddirs[$dir] = true;
         return $dir;

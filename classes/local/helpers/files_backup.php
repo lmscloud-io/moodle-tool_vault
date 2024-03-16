@@ -105,6 +105,9 @@ class files_backup {
      * @return string
      */
     public function get_archive_file_path(): string {
+        if (empty($this->zipdir)) {
+            throw new \coding_exception('There is no current archive');
+        }
         return $this->zipdir . DIRECTORY_SEPARATOR . $this->currentbackupfile->get_file_name();
     }
 
@@ -114,8 +117,10 @@ class files_backup {
      * @param bool $startnew start new archive
      */
     public function finish(bool $startnew = false) {
-        $this->ziparchive->close();
-        $this->ziparchive = null;
+        if ($this->ziparchive) {
+            $this->ziparchive->close();
+            $this->ziparchive = null;
+        }
 
         if (!empty($this->currentbackupfile->get_detail('lastfile'))) {
             $zipfilepath = $this->get_archive_file_path();
@@ -133,6 +138,7 @@ class files_backup {
         }
         $this->filestoremove = [];
         tempfiles::remove_temp_dir($this->zipdir);
+        $this->zipdir = null;
 
         if ($startnew) {
             $this->start();

@@ -55,6 +55,8 @@ class cli_helper {
     protected $script;
     /** @var string Name of php file containing the caller script (for printing help) */
     protected $scriptfilename;
+    /** @var array */
+    protected $clioptions;
 
     /**
      * cli_helper constructor.
@@ -75,7 +77,7 @@ class cli_helper {
             }
         }
 
-        list($this->clioptions, $this->unrecognized) = cli_get_params(
+        list($this->clioptions, $unrecognized) = cli_get_params(
             $longoptions,
             $shortmapping
         );

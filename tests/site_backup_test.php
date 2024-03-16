@@ -98,7 +98,13 @@ class site_backup_test extends \advanced_testcase {
         $this->assertEquals(['value', 'value', null, '', 'null', 'NULL', 'value "with" quotes', "value\nwith\nnewlines"],
             array_column($data, 2));
 
+        // Close archive, remove temp folder and also clear the curl mock stack.
+        $sitebackup->get_files_backup(constants::FILENAME_DBDUMP)->finish();
         tempfiles::remove_temp_dir($dir);
+        $curl = new \curl();
+        $curl->get('');
+        $curl->get('');
+        $curl->get('');
     }
 
     public function test_export_db() {

@@ -46,6 +46,7 @@ class files_backup_mock extends \tool_vault\local\helpers\files_backup {
         $newfilepath = make_request_directory().DIRECTORY_SEPARATOR.basename($zipfilepath);
         copy($zipfilepath, $newfilepath);
         $this->uploadedfiles[] = $newfilepath;
+        $this->ziparchive = null;
 
         \curl::mock_response('123');
         \curl::mock_response('123');
