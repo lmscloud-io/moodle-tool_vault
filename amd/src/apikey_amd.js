@@ -133,7 +133,7 @@ define([], function() {
 
             var enterApikeyButton = document.querySelector(SELECTORS.ENTER_KEY_BUTTON);
             enterApikeyButton.addEventListener('click', function() {
-                openApikeyForm();
+                openApikeyForm('', false);
             });
         }
     };

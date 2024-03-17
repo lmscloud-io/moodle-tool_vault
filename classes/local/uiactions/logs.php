@@ -64,6 +64,7 @@ class logs extends base {
             $result['restores'][] = (new \tool_vault\output\restore_details($restore))->export_for_template($output);
         }
         $result['haspastrestores'] = !empty($result['restores']);
+        $result['islegacy'] = (int)($CFG->branch) <= 39;
 
         return $result;
     }

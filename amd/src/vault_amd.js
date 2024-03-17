@@ -123,7 +123,7 @@ define([
             return;
         }
         var contextid = backupForm.getAttribute('data-contextid');
-        backupForm.addEventListener('submit', async(event) => {
+        backupForm.addEventListener('submit', function(event) {
             event.preventDefault();
             var pendingPromise = new Pending('tool/vault:startBackupPopup');
             x(contextid)
@@ -131,8 +131,12 @@ define([
                 if (modal) {
                     modal.show();
 
-                    modal.getRoot().on(ModalEvents.save, () => submitForm(backupForm, modal));
-                    modal.getRoot().on(ModalEvents.cancel, () => modal.hide());
+                    modal.getRoot().on(ModalEvents.save, function() {
+                        submitForm(backupForm, modal);
+                    });
+                    modal.getRoot().on(ModalEvents.cancel, function() {
+                        modal.hide();
+                    });
                 }
                 pendingPromise.resolve();
                 return null;
@@ -145,11 +149,11 @@ define([
     };
 
     var initStartDryRun = function(backupkey) {
-        var dryrunForm = document.querySelector(SELECTORS.START_DRYRUN + `[data-backupkey="${backupkey}"]`);
+        var dryrunForm = document.querySelector(SELECTORS.START_DRYRUN + '[data-backupkey="' + backupkey + '"]');
         if (!dryrunForm) {
             return;
         }
-        dryrunForm.addEventListener('submit', event => {
+        dryrunForm.addEventListener('submit', function(event) {
             event.preventDefault();
             ModalFactory.create({
                 type: ModalFactory.types.SAVE_CANCEL,
@@ -162,8 +166,12 @@ define([
                 .then(function(modal) {
                     modal.show();
 
-                    modal.getRoot().on(ModalEvents.save, () => submitForm(dryrunForm, modal));
-                    modal.getRoot().on(ModalEvents.cancel, () => modal.hide());
+                    modal.getRoot().on(ModalEvents.save, function() {
+                        submitForm(dryrunForm, modal);
+                    });
+                    modal.getRoot().on(ModalEvents.cancel, function() {
+                        modal.hide();
+                    });
 
                     return modal;
                 })
@@ -172,11 +180,11 @@ define([
     };
 
     var initStartRestore = function(backupkey) {
-        var restoreForm = document.querySelector(SELECTORS.START_RESTORE + `[data-backupkey="${backupkey}"]`);
+        var restoreForm = document.querySelector(SELECTORS.START_RESTORE + '[data-backupkey="' + backupkey + '"]');
         if (!restoreForm) {
             return;
         }
-        restoreForm.addEventListener('submit', event => {
+        restoreForm.addEventListener('submit', function(event) {
             event.preventDefault();
             ModalFactory.create({
                 type: ModalFactory.types.SAVE_CANCEL,
@@ -189,8 +197,12 @@ define([
                 .then(function(modal) {
                     modal.show();
 
-                    modal.getRoot().on(ModalEvents.save, () => submitForm(restoreForm, modal));
-                    modal.getRoot().on(ModalEvents.cancel, () => modal.hide());
+                    modal.getRoot().on(ModalEvents.save, function() {
+                        submitForm(restoreForm, modal);
+                    });
+                    modal.getRoot().on(ModalEvents.cancel, function() {
+                        modal.hide();
+                    });
 
                     return modal;
                 })
@@ -199,15 +211,17 @@ define([
     };
 
     var initCollapseExpandBackupLogs = function() {
-        var logslong = document.querySelector(`[data-vault-purpose="logslong"]`);
-        var logsshort = document.querySelector(`[data-vault-purpose="logsshort"]`);
+        var logslong = document.querySelector('[data-vault-purpose="logslong"]');
+        var logsshort = document.querySelector('[data-vault-purpose="logsshort"]');
         if (logslong && logsshort) {
-            logslong.querySelector(`[data-vault-purpose="togglelogs"]`).addEventListener('click', event => {
+            logslong.querySelector('[data-vault-purpose="togglelogs"]')
+            .addEventListener('click', function(event) {
                 event.preventDefault();
                 logsshort.style.display = 'block';
                 logslong.style.display = 'none';
             });
-            logsshort.querySelector(`[data-vault-purpose="togglelogs"]`).addEventListener('click', event => {
+            logsshort.querySelector('[data-vault-purpose="togglelogs"]')
+            .addEventListener('click', function(event) {
                 event.preventDefault();
                 logsshort.style.display = 'none';
                 logslong.style.display = 'block';

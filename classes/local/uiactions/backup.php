@@ -78,6 +78,7 @@ class backup extends base {
         }
         $result['haspastbackups'] = !empty($result['backups']);
         $result['restoreallowed'] = api::are_restores_allowed();
+        $result['islegacy'] = (int)($CFG->branch) <= 39;
         return $result;
     }
 

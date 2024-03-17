@@ -53,6 +53,7 @@ class restore extends base {
      * @return array
      */
     public function export_for_template(renderer_base $output) {
+        global $CFG;
         $result = ['isregistered' => (int)api::is_registered()];
 
         $lastoperation = operation_model::get_last_of([restore_model::class, dryrun_model::class]);
@@ -78,6 +79,7 @@ class restore extends base {
 
             $result['remotebackupsupdateurl'] = restore_updateremote::url()->out(false);
         }
+        $result['islegacy'] = (int)($CFG->branch) <= 39;
         return $result;
     }
 
