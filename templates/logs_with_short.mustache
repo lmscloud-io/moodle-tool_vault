@@ -48,9 +48,16 @@
 {{^isprogresspage}}
 {{#haslogsshort}}
 {{#js}}
+{{#islegacy}}
+    require(['tool_vault/vault_amd'], function(Vault) {
+        Vault.initCollapseExpandBackupLogs();
+    });
+{{/islegacy}}
+{{^islegacy}}
     require(['tool_vault/vault'], function(Vault) {
         Vault.initCollapseExpandBackupLogs();
     });
+{{/islegacy}}
 {{/js}}
 {{/haslogsshort}}
 {{/isprogresspage}}

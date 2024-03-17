@@ -49,7 +49,14 @@
 </div>
 
 {{#js}}
+{{#islegacy}}
+    require(['tool_vault/vault_amd'], function(Vault) {
+        Vault.initStartBackup();
+    });
+{{/islegacy}}
+{{^islegacy}}
     require(['tool_vault/vault'], function(Vault) {
         Vault.initStartBackup();
     });
+{{/islegacy}}
 {{/js}}

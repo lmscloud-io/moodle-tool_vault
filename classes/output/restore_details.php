@@ -84,6 +84,7 @@ class restore_details implements \templatable {
                 }
             }
         }
+        $rv['islegacy'] = (int)($CFG->branch) <= 39;
         return $rv;
     }
 }

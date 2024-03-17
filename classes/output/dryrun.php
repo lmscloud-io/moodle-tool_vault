@@ -69,6 +69,7 @@ class dryrun implements \templatable {
      * @return array
      */
     public function export_for_template(renderer_base $output) {
+        global $CFG;
         $model = $this->dryrun->get_model();
         $inprogress = $model->status === constants::STATUS_SCHEDULED || $model->status === constants::STATUS_INPROGRESS;
         $prechecks = [];
@@ -99,6 +100,7 @@ class dryrun implements \templatable {
             $rv['startdryrunlabel'] = get_string('repeatprecheck', 'tool_vault');
             $rv['encrypted'] = (int)$this->remotebackup->get_encrypted();
         }
+        $rv['islegacy'] = (int)($CFG->branch) <= 39;
         return $rv;
     }
 

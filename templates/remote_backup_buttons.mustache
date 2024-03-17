@@ -42,8 +42,16 @@
 </form>
 
 {{#js}}
+{{#islegacy}}
+    require(['tool_vault/vault_amd'], function(Vault) {
+        Vault.initStartDryRun("{{backupkey}}");
+        Vault.initStartRestore("{{backupkey}}");
+    });
+{{/islegacy}}
+{{^islegacy}}
     require(['tool_vault/vault'], function(Vault) {
         Vault.initStartDryRun("{{backupkey}}");
         Vault.initStartRestore("{{backupkey}}");
     });
+{{/islegacy}}
 {{/js}}

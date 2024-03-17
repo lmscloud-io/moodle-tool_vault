@@ -140,6 +140,7 @@ class backup_details implements \templatable {
         if (isset($error)) {
             $rv['restorenotallowedreason'] = (new \core\output\notification($error, null, false))->export_for_template($output);
         }
+        $rv['islegacy'] = (int)($CFG->branch) <= 39;
         return $rv;
     }
 }

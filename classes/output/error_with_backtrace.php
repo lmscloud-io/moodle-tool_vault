@@ -66,14 +66,17 @@ class error_with_backtrace implements \templatable {
      * @return array
      */
     public function export_for_template(renderer_base $output) {
+        global $CFG;
         $message = $this->error;
         if (!$message) {
             return [];
         }
-        return [
+        $rv = [
             'uniqueid' => 'errormessage'.random_string(),
             'error' => $this->error,
             'backtrace' => debugging() ? $this->backtrace : null,
         ];
+        $rv['islegacy'] = (int)($CFG->branch) <= 39;
+        return $rv;
     }
 }
