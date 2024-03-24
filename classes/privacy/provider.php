@@ -16,6 +16,7 @@
 
 namespace tool_vault\privacy;
 
+use core_privacy\local\metadata\collection;
 use core_privacy\local\metadata\null_provider;
 
 /**
@@ -25,7 +26,8 @@ use core_privacy\local\metadata\null_provider;
  * @copyright  2024 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class provider implements null_provider {
+class provider implements null_provider,
+        \core_privacy\local\metadata\provider {
 
 
     /**
@@ -36,5 +38,21 @@ class provider implements null_provider {
      */
     public static function get_reason(): string {
         return 'privacy:metadata';
+    }
+
+    /**
+     * Returns meta data about this system.
+     *
+     * @param collection $collection The initialised collection to add items to.
+     * @return collection A listing of user data stored through this system.
+     */
+    public static function get_metadata(collection $collection): collection {
+        $collection->add_external_location_link('lmsvault.io',
+            [
+                '*' => 'privacy:metadata:alldata',
+            ],
+            'privacy:metadata:lmsvault');
+
+        return $collection;
     }
 }
