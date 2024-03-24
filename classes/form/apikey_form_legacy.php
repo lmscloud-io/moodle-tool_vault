@@ -16,8 +16,6 @@
 
 namespace tool_vault\form;
 
-use tool_vault\api;
-
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . "/formslib.php");
@@ -38,9 +36,7 @@ class apikey_form_legacy extends \moodleform {
         $returnurl = $this->_customdata['returnurl'] ?? '';
         $mform->addElement("hidden", "returnurl", $returnurl);
         $mform->setType('returnurl', PARAM_URL);
-        $mform->addElement('text', 'apikey', 'API key', ['style' => 'width:100%']);
-        $mform->setType('apikey', PARAM_RAW);
-        $mform->addRule('apikey', null, 'required', null, 'client');
+        apikey_form_helper::definition($mform);
         $this->add_action_buttons();
     }
 
@@ -53,11 +49,7 @@ class apikey_form_legacy extends \moodleform {
      */
     public function validation($data, $files) {
         $errors = [];
-        if (!strlen($data['apikey'])) {
-            $errors['apikey'] = get_string('required');
-        } else if (strlen($data['apikey']) && !api::validate_api_key($data['apikey'])) {
-            $errors['apikey'] = get_string('error_apikeynotvalid', 'tool_vault');
-        }
+        apikey_form_helper::validation($data, $errors);
         return $errors;
     }
 }

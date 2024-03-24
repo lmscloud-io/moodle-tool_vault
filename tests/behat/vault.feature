@@ -41,7 +41,7 @@ Feature: Using tool vault
     And I switch to the main frame
     And I press "I have an API key"
     And the "src" attribute of "#getapikey_iframe" "css_element" should contain "about:blank"
-    And I set the field "API key" to "hellothere"
+    And I set the field "API key" to "hellothereThisisaninvalidAPIkeythatlooksvalid"
     And I press "Save changes"
     And I should see "API key not valid"
 

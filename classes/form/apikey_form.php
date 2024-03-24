@@ -56,7 +56,7 @@ class apikey_form extends dynamic_form {
      * Load in existing data as form defaults
      */
     public function set_data_for_dynamic_submission(): void {
-        $apikey = $this->optional_param('apikey', '', PARAM_RAW);
+        $apikey = $this->optional_param('apikey', '', PARAM_RAW_TRIMMED);
         $this->set_data(['apikey' => $apikey]);
     }
 
@@ -73,10 +73,7 @@ class apikey_form extends dynamic_form {
      * Form definition.
      */
     protected function definition() {
-        $mform = $this->_form;
-        $mform->addElement('text', 'apikey', 'API key', ['style' => 'width:100%']);
-        $mform->setType('apikey', PARAM_RAW);
-        $mform->addRule('apikey', null, 'required', null, 'client');
+        apikey_form_helper::definition($this->_form);
         $this->add_action_buttons();
     }
 
@@ -89,11 +86,7 @@ class apikey_form extends dynamic_form {
      */
     public function validation($data, $files) {
         $errors = [];
-        if (!strlen($data['apikey'])) {
-            $errors['apikey'] = get_string('required');
-        } else if (strlen($data['apikey']) && !api::validate_api_key($data['apikey'])) {
-            $errors['apikey'] = get_string('error_apikeynotvalid', 'tool_vault');
-        }
+        apikey_form_helper::validation($data, $errors);
         return $errors;
     }
 }
