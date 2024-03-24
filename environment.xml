@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<COMPATIBILITY_MATRIX>
+    <PLUGIN name="tool_vault">
+        <PHP version="7.1.0" level="required">
+        </PHP>
+    </PLUGIN>
+</COMPATIBILITY_MATRIX>
