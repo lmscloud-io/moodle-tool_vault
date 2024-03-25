@@ -23,6 +23,7 @@ use xmldb_key;
 use xmldb_table;
 
 // Mdlcode-disable cannot-parse-db-tablename.
+// phpcs:disable Generic.CodeAnalysis.EmptyStatement.DetectedCatch
 
 /**
  * Stores information about one DB table - either from definitions or from actual db
@@ -398,7 +399,11 @@ class dbtable {
                     // Set key with info retrofitted.
                     $key->setFromADOKey($dbindex);
                     // Add key to the table.
-                    $table->addKey($key);
+                    try {
+                        $table->addKey($key);
+                    } catch (\Exception $e) {
+                        // There can be exceptions such as duplicate name.
+                    }
 
                     // We are handling one xmldb_index (non-uniques).
                 } else {
@@ -406,7 +411,11 @@ class dbtable {
                     // Set index with info retrofitted.
                     $index->setFromADOIndex($dbindex);
                     // Add index to the table.
-                    $table->addIndex($index);
+                    try {
+                        $table->addIndex($index);
+                    } catch (\Exception $e) {
+                        // There can be exceptions such as duplicate name.
+                    }
                 }
             }
         }
@@ -435,12 +444,20 @@ class dbtable {
                 $index->setFromADOIndex($dbindex);
                 $index->setUnique((bool)$dbindex['unique']);
                 // Add index to the table.
-                $table->addIndex($index);
+                try {
+                    $table->addIndex($index);
+                } catch (\Exception $e) {
+                    // There can be exceptions such as duplicate name.
+                }
             }
         }
 
         if ($primarykey = $structure->retrieve_primary_keys_postgres()[$tableparam] ?? null) {
-            $table->addKey(new xmldb_key($primarykey->keyname, XMLDB_KEY_PRIMARY, [$primarykey->columnname]));
+            try {
+                $table->addKey(new xmldb_key($primarykey->keyname, XMLDB_KEY_PRIMARY, [$primarykey->columnname]));
+            } catch (\Exception $e) {
+                // There can be exceptions such as duplicate name.
+            }
         }
     }
 
