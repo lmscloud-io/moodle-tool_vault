@@ -2,6 +2,12 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## [1.2] - 2024-03-25
+
+### Fixed
+- Catch exceptions when building list of database modifications, since some plugins
+  may have errors in the schema (i.e. block_grade_me)
+
 ## [1.1] - 2024-03-24
 
 ### Added
