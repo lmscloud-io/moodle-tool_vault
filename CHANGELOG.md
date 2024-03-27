@@ -2,6 +2,12 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## Unreleased
+
+### Fixed
+- Prevent curl from sending Authorization header to AWS S3 where it is not needed and
+  causes an error.
+
 ## [1.2] - 2024-03-25
 
 ### Fixed

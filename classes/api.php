@@ -331,7 +331,7 @@ class api {
             'CURLOPT_HTTPHEADER' => array_merge(self::prepare_s3_headers($encryptionkey),
                 $result['uploadheaders'] ?? []),
             'CURLOPT_RETURNTRANSFER' => 1,
-            'CURLOPT_USERPWD' => '',
+            'CURLOPT_HTTPAUTH' => CURLAUTH_NONE,
         ];
 
         for ($i = 0; $i < constants::REQUEST_S3_RETRIES; $i++) {
@@ -481,6 +481,7 @@ class api {
         $options = [
             'CURLOPT_TIMEOUT' => constants::REQUEST_API_TIMEOUT, // Smaller timeout here.
             'CURLOPT_HTTPHEADER' => self::prepare_s3_headers($encryptionkey),
+            'CURLOPT_HTTPAUTH' => CURLAUTH_NONE,
         ];
         $curl = new \curl();
         // Perform a 'head' request to the pre-signed S3 url to check if the encryption key is correct.
@@ -524,6 +525,7 @@ class api {
             'CURLOPT_TIMEOUT' => constants::REQUEST_S3_TIMEOUT,
             'CURLOPT_HTTPHEADER' => self::prepare_s3_headers($encryptionkey),
             'CURLOPT_RETURNTRANSFER' => 1,
+            'CURLOPT_HTTPAUTH' => CURLAUTH_NONE,
         ];
 
         for ($i = 0; $i < constants::REQUEST_S3_RETRIES; $i++) {
@@ -582,6 +584,7 @@ class api {
             "x-amz-server-side-encryption-customer-algorithm: AES256",
             "x-amz-server-side-encryption-customer-key: ". $key,
             "x-amz-server-side-encryption-customer-key-MD5: ". $encodedmd5,
+            "Authorization: ",
         ];
     }
 
