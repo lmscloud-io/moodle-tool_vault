@@ -50,6 +50,31 @@ abstract class operation_base implements logger {
     }
 
     /**
+     * Returns the error message to store on server
+     *
+     * @param \Throwable $t
+     * @return string
+     */
+    protected function get_error_message_for_server(\Throwable $t): string {
+        global $CFG;
+        $message = $t->getMessage();
+        if ($t instanceof \moodle_exception) {
+            // When debug display is off, the debuginfo is not added to the message, add it here.
+            $hasdebugdeveloper = (
+                isset($CFG->debugdisplay) &&
+                isset($CFG->debug) &&
+                $CFG->debugdisplay &&
+                $CFG->debug === DEBUG_DEVELOPER
+            );
+            if (!$hasdebugdeveloper && $t->debuginfo) {
+                $message = "$message ($t->debuginfo)";
+            }
+        }
+        $message .= "\n\n" . $t->getTraceAsString();
+        return $message;
+    }
+
+    /**
      * Mark operation as failed
      *
      * @param \Throwable $t

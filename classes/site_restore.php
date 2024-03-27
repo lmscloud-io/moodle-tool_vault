@@ -532,7 +532,8 @@ class site_restore extends operation_base {
         $this->model->set_details(['encryptionkey' => ''])->save();
         $restorekey = $this->model->get_details()['restorekey'] ?? '';
         if ($restorekey) {
-            api::update_restore_ignoring_errors($restorekey, ['faileddetails' => $t->getMessage()], constants::STATUS_FAILED);
+            $faileddetails = $this->get_error_message_for_server($t);
+            api::update_restore_ignoring_errors($restorekey, ['faileddetails' => $faileddetails], constants::STATUS_FAILED);
         }
     }
 }

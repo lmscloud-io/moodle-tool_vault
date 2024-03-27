@@ -163,7 +163,8 @@ class site_backup extends operation_base {
             return;
         }
         try {
-            api::update_backup($this->model->backupkey, ['faileddetails' => $t->getMessage()], constants::STATUS_FAILED);
+            $faileddetails = $this->get_error_message_for_server($t);
+            api::update_backup($this->model->backupkey, ['faileddetails' => $faileddetails], constants::STATUS_FAILED);
         } catch (\Throwable $tapi) {
             // One of the reason for the failed backup - impossible to communicate with the API,
             // in which case this request will also fail.
