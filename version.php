@@ -26,8 +26,8 @@ defined('MOODLE_INTERNAL') || die();
 
 /** @var stdClass $plugin */
 $plugin->component    = 'tool_vault';
-$plugin->release      = '1.2';
-$plugin->version      = 2024032500;
+$plugin->release      = '1.3';
+$plugin->version      = 2024032700;
 $plugin->requires     = 2020061500;
 $plugin->supported    = [39, 404];
 $plugin->maturity     = MATURITY_STABLE;
