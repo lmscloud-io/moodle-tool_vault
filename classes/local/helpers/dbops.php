@@ -71,7 +71,10 @@ class dbops {
      */
     protected static function insert_chunk(string $tablename, array $fields, array &$rows) {
         global $DB;
-        $fieldssql = '('.implode(',', $fields).')';
+        $dbgen = $DB->get_manager()->generator;
+        $fieldssql = '(' . implode(',', array_map(function ($f) use ($dbgen) {
+            return $dbgen->getEncQuoted($f);
+        }, $fields)) . ')';
 
         $valuerowsql = '('.implode(',', array_fill(0, count($fields), '?')).')';
         $valuessql = implode(',', array_fill(0, count($rows), $valuerowsql));

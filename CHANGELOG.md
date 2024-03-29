@@ -2,6 +2,12 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## [1.4] - 2024-03-29
+
+### Fixed
+- Quoting names of the columns that are reserved words (for example, there is a database column
+  'count' in the local_wunderbyte_table plugin)
+
 ## [1.3] - 2024-03-27
 
 ### Fixed

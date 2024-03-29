@@ -298,9 +298,10 @@ class site_backup extends operation_base {
      */
     public function export_table_data(dbtable $table, string $dir) {
         global $DB;
+        $dbgen = $DB->get_manager()->generator;
 
-        $fields = array_map(function(\xmldb_field $f) {
-            return $f->getName();
+        $fields = array_map(function(\xmldb_field $f) use ($dbgen) {
+            return $dbgen->getEncQuoted($f->getName());
         }, $table->get_xmldb_table()->getFields());
         $sortby = in_array('id', $fields) ? 'id' : reset($fields);
         $fieldslist = join(',', $fields);
