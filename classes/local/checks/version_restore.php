@@ -54,7 +54,19 @@ class version_restore extends check_base_restore {
         $details = $this->model->get_details();
         $version = (float)($details['backupversion']);
         $branch = $details['backupbranch'];
-        return "{$branch}" === "{$CFG->branch}" && (float)($CFG->version) >= $version;
+        return (float)($CFG->version) >= $version;
+    }
+
+    /**
+     * Restore is performed into a higher version of Moodle core than the backup
+     *
+     * @return bool
+     */
+    public function core_needs_upgrade(): bool {
+        global $CFG;
+        $details = $this->model->get_details();
+        $version = (float)($details['backupversion']);
+        return (float)($CFG->version) > $version;
     }
 
     /**
@@ -68,7 +80,11 @@ class version_restore extends check_base_restore {
         $branch = $details['backupbranch'] ?? null;
         $version = $details['backupversion'];
         if ($this->success()) {
-            return get_string('moodleversion_success', 'tool_vault');
+            if ($this->core_needs_upgrade()) {
+                return 'Restore can be perrformed but you will need to run upgrade process after it completes.';
+            } else {
+                return get_string('moodleversion_success', 'tool_vault');
+            }
             // phpcs:disable Squiz.PHP.CommentedOutCode.Found
             // Probably not needed. Begin.
             // } else if ("{$branch}" !== "{$CFG->branch}") {
@@ -96,7 +112,7 @@ class version_restore extends check_base_restore {
         }
         $details = $this->model->get_details();
         return
-            $this->display_status_message($this->get_status_message()).
+            $this->display_status_message($this->get_status_message(), $this->core_needs_upgrade()).
             '<ul>'.
             '<li>' . get_string('moodleversion_backupinfo', 'tool_vault', (object)[
                 'version' => $details['backupversion'],

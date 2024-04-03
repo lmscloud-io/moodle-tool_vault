@@ -18,6 +18,7 @@ namespace tool_vault;
 
 use tool_vault\local\checks\check_base;
 use tool_vault\local\checks\plugins_restore;
+use tool_vault\local\checks\version_restore;
 use tool_vault\local\helpers\dbops;
 use tool_vault\local\helpers\files_restore;
 use tool_vault\local\helpers\plugindata;
@@ -392,42 +393,61 @@ class site_restore extends operation_base {
         }
 
         // Drop all extra tables.
-        $this->drop_tables_from_extra_plugins();
+        $this->drop_extra_tables(array_keys($tables));
 
         $this->add_to_log('Finished database restore');
     }
 
     /**
-     * Drop tables all plugins that are "extra" (code present on this site but data absent in the backup)
+     * Drop every table that has a definition in any install.xml files but is not present in the backup
      *
-     * Because the 'config_plugins' table does not have the 'version' for these plugins,
-     * next time admin logs in to the site they will be prompted to upgrade and install them.
-     * If the database tables are present, the upgrade process will throw an exception.
+     * In the situation like this it means that the backup was made in a previous version
+     * of core/plugin and the table will be created during the upgrade process. If it already exists
+     * the upgrade process will throw an exception.
      *
+     * Only do it in cases when:
+     * - core tables if the current moodle version is higher than the one in the backup
+     * - plugins that are installed on this site but missing in the backup
+     * - plugins that are installed on this site and have a higher version than in the backup
+     *
+     * @param string[] $tablesinbackup
      * @return void
      */
-    protected function drop_tables_from_extra_plugins() {
+    protected function drop_extra_tables(array $tablesinbackup) {
         global $DB;
+
+        $components = [];
+
+        /** @var version_restore $precheckcore */
+        $precheckcore = $this->prechecks[version_restore::get_name()] ?? null;
+        if ($precheckcore && $precheckcore->core_needs_upgrade()) {
+            $components[] = 'core';
+        }
 
         /** @var plugins_restore $precheck */
         $precheck = $this->prechecks[plugins_restore::get_name()] ?? null;
-        if (!$precheck) {
+        if ($precheck) {
+            $preservedplugins = siteinfo::get_excluded_plugins_restore();
+            $components = array_merge($components,
+                array_diff(array_keys($precheck->plugins_needing_upgrade() + $precheck->extra_plugins()), $preservedplugins));
+        }
+
+        if (empty($components)) {
             return;
         }
-        $extraplugins = $precheck->extra_plugins();
-        $extrapluginswithtables = [];
+
+        // Find all tables that need to be dropped.
         $extratables = [];
-        $preservedplugins = siteinfo::get_excluded_plugins_restore();
         foreach ($this->dbstructure->get_tables_definitions() as $tablename => $table) {
-            if (array_key_exists($table->get_component(), $extraplugins)
-                    && !in_array($table->get_component(), $preservedplugins)) {
+            if (in_array($table->get_component(), $components) && !in_array($tablename, $tablesinbackup)) {
                 $extratables[$tablename] = $table;
-                $extrapluginswithtables[$table->get_component()] = 1;
             }
         }
+
+        // Drop extra tables.
         if ($extratables) {
-            $this->add_to_log('Dropping database tables from plugins that are not present in the backup: ' .
-                join(', ', array_keys($extrapluginswithtables)).'...');
+            $this->add_to_log('Dropping database tables that are not present in the backup: ' .
+                join(', ', array_keys($extratables)).'...');
             foreach ($extratables as $table) {
                 $DB->get_manager()->drop_table($table->get_xmldb_table());
             }

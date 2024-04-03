@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\checks;
 
+use core_plugin_manager;
 use moodle_url;
 use tool_vault\api;
 use tool_vault\constants;
@@ -39,8 +40,12 @@ class plugins_restore extends check_base_restore {
         $parent = $this->get_parent();
         $backupplugins = $parent->get_metadata()['plugins'];
         $list = $this->consolidate($backupplugins, $pluginlist);
+        $standardplugins = array_filter(array_keys($list), function($pluginname) {
+            return $this->is_standard_plugin($pluginname, true);
+        });
         $this->model->set_details([
             'list' => $list,
+            'standardplugins' => $standardplugins,
         ])->save();
     }
 
@@ -82,12 +87,16 @@ class plugins_restore extends check_base_restore {
     /**
      * Find all plugins needing upgrade (higher version than in the backup)
      *
-     * @return array
+     * @param bool $includestandard include standard plugins
+     * @return array pluginname=>[['version'=>...], ['version'=>...]]
      */
-    protected function plugins_needing_upgrade(): array {
+    public function plugins_needing_upgrade(bool $includestandard = true): array {
         $list = $this->model->get_details()['list'];
         $problem = [];
         foreach ($list as $pluginname => $info) {
+            if (!$includestandard && $this->is_standard_plugin($pluginname)) {
+                continue;
+            }
             $v1 = $info[0]['version'] ?? null;
             $v2 = $info[1]['version'] ?? null;
             if ($v1 && $v2 && $v1 < $v2) {
@@ -100,23 +109,27 @@ class plugins_restore extends check_base_restore {
     /**
      * Plugins present on this site but not present in the backup
      *
-     * @return array
+     * @param bool $includestandard include standard plugins
+     * @return array pluginname=>[null, ['version'=>...]]
      */
-    public function extra_plugins(): array {
-        return array_filter($this->model->get_details()['list'], function($info) {
-            return empty($info[0]) && !empty($info[1]);
-        });
+    public function extra_plugins(bool $includestandard = true): array {
+        return array_filter($this->model->get_details()['list'], function($info, $pluginname) use ($includestandard) {
+            return empty($info[0]) && !empty($info[1])
+                && ($includestandard || !$this->is_standard_plugin($pluginname));
+        }, ARRAY_FILTER_USE_BOTH);
     }
 
     /**
      * Plugins present in the backup and missing on this site
      *
+     * @param bool $includestandard include standard plugins
      * @return array
      */
-    protected function missing_plugins(): array {
-        return array_filter($this->model->get_details()['list'], function($info) {
-            return empty($info[1]) && !empty($info[0]);
-        });
+    protected function missing_plugins(bool $includestandard = true): array {
+        return array_filter($this->model->get_details()['list'], function($info, $pluginname) use ($includestandard)  {
+            return empty($info[1]) && !empty($info[0])
+                && ($includestandard || !$this->is_standard_plugin($pluginname));
+        }, ARRAY_FILTER_USE_BOTH);
     }
 
     /**
@@ -140,9 +153,9 @@ class plugins_restore extends check_base_restore {
      */
     public function get_status_message(): string {
         if ($this->success()) {
-            if ($this->extra_plugins() || $this->plugins_needing_upgrade()) {
+            if ($this->extra_plugins(false) || $this->plugins_needing_upgrade(false)) {
                 return get_string('addonplugins_success_needsupgrade', 'tool_vault');
-            } else if ($this->missing_plugins()) {
+            } else if ($this->missing_plugins(false)) {
                 return get_string('addonplugins_success_withmissing', 'tool_vault');
             } else {
                 return get_string('addonplugins_success', 'tool_vault');
@@ -166,15 +179,15 @@ class plugins_restore extends check_base_restore {
             $r[] = get_string('addonplugins_withlowerversion', 'tool_vault') . ": " .
                 join(', ', array_keys($p));
         }
-        if ($p = $this->extra_plugins()) {
+        if ($p = $this->extra_plugins(false)) {
             $r[] = get_string('addonplugins_notpresent', 'tool_vault') . ": " .
                 join(', ', array_keys($p));
         }
-        if ($p = $this->plugins_needing_upgrade()) {
+        if ($p = $this->plugins_needing_upgrade(false)) {
             $r[] = get_string('addonplugins_withhigherversion', 'tool_vault') . ": " .
                 join(', ', array_keys($p));
         }
-        if ($p = $this->missing_plugins()) {
+        if ($p = $this->missing_plugins(false)) {
             $r[] = get_string('addonplugins_missing', 'tool_vault') . ": " .
                 join(', ', array_keys($p));
         }
@@ -189,8 +202,8 @@ class plugins_restore extends check_base_restore {
      * @return bool
      */
     public function has_details(): bool {
-        return $this->problem_plugins() || $this->missing_plugins()
-            || $this->extra_plugins() || $this->plugins_needing_upgrade();
+        return $this->problem_plugins() || $this->missing_plugins(false)
+            || $this->extra_plugins(false) || $this->plugins_needing_upgrade(false);
     }
 
     /**
@@ -207,6 +220,24 @@ class plugins_restore extends check_base_restore {
             'hasname' => !empty($name),
             'pluginname' => $pluginname,
         ];
+    }
+
+    /**
+     * Checks if a plugin is standard or deleted standard plugin
+     *
+     * @param string $pluginname
+     * @param bool $realtime run in real-time (check with the core classes), rather than take from the check results
+     * @return bool
+     */
+    protected function is_standard_plugin(string $pluginname, bool $realtime = false): bool {
+        $standardplugins = $realtime ? null : ($this->model->get_details()['standardplugins'] ?? null);
+        if (!isset($standardplugins) || !is_array($standardplugins)) {
+            list($type, $name) = \core_component::normalize_component($pluginname);
+            $allplugins = core_plugin_manager::standard_plugins_list($type) ?: [];
+            return in_array($name, $allplugins) || core_plugin_manager::is_deleted_standard_plugin($type, $name);
+        } else {
+            return in_array($pluginname, $standardplugins);
+        }
     }
 
     /**
@@ -243,15 +274,15 @@ class plugins_restore extends check_base_restore {
             $r['hasproblems'] = true;
             $r['problemplugins'] = $this->prepare_for_template($p);
         }
-        if ($p = $this->extra_plugins()) {
+        if ($p = $this->extra_plugins(false)) {
             $r['hasextra'] = true;
             $r['extraplugins'] = $this->prepare_for_template($p);
         }
-        if ($p = $this->plugins_needing_upgrade()) {
+        if ($p = $this->plugins_needing_upgrade(false)) {
             $r['hastobeupgraded'] = true;
             $r['tobeupgraded'] = $this->prepare_for_template($p);
         }
-        if ($p = $this->missing_plugins()) {
+        if ($p = $this->missing_plugins(false)) {
             $r['hasmissing'] = true;
             $r['missingplugins'] = $this->prepare_for_template($p);
         }
