@@ -37,6 +37,7 @@ class version_restore extends check_base_restore {
         $this->model->set_details([
             'backupversion' => $parent->get_metadata()['version'],
             'backupbranch' => $parent->get_metadata()['branch'],
+            'backuprelease' => $parent->get_metadata()['release'] ?? '',
             'success' => true,
         ])->save();
     }
@@ -54,7 +55,34 @@ class version_restore extends check_base_restore {
         $details = $this->model->get_details();
         $version = (float)($details['backupversion']);
         $branch = $details['backupbranch'];
-        return (float)($CFG->version) >= $version;
+        return ((float)($CFG->version) >= $version) && $this->core_upgrade_possible();
+    }
+
+    /**
+     * Checks if moodle core upgrade is possible
+     *
+     * For example, in environment.xml we see <MOODLE version="4.2" requires="3.11.8">
+     * which means that the upgrade from 3.9 (or any release before 3.11.8) to 4.2 is not possible.
+     *
+     * @return bool
+     */
+    public function core_upgrade_possible(): bool {
+        global $CFG;
+        require_once($CFG->dirroot.'/lib/environmentlib.php');
+
+        $details = $this->model->get_details();
+        $release = $details['backuprelease'] ?? '';
+
+        if (empty($release)) {
+            // Release was not collected before tool_vault v1.5, skip this check.
+            return true;
+        }
+
+        $normrelease = normalize_version($release);
+        $majorversion = get_latest_version_available(normalize_version($CFG->release), ENV_SELECT_RELEASE);
+        $data = get_environment_for_version($majorversion, ENV_SELECT_RELEASE);
+        $requires = $data['@']['requires'] ?? '1.0';
+        return version_compare($normrelease, $requires, '>=');
     }
 
     /**
@@ -76,12 +104,14 @@ class version_restore extends check_base_restore {
      */
     public function get_status_message(): string {
         global $CFG;
+        require_once($CFG->dirroot.'/lib/environmentlib.php');
+
         $details = $this->model->get_details();
         $branch = $details['backupbranch'] ?? null;
         $version = $details['backupversion'];
         if ($this->success()) {
             if ($this->core_needs_upgrade()) {
-                return 'Restore can be perrformed but you will need to run upgrade process after it completes.';
+                return get_string('moodleversion_success_withupgrade', 'tool_vault');
             } else {
                 return get_string('moodleversion_success', 'tool_vault');
             }
@@ -91,6 +121,13 @@ class version_restore extends check_base_restore {
             // return "Can not restore backup made on a different branch (major version) of Moodle. ".
             // "This backup branch is '{$branch}' and this site branch is '{$CFG->branch}'";
             // End.
+        } else if ($this->core_needs_upgrade() && !$this->core_upgrade_possible()) {
+            $a = (object)[
+                'backuprelease' => normalize_version($details['backuprelease'] ?? ''),
+                'currentrelease' => get_latest_version_available(normalize_version($CFG->release), ENV_SELECT_RELEASE),
+                'url' => (new \moodle_url('/admin/environment.php'))->out(false),
+            ];
+            return get_string('moodleversion_fail_cannotupgrade', 'tool_vault', $a);
         } else {
             $a = (object)[
                 'version' => $version,
@@ -107,6 +144,8 @@ class version_restore extends check_base_restore {
      */
     public function summary(): string {
         global $CFG;
+        require_once($CFG->dirroot.'/lib/environmentlib.php');
+
         if ($this->model->status !== constants::STATUS_FINISHED) {
             return '';
         }
@@ -116,11 +155,12 @@ class version_restore extends check_base_restore {
             '<ul>'.
             '<li>' . get_string('moodleversion_backupinfo', 'tool_vault', (object)[
                 'version' => $details['backupversion'],
-                'branch' => $details['backupbranch'],
+                'branch' => !empty($details['backuprelease']) ? normalize_version($details['backuprelease']) :
+                    $details['backupbranch'],
             ]) . '</li>'.
             '<li>' . get_string('moodleversion_siteinfo', 'tool_vault', (object)[
                 'version' => $CFG->version,
-                'branch' => $CFG->branch,
+                'branch' => normalize_version($CFG->release),
             ]) . '</li>'.
             '</ul>';
     }

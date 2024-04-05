@@ -165,11 +165,13 @@ $string['loginexplanation'] = "Create an account on {\$a} to be able to backup o
 With the <b>free account</b> you will be able to backup and restore small sites and store them up to 7 days on the server.";
 $string['manageremoteaccount'] = 'Manage your account';
 $string['messageprovider:statusupdate'] = 'Status update for Vault - Site migration';
-$string['moodleversion_backupinfo'] = 'Backup made in version {$a->version} (branch {$a->branch})';
+$string['moodleversion_backupinfo'] = 'Backup made in version {$a->version} (Moodle {$a->branch})';
 $string['moodleversion_fail'] = "Site version number has to be greater than or equal to the version in the backup.
 This backup is {\$a->version} and this site is {\$a->siteversion}";
-$string['moodleversion_siteinfo'] = 'This website has version {$a->version} (branch {$a->branch})';
+$string['moodleversion_fail_cannotupgrade'] = 'Restore is blocked because Moodle can not upgrade from {$a->backuprelease} to {$a->currentrelease}. See <a href=\"{$a->url}\">environment page</a> for upgrade requirements.';
+$string['moodleversion_siteinfo'] = 'This website has version {$a->version} (Moodle {$a->branch})';
 $string['moodleversion_success'] = 'Moodle version matches';
+$string['moodleversion_success_withupgrade'] = 'Restore can be performed but you will need to run upgrade process after it completes.';
 $string['nobackupsavailable'] = 'There are no remote backups avaiable for restore';
 $string['nopastbackups'] = "You don't have any past backups";
 $string['nopastrestores'] = "You don't have any past restores";

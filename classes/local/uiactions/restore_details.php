@@ -47,7 +47,7 @@ class restore_details extends base {
      * @return string
      */
     public function display(\renderer_base $output) {
-        $id = optional_param('id', null, PARAM_INT);
+        $id = optional_param('id', 0, PARAM_INT);
 
         if ($restore = restore_model::get_by_id($id)) {
             $data = (new \tool_vault\output\restore_details($restore))->export_for_template($output);
