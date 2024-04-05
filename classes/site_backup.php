@@ -103,6 +103,7 @@ class site_backup extends operation_base {
             'dbengine' => $DB->get_dbfamily(),
             'version' => $CFG->version,
             'branch' => $CFG->branch,
+            'release' => $CFG->release,
             'tool_vault_version' => get_config('tool_vault', 'version'),
             'email' => $USER->email ?? '',
             'name' => $USER ? fullname($USER) : '',
