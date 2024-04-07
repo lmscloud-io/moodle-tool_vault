@@ -173,6 +173,18 @@ class dbstatus extends check_base {
     }
 
     /**
+     * Evaluate check and store results in model details
+     */
+    public function execute(): void {
+        parent::execute();
+        if (!$this->success() && !$this->parent) {
+            // This is a stand-alone backup precheck that failed, report to the server.
+            $faileddetails = $this->get_error_message_for_server(new backup_precheck_failed($this));
+            api::report_error(['faileddetails' => $faileddetails]);
+        }
+    }
+
+    /**
      * Summary
      *
      * @return string
@@ -194,6 +206,16 @@ class dbstatus extends check_base {
                 '</ul>';
         }
         return '';
+    }
+
+    /**
+     * Details about the failure that will be added to the exception message
+     *
+     * @return string
+     */
+    public function failure_details(): string {
+        $report = $this->get_report();
+        return $report ? print_r($report[constants::DIFF_INVALIDTABLES], true) : ''; // phpcs:ignore
     }
 
     /**

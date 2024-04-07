@@ -19,6 +19,7 @@ namespace tool_vault;
 use tool_vault\local\checks\check_base;
 use tool_vault\local\checks\diskspace_restore;
 use tool_vault\local\checks\plugins_restore;
+use tool_vault\local\checks\restore_precheck_failed;
 use tool_vault\local\checks\version_restore;
 use tool_vault\local\helpers\files_restore;
 use tool_vault\local\helpers\tempfiles;
@@ -174,10 +175,9 @@ class site_restore_dryrun extends operation_base {
 
         foreach ($this->prechecks as $chk) {
             if (!$chk->success()) {
-                $this->add_to_log('Restore pre-check finished with failure', constants::LOGLEVEL_ERROR);
-                $this->model
-                    ->set_status(constants::STATUS_FAILED)
-                    ->save();
+                $t = new restore_precheck_failed($chk);
+                tempfiles::cleanup();
+                $this->mark_as_failed($t);
                 return;
             }
         }
@@ -236,7 +236,8 @@ class site_restore_dryrun extends operation_base {
         $this->model->set_details(['encryptionkey' => ''])->save();
         $restorekey = $this->model->get_details()['restorekey'] ?? '';
         if ($restorekey) {
-            api::update_restore_ignoring_errors($restorekey, ['faileddetails' => $t->getMessage()], constants::STATUS_FAILED);
+            $faileddetails = $this->get_error_message_for_server($t);
+            api::update_restore_ignoring_errors($restorekey, ['faileddetails' => $faileddetails], constants::STATUS_FAILED);
         }
     }
 }

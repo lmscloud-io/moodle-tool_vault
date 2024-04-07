@@ -685,6 +685,21 @@ class api {
     }
 
     /**
+     * Report an error in the backup precheck to the server
+     *
+     * @param array $params
+     * @return void
+     */
+    public static function report_error(array $params): void {
+        try {
+            self::api_call("reporterror", 'POST', $params);
+        } catch (\Throwable $tapi) {
+            // Ignore connection or other server errors.
+            return;
+        }
+    }
+
+    /**
      * Should site be in maintenance mode
      *
      * @return bool

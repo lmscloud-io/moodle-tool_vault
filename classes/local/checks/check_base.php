@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\checks;
 
+use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\models\check_model;
 use tool_vault\local\models\operation_model;
@@ -206,7 +207,7 @@ abstract class check_base extends operation_base {
     /**
      * Evaluate check and store results in model details
      */
-    final public function execute(): void {
+    public function execute(): void {
         $this->perform();
         $this->model->set_status(constants::STATUS_FINISHED)->save();
     }
@@ -217,6 +218,17 @@ abstract class check_base extends operation_base {
      * @return string
      */
     abstract public function summary(): string;
+
+    /**
+     * Details about the failure that will be added to the exception message
+     *
+     * executed as part of backup/restore pre-checks
+     *
+     * @return string
+     */
+    public function failure_details(): string {
+        return '';
+    }
 
     /**
      * Does this past check have details (to display a link "Show details")
@@ -300,5 +312,20 @@ abstract class check_base extends operation_base {
      */
     public function get_status_message(): string {
         return $this->success() ? get_string('success', 'moodle') : get_string('status_failed', 'tool_vault');
+    }
+
+    /**
+     * Mark pre-check as failed
+     *
+     * @param \Throwable $t
+     * @return void
+     */
+    public function mark_as_failed(\Throwable $t) {
+        parent::mark_as_failed($t);
+        if (!$this->parent) {
+            // This is a stand-alone backup precheck that failed, report to the server.
+            $faileddetails = $this->get_error_message_for_server($t);
+            api::report_error(['faileddetails' => $faileddetails]);
+        }
     }
 }

@@ -6,6 +6,8 @@ All notable changes to the tool_vault plugin will be documented in this file.
 
 ### Added
 - Ability to restore into a higher major version of Moodle
+### Fixed
+- Display more details when backup or restore pre-checks fail, send error backtrace to the server
 
 ## [1.4] - 2024-03-29
 

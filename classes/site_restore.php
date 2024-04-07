@@ -18,6 +18,7 @@ namespace tool_vault;
 
 use tool_vault\local\checks\check_base;
 use tool_vault\local\checks\plugins_restore;
+use tool_vault\local\checks\restore_precheck_failed;
 use tool_vault\local\checks\version_restore;
 use tool_vault\local\helpers\dbops;
 use tool_vault\local\helpers\files_restore;
@@ -160,13 +161,7 @@ class site_restore extends operation_base {
 
         foreach ($this->prechecks as $chk) {
             if (!$chk->success()) {
-                $this->add_to_log('Aborting restore process. Restore pre-checks failed.', constants::LOGLEVEL_ERROR);
-                $this->model
-                    ->set_status(constants::STATUS_FAILED)
-                    ->set_details(['encryptionkey' => ''])
-                    ->save();
-                api::update_restore_ignoring_errors($this->model->get_details()['restorekey'], [], constants::STATUS_FAILED);
-                return;
+                throw new restore_precheck_failed($chk);
             }
         }
 

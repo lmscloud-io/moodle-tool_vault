@@ -69,12 +69,16 @@ class plugins_restore extends check_base_restore {
     /**
      * Find all plugins with problems (lower version than in the backup)
      *
+     * @param bool $includestandard include standard plugins
      * @return array
      */
-    protected function problem_plugins(): array {
+    protected function problem_plugins(bool $includestandard = true): array {
         $list = $this->model->get_details()['list'];
         $problem = [];
         foreach ($list as $pluginname => $info) {
+            if (!$includestandard && $this->is_standard_plugin($pluginname)) {
+                continue;
+            }
             $v1 = $info[0]['version'] ?? null;
             $v2 = $info[1]['version'] ?? null;
             if ($v1 && $v2 && $v1 > $v2) {
@@ -176,8 +180,12 @@ class plugins_restore extends check_base_restore {
         }
         $r = [];
         if ($p = $this->problem_plugins()) {
+            $paddon = $this->problem_plugins(false);
+            if (count($p) > count($paddon)) {
+                $paddon[get_string('containsstandardplugins', 'tool_vault', count($p) - count($paddon))] = true;
+            }
             $r[] = get_string('addonplugins_withlowerversion', 'tool_vault') . ": " .
-                join(', ', array_keys($p));
+                join(', ', array_keys($paddon));
         }
         if ($p = $this->extra_plugins(false)) {
             $r[] = get_string('addonplugins_notpresent', 'tool_vault') . ": " .

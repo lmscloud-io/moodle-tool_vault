@@ -67,9 +67,11 @@
     {{/haslogs}}
 </table>
 
+{{^isprogresspage}}
 {{#errormessage}}
 {{> tool_vault/error_with_backtrace }}
 {{/errormessage}}
+{{/isprogresspage}}
 
 {{#haslogs}}
     {{#isprogresspage}}
@@ -80,11 +82,16 @@
     {{/isprogresspage}}
 {{/haslogs}}
 
+{{^isprogresspage}}
 {{#prechecks}}
     {{> tool_vault/check_summary}}
 {{/prechecks}}
+{{/isprogresspage}}
 
 {{#isprogresspage}}
+    {{#errordetailsurl}}
+        <p><a href="{{.}}">{{#str}} viewerrordetails, tool_vault {{/str}}</a></p>
+    {{/errordetailsurl}}
     {{#timefinished}}
         <p><a href="{{siteurl}}">{{#str}} returntothesite, tool_vault {{/str}}</a></p>
     {{/timefinished}}

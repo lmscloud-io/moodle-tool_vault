@@ -18,6 +18,8 @@ namespace tool_vault\local\operations;
 
 use tool_vault\api;
 use tool_vault\constants;
+use tool_vault\local\checks\backup_precheck_failed;
+use tool_vault\local\checks\restore_precheck_failed;
 use tool_vault\local\logger;
 use tool_vault\local\models\operation_model;
 
@@ -56,7 +58,7 @@ abstract class operation_base implements logger {
      * @return string
      */
     protected function get_error_message_for_server(\Throwable $t): string {
-        global $CFG;
+        global $CFG, $DB;
         $message = $t->getMessage();
         if ($t instanceof \moodle_exception) {
             // When debug display is off, the debuginfo is not added to the message, add it here.
@@ -70,7 +72,11 @@ abstract class operation_base implements logger {
                 $message = "$message ($t->debuginfo)";
             }
         }
-        $message .= "\n\n" . $t->getTraceAsString();
+        $message .= "\n\nPHP ".PHP_VERSION." / Moodle {$CFG->release} / DB ".$DB->get_dbfamily()."\n";
+        if ($t instanceof backup_precheck_failed || $t instanceof restore_precheck_failed) {
+            $message .= "\n" . $t->extra_info();
+        }
+        $message .= "\n" . $t->getTraceAsString();
         return $message;
     }
 
