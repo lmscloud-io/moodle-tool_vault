@@ -2,7 +2,7 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-## Unreleased
+## [1.5] - 2024-04-07
 
 ### Added
 - Ability to restore into a higher major version of Moodle
