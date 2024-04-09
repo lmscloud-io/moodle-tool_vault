@@ -19,6 +19,7 @@ namespace tool_vault\local\checks;
 use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\helpers\siteinfo;
+use tool_vault\local\uiactions\backup_checkreport;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\local\xmldb\dbtable;
 
@@ -229,6 +230,24 @@ class dbstatus extends check_base {
     }
 
     /**
+     * Display a link to exclude table from backup
+     *
+     * @param string $tablename
+     * @param dbtable|null $deftable
+     * @return string
+     */
+    protected function add_to_excluded_tables_link(string $tablename, ?dbtable $deftable = null): string {
+        global $CFG;
+        $a = $CFG->prefix . $tablename;
+        if (siteinfo::is_table_excluded_from_backup($tablename, $deftable)) {
+            // Looks like we already excluded it since the last check.
+            return ' <b><em>' . get_string('tablealreadyexcluded', 'tool_vault', $a) . '</em></b>';
+        }
+        $url = backup_checkreport::url(['id' => $this->model->id, 'sesskey' => sesskey(), 'addexcludedtable' => $tablename]);
+        return ' ' . \html_writer::link($url, get_string('excludetablefrombackup', 'tool_vault', $a));
+    }
+
+    /**
      * Data for the template
      *
      * @return array
@@ -257,7 +276,8 @@ class dbstatus extends check_base {
                         get_string('dbmodifications_missingtable_warning', 'tool_vault');
                 } else if ($errortype === constants::DIFF_EXTRATABLES) {
                     $tables[$tablename]['tablewarnings'][] =
-                        get_string('dbmodifications_extratable_warning', 'tool_vault');
+                        get_string('dbmodifications_extratable_warning', 'tool_vault').
+                        $this->add_to_excluded_tables_link($tablename);
                 } else if ($errortype === constants::DIFF_CHANGEDTABLES) {
                     foreach ($details[2] as $changetype => $list) {
                         foreach ($list as $l) {
@@ -267,7 +287,8 @@ class dbstatus extends check_base {
                     }
                 } else if ($errortype === constants::DIFF_INVALIDTABLES) {
                     foreach ($details[2] as $l) {
-                        $tables[$tablename]['tablewarnings'][] = $OUTPUT->pix_icon('req', '') . $l;
+                        $tables[$tablename]['tablewarnings'][] = $OUTPUT->pix_icon('req', '') . $l .
+                            $this->add_to_excluded_tables_link($tablename);
                     }
                 }
             }

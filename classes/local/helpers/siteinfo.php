@@ -266,6 +266,22 @@ class siteinfo {
     }
 
     /**
+     * Alters a setting to include the specific table
+     *
+     * @param string $tablename table name without the mdl_ prefix
+     * @return void
+     */
+    public static function add_table_to_excluded_from_backup(string $tablename): void {
+        global $CFG;
+        $tablename = trim(strtolower($tablename));
+        $tables = api::get_setting_array('backupexcludetables');
+        if (!in_array($CFG->prefix . $tablename, $tables)) {
+            $tables[] = $CFG->prefix . $tablename;
+        }
+        set_config('backupexcludetables', implode(', ', $tables), 'tool_vault');
+    }
+
+    /**
      * Is given table excluded from restore
      *
      * @param string $tablename

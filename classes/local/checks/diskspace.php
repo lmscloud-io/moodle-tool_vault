@@ -21,6 +21,8 @@ use tool_vault\local\helpers\siteinfo;
 use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\xmldb\dbstructure;
 
+// phpcs:disable Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+
 /**
  * Check disk space
  *

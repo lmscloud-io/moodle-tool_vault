@@ -37,7 +37,7 @@ class restore_precheck_failed extends \moodle_exception {
             'name' => $chk->get_display_name(),
             'message' => html_to_text($chk->summary()),
         ];
-        parent::__construct('error_backupprecheckfailed', 'tool_vault', null, $a);
+        parent::__construct('error_restoreprecheckfailed', 'tool_vault', null, $a);
         $this->extrainfo = $chk->failure_details();
     }
 

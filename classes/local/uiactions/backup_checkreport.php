@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\uiactions;
 
+use tool_vault\local\helpers\siteinfo;
 use tool_vault\output\check_display;
 
 /**
@@ -34,6 +35,17 @@ class backup_checkreport extends base {
      */
     public static function get_display_name(): string {
         return get_string('precheckdetails', 'tool_vault');
+    }
+
+    /**
+     * Process action
+     */
+    public function process() {
+        $id = optional_param('id', null, PARAM_INT);
+        if (($table = optional_param('addexcludedtable', null, PARAM_TEXT)) && confirm_sesskey()) {
+            siteinfo::add_table_to_excluded_from_backup($table);
+            redirect(self::url(['id' => $id]));
+        }
     }
 
     /**
