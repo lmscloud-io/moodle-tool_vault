@@ -52,8 +52,13 @@ class diskspace extends check_base {
         foreach ($structure->get_tables_actual() as $tablename => $table) {
             $deftable = $structure->find_table_definition($tablename);
             if (!siteinfo::is_table_excluded_from_backup($tablename, $deftable)) {
-                // Mdlcode-disable-next-line cannot-parse-db-tablename.
-                $this->tablerowscnt[$tablename] = $DB->count_records_select($tablename, '1=1');
+                try {
+                    // Mdlcode-disable-next-line cannot-parse-db-tablename.
+                    $this->tablerowscnt[$tablename] = $DB->count_records_select($tablename, '1=1');
+                } catch (\Throwable $e) {
+                    // An exception can occur if $tablename contains invalid characters. It will
+                    // be reported in the dbstatus check, so just ignore it here.
+                }
             }
         }
         $dbrecords = array_sum($this->tablerowscnt);

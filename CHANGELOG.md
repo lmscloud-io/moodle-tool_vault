@@ -2,6 +2,12 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## Unreleased
+
+### Fixed
+- Removed excessive validation checks, some plugins have `datetime` columns, it is allowed in xmldb
+  but reported as error in the "Database check" in Moodle. Vault should allow them.
+
 ## [1.5] - 2024-04-07
 
 ### Added

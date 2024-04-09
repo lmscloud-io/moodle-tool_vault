@@ -376,8 +376,9 @@ class dbtable {
         global $DB, $CFG;
         $table = $this->get_xmldb_table();
         $tableparam = $table->getName();
+        $dbgen = $DB->get_manager()->generator;
         // Get PK, UK and indexes info from ADODb.
-        $result = $DB->get_recordset_sql('SHOW INDEXES FROM '.$CFG->prefix.$tableparam);
+        $result = $DB->get_recordset_sql('SHOW INDEXES FROM '.$dbgen->getEncQuoted($CFG->prefix.$tableparam));
         $dbindexes = [];
         foreach ($result as $res) {
             if (!isset($dbindexes[$res->key_name])) {
