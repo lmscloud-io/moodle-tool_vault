@@ -567,13 +567,6 @@ class dbtable {
             if ($error !== null) {
                 $result[] = $error;
             }
-            if ($obj instanceof xmldb_field) {
-                // Extra checks that are present in check_database_schema() but absent in validateDefinition().
-                if (empty($obj->getType()) || $obj->getType() == XMLDB_TYPE_DATETIME || $obj->getType() == XMLDB_TYPE_TIMESTAMP) {
-                    $result[] = 'Invalid field definition in table {'.$this->get_xmldb_table()->getName().'}: field "'.
-                        $obj->getName().'" has unsupported type';
-                }
-            }
         }
 
         return $result;
