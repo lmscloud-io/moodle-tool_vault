@@ -27,16 +27,11 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['addonplugins'] = 'Add-on plugins';
 $string['addonplugins_extraplugins'] = 'Extra plugins';
-$string['addonplugins_extraplugins_desc'] = "The following plugins are present on this site but not present in the backup. All data associated with
-these plugins will be deleted during the restore process. After the restore process is finished you will
-be prompted to run Moodle upgrade process that will re-install these plugins.";
+$string['addonplugins_extraplugins_desc'] = "The following plugins are present on this site but not present in the backup. All data associated with these plugins will be deleted during the restore process. After the restore process is finished you will be prompted to run Moodle upgrade process that will re-install these plugins.";
 $string['addonplugins_fail'] = 'Some plugins have lower version than the same plugins in the backup';
 $string['addonplugins_missing'] = 'Missing plugins';
 $string['addonplugins_missing_autoremove'] = 'Missing plugins will be automatically removed after restore. <a href="{$a}">Change</a>';
-$string['addonplugins_missing_desc'] = "The following plugins are present in the backup but are not installed on this site. After the restore
-these plugins will be listed as \"Missing form disk\", you can choose to uninstall them or keep the
-data until you add the code for the plugins. Until then, you may experience errors, for example,
-missing scheduled tasks.";
+$string['addonplugins_missing_desc'] = "The following plugins are present in the backup but are not installed on this site. After the restore these plugins will be listed as \"Missing form disk\", you can choose to uninstall them or keep the data until you add the code for the plugins. Until then, you may experience errors, for example, missing scheduled tasks.";
 $string['addonplugins_missing_noautoremove'] = 'You can choose to automatically remove missing plugins after restore in the <a href="{$a}">settings</a>';
 $string['addonplugins_notpresent'] = 'Plugins found on this site but not present in the backup';
 $string['addonplugins_pluginsdirectory'] = 'Plugins directory';
@@ -47,12 +42,10 @@ $string['addonplugins_success'] = 'Plugins versions in the backup and on this si
 $string['addonplugins_success_needsupgrade'] = 'Some plugins will need to be upgraded after restore';
 $string['addonplugins_success_withmissing'] = 'Some plugins are missing but the restore is possible';
 $string['addonplugins_willrequireupgrade'] = 'Will require upgrade';
-$string['addonplugins_willrequireupgrade_desc'] = "The following plugins have higher version than in the backup. After the restore process is finished
-you will be prompted to run Moodle upgrade process.";
+$string['addonplugins_willrequireupgrade_desc'] = "The following plugins have higher version than in the backup. After the restore process is finished you will be prompted to run Moodle upgrade process.";
 $string['addonplugins_withhigherversion'] = 'Plugins have higher version than the same plugins in the backup';
 $string['addonplugins_withlowerversion'] = 'Plugins have lower version than the same plugins in the backup';
-$string['addonplugins_withlowerversion_desc'] = "The following plugins have lower version on this site than in the backup.
-You must upgrade the code for these plugins before restoring from this backup.";
+$string['addonplugins_withlowerversion_desc'] = "The following plugins have lower version on this site than in the backup. You must upgrade the code for these plugins before restoring from this backup.";
 $string['backup'] = 'Backup';
 $string['backupdetails'] = 'Backup details';
 $string['backupfinished'] = 'This backup has already finished. You can access the logs <a href="{$a}">here</a>';
@@ -74,16 +67,14 @@ $string['configoverrides_willnotbeincludedplugin'] = 'Plugin settings from confi
 $string['containsstandardplugins'] = '{$a} standard plugins';
 $string['dbmodifications'] = 'Database modifications';
 $string['dbmodifications_changedtables'] = 'Changed tables';
-$string['dbmodifications_extratable_warning'] = 'Extra table: Table is absent in the definition but is present in the actual database';
+$string['dbmodifications_extratable_warning'] = 'Extra table: Table is absent in the definition but is present in the actual database.';
 $string['dbmodifications_extratables'] = 'Extra tables';
 $string['dbmodifications_invalidtables'] = 'Invalid tables';
 $string['dbmodifications_missingtable_warning'] = 'Missing table: Table is present in the definition but is absent in the actual database';
 $string['dbmodifications_missingtables'] = 'Missing tables';
 $string['dbmodifications_status_clean'] = 'Your database tables match descriptions in install.xml';
-$string['dbmodifications_status_invalid'] = "Your database has modifications that can not be processed by Moodle.
-You need to adjust the 'Backup settings' and exclude some entities if you want to perform site backup";
-$string['dbmodifications_status_modified'] = "Your database state does not match specifications in install.xml.
-The site can be backed up, the modifications will be included in the backup";
+$string['dbmodifications_status_invalid'] = "Your database has modifications that can not be processed by Moodle. You need to adjust the 'Backup settings' and exclude some entities if you want to perform site backup";
+$string['dbmodifications_status_modified'] = "Your database state does not match specifications in install.xml. The site can be backed up, the modifications will be included in the backup";
 $string['dbmodifications_status_nomodifications'] = 'Site backup can be performed without any database modifications';
 $string['defaultbackupdescription'] = '{$a->site} by {$a->name}';
 $string['diskspacebackup'] = 'Disk space';
@@ -104,8 +95,7 @@ $string['diskspacerestore_fail'] = 'There is not enough disk space in the tempor
 $string['diskspacerestore_filedirsize'] = 'Required space for files';
 $string['diskspacerestore_mintmpspace'] = 'Minimum space required in temp dir';
 $string['diskspacerestore_success'] = 'There is enough disk space in the temporary directory to perform site restore';
-$string['diskspacerestore_success_warning'] = "There is enough disk space in the temporary directory however
-there may not be enough space for all files and dataroot if they are in the same local disk partition";
+$string['diskspacerestore_success_warning'] = "There is enough disk space in the temporary directory however there may not be enough space for all files and dataroot if they are in the same local disk partition";
 $string['enterapikey'] = 'I have an API key';
 $string['enterpassphrase'] = 'This backup is encrypted, you need a passphrase';
 $string['error_accesskeyisnotvalid'] = 'Accesskey is not valid';
@@ -163,13 +153,11 @@ $string['lastop_restoreprecheckscheduled_text'] = 'Your restore pre-check is now
 $string['lastop_restorescheduled_header'] = 'Restore scheduled';
 $string['lastop_restorescheduled_text'] = 'Your restore is scheduled and will be executed during the next cron run';
 $string['lastupdated'] = 'Last updated';
-$string['loginexplanation'] = "Create an account on {\$a} to be able to backup or restore the site.
-With the <b>free account</b> you will be able to backup and restore small sites and store them up to 7 days on the server.";
+$string['loginexplanation'] = "Create an account on {\$a} to be able to backup or restore the site. With the <b>free account</b> you will be able to backup and restore small sites and store them up to 7 days on the server.";
 $string['manageremoteaccount'] = 'Manage your account';
 $string['messageprovider:statusupdate'] = 'Status update for Vault - Site migration';
 $string['moodleversion_backupinfo'] = 'Backup made in version {$a->version} (Moodle {$a->branch})';
-$string['moodleversion_fail'] = "Site version number has to be greater than or equal to the version in the backup.
-This backup is {\$a->version} and this site is {\$a->siteversion}";
+$string['moodleversion_fail'] = "Site version number has to be greater than or equal to the version in the backup. This backup is {\$a->version} and this site is {\$a->siteversion}";
 $string['moodleversion_fail_cannotupgrade'] = 'Restore is blocked because Moodle can not upgrade from {$a->backuprelease} to {$a->currentrelease}. See <a href=\"{$a->url}\">environment page</a> for upgrade requirements.';
 $string['moodleversion_siteinfo'] = 'This website has version {$a->version} (Moodle {$a->branch})';
 $string['moodleversion_success'] = 'Moodle version matches';
@@ -215,8 +203,7 @@ For other plugins include them in backup and uninstall after restore.<br>
 Note that this will only exclude data in plugin's own tables, settings, associated files, scheduled tasks and other known common types of plugin-related data. It may not be accurate for complicated plugins or plugins with dependencies.";
 $string['settings_backupexcludetables'] = 'Exclude tables';
 $string['settings_backupexcludetables_desc'] = "Vault will back up all tables that start with the prefix '{\$a->prefix}' even if they are not listed in xmldb schemas of the core or installed plugins.<br>You can list here the extra tables that should not be backed up an asterisk ('*') to exclude all extra tables.";
-$string['settings_desc'] = "Vault plugin settings where you can configure what to exclude during backup or
-preserve during restore.";
+$string['settings_desc'] = "Vault plugin settings where you can configure what to exclude during backup or preserve during restore.";
 $string['settings_header'] = 'Vault - Site migration settings';
 $string['settings_headerbackup'] = 'Backup settings';
 $string['settings_headerrestore'] = 'Restore settings';
@@ -228,16 +215,13 @@ Restore process will attempt to preserve existing data associated with these plu
 Note that this will only process data in plugin's own tables, settings, associated files, scheduled tasks and other known common types of plugin-related data. It may not be accurate for complicated plugins or plugins with dependencies.";
 $string['showbacktrace'] = 'Show backtrace';
 $string['sitebackup'] = 'Site backup';
-$string['sitebackup_desc'] = "Backup your whole site to the cloud with possibility to restore it on the same or different
-server, in a different database or different file system.";
+$string['sitebackup_desc'] = "Backup your whole site to the cloud with possibility to restore it on the same or different server, in a different database or different file system.";
 $string['siterestore'] = 'Site restore';
 $string['siterestore_desc'] = "Restore a site from the cloud backup that you have made yourself or somebody shared with you.<br>
 Note that the whole content of the current site will be replaced with the content of the backup.";
 $string['siterestore_notallowed_desc'] = 'Restoring on this site is not allowed. You can change it in the plugin settings.';
 $string['startbackup'] = 'Start backup';
-$string['startbackup_desc'] = "Your backup will be scheduled and performed during the next cron run. You may choose to encrypt your backup with a passphrase,
-in this case you will need to enter the same passphrase on restore. Passphrase will only be stored on your moodle site
-until the end of the backup process.";
+$string['startbackup_desc'] = "Your backup will be scheduled and performed during the next cron run. You may choose to encrypt your backup with a passphrase, in this case you will need to enter the same passphrase on restore. Passphrase will only be stored on your moodle site until the end of the backup process.";
 $string['startdryrun'] = 'Run pre-check';
 $string['startrestore'] = 'Restore this backup';
 $string['startrestore_desc'] = 'Restore will be executed on the next cron run. Important! All data from this site will be deleted!';
