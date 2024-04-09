@@ -2,7 +2,7 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-## Unreleased
+## [1.6] - 2024-04-09
 
 ### Added
 - Improve how extra/invalid tables are reported, allow to exclude them in one click
