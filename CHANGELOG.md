@@ -8,6 +8,7 @@ All notable changes to the tool_vault plugin will be documented in this file.
 - Possibility to choose where in which region to store your data during backup (for eligible plans)
 - Possibility to choose expiration date during backup
 - Explanation of the restrictions on the backup screen (for plans with restrictions)
+- Reminder to refresh the progress page to see the updated logs
 ### Fixed
 - Do not automatically uninstall missing plugins if an upgrade is pending - it can cause exceptions
   and plugins can be left in half-deleted state that is hard to fix.
