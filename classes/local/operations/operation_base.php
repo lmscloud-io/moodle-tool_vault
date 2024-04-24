@@ -57,7 +57,7 @@ abstract class operation_base implements logger {
      * @param \Throwable $t
      * @return string
      */
-    protected function get_error_message_for_server(\Throwable $t): string {
+    public static function get_error_message_for_server(\Throwable $t): string {
         global $CFG, $DB;
         $message = $t->getMessage();
         if ($t instanceof \moodle_exception) {

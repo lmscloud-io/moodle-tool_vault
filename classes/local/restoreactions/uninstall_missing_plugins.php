@@ -37,23 +37,35 @@ class uninstall_missing_plugins extends restore_action {
      * @return void
      */
     public function execute(site_restore $logger, string $stage) {
+        global $CFG;
         if (!api::get_setting_checkbox('restoreremovemissing')) {
             return;
         }
 
+        $needsupgrade = recalc_version_hash::fetch_core_version() != (float)$CFG->version;
         \core_plugin_manager::reset_caches();
         $pluginman = \core_plugin_manager::instance();
+        /** @var \core\plugininfo\base[][] $plugininfo */
         $plugininfo = $pluginman->get_plugins();
 
         $plugins = [];
         foreach ($plugininfo as $type => $pluginsoftype) {
             foreach ($pluginsoftype as $name => $plugin) {
-                if ($plugin->get_status() === \core_plugin_manager::PLUGIN_STATUS_MISSING) {
+                $status = $plugin->get_status();
+                if ($status === \core_plugin_manager::PLUGIN_STATUS_MISSING) {
                     $plugins[] = $plugin;
+                } else if ($status !== \core_plugin_manager::PLUGIN_STATUS_UPTODATE) {
+                    $needsupgrade = true;
                 }
             }
         }
         if (!$plugins) {
+            return;
+        }
+
+        if ($needsupgrade) {
+            $logger->add_to_log('Cannot uninstall missing plugins ('.count($plugins).') because a Moodle upgrade is pending',
+                constants::LOGLEVEL_WARNING);
             return;
         }
 
@@ -63,7 +75,14 @@ class uninstall_missing_plugins extends restore_action {
                 $logger->add_to_log('Uninstalling: ' . $plugin->component);
 
                 $progress = new \null_progress_trace();
-                $pluginman->uninstall_plugin($plugin->component, $progress);
+                try {
+                    $pluginman->uninstall_plugin($plugin->component, $progress);
+                } catch (\Throwable $e) {
+                    $logger->add_to_log('Error occurred while trying to uninstall plugin '. $plugin->component .
+                        ', some plugin data may still be present in the database: ' . $e->getMessage(),
+                        constants::LOGLEVEL_WARNING);
+                    api::report_error($e);
+                }
                 $progress->finished();
             } else {
                 $logger->add_to_log('Can not be uninstalled: ' . $plugin->component, constants::LOGLEVEL_WARNING);

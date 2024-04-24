@@ -47,6 +47,7 @@ $string['addonplugins_withhigherversion'] = 'Plugins have higher version than th
 $string['addonplugins_withlowerversion'] = 'Plugins have lower version than the same plugins in the backup';
 $string['addonplugins_withlowerversion_desc'] = "The following plugins have lower version on this site than in the backup. You must upgrade the code for these plugins before restoring from this backup.";
 $string['backup'] = 'Backup';
+$string['backupdescription'] = 'Backup description';
 $string['backupdetails'] = 'Backup details';
 $string['backupfinished'] = 'This backup has already finished. You can access the logs <a href="{$a}">here</a>';
 $string['backupinprogres'] = 'During backup the site is placed in maintenance mode. Use this page to access logs about the current process';
@@ -118,6 +119,7 @@ $string['error_invaliddownloadlink'] = 'Vault API did not return a valid downloa
 $string['error_invaliduploadlink'] = 'Vault API did not return a valid upload link {$a}';
 $string['error_metadatanotvalid'] = 'Archive {$a} does not contain backup metadata';
 $string['error_notavalidlink'] = 'Vault API did not return a valid link: {$a}';
+$string['error_passphrasewrong'] = 'Error checking access to an encrypted backup';
 $string['error_restoreprecheckfailed'] = 'Error occurred while executing restore pre-check \'{$a->name}\': {$a->message}';
 $string['error_restoresnotallowed'] = 'Restores are not allowed on this site';
 $string['error_serverreturnednodata'] = 'Server returned no data';
@@ -177,6 +179,7 @@ $string['precheckdetails'] = 'Pre-check details';
 $string['privacy:metadata'] = 'The Vault plugin doesn\'t store any personal data.';
 $string['privacy:metadata:alldata'] = 'All data from the database, file system and dataroot';
 $string['privacy:metadata:lmsvault'] = 'Vault miration tool can backup the whole site to the AWS S3. Admin is given an option to encrypt the backup so it can not be accessed by anybody else. See https://lmsvault.io for more information.';
+$string['refreshpage'] = '<a href="{$a}">Refresh</a> this page to see the updated logs.';
 $string['remotebackup'] = 'Remote backup';
 $string['remotebackupdetails'] = 'Remote backup details';
 $string['remotebackups'] = 'Remote backups';
@@ -191,7 +194,8 @@ $string['restoreprechecks'] = 'Restore pre-checks';
 $string['restoreremovemissing'] = 'Automatically remove missing plugins after restore';
 $string['restoreremovemissing_desc'] = "If backup contains data for the plugins that are not present in this site codebase, they will be marked as \"Missing from disk\" in the plugin overview.<br>
 - Enabling this option will automatically uninstall these plugins and remove all data associated with them from the database and file storage<br>
-- Disabling this option will leave the data in the database and you will be able to add plugins code after the restore is finished or run the uninstall script manually.";
+- Disabling this option will leave the data in the database and you will be able to add plugins code after the restore is finished or run the uninstall script manually.<br>
+<em>Missing plugins will not be removed if the upgrade is pending after the restore, i.e. if you restore into a higher Moodle version or other plugins need to be upgraded.</em>";
 $string['returntothesite'] = 'Return to the site';
 $string['seefullreport'] = 'See full report';
 $string['settings_allowrestore'] = 'Allow restores on this site';
@@ -222,7 +226,14 @@ $string['siterestore_desc'] = "Restore a site from the cloud backup that you hav
 Note that the whole content of the current site will be replaced with the content of the backup.";
 $string['siterestore_notallowed_desc'] = 'Restoring on this site is not allowed. You can change it in the plugin settings.';
 $string['startbackup'] = 'Start backup';
-$string['startbackup_desc'] = "Your backup will be scheduled and performed during the next cron run. You may choose to encrypt your backup with a passphrase, in this case you will need to enter the same passphrase on restore. Passphrase will only be stored on your moodle site until the end of the backup process.";
+$string['startbackup_bucket'] = 'Store data in';
+$string['startbackup_cta'] = 'Need more? See <a href="{$a->href}" target="_blank">{$a->link}</a> for pricing.';
+$string['startbackup_desc'] = "Your backup will be scheduled and performed during the <b>next cron run</b>.";
+$string['startbackup_enc_desc'] = "You may choose to encrypt your backup with a passphrase, in which case you will need to enter the same passphrase on restore. The passphrase will only be stored on your moodle site until the end of the backup process. If you forget your passphrase, you will not be able to restore this backup.";
+$string['startbackup_expiredays_prefix'] = 'Automatically expire backup after';
+$string['startbackup_expiredays_suffix'] = 'days';
+$string['startbackup_limit_desc'] = 'You can upload backups up to {$a}. If the size of the archived backup is larger than this, your backup will fail.';
+$string['startbackup_noenc_desc'] = 'Your data will be encrypted at rest. Specifying your own encryption key is not supported with your current subscription.';
 $string['startdryrun'] = 'Run pre-check';
 $string['startrestore'] = 'Restore this backup';
 $string['startrestore_desc'] = 'Restore will be executed on the next cron run. Important! All data from this site will be deleted!';

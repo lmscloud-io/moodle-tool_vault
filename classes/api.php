@@ -22,6 +22,7 @@ use tool_vault\local\logger;
 use tool_vault\local\models\backup_file;
 use tool_vault\local\models\operation_model;
 use tool_vault\local\models\remote_backup;
+use tool_vault\local\operations\operation_base;
 
 /**
  * Main api
@@ -319,13 +320,13 @@ class api {
 
         $result = self::api_call("backups/$backupkey/upload/$filename", 'post', ['contenttype' => $contenttype], $sitebackup);
         $s3url = $result['uploadurl'] ?? null;
+        $encryptionkey = $sitebackup->get_model()->get_details()['encryptionkey'] ?? '';
 
         // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
-        if (!preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
+        if ($encryptionkey && !preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
             throw new \moodle_exception('error_invaliduploadlink', 'tool_vault', '', $filename);
         }
 
-        $encryptionkey = $sitebackup->get_model()->get_details()['encryptionkey'] ?? '';
         $options = [
             'CURLOPT_TIMEOUT' => constants::REQUEST_S3_TIMEOUT,
             'CURLOPT_HTTPHEADER' => array_merge(self::prepare_s3_headers($encryptionkey),
@@ -463,7 +464,8 @@ class api {
      * @throws api_exception
      */
     public static function validate_backup(string $backupkey, string $passphrase) {
-        $result = self::api_call("backups/$backupkey/validate", 'get', []);
+        $result = self::api_call("backups/$backupkey/validate", 'get',
+            ['vaultversion' => get_config('tool_vault', 'version')]);
         $s3url = $result['downloadurl'] ?? null;
         $encrypted = $result['encrypted'] ?? false;
 
@@ -480,7 +482,8 @@ class api {
         $encryptionkey = self::prepare_encryption_key($passphrase);
         $options = [
             'CURLOPT_TIMEOUT' => constants::REQUEST_API_TIMEOUT, // Smaller timeout here.
-            'CURLOPT_HTTPHEADER' => self::prepare_s3_headers($encryptionkey),
+            'CURLOPT_HTTPHEADER' => array_merge(self::prepare_s3_headers($encryptionkey),
+                $result['downloadheaders'] ?? []),
             'CURLOPT_HTTPAUTH' => CURLAUTH_NONE,
         ];
         $curl = new \curl();
@@ -488,7 +491,7 @@ class api {
         $res = $curl->head($s3url, $options);
         $httpcode = $curl->get_info()['http_code'] ?? 0;
         if ($httpcode == 403) {
-            throw new api_exception('passphrasewrong', 'tool_vault');
+            throw new api_exception(get_string('error_passphrasewrong', 'tool_vault'));
         }
         if ($curl->errno || ($httpcode != 200)) {
             throw self::prepare_s3_exception($curl, $res);
@@ -515,7 +518,7 @@ class api {
         $encrypted = $result['encrypted'] ?? false;
 
         // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
-        if (!preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
+        if ($encrypted && !preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
             throw new \moodle_exception('error_invaliddownloadlink', 'tool_vault', '',
                 (object)['filename' => $filename, 'url' => $s3url]);
         }
@@ -523,7 +526,8 @@ class api {
         $encryptionkey = $encrypted ? ($model->get_details()['encryptionkey'] ?? '') : '';
         $options = [
             'CURLOPT_TIMEOUT' => constants::REQUEST_S3_TIMEOUT,
-            'CURLOPT_HTTPHEADER' => self::prepare_s3_headers($encryptionkey),
+            'CURLOPT_HTTPHEADER' => array_merge(self::prepare_s3_headers($encryptionkey),
+                $result['downloadheaders'] ?? []),
             'CURLOPT_RETURNTRANSFER' => 1,
             'CURLOPT_HTTPAUTH' => CURLAUTH_NONE,
         ];
@@ -540,7 +544,7 @@ class api {
             }
 
             if ($curl->errno || (($curl->get_info()['http_code'] ?? 0) != 200)) {
-                $s3exception = self::prepare_s3_exception($curl, filesize($filepath) < 5000 ? file_get_contents($filepath) : '');
+                $s3exception = self::prepare_s3_exception($curl, filesize($filepath) < 10000 ? file_get_contents($filepath) : '');
                 if ($logger) {
                     $logger->add_to_log("Error downloading file $filename (attempt ".($i + 1)."/".
                         constants::REQUEST_S3_RETRIES."): ".$s3exception->getMessage(), constants::LOGLEVEL_WARNING);
@@ -595,7 +599,7 @@ class api {
      * @throws \moodle_exception
      */
     public static function precheck_backup_allowed() {
-        $info = ['precheckonly' => 1];
+        $info = ['precheckonly' => 1, 'vaultversion' => get_config('tool_vault', 'version')];
         return self::api_call('backups', 'PUT', $info);
     }
 
@@ -607,6 +611,7 @@ class api {
      * @throws \moodle_exception
      */
     public static function request_new_backup_key(array $info): string {
+        $info['vaultversion'] = get_config('tool_vault', 'version');
         $res = self::api_call('backups', 'PUT', $info);
         if (empty($res['backupkey'])) {
             throw new \moodle_exception('error_serverreturnednodata', 'tool_vault');
@@ -687,12 +692,12 @@ class api {
     /**
      * Report an error in the backup precheck to the server
      *
-     * @param array $params
+     * @param \Throwable $t
      * @return void
      */
-    public static function report_error(array $params): void {
+    public static function report_error(\Throwable $t): void {
         try {
-            self::api_call("reporterror", 'POST', $params);
+            self::api_call("reporterror", 'POST', ['faileddetails' => operation_base::get_error_message_for_server($t)]);
         } catch (\Throwable $tapi) {
             // Ignore connection or other server errors.
             return;

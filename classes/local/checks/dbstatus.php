@@ -180,8 +180,7 @@ class dbstatus extends check_base {
         parent::execute();
         if (!$this->success() && !$this->parent) {
             // This is a stand-alone backup precheck that failed, report to the server.
-            $faileddetails = $this->get_error_message_for_server(new backup_precheck_failed($this));
-            api::report_error(['faileddetails' => $faileddetails]);
+            api::report_error(new backup_precheck_failed($this));
         }
     }
 

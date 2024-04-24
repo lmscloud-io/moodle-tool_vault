@@ -23,6 +23,7 @@
  */
 
 use tool_vault\api;
+use tool_vault\output\start_backup_popup;
 
 /**
  * Callback executed from setup.php on every page.
@@ -63,14 +64,7 @@ function tool_vault_output_fragment_start_backup($args): string {
     $context = context_system::instance();
     require_capability('moodle/site:config', $context);
 
-    api::precheck_backup_allowed();
-
-    $description = get_string('defaultbackupdescription', 'tool_vault',
-        (object)[
-            'site' => $CFG->wwwroot,
-            'name' => fullname($USER, true),
-        ]);
-    return $OUTPUT->render_from_template('tool_vault/start_backup_popup', [
-        'description' => $description,
-    ]);
+    $result = api::precheck_backup_allowed();
+    $data = (new start_backup_popup($result))->export_for_template($OUTPUT);
+    return $OUTPUT->render_from_template('tool_vault/start_backup_popup', $data);
 }

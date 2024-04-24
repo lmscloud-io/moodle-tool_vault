@@ -324,8 +324,7 @@ abstract class check_base extends operation_base {
         parent::mark_as_failed($t);
         if (!$this->parent) {
             // This is a stand-alone backup precheck that failed, report to the server.
-            $faileddetails = $this->get_error_message_for_server($t);
-            api::report_error(['faileddetails' => $faileddetails]);
+            api::report_error($t);
         }
     }
 }
