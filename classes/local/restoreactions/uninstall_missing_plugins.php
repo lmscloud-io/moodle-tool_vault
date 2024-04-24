@@ -45,7 +45,7 @@ class uninstall_missing_plugins extends restore_action {
         $needsupgrade = recalc_version_hash::fetch_core_version() != (float)$CFG->version;
         \core_plugin_manager::reset_caches();
         $pluginman = \core_plugin_manager::instance();
-        /** @var \core\plugininfo\base[][] */
+        /** @var \core\plugininfo\base[][] $plugininfo */
         $plugininfo = $pluginman->get_plugins();
 
         $plugins = [];

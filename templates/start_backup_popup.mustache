@@ -47,7 +47,7 @@
     <input type="text" name="description" value="{{description}}"
            id="description_startbackup" style="width: 100%" maxlength="255">
 </p>
-<p><label for="expiredays">{{#str}} startbackup_expiredays_prefix, tool_vault {{/str}}</label>
+<p><label for="expiredays_startbackup">{{#str}} startbackup_expiredays_prefix, tool_vault {{/str}}</label>
 <input type="text" name="expiredays" id="expiredays_startbackup"
     value="{{#expiredays}}{{.}}{{/expiredays}}" {{^canchangeexpiration}}disabled{{/canchangeexpiration}} style="width: 50px;">
 {{#str}} startbackup_expiredays_suffix, tool_vault {{/str}}
@@ -58,6 +58,5 @@
 {{#showupgrademessage}}
 <p>{{#str}} startbackup_cta, tool_vault, {"href": {{#quote}}{{vaulturl}}{{/quote}}, "link": {{#quote}}{{vaulturl}}{{/quote}} } {{/str}}</p>
 {{/showupgrademessage}}
-</p>
 </form>
 

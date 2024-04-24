@@ -2,7 +2,7 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-## Unreleased
+## [1.7] - 2024-04-24
 
 ### Added
 - Possibility to choose where in which region to store your data during backup (for eligible plans)
