@@ -37,6 +37,8 @@ class backup_startbackup extends base {
         $backup = \tool_vault\site_backup::schedule([
             'passphrase' => optional_param('passphrase', null, PARAM_RAW),
             'description' => optional_param('description', null, PARAM_NOTAGS),
+            'bucket' => optional_param('bucket', '', PARAM_TEXT),
+            'expiredays' => optional_param('expiredays', 0, PARAM_INT),
         ]);
         redirect(ui::progressurl(['accesskey' => $backup->get_model()->accesskey]));
     }

@@ -26,11 +26,38 @@
 
 <form action="#">
 <p>{{#str}} startbackup_desc, tool_vault {{/str}}</p>
-<p><label for="passphrase_startbackup">{{#str}} passphrase, tool_vault {{/str}}:</label>
-    <input type="text" name="passphrase" id="passphrase_startbackup"></p>
-<p><label for="description_startbackup">{{#str}} description, moodle {{/str}}:</label><br>
+{{#showbucketselect}}
+<p><label for="bucket">{{#str}} startbackup_bucket, tool_vault {{/str}}:</label><br>
+    <select name="bucket" id="bucket_startbackup">
+        {{#buckets}}
+            <option value="{{id}}" {{#isdefault}}selected{{/isdefault}}>{{{label}}}</option>
+        {{/buckets}}
+    </select>
+</p>
+{{/showbucketselect}}
+{{#withencryption}}
+    <p>{{#str}} startbackup_enc_desc, tool_vault {{/str}}</p>
+    <p><label for="passphrase_startbackup">{{#str}} passphrase, tool_vault {{/str}}:</label>
+        <input type="text" name="passphrase" id="passphrase_startbackup"></p>
+{{/withencryption}}
+{{^withencryption}}
+    <p>{{#str}} startbackup_noenc_desc, tool_vault {{/str}}</p>
+{{/withencryption}}
+<p><label for="description_startbackup">{{#str}} backupdescription, tool_vault {{/str}}:</label><br>
     <input type="text" name="description" value="{{description}}"
            id="description_startbackup" style="width: 100%" maxlength="255">
+</p>
+<p><label for="expiredays">{{#str}} startbackup_expiredays_prefix, tool_vault {{/str}}</label>
+<input type="text" name="expiredays" id="expiredays_startbackup"
+    value="{{#expiredays}}{{.}}{{/expiredays}}" {{^canchangeexpiration}}disabled{{/canchangeexpiration}} style="width: 50px;">
+{{#str}} startbackup_expiredays_suffix, tool_vault {{/str}}
+</p>
+{{#limit}}
+<p>{{#str}} startbackup_limit_desc, tool_vault, {{limit}} {{/str}}</p>
+{{/limit}}
+{{#showupgrademessage}}
+<p>{{#str}} startbackup_cta, tool_vault, {"href": {{#quote}}{{vaulturl}}{{/quote}}, "link": {{#quote}}{{vaulturl}}{{/quote}} } {{/str}}</p>
+{{/showupgrademessage}}
 </p>
 </form>
 

@@ -32,11 +32,9 @@ class recalc_version_hash extends restore_action {
     /**
      * Get the core version.
      *
-     * In order for this to work properly, opcache should be reset beforehand.
-     *
      * @return float core version.
      */
-    protected static function fetch_core_version() {
+    public static function fetch_core_version() {
         global $CFG;
         $version = null; // Prevent IDE complaints.
         require($CFG->dirroot . '/version.php');

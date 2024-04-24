@@ -79,6 +79,8 @@ class site_backup extends operation_base {
         $model->set_status(constants::STATUS_SCHEDULED)->set_details([
             'usercreated' => $USER->id,
             'description' => substr($params['description'] ?? '', 0, constants::DESCRIPTION_MAX_LENGTH),
+            'bucket' => $params['bucket'] ?? '',
+            'expiredays' => $params['expiredays'] ?? '',
             'encryptionkey' => $encryptionkey,
             'encrypted' => (bool)strlen($encryptionkey),
             'fullname' => $USER ? fullname($USER) : '',
@@ -129,6 +131,8 @@ class site_backup extends operation_base {
         $params = [
             'description' => $model->get_details()['description'] ?? '',
             'encrypted' => !empty($model->get_details()['encrypted']),
+            'bucket' => $model->get_details()['bucket'] ?? '',
+            'expiredays' => (int)($model->get_details()['expiredays'] ?? 0),
         ];
         $backupkey = api::request_new_backup_key($params);
         $model

@@ -39,6 +39,8 @@
     <form action="#" data-url="{{startbackupurl}}" method="POST" data-action="startbackup" data-contextid="{{contextid}}">
         <input type="hidden" name="passphrase" value="">
         <input type="hidden" name="description" value="">
+        <input type="hidden" name="bucket" value="">
+        <input type="hidden" name="expiredays" value="">
         <input type="submit" value="{{#str}}startbackup, tool_vault{{/str}}" class="btn btn-primary" {{^canstartbackup}}disabled{{/canstartbackup}}>
     </form>
     {{#whybackupdisabled}}
