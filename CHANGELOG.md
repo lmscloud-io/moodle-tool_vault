@@ -2,6 +2,11 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## Unreleased
+
+### Fixed
+- Changed wording for backups with passphrases
+
 ## [1.7] - 2024-04-24
 
 ### Added

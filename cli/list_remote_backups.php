@@ -51,7 +51,7 @@ foreach ($backups as $backup) {
     $timestarted = \tool_vault\local\helpers\ui::format_time_cli($backup->timecreated);
     $description = $backup->get_description();
     $table[$backup->backupkey] = trim($timestarted . "\n" . $description) .
-        ($backup->get_encrypted() ? "\n" . get_string('isencrypted', 'tool_vault') : '');
+        ($backup->get_encrypted() ? "\n" . get_string('withpassphrase', 'tool_vault') : '');
 }
 $table = array_reverse($table, true);
 echo $clihelper->print_table($table);
