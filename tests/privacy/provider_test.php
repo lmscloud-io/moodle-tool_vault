@@ -29,7 +29,7 @@ use core_privacy\local\metadata\collection;
  * @copyright  2024 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class provider_test extends \advanced_testcase {
+final class provider_test extends \advanced_testcase {
 
     /** @var string */
     const COMPONENT = 'tool_vault';
@@ -60,7 +60,7 @@ class provider_test extends \advanced_testcase {
     /**
      * Test that get_metadata() returns valid string identifiers.
      */
-    public function test_link_external_location() {
+    public function test_link_external_location(): void {
         $collection = new collection(self::COMPONENT);
         $collection = provider::get_metadata($collection);
         $this->assertNotEmpty($collection);

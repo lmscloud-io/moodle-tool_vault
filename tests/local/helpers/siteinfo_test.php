@@ -27,7 +27,7 @@ use tool_vault\api;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class siteinfo_test extends \advanced_testcase {
+final class siteinfo_test extends \advanced_testcase {
 
     /**
      * Cleanup all temp files
@@ -38,27 +38,27 @@ class siteinfo_test extends \advanced_testcase {
         tempfiles::cleanup();
     }
 
-    public function test_get_plugins_list_full() {
+    public function test_get_plugins_list_full(): void {
         $list = siteinfo::get_plugins_list_full(true);
         $this->assertNotEmpty($list);
     }
 
-    public function test_unsupported_plugin_types_to_exclude() {
+    public function test_unsupported_plugin_types_to_exclude(): void {
         $this->assertTrue(in_array('mod', siteinfo::unsupported_plugin_types_to_exclude()));
     }
 
-    public function test_plugin_has_xmldb_uninstall_function() {
+    public function test_plugin_has_xmldb_uninstall_function(): void {
         $this->assertTrue(siteinfo::plugin_has_xmldb_uninstall_function('search_simpledb'));
         $this->assertFalse(siteinfo::plugin_has_xmldb_uninstall_function('media_videojs'));
     }
 
-    public function test_plugin_has_subplugins() {
+    public function test_plugin_has_subplugins(): void {
         $this->assertTrue(siteinfo::plugin_has_subplugins('tool_log'));
         $this->assertFalse(siteinfo::plugin_has_subplugins('tool_mobile'));
         $this->assertFalse(siteinfo::plugin_has_subplugins('qformat_xml'));
     }
 
-    public function test_is_dataroot_path_skipped_backup() {
+    public function test_is_dataroot_path_skipped_backup(): void {
         $this->resetAfterTest();
         $this->assertTrue(siteinfo::is_dataroot_path_skipped_backup('sessions'));
         $this->assertFalse(siteinfo::is_dataroot_path_skipped_backup('hellothere'));
@@ -66,7 +66,7 @@ class siteinfo_test extends \advanced_testcase {
         $this->assertTrue(siteinfo::is_dataroot_path_skipped_backup('hellothere'));
     }
 
-    public function test_is_dataroot_path_skipped_restore() {
+    public function test_is_dataroot_path_skipped_restore(): void {
         $this->resetAfterTest();
         $this->assertTrue(siteinfo::is_dataroot_path_skipped_restore('sessions'));
         $this->assertFalse(siteinfo::is_dataroot_path_skipped_restore('hellothere'));

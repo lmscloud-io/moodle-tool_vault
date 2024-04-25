@@ -25,12 +25,12 @@ namespace tool_vault\local\xmldb;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class dbstructure_test extends \advanced_testcase {
+final class dbstructure_test extends \advanced_testcase {
 
     /**
      * Test for loading structure
      */
-    public function test_dbstructure() {
+    public function test_dbstructure(): void {
         $definitions = dbstructure::load();
         // Loop through all tables and compare definitions with actual.
         foreach ($definitions->get_tables_actual() as $tablename => $actualtable) {
@@ -46,7 +46,7 @@ class dbstructure_test extends \advanced_testcase {
     /**
      * Test function retrieve_sequences()
      */
-    public function test_sequences() {
+    public function test_sequences(): void {
         $this->resetAfterTest();
 
         $definitions = dbstructure::load();

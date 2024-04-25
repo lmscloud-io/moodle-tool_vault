@@ -27,14 +27,14 @@ use tool_vault\constants;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class dbtable_test extends \advanced_testcase {
+final class dbtable_test extends \advanced_testcase {
 
     /**
      * Test for get_alter_sql
      *
      * @return void
      */
-    public function test_get_alter_sql() {
+    public function test_get_alter_sql(): void {
         $this->resetAfterTest();
 
         $structure = dbstructure::load();
@@ -48,7 +48,7 @@ class dbtable_test extends \advanced_testcase {
      *
      * @return void
      */
-    public function test_get_alter_sql_xml() {
+    public function test_get_alter_sql_xml(): void {
         $this->resetAfterTest();
 
         $table = $this->fixture_config();
@@ -224,7 +224,7 @@ EOF;
     /**
      * Test for compare_with_other_table()
      */
-    public function test_compare_with_other_table() {
+    public function test_compare_with_other_table(): void {
         $this->resetAfterTest();
 
         $deftable = $this->fixture_config_log();

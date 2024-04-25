@@ -44,7 +44,7 @@ require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_back
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class site_backup_test extends \advanced_testcase {
+final class site_backup_test extends \advanced_testcase {
 
     /**
      * Cleanup all temp files
@@ -69,14 +69,14 @@ class site_backup_test extends \advanced_testcase {
     /**
      * Testing get_all_tables()
      */
-    public function test_get_all_tables() {
+    public function test_get_all_tables(): void {
         $this->resetAfterTest();
         $tables = $this->create_site_backup()->get_db_structure()->get_tables_actual();
         $this->assertTrue(array_key_exists('tool_vault_config', $tables));
         $this->assertTrue(array_key_exists('config', $tables));
     }
 
-    public function test_export_table() {
+    public function test_export_table(): void {
         $this->resetAfterTest();
         $sitebackup = $this->create_site_backup();
         $tableobj = dbtable::create_from_actual_db('tool_vault_config', $sitebackup->get_db_structure());
@@ -107,7 +107,7 @@ class site_backup_test extends \advanced_testcase {
         $curl->get('');
     }
 
-    public function test_export_db() {
+    public function test_export_db(): void {
         if (!PHPUNIT_LONGTEST) {
             $this->markTestSkipped('PHPUNIT_LONGTEST is not defined');
         }
@@ -165,7 +165,7 @@ class site_backup_test extends \advanced_testcase {
         tempfiles::remove_temp_dir($dir);
     }
 
-    public function test_export_dataroot() {
+    public function test_export_dataroot(): void {
         $this->resetAfterTest();
 
         // Make a directory under dataroot and store a file there.
@@ -190,7 +190,7 @@ class site_backup_test extends \advanced_testcase {
         tempfiles::remove_temp_dir($dir);
     }
 
-    public function test_export_filedir() {
+    public function test_export_filedir(): void {
         $this->resetAfterTest();
 
         $sitebackup = $this->create_site_backup();

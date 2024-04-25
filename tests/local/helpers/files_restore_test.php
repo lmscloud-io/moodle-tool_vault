@@ -45,7 +45,7 @@ require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_back
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class files_restore_test extends \advanced_testcase {
+final class files_restore_test extends \advanced_testcase {
 
     /**
      * Cleanup all temp files
@@ -109,7 +109,7 @@ class files_restore_test extends \advanced_testcase {
     /**
      * Test helper for filedir
      */
-    public function test_filedir() {
+    public function test_filedir(): void {
         global $DB;
         $this->resetAfterTest();
         $siterestore = $this->create_site_restore();
@@ -142,7 +142,7 @@ class files_restore_test extends \advanced_testcase {
     /**
      * Test helper for dataroot
      */
-    public function test_dataroot() {
+    public function test_dataroot(): void {
         $this->resetAfterTest();
         $siterestore = $this->create_site_restore();
 
@@ -213,7 +213,7 @@ class files_restore_test extends \advanced_testcase {
     /**
      * Test helper for dbdump
      */
-    public function test_dbdump() {
+    public function test_dbdump(): void {
         $this->resetAfterTest();
 
         $filepathstructure = $this->prepare_db_structure();

@@ -44,7 +44,7 @@ require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_back
  * @copyright   2023 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class cleanup_existing_files_test extends \advanced_testcase {
+final class cleanup_existing_files_test extends \advanced_testcase {
 
     /**
      * Cleanup all temp files
@@ -55,7 +55,7 @@ class cleanup_existing_files_test extends \advanced_testcase {
         tempfiles::cleanup();
     }
 
-    public function test_execute() {
+    public function test_execute(): void {
         global $CFG, $DB;
         $this->resetAfterTest();
 

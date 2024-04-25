@@ -27,7 +27,7 @@ use tool_vault\constants;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class cli_helper_test extends \advanced_testcase {
+final class cli_helper_test extends \advanced_testcase {
 
     /**
      * Generate cli_helper and mock $_SERVER['argv']
@@ -53,7 +53,7 @@ class cli_helper_test extends \advanced_testcase {
     /**
      * Test cli_helper for backup
      */
-    public function test_cli_helper_for_backup() {
+    public function test_cli_helper_for_backup(): void {
         $this->resetAfterTest();
         $clihelper = $this->construct_helper(cli_helper::SCRIPT_BACKUP, ['--apikey=phpunit']);
         ob_start();
@@ -68,7 +68,7 @@ class cli_helper_test extends \advanced_testcase {
     /**
      * Test cli_helper for restore
      */
-    public function test_cli_helper_for_restore() {
+    public function test_cli_helper_for_restore(): void {
         $this->resetAfterTest();
         $clihelper = $this->construct_helper(cli_helper::SCRIPT_RESTORE, ['--apikey=phpunit', '--backupkey=abcdef']);
         ob_start();
@@ -83,7 +83,7 @@ class cli_helper_test extends \advanced_testcase {
     /**
      * Test cli_helper for list
      */
-    public function test_cli_helper_for_list() {
+    public function test_cli_helper_for_list(): void {
         $this->resetAfterTest();
         $clihelper = $this->construct_helper(cli_helper::SCRIPT_LIST, ['--apikey=phpunit']);
         ob_start();
@@ -100,7 +100,7 @@ class cli_helper_test extends \advanced_testcase {
      *
      * @return void
      */
-    public function test_print_table() {
+    public function test_print_table(): void {
         $result = (new cli_helper(cli_helper::SCRIPT_LIST, ''))->print_table(['a' => 'bb', 'cc' => 'd']);
         $this->assertEquals("a  bb\ncc d\n", $result);
     }

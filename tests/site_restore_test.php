@@ -45,7 +45,7 @@ require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_back
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class site_restore_test extends \advanced_testcase {
+final class site_restore_test extends \advanced_testcase {
     /**
      * Cleanup all temp files
      *
@@ -89,7 +89,7 @@ class site_restore_test extends \advanced_testcase {
         \curl::mock_response(json_encode(['downloadurl' => 'https://test.s3.amazonaws.com/']));
     }
 
-    public function test_restore_db() {
+    public function test_restore_db(): void {
         global $DB, $CFG;
         if (!PHPUNIT_LONGTEST) {
             $this->markTestSkipped('PHPUNIT_LONGTEST is not defined');
@@ -145,7 +145,7 @@ class site_restore_test extends \advanced_testcase {
         tempfiles::cleanup();
     }
 
-    public function test_restore_dataroot() {
+    public function test_restore_dataroot(): void {
         $this->resetAfterTest();
 
         // Make a directory under dataroot and store a file there.
@@ -178,7 +178,7 @@ class site_restore_test extends \advanced_testcase {
         tempfiles::cleanup();
     }
 
-    public function test_site_restore_filedir() {
+    public function test_site_restore_filedir(): void {
         global $CFG;
         $this->resetAfterTest();
 

@@ -27,7 +27,7 @@ use tool_vault\local\helpers\tempfiles;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class api_test extends \advanced_testcase {
+final class api_test extends \advanced_testcase {
 
     /**
      * Cleanup all temp files
@@ -43,7 +43,7 @@ class api_test extends \advanced_testcase {
      *
      * This is to be replaced by some actually usefule test.
      */
-    public function test_dummy() {
+    public function test_dummy(): void {
         $this->assertNotEmpty(\core_component::get_component_directory('tool_vault'));
     }
 }

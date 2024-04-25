@@ -28,7 +28,7 @@ use tool_vault\local\xmldb\dbstructure;
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class plugindata_test extends \advanced_testcase {
+final class plugindata_test extends \advanced_testcase {
 
     /**
      * Cleanup all temp files
@@ -53,7 +53,7 @@ class plugindata_test extends \advanced_testcase {
         ];
     }
 
-    public function test_get_sql_for_plugins_data_in_table() {
+    public function test_get_sql_for_plugins_data_in_table(): void {
         global $DB;
         $tablestotest = array_merge(plugindata::get_tables_with_possible_plugin_data(), ['course']);
         foreach ($tablestotest as $table) {
@@ -76,7 +76,7 @@ class plugindata_test extends \advanced_testcase {
         }
     }
 
-    public function test_get_sql_for_plugins_data_in_table_to_preserve() {
+    public function test_get_sql_for_plugins_data_in_table_to_preserve(): void {
         global $DB;
         foreach (plugindata::get_tables_with_possible_plugin_data_to_preserve() as $table) {
             foreach ($this->pluginset_to_test() as $setname => $pluginset) {
