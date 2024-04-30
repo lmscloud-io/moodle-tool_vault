@@ -2,10 +2,11 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-## Unreleased
+## [1.8] - 2024-04-30
 
 ### Fixed
-- Changed wording for backups with passphrases
+- Changed wording for backups with passphrases and a number of other strings
+- Fixes to coding style to comply with the latest version of moodle-plugin-ci
 
 ## [1.7] - 2024-04-24
 
