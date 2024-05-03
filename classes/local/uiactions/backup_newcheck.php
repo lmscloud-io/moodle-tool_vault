@@ -31,6 +31,7 @@ class backup_newcheck extends base {
      * Process action
      */
     public function process() {
+        parent::process();
         require_sesskey();
         $check = check_base::schedule(['type' => required_param('type', PARAM_ALPHANUMEXT)]);
         if (optional_param('detailed', false, PARAM_BOOL)) {

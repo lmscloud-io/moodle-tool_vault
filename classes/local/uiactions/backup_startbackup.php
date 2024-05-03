@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\uiactions;
 
+use tool_vault\api;
 use tool_vault\local\helpers\ui;
 
 /**
@@ -33,6 +34,7 @@ class backup_startbackup extends base {
      * Process action
      */
     public function process() {
+        parent::process();
         require_sesskey();
         $backup = \tool_vault\site_backup::schedule([
             'passphrase' => optional_param('passphrase', null, PARAM_RAW),

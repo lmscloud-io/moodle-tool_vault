@@ -32,6 +32,7 @@ class main_forgetapikey extends base {
      * Process action
      */
     public function process() {
+        parent::process();
         require_sesskey();
         api::set_api_key(null);
         $returnurl = optional_param('returnurl', null, PARAM_LOCALURL);

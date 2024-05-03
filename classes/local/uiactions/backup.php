@@ -50,7 +50,9 @@ class backup extends base {
         global $CFG, $USER;
         $whybackupdisabled = null;
         $activeprocesses = operation_model::get_active_processes(true);
-        if (!api::is_registered()) {
+        if (api::is_cli_only()) {
+            $whybackupdisabled = get_string('error_usecli', 'tool_vault');
+        } else if (!api::is_registered()) {
             $whybackupdisabled = get_string('warning_backupdisablednoapikey', 'tool_vault');
         } else if ($activeprocesses) {
             $whybackupdisabled = get_string('warning_backupdisabledanotherinprogress', 'tool_vault');
@@ -77,7 +79,7 @@ class backup extends base {
             $result['backups'][] = (new \tool_vault\output\backup_details($backup, null, false))->export_for_template($output);
         }
         $result['haspastbackups'] = !empty($result['backups']);
-        $result['restoreallowed'] = api::are_restores_allowed();
+        $result['restoreallowed'] = api::are_restores_allowed() && !api::is_cli_only();
         return $result;
     }
 

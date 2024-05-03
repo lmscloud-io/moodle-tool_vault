@@ -33,11 +33,18 @@ if ($hassiteconfig) {
 
     // Main page for the Vault (under Site administration -> Server).
     $ADMIN->add('server', new admin_externalpage('tool_vault_index', new lang_string('pluginname', 'tool_vault'),
-        \tool_vault\local\helpers\ui::baseurl()));
+        \tool_vault\local\helpers\ui::baseurl(), 'moodle/site:config', get_config('tool_vault', 'clionly')));
 
     // Vault plugin settings (under Site administration -> Plugins -> Admin tools).
     $settings = new admin_settingpage('tool_vault', new lang_string('settings_header', 'tool_vault'));
     $ADMIN->add('tools', $settings);
+
+    $settings->add(new admin_setting_configcheckbox(
+        'tool_vault/clionly',
+        get_string('settings_clionly', 'tool_vault'),
+        get_string('settings_clionly_desc', 'tool_vault'),
+        0
+    ));
 
     $yesnooptions = [
         0 => get_string('no'),

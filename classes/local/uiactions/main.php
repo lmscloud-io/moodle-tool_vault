@@ -33,6 +33,7 @@ class main extends base {
      * Process action
      */
     public function process() {
+        parent::process();
         if (!class_exists('\\core_form\\dynamic_form')) {
             $form = new apikey_form_legacy(self::url());
             if ($formdata = $form->get_data()) {
@@ -64,7 +65,7 @@ class main extends base {
         $rv = $output->render_from_template('tool_vault/main', [
             'pixbaseurl' => $CFG->wwwroot . '/admin/tool/vault/pix',
             'mainurl' => $CFG->wwwroot . '/admin/tool/vault/index.php',
-            'allowrestore' => api::are_restores_allowed(),
+            'allowrestore' => api::are_restores_allowed() && !api::is_cli_only(),
             'settingsurl' => (new moodle_url('/admin/settings.php', ['section' => 'tool_vault']))->out(false),
             'registrationform' => $this->registration_form($output),
             'isregistered' => api::is_registered(),

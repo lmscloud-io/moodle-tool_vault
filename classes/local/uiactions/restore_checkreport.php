@@ -36,6 +36,14 @@ class restore_checkreport extends base {
     }
 
     /**
+     * Process action
+     */
+    public function process() {
+        // Note, there is no call to parent::process() because this page needs to be available to
+        // see results of the CLI pre-check fails.
+    }
+
+    /**
      * Display
      *
      * @param \renderer_base $output

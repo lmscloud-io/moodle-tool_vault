@@ -33,10 +33,14 @@ class restore_dryrun extends base {
      * Process action
      */
     public function process() {
+        parent::process();
         require_sesskey();
         $backupkey = required_param('backupkey', PARAM_ALPHANUMEXT);
         $passphrase = optional_param('passphrase', '', PARAM_RAW);
         try {
+            if (!api::are_restores_allowed()) {
+                throw new \moodle_exception('error_restoresnotallowed', 'tool_vault');
+            }
             api::validate_backup($backupkey, $passphrase);
         } catch (api_exception $e) {
             redirect(restore::url(), $e->getMessage(), 0, \core\output\notification::NOTIFY_ERROR);

@@ -93,7 +93,7 @@ class dryrun implements \templatable {
         }
         if ($this->remotebackup) {
             $rv['showactions'] = true;
-            $rv['restoreallowed'] = api::are_restores_allowed();
+            $rv['restoreallowed'] = api::are_restores_allowed() && !api::is_cli_only();
             $rv['dryrunurl'] = restore_dryrun::url(['backupkey' => $model->backupkey])->out(false);
             $rv['restoreurl'] = restore_restore::url(['backupkey' => $model->backupkey])->out(false);
             $rv['startdryrunlabel'] = get_string('repeatprecheck', 'tool_vault');

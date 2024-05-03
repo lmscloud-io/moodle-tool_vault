@@ -32,6 +32,7 @@ class restore_updateremote extends base {
      * Process action
      */
     public function process() {
+        parent::process();
         require_sesskey();
         api::store_config('cachedremotebackups', null);
         redirect(restore::url());

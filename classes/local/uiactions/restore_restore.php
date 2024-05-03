@@ -33,6 +33,7 @@ class restore_restore extends base {
      * Process action
      */
     public function process() {
+        parent::process();
         require_sesskey();
         $backupkey = required_param('backupkey', PARAM_ALPHANUMEXT);
         $passphrase = optional_param('passphrase', '', PARAM_RAW);

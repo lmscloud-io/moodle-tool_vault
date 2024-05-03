@@ -41,6 +41,8 @@ class backup_checkreport extends base {
      * Process action
      */
     public function process() {
+        // Note, there is no call to parent::process() because this page needs to be available to
+        // see results of the CLI pre-check fails.
         $id = optional_param('id', null, PARAM_INT);
         if (($table = optional_param('addexcludedtable', null, PARAM_TEXT)) && confirm_sesskey()) {
             siteinfo::add_table_to_excluded_from_backup($table);

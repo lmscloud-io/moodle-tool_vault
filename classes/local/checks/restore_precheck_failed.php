@@ -33,9 +33,14 @@ class restore_precheck_failed extends \moodle_exception {
      * @param check_base $chk
      */
     public function __construct(check_base $chk) {
+        $message = html_to_text($chk->summary());
+        if ($chk->has_details()) {
+            $message .= "\n".get_string('seefullreport', 'tool_vault').": ".
+                $chk->get_fullreport_url()->out(false)."\n";
+        }
         $a = (object)[
             'name' => $chk->get_display_name(),
-            'message' => html_to_text($chk->summary()),
+            'message' => $message,
         ];
         parent::__construct('error_restoreprecheckfailed', 'tool_vault', null, $a);
         $this->extrainfo = $chk->failure_details();

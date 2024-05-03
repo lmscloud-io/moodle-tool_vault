@@ -85,7 +85,9 @@ abstract class base {
      * Process action
      */
     public function process() {
-        null;
+        if (api::is_cli_only()) {
+            throw new \moodle_exception('error_usecli', 'tool_vault');
+        }
     }
 
     /**

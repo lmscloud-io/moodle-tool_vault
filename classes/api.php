@@ -168,6 +168,15 @@ class api {
     }
 
     /**
+     * Are backup/restores available from CLI only
+     *
+     * @return bool
+     */
+    public static function is_cli_only(): bool {
+        return self::get_setting_checkbox('clionly');
+    }
+
+    /**
      * Perform a call to vault API
      *
      * @param string $endpoint
