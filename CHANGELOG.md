@@ -2,6 +2,11 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## Unreleased
+
+### Added
+- Improvements to the CLI backup/restore
+
 ## [1.8] - 2024-04-30
 
 ### Fixed

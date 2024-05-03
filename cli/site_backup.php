@@ -52,12 +52,15 @@ if ($clihelper->get_cli_option('dryrun')) {
     cli_error('Option --dryrun is not yet implemented');
 }
 
+/** @var \tool_vault\site_backup $operation */
 $operation = \tool_vault\site_backup::schedule([
     'description' => $clihelper->get_cli_option('description'),
     'passphrase' => $clihelper->get_cli_option('passphrase'),
+    'bucket' => $clihelper->get_cli_option('storage'),
+    'expiredays' => clean_param($clihelper->get_cli_option('expiredays'), PARAM_INT),
 ]);
-$operation->start((int)getmypid());
 try {
+    $operation->start((int)getmypid());
     $operation->execute();
 } catch (\Throwable $t) {
     $operation->mark_as_failed($t);

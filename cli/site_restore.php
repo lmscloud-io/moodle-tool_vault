@@ -59,17 +59,16 @@ try {
 // Run restore.
 if ($clihelper->get_cli_option('dryrun')) {
     $operation = \tool_vault\site_restore_dryrun::schedule($params);
-    $operation->start((int)getmypid());
 } else {
     if (!api::are_restores_allowed()) {
         cli_error('Restores are not allowed on this site. ' .
             'You can enable site restore for this CLI script by adding the option --allow-restore');
     }
     $operation = \tool_vault\site_restore::schedule($params);
-    $operation->start((int)getmypid());
 }
 
 try {
+    $operation->start((int)getmypid());
     $operation->execute();
 } catch (\Throwable $t) {
     $operation->mark_as_failed($t);

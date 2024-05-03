@@ -156,6 +156,25 @@ class cli_helper {
                 ],
             ];
         }
+        if ($this->script === self::SCRIPT_BACKUP) {
+            $options += [
+                'storage' => [
+                    'description' => 'Storage for the backup (if supported in your subscription)',
+                    'hasvalue' => 'NAME',
+                ],
+            ];
+            $options += [
+                'expiredays' => [
+                    'description' => 'Days before backup expires',
+                    'hasvalue' => 'NUMBER',
+                    'validation' => function($text) {
+                        if (''.$text !== '' && $text !== ''.clean_param($text, PARAM_INT)) {
+                            $this->cli_error('Parameter expiredays must be a number');
+                        }
+                    },
+                ],
+            ];
+        }
         if ($this->script === self::SCRIPT_RESTORE) {
             $options += [
                 'allow-restore' => [
