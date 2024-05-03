@@ -26,6 +26,7 @@ define('CLI_SCRIPT', true);
 
 use tool_vault\local\cli_helper;
 use tool_vault\local\helpers\tempfiles;
+use tool_vault\output\start_backup_popup;
 
 require_once(__DIR__ . '/../../../../config.php');
 
@@ -46,19 +47,21 @@ if ($clihelper->get_cli_option('help')) {
 
 // Validate all arguments.
 $clihelper->validate_cli_options();
+$precheckonly = $clihelper->get_cli_option('dryrun');
 
-if ($clihelper->get_cli_option('dryrun')) {
-    // TODO.
-    cli_error('Option --dryrun is not yet implemented');
+if ($precheckonly) {
+    /** @var \tool_vault\site_backup_dryrun $operation */
+    $operation = \tool_vault\site_backup_dryrun::schedule();
+} else {
+    /** @var \tool_vault\site_backup $operation */
+    $operation = \tool_vault\site_backup::schedule([
+        'description' => $clihelper->get_cli_option('description'),
+        'passphrase' => $clihelper->get_cli_option('passphrase'),
+        'bucket' => $clihelper->get_cli_option('storage'),
+        'expiredays' => clean_param($clihelper->get_cli_option('expiredays'), PARAM_INT),
+    ]);
 }
 
-/** @var \tool_vault\site_backup $operation */
-$operation = \tool_vault\site_backup::schedule([
-    'description' => $clihelper->get_cli_option('description'),
-    'passphrase' => $clihelper->get_cli_option('passphrase'),
-    'bucket' => $clihelper->get_cli_option('storage'),
-    'expiredays' => clean_param($clihelper->get_cli_option('expiredays'), PARAM_INT),
-]);
 try {
     $operation->start((int)getmypid());
     $operation->execute();
@@ -69,4 +72,8 @@ try {
 }
 
 cli_writeln("");
-cli_writeln("Backup key: ".$operation->get_backup_key());
+if ($precheckonly && ($precheckresults = $operation->get_model()->get_details()['precheckresults'] ?? null)) {
+    (new start_backup_popup($precheckresults))->display_in_cli($clihelper);
+} else {
+    cli_writeln("Backup key: ".$operation->get_backup_key());
+}

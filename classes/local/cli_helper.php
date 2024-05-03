@@ -326,7 +326,7 @@ class cli_helper {
      *
      * @param string $text text to be written
      */
-    protected function cli_writeln($text): void {
+    public function cli_writeln($text): void {
         $this->cli_write($text . PHP_EOL);
     }
 

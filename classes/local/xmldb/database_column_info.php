@@ -58,6 +58,7 @@ class database_column_info extends \database_column_info {
                 $this->data['max_length'] = min($this->data['max_length'], \xmldb_field::FLOAT_MAX_LENGTH);
             }
         }
+        $this->data['type'] = (string)$this->data['type']; // Prevent PHP8 warnings.
 
         $field = new \xmldb_field($this->name);
         $field->setFromADOField($this);
