@@ -41,7 +41,7 @@ class behat_tool_vault extends behat_base {
      * @Given /^test API key is specified for tool_vault$/
      */
     public function test_api_key_is_specified_for_tool_vault() {
-        if (!defined('TOOL_VAULT_TEST_API_KEY')) {
+        if (!defined('TOOL_VAULT_TEST_API_KEY') || empty(TOOL_VAULT_TEST_API_KEY)) {
             throw new \Moodle\BehatExtension\Exception\SkippedException();
         }
         \tool_vault\api::set_api_key(TOOL_VAULT_TEST_API_KEY);

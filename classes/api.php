@@ -89,7 +89,7 @@ class api {
     public static function get_api_url() {
         if (((defined('PHPUNIT_TEST') && PHPUNIT_TEST)
                 || defined('BEHAT_SITE_RUNNING') || defined('BEHAT_TEST'))
-            && defined('TOOL_VAULT_TEST_API_URL')) {
+            && (defined('TOOL_VAULT_TEST_API_URL') && !empty(TOOL_VAULT_TEST_API_URL))) {
             return TOOL_VAULT_TEST_API_URL;
         }
         return self::get_config('apiurl') ?: preg_replace('|^(https?://)|', '\1v1.api.', self::FRONTENDURL);

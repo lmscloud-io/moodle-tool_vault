@@ -117,7 +117,7 @@ jobs:
         run: |
           moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
           moodle-plugin-ci add-config "define('PHPUNIT_LONGTEST', true);"
-          moodle-plugin-ci add-config "define('TOOL_VAULT_TEST_API_KEY', '${{ vars.TESTAPIKEY }}');" > /dev/null 2>&1
+          moodle-plugin-ci add-config "define('TOOL_VAULT_TEST_API_KEY', '${{ secrets.TESTAPIKEY }}');" > /dev/null 2>&1
           moodle-plugin-ci add-config "define('PHPUNIT_BACKUPTEMPDIR', '$(pwd)/tmpbackup');"
         env:
           DB: ${{ matrix.database }}
