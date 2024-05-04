@@ -94,6 +94,7 @@ class start_backup_popup implements \templatable {
     /**
      * Display all backup precheck results for the CLI
      *
+     * @param cli_helper $clihelper
      * @return void
      */
     public function display_in_cli(cli_helper $clihelper) {
