@@ -57,7 +57,7 @@ class behat_tool_vault extends behat_base {
         $backupname = random_string(15) . ' (' . $CFG->branch . ')';
         set_config('behat_backup_name', $backupname, 'tool_vault');
         $this->execute('behat_forms::i_set_the_field_in_container_to', [
-            get_string('description', 'moodle'),
+            get_string('backupdescription', 'tool_vault'),
             get_string('startbackup', 'tool_vault'),
             "dialogue",
             $backupname,
