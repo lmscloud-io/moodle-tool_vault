@@ -26,8 +26,9 @@
 
 
 {{#haspastbackups}}
-    <h3>{{#str}} pastbackupslist, tool_vault {{/str}}</h3>
     <table class="generaltable">
+        <caption>{{#str}} pastbackupslist, tool_vault {{/str}}</caption>
+        <thead>
         <tr>
             <th>{{#str}} backup, tool_vault {{/str}}</th>
             <th>{{#str}} status, moodle {{/str}}</th>
@@ -35,6 +36,8 @@
             <th>{{#str}} withpassphrase, tool_vault {{/str}}</th>
             <th></th>
         </tr>
+        </thead>
+        <tbody>
         {{#backups}}
             <tr>
                 <td>
@@ -49,6 +52,7 @@
                 </td>
             </tr>
         {{/backups}}
+        </tbody>
     </table>
 {{/haspastbackups}}
 {{^haspastbackups}}
@@ -58,8 +62,9 @@
 
 
 {{#haspastrestores}}
-    <h3>{{#str}} pastrestoreslist, tool_vault {{/str}}</h3>
     <table class="generaltable">
+        <caption>{{#str}} pastrestoreslist, tool_vault {{/str}}</caption>
+        <thead>
         <tr>
             <th>{{#str}} backup, tool_vault {{/str}}</th>
             <th>{{#str}} status, moodle {{/str}}</th>
@@ -67,6 +72,8 @@
             <th>{{#str}} withpassphrase, tool_vault {{/str}}</th>
             <th></th>
         </tr>
+        </thead>
+        <tbody>
         {{#restores}}
             <tr>
                 <td>
@@ -81,6 +88,7 @@
                 </td>
             </tr>
         {{/restores}}
+        </tbody>
     </table>
 {{/haspastrestores}}
 {{^haspastrestores}}

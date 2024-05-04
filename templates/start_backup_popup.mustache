@@ -27,7 +27,7 @@
 <form action="#">
 <p>{{#str}} startbackup_desc, tool_vault {{/str}}</p>
 {{#showbucketselect}}
-<p><label for="bucket">{{#str}} startbackup_bucket, tool_vault {{/str}}:</label><br>
+<p><label for="bucket_startbackup">{{#str}} startbackup_bucket, tool_vault {{/str}}:</label><br>
     <select name="bucket" id="bucket_startbackup">
         {{#buckets}}
             <option value="{{id}}" {{#isdefault}}selected{{/isdefault}}>{{{label}}}</option>
