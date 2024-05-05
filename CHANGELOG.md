@@ -2,11 +2,13 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-## Unreleased
+## [1.9] - 2024-05-05
 
 ### Added
-- Improvements to the CLI backup/restore, allow to run backup pre-check
+- Improvements to the CLI backup/restore, allow to run backup pre-check from CLI
 - Setting to disable web access to tool_vault and execute from CLI only
+### Fixes
+- Fixes to README file and automated tests
 
 ## [1.8] - 2024-04-30
 
