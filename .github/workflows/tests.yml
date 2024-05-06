@@ -7,6 +7,7 @@ on:
         description: 'Run extended tests'
         type: boolean
         required: true
+  pull_request:
 
 jobs:
   extended_tests:
