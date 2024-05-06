@@ -3,13 +3,15 @@ name: Testing site backup and restore
 on:
   workflow_dispatch:
     inputs:
-      tag:
+      dorun:
         description: 'Run extended tests'
+        type: boolean
         required: true
 
 jobs:
-  test:
+  extended_tests:
     runs-on: ubuntu-22.04
+    if:  ${{ inputs.dorun }}
 
     services:
       postgres:
