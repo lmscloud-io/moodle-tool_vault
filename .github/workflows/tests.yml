@@ -8,11 +8,11 @@ on:
         type: boolean
         required: true
   pull_request:
+    # TODO temporary - remove.
 
 jobs:
   extended_tests:
     runs-on: ubuntu-22.04
-    if:  ${{ inputs.dorun }}
 
     services:
       postgres:
@@ -20,6 +20,7 @@ jobs:
         env:
           POSTGRES_USER: 'postgres'
           POSTGRES_HOST_AUTH_METHOD: 'trust'
+          APIKEYRRO: ${{ secrets.TESTAPIKEYPRO }}
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
@@ -42,6 +43,7 @@ jobs:
           - php: '8.2'
             moodle-branch: 'MOODLE_404_STABLE'
             database: 'pgsql'
+            plan: 'pro'
 
     steps:
       - name: Check out repository code
@@ -72,7 +74,9 @@ jobs:
         run: |
           moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
           moodle-plugin-ci add-config "define('PHPUNIT_LONGTEST', true);"
-          moodle-plugin-ci add-config "define('TOOL_VAULT_TEST_API_KEY', '${{ secrets.TESTAPIKEY }}');" > /dev/null 2>&1
+          if [ "${{ matrix.plan }}" == "pro" ]; then
+            moodle-plugin-ci add-config "define('TOOL_VAULT_TEST_API_KEY', '${APIKEYPRO}');" > /dev/null 2>&1
+          fi
           moodle-plugin-ci add-config "define('PHPUNIT_BACKUPTEMPDIR', '$(pwd)/tmpbackup');"
         env:
           DB: ${{ matrix.database }}
