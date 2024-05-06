@@ -1,4 +1,4 @@
-name: Testing site backup and restore
+name: Extended testing of LMSVault
 
 on:
   workflow_dispatch:
@@ -21,6 +21,8 @@ jobs:
           POSTGRES_USER: 'postgres'
           POSTGRES_HOST_AUTH_METHOD: 'trust'
           APIKEYRRO: ${{ secrets.TESTAPIKEYPRO }}
+          APIKEYRRO2: ${{ secrets.TESTAPIKEYPRO2 }}
+          LMSVAULTBACKEND: ${{ secrets.LMSVAULTBACKEND }}
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
@@ -44,6 +46,10 @@ jobs:
             moodle-branch: 'MOODLE_404_STABLE'
             database: 'pgsql'
             plan: 'pro'
+        #   - php: '7.4'
+        #     moodle-branch: 'MOODLE_404_STABLE'
+        #     database: 'pgsql'
+        #     plan: 'pro'
 
     steps:
       - name: Check out repository code
@@ -63,7 +69,7 @@ jobs:
 
       - name: Initialise moodle-plugin-ci
         run: |
-          civersion=$(if [[ "${{ matrix.php }}" =~ ^7.[23]$ ]]; then echo "^3"; fi)
+          civersion=$(if [[ "${{ matrix.php }}" =~ ^7.[0123]$ ]]; then echo "^3"; fi)
           composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci  ${civersion:-^4}
           echo $(cd ci/bin; pwd) >> $GITHUB_PATH
           echo $(cd ci/vendor/bin; pwd) >> $GITHUB_PATH
@@ -74,7 +80,11 @@ jobs:
         run: |
           moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
           moodle-plugin-ci add-config "define('PHPUNIT_LONGTEST', true);"
-          if [ "${{ matrix.plan }}" == "pro" ]; then
+          if [[ "${{ matrix.plan }}" == "pro" ]]; then
+            echo "Setting API key"
+            if [[ "${APIKEYPRO}" == "" ]]; then
+              echo ":( it is empty"
+            fi
             moodle-plugin-ci add-config "define('TOOL_VAULT_TEST_API_KEY', '${APIKEYPRO}');" > /dev/null 2>&1
           fi
           moodle-plugin-ci add-config "define('PHPUNIT_BACKUPTEMPDIR', '$(pwd)/tmpbackup');"

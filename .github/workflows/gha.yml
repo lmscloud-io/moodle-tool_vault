@@ -106,7 +106,7 @@ jobs:
 
       - name: Initialise moodle-plugin-ci
         run: |
-          civersion=$(if [[ "${{ matrix.php }}" =~ ^7.[23]$ ]]; then echo "^3"; fi)
+          civersion=$(if [[ "${{ matrix.php }}" =~ ^7.[0123]$ ]]; then echo "^3"; fi)
           composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci  ${civersion:-^4}
           echo $(cd ci/bin; pwd) >> $GITHUB_PATH
           echo $(cd ci/vendor/bin; pwd) >> $GITHUB_PATH
