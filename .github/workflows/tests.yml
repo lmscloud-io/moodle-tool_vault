@@ -11,6 +11,10 @@ on:
         description: 'API key (optional)'
         type: string
         required: false
+      storage:
+        description: 'Test storage option (empty for default, * for all)'
+        type: string
+        required: false
   pull_request:
     # TODO temporary - remove.
 
@@ -24,8 +28,10 @@ jobs:
         env:
           POSTGRES_USER: 'postgres'
           POSTGRES_HOST_AUTH_METHOD: 'trust'
-          APIKEYRRO: ${{ secrets.TESTAPIKEYPRO }}
-          APIKEYRRO2: ${{ secrets.TESTAPIKEYPRO2 }}
+          APIKEYPRO: ${{ secrets.TESTAPIKEYPRO }}
+          APIKEYPRO2: ${{ secrets.TESTAPIKEYPRO2 }}
+          APIKEYLIGHT: ${{ secrets.TESTAPIKEYLIGHT }}
+          APIKEYLIGHT2: ${{ secrets.TESTAPIKEYLIGHT2 }}
           LMSVAULTSTAGING: ${{ secrets.LMSVAULTSTAGING }}
         ports:
           - 5432:5432
@@ -49,7 +55,6 @@ jobs:
           - php: '8.2'
             moodle-branch: 'MOODLE_404_STABLE'
             database: 'pgsql'
-            plan: 'pro'
         #   - php: '7.4'
         #     moodle-branch: 'MOODLE_404_STABLE'
         #     database: 'pgsql'
@@ -85,18 +90,21 @@ jobs:
           moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
           moodle-plugin-ci add-config "define('PHPUNIT_LONGTEST', true);"
           APIKEY=""
+          APIKEYLIGHT=""
           if [[ "${{ github.event.inputs.runonstaging }}" == "true" ]]; then
             moodle-plugin-ci add-config "define('TOOL_VAULT_TEST_API_URL', '${LMSVAULTSTAGING}');"
-            if [[ "${{ matrix.plan }}" == "pro" ]]; then APIKEY="${APIKEYPRO2}"
-            fi
+            APIKEY="${APIKEYPRO2}"
+            APIKEYLIGHT="${APIKEYLIGHT2}"
           else
-            if [[ "${{ matrix.plan }}" == "pro" ]]; then APIKEY="${APIKEYPRO}"
-            fi
+            APIKEY="${APIKEYPRO}"
+            APIKEYLIGHT="${APIKEYLIGHT}"
           fi
           if [[ "${{ github.event.inputs.apikey }}" != "" ]]; then
             APIKEY="${{ github.event.inputs.apikey }}"
           fi
+          moodle-plugin-ci add-config "define('TOOL_VAULT_TEST_STORAGE', '${{ github.event.inputs.storage }}');"
           moodle-plugin-ci add-config "define('TOOL_VAULT_TEST_API_KEY', '${APIKEY}');"
+          moodle-plugin-ci add-config "define('TOOL_VAULT_TEST_API_KEY_LIGHT', '${APIKEYLIGHT}');"
           moodle-plugin-ci add-config "define('PHPUNIT_BACKUPTEMPDIR', '$(pwd)/tmpbackup');"
         env:
           DB: ${{ matrix.database }}
