@@ -48,6 +48,9 @@ class behat_tool_vault extends behat_base {
         } else if (($type === 'light' || $type === 'any')
                 && (defined('TOOL_VAULT_TEST_API_KEY_LIGHT') && !empty(TOOL_VAULT_TEST_API_KEY_LIGHT))) {
             $key = TOOL_VAULT_TEST_API_KEY_LIGHT;
+        } else if (($type === 'free' || $type === 'any')
+                && (defined('TOOL_VAULT_TEST_API_KEY_FREE') && !empty(TOOL_VAULT_TEST_API_KEY_FREE))) {
+            $key = TOOL_VAULT_TEST_API_KEY_FREE;
         }
         if ($key) {
             \tool_vault\api::set_api_key($key);
