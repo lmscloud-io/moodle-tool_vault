@@ -38,13 +38,39 @@ class behat_tool_vault extends behat_base {
     /**
      * Skip tests if the test API url is not set
      *
-     * @Given /^test API key is specified for tool_vault$/
+     * @Given test API key for :type account is specified for tool_vault
      */
-    public function test_api_key_is_specified_for_tool_vault() {
-        if (!defined('TOOL_VAULT_TEST_API_KEY') || empty(TOOL_VAULT_TEST_API_KEY)) {
+    public function test_api_key_is_specified_for_tool_vault($type) {
+        $key = '';
+        if (($type === 'pro' || $type === 'any')
+                && (defined('TOOL_VAULT_TEST_API_KEY') && !empty(TOOL_VAULT_TEST_API_KEY))) {
+            $key = TOOL_VAULT_TEST_API_KEY;
+        } else if (($type === 'light' || $type === 'any')
+                && (defined('TOOL_VAULT_TEST_API_KEY_LIGHT') && !empty(TOOL_VAULT_TEST_API_KEY_LIGHT))) {
+            $key = TOOL_VAULT_TEST_API_KEY_LIGHT;
+        }
+        if ($key) {
+            \tool_vault\api::set_api_key($key);
+        } else {
             throw new \Moodle\BehatExtension\Exception\SkippedException();
         }
-        \tool_vault\api::set_api_key(TOOL_VAULT_TEST_API_KEY);
+    }
+
+    /**
+     * Skip tests if the storage is not in whitelisted
+     *
+     * @Given storage :storage should be tested in tool_vault
+     */
+    public function storage_should_be_tested_in_tool_vault($storage) {
+        $definedstorage = defined('TOOL_VAULT_TEST_STORAGE') && !empty(TOOL_VAULT_TEST_STORAGE) ?
+            TOOL_VAULT_TEST_STORAGE : '';
+        if ($storage === $definedstorage || $definedstorage === '*') {
+            return;
+        }
+        if ($definedstorage === '' && preg_match('/^eu/i', $storage)) {
+            return;
+        }
+        throw new \Moodle\BehatExtension\Exception\SkippedException();
     }
 
     /**
@@ -61,6 +87,26 @@ class behat_tool_vault extends behat_base {
             get_string('startbackup', 'tool_vault'),
             "dialogue",
             $backupname,
+        ]);
+    }
+
+    /**
+     * Generate a random backup name and set it in the form
+     *
+     * @Given I set vault backup storage field to :storage
+     */
+    public function set_vault_backup_storage_field($storage) {
+        global $CFG;
+        if (!strlen((string)$storage)) {
+            // Do not set anything, leave default.
+            // This will also pass if the storage selector is not displayed at all.
+            return;
+        }
+        $this->execute('behat_forms::i_set_the_field_in_container_to', [
+            get_string('startbackup_bucket', 'tool_vault'),
+            get_string('startbackup', 'tool_vault'),
+            "dialogue",
+            $storage,
         ]);
     }
 
