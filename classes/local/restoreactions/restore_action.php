@@ -50,6 +50,7 @@ abstract class restore_action {
         'afterall' => [
             uninstall_missing_plugins::class,
             cleanup_existing_files::class,
+            upgrade_old::class,
         ],
     ];
 

@@ -30,15 +30,15 @@ use tool_vault\site_restore;
 class recalc_version_hash extends restore_action {
 
     /**
-     * Get the core version.
+     * Get the core version of the code
      *
-     * @return float core version.
+     * @return array of version and release
      */
     public static function fetch_core_version() {
         global $CFG;
         $version = null; // Prevent IDE complaints.
         require($CFG->dirroot . '/version.php');
-        return (float)$version;
+        return ['version' => (float)$version, 'release' => (string)$release];
     }
 
     /**
@@ -65,7 +65,7 @@ class recalc_version_hash extends restore_action {
         $versiontoohigh = [];
 
         // Check that the main version hasn't changed.
-        $version = self::fetch_core_version();
+        $version = self::fetch_core_version()['version'];
         if ((float) $CFG->version > $version) {
             $versiontoohigh[] = 'core';
         } else if ('' . $CFG->version !== '' . $version) {

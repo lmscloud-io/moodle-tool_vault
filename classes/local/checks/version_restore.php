@@ -54,35 +54,41 @@ class version_restore extends check_base_restore {
         }
         $details = $this->model->get_details();
         $version = (float)($details['backupversion']);
-        $branch = $details['backupbranch'];
-        return ((float)($CFG->version) >= $version) && $this->core_upgrade_possible();
+        return ((float)($CFG->version) >= $version);
     }
 
     /**
-     * Checks if moodle core upgrade is possible
+     * Checks if direct moodle core upgrade is possible
      *
      * For example, in environment.xml we see <MOODLE version="4.2" requires="3.11.8">
-     * which means that the upgrade from 3.9 (or any release before 3.11.8) to 4.2 is not possible.
+     * which means that the upgrade directly from 3.9 (or any release before 3.11.8) to 4.2 is not possible.
+     * In this case the function will return '3.11.8'
      *
-     * @return bool
+     * tool_vault contains all old upgrade scripts and will upgrade regardless.
+     *
+     * @param string $fromrelease i.e. 3.9.4
+     * @param string $torelease i.e. 4.2.8
+     * @return string|null
      */
-    public function core_upgrade_possible(): bool {
+    public static function get_required_core_intermediary_release(string $fromrelease, string $torelease): ?string {
         global $CFG;
         require_once($CFG->dirroot.'/lib/environmentlib.php');
 
-        $details = $this->model->get_details();
-        $release = $details['backuprelease'] ?? '';
-
-        if (empty($release)) {
+        if (empty($fromrelease)) {
             // Release was not collected before tool_vault v1.5, skip this check.
-            return true;
+            return null;
         }
 
-        $normrelease = normalize_version($release);
-        $majorversion = get_latest_version_available(normalize_version($CFG->release), ENV_SELECT_RELEASE);
+        $normrelease = normalize_version($fromrelease);
+        $majorversion = get_latest_version_available(normalize_version($torelease), ENV_SELECT_RELEASE);
         $data = get_environment_for_version($majorversion, ENV_SELECT_RELEASE);
         $requires = $data['@']['requires'] ?? '1.0';
-        return version_compare($normrelease, $requires, '>=');
+        if (version_compare($normrelease, $requires, '>=')) {
+            // Direct upgrade is possible by Moodle.
+            return null;
+        } else {
+            return $requires;
+        }
     }
 
     /**
@@ -111,6 +117,18 @@ class version_restore extends check_base_restore {
         $version = $details['backupversion'];
         if ($this->success()) {
             if ($this->core_needs_upgrade()) {
+                $backuprelease = normalize_version($details['backuprelease'] ?? '');
+                $currentrelease = normalize_version($CFG->release);
+                $intermediaryrelease = self::get_required_core_intermediary_release($backuprelease, $currentrelease);
+                if ($intermediaryrelease !== null) {
+                    $a = (object)[
+                        'intermediaryrelease' => $intermediaryrelease,
+                        'backuprelease' => $backuprelease,
+                        'currentrelease' => $currentrelease,
+                        'url' => (new \moodle_url('/admin/environment.php'))->out(false),
+                    ];
+                    return get_string('moodleversion_success_withextraupgrade', 'tool_vault', $a);
+                }
                 return get_string('moodleversion_success_withupgrade', 'tool_vault');
             } else {
                 return get_string('moodleversion_success', 'tool_vault');
@@ -121,13 +139,6 @@ class version_restore extends check_base_restore {
             // return "Can not restore backup made on a different branch (major version) of Moodle. ".
             // "This backup branch is '{$branch}' and this site branch is '{$CFG->branch}'";
             // End.
-        } else if ($this->core_needs_upgrade() && !$this->core_upgrade_possible()) {
-            $a = (object)[
-                'backuprelease' => normalize_version($details['backuprelease'] ?? ''),
-                'currentrelease' => get_latest_version_available(normalize_version($CFG->release), ENV_SELECT_RELEASE),
-                'url' => (new \moodle_url('/admin/environment.php'))->out(false),
-            ];
-            return get_string('moodleversion_fail_cannotupgrade', 'tool_vault', $a);
         } else {
             $a = (object)[
                 'version' => $version,
