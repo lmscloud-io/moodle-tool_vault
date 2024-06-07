@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Upgrade code for install
  *
@@ -24,16 +26,13 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-use tool_usertours\manager;
-use tool_usertours\tour;
-
 /**
  * Upgrade the user tours plugin.
  *
  * @param int $oldversion The old version of the user tours plugin
  * @return bool
  */
-function xmldb_tool_usertours_upgrade($oldversion) {
+function tool_vault_311_xmldb_tool_usertours_upgrade($oldversion) {
     global $CFG, $DB;
 
     // Automatically generated Moodle v3.6.0 release upgrade line.
@@ -45,13 +44,6 @@ function xmldb_tool_usertours_upgrade($oldversion) {
     // Automatically generated Moodle v3.8.0 release upgrade line.
     // Put any upgrade step following this.
 
-    if ($oldversion < 2020061501) {
-        // Updating shipped tours will fix broken sortorder records in existing tours.
-        manager::update_shipped_tours();
-
-        upgrade_plugin_savepoint(true, 2020061501, 'tool', 'usertours');
-    }
-
     // Automatically generated Moodle v3.9.0 release upgrade line.
     // Put any upgrade step following this.
 
@@ -59,8 +51,8 @@ function xmldb_tool_usertours_upgrade($oldversion) {
         // Clean up user preferences of deleted tours.
         $select = $DB->sql_like('name', ':lastcompleted') . ' OR ' . $DB->sql_like('name', ':requested');
         $params = [
-            'lastcompleted' => tour::TOUR_LAST_COMPLETED_BY_USER . '%',
-            'requested' => tour::TOUR_REQUESTED_BY_USER . '%',
+            'lastcompleted' => 'tool_usertours_tour_completion_time_' . '%',
+            'requested' => 'tool_usertours_tour_reset_time_' . '%',
         ];
 
         $preferences = $DB->get_records_select('user_preferences', $select, $params, '', 'DISTINCT name');
@@ -79,12 +71,8 @@ function xmldb_tool_usertours_upgrade($oldversion) {
     // Automatically generated Moodle v3.10.0 release upgrade line.
     // Put any upgrade step following this.
 
-    if ($oldversion < 2021051700) {
-        // Updating shipped tours.
-        manager::update_shipped_tours();
-
-        upgrade_plugin_savepoint(true, 2021051700, 'tool', 'usertours');
-    }
+    // Vault removed the upgrade step updating shipped tours since it will be executed in the further upgrade
+    // steps anyway.
 
     // Automatically generated Moodle v3.11.0 release upgrade line.
     // Put any upgrade step following this.

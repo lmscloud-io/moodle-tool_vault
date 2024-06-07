@@ -32,6 +32,8 @@
 // of the Universitat Politecnica de Catalunya http://www.upc.edu
 // Contact info: Marc Alier Forment granludo @ gmail.com or marc.alier @ upc.edu.
 
+// phpcs:ignoreFile
+
 /**
  * This file defines tasks performed by the plugin.
  *
@@ -54,7 +56,7 @@
  *
  * @return boolean
  */
-function xmldb_ltiservice_gradebookservices_upgrade($oldversion) {
+function tool_vault_311_xmldb_ltiservice_gradebookservices_upgrade($oldversion) {
     global $CFG, $DB, $OUTPUT;
 
     $dbman = $DB->get_manager();

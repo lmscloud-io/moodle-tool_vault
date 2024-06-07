@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * This file keeps track of upgrades to the recentlyaccesseditems block
  *
@@ -44,7 +46,7 @@ defined('MOODLE_INTERNAL') || die();
  * @param $oldversion
  * @return bool
  */
-function xmldb_block_recentlyaccesseditems_upgrade($oldversion, $block) {
+function tool_vault_311_xmldb_block_recentlyaccesseditems_upgrade($oldversion) {
     global $DB;
 
     // Automatically generated Moodle v3.7.0 release upgrade line.

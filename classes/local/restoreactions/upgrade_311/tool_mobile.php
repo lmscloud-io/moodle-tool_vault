@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Mobile app support.
  *
@@ -24,15 +26,13 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/lib/upgradelib.php');
-
 /**
  * Upgrade the plugin.
  *
  * @param int $oldversion
  * @return bool always true
  */
-function xmldb_tool_mobile_upgrade($oldversion) {
+function tool_vault_311_xmldb_tool_mobile_upgrade($oldversion) {
     global $CFG;
 
     if ($oldversion < 2019021100) {

@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Shibboleth authentication plugin upgrade code
  *
@@ -29,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $oldversion the version we are upgrading from
  * @return bool result
  */
-function xmldb_auth_shibboleth_upgrade($oldversion) {
+function tool_vault_311_xmldb_auth_shibboleth_upgrade($oldversion) {
     global $CFG, $DB, $OUTPUT;
 
     // Automatically generated Moodle v3.6.0 release upgrade line.
@@ -48,25 +50,8 @@ function xmldb_auth_shibboleth_upgrade($oldversion) {
     // Put any upgrade step following this.
 
     if ($oldversion < 2020110901) {
-        // The 'Data modification API' setting in the Shibboleth authentication plugin can no longer be configured
-        // to use files located within the site data directory, as it exposes the site to security risks. Therefore,
-        // we need to find every existing case and reset the 'Data modification API' setting to its default value.
-
-        $convertdataconfig = get_config('auth_shibboleth', 'convert_data');
-
-        if (preg_match('/' . preg_quote($CFG->dataroot, '/') . '/', realpath($convertdataconfig))) {
-            set_config('convert_data', '', 'auth_shibboleth');
-
-            $warn = 'Your \'Data modification API\' setting in the Shibboleth authentication plugin is currently
-            configured to use a file located within the current site data directory ($CFG->dataroot). You are no
-            longer able to use files from within this directory for this purpose as it exposes your site to security
-            risks. This setting has been reset to its default value. Please reconfigure it by providing a path
-            to a file which is not located within the site data directory.';
-
-            echo $OUTPUT->notification($warn, 'notifyproblem');
-        }
-
-        upgrade_plugin_savepoint(true, 2020110901, 'auth', 'shibboleth');
+        // This upgrade script removed in Vault because it only adds a notification, and it
+        // will not be visible in the upgrade anyway.
     }
 
     // Automatically generated Moodle v3.11.0 release upgrade line.

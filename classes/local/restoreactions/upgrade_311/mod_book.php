@@ -13,6 +13,9 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+// phpcs:ignoreFile
+
 /**
  * Book module upgrade code
  *
@@ -29,7 +32,7 @@ defined('MOODLE_INTERNAL') || die;
  * @param int $oldversion the version we are upgrading from
  * @return bool always true
  */
-function xmldb_book_upgrade($oldversion) {
+function tool_vault_311_xmldb_book_upgrade($oldversion) {
     global $CFG, $DB;
 
     $dbman = $DB->get_manager();

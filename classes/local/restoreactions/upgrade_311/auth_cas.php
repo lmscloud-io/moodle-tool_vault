@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * CAS authentication plugin upgrade code
  *
@@ -29,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $oldversion the version we are upgrading from
  * @return bool result
  */
-function xmldb_auth_cas_upgrade($oldversion) {
+function tool_vault_311_xmldb_auth_cas_upgrade($oldversion) {
     global $CFG;
 
     // Automatically generated Moodle v3.6.0 release upgrade line.

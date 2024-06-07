@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\restoreactions;
 use tool_vault\local\checks\version_restore;
+use tool_vault\local\restoreactions\upgrade_311\upgrade_311;
 use tool_vault\site_restore;
 
 /**
@@ -60,13 +61,11 @@ class upgrade_old extends restore_action {
 
         // TODO the following code assumes that $intermediaterelease == '3.11.8' since others are not needed yet.
 
-        require_once($CFG->dirroot.'/admin/tool/vault/special/upgrade.php');
+        require_once($CFG->libdir.'/upgradelib.php');
 
-        tool_vault_core_upgrade($CFG->version);
+        upgrade_311::upgrade($logger);
 
         set_config('upgraderunning', 0);
-        set_config('version', 2021051708.00);
-        set_config('release', '3.11.8');
 
         $logger->add_to_log('Checking values(3): version = '.$CFG->version.', release = '.$CFG->release);
         $logger->add_to_log('...done');

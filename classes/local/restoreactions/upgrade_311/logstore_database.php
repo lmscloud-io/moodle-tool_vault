@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Database log store upgrade.
  *
@@ -24,7 +26,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-function xmldb_logstore_database_upgrade($oldversion) {
+function tool_vault_311_xmldb_logstore_database_upgrade($oldversion) {
     global $CFG;
 
     // Automatically generated Moodle v3.6.0 release upgrade line.

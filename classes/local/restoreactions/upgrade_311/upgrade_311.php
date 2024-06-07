@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace tool_vault\local\restoreactions\upgrade_311;
+use tool_vault\constants;
+use tool_vault\site_restore;
 
 /**
  * Class plugins
@@ -23,13 +25,68 @@ namespace tool_vault\local\restoreactions\upgrade_311;
  * @copyright  2024 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class plugins {
+class upgrade_311 {
+    /**
+     * Upgrade the restored site to 3.11.8
+     *
+     * @param site_restore $logger
+     * @return void
+     */
+    public static function upgrade(site_restore $logger) {
+        self::upgrade_core($logger);
+        self::upgrade_plugins($logger);
+    }
+
+    /**
+     * Upgrade core to 3.11.8
+     *
+     * @param site_restore $logger
+     * @return void
+     */
+    protected static function upgrade_core(site_restore $logger) {
+        global $CFG;
+        require_once(__DIR__ ."/core.php");
+        tool_vault_311_core_upgrade($CFG->version);
+
+        set_config('version', 2021051708.00);
+        set_config('release', '3.11.8');
+    }
+
+    /**
+     * Upgrade all standard plugins to 3.11.8
+     *
+     * @param site_restore $logger
+     * @return void
+     */
+    protected static function upgrade_plugins(site_restore $logger) {
+        global $DB;
+        $allcurversions = $DB->get_records_menu('config_plugins', ['name' => 'version'], '', 'plugin, value');
+        foreach (self::plugin_versions() as $plugin => $version) {
+            if (empty($allcurversions[$plugin])) {
+                // Standard plugin {$plugin} not found. It will be installed during the full upgrade.
+                continue;
+            }
+            if (file_exists(__DIR__ ."/". $plugin .".php")) {
+                require_once(__DIR__ ."/". $plugin .".php");
+                $pluginshort = preg_replace("/^mod_/", "", $plugin);
+                $funcname = "tool_vault_311_xmldb_{$pluginshort}_upgrade";
+                try {
+                    $funcname($allcurversions[$plugin]);
+                } catch (\Throwable $t) {
+                    $logger->add_to_log("Exception executing upgrade script for plugin {$plugin}: ".
+                        $t->getMessage(), constants::LOGLEVEL_WARNING);
+                }
+            }
+            set_config('version', $version, $plugin);
+        }
+    }
+
     /**
      * List of standard plugins in 3.11.8 and their exact versions
      *
      * @return array
      */
-    public static function versions() {
+    protected static function plugin_versions() {
         return [
             "mod_assign" => 2021051700,
             "mod_assignment" => 2021051700,

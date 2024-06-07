@@ -13,24 +13,8 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-//
-// This file is part of BasicLTI4Moodle
-//
-// BasicLTI4Moodle is an IMS BasicLTI (Basic Learning Tools for Interoperability)
-// consumer for Moodle 1.9 and Moodle 2.0. BasicLTI is a IMS Standard that allows web
-// based learning tools to be easily integrated in LMS as native ones. The IMS BasicLTI
-// specification is part of the IMS standard Common Cartridge 1.1 Sakai and other main LMS
-// are already supporting or going to support BasicLTI. This project Implements the consumer
-// for Moodle. Moodle is a Free Open source Learning Management System by Martin Dougiamas.
-// BasicLTI4Moodle is a project iniciated and leaded by Ludo(Marc Alier) and Jordi Piguillem
-// at the GESSI research group at UPC.
-// SimpleLTI consumer for Moodle is an implementation of the early specification of LTI
-// by Charles Severance (Dr Chuck) htp://dr-chuck.com , developed by Jordi Piguillem in a
-// Google Summer of Code 2008 project co-mentored by Charles Severance and Marc Alier.
-//
-// BasicLTI4Moodle is copyright 2009 by Marc Alier Forment, Jordi Piguillem and Nikolas Galanis
-// of the Universitat Politecnica de Catalunya http://www.upc.edu
-// Contact info: Marc Alier Forment granludo @ gmail.com or marc.alier @ upc.edu.
+
+// phpcs:ignoreFile
 
 /**
  * This file keeps track of upgrades to the lti module
@@ -58,7 +42,7 @@
  *
  * @return boolean
  */
-function xmldb_lti_upgrade($oldversion) {
+function tool_vault_311_xmldb_lti_upgrade($oldversion) {
     global $CFG, $DB, $OUTPUT;
 
     $dbman = $DB->get_manager();
@@ -94,13 +78,6 @@ function xmldb_lti_upgrade($oldversion) {
         // Conditionally launch add index clientid.
         if (!$dbman->index_exists($table, $index)) {
             $dbman->add_index($table, $index);
-        }
-
-        require_once($CFG->dirroot . '/mod/lti/upgradelib.php');
-
-        $warning = mod_lti_verify_private_key();
-        if (!empty($warning)) {
-            echo $OUTPUT->notification($warning, 'notifyproblem');
         }
 
         // Lti savepoint reached.

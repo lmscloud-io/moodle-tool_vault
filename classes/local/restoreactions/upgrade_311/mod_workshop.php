@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Keeps track of upgrades to the workshop module
  *
@@ -34,7 +36,7 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $oldversion the version we are upgrading from
  * @return bool result
  */
-function xmldb_workshop_upgrade($oldversion) {
+function tool_vault_311_xmldb_workshop_upgrade($oldversion) {
     global $DB;
 
     $dbman = $DB->get_manager();

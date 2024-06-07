@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Essay question type upgrade code.
  *
@@ -29,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
  * Upgrade code for the essay question type.
  * @param int $oldversion the version we are upgrading from.
  */
-function xmldb_qtype_essay_upgrade($oldversion) {
+function tool_vault_311_xmldb_qtype_essay_upgrade($oldversion) {
     global $CFG, $DB;
 
     $dbman = $DB->get_manager();

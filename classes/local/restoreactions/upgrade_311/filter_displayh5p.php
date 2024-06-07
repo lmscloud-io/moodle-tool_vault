@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Display H5P upgrade code
  *
@@ -30,14 +32,12 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $oldversion the version we are upgrading from
  * @return bool result
  */
-function xmldb_filter_displayh5p_upgrade($oldversion) {
+function tool_vault_311_xmldb_filter_displayh5p_upgrade($oldversion) {
     global $CFG;
-
-    require_once($CFG->dirroot . '/filter/displayh5p/db/upgradelib.php');
 
     if ($oldversion < 2019110800) {
         // We need to move up the displayh5p filter over urltolink and activitynames filters to works properly.
-        filter_displayh5p_reorder();
+        tool_vault_311_filter_displayh5p_reorder();
 
         upgrade_plugin_savepoint(true, 2019110800, 'filter', 'displayh5p');
     }
@@ -67,4 +67,26 @@ function xmldb_filter_displayh5p_upgrade($oldversion) {
     // Put any upgrade step following this.
 
     return true;
+}
+
+function tool_vault_311_filter_displayh5p_reorder() {
+
+    // The filter enabled is mandatory to be able to display the H5P content.
+    filter_set_global_state('displayh5p', TEXTFILTER_ON);
+
+    $states = filter_get_global_states();
+    $displayh5ppos = $states['displayh5p']->sortorder;
+    $activitynamespos = 1;
+    if (!empty($states['activitynames'])) {
+        $activitynamespos = $states['activitynames']->sortorder;
+    }
+    $urltolinkpos = 1;
+    if (!empty($states['urltolink'])) {
+        $urltolinkpos = $states['urltolink']->sortorder;
+    }
+    $minpos = ($activitynamespos < $urltolinkpos) ? $activitynamespos : $urltolinkpos;
+    while ($minpos < $displayh5ppos) {
+        filter_set_global_state('displayh5p', TEXTFILTER_ON, -1);
+        $displayh5ppos--;
+    }
 }

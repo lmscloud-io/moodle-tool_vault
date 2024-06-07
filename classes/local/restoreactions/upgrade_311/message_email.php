@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Upgrade code for email message processor
  *
@@ -29,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @param int $oldversion The version that we are upgrading from
  */
-function xmldb_message_email_upgrade($oldversion) {
+function tool_vault_311_xmldb_message_email_upgrade($oldversion) {
     global $DB;
 
     $dbman = $DB->get_manager();

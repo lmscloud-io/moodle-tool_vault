@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Upgrade script for the quiz module.
  *
@@ -28,7 +30,7 @@ defined('MOODLE_INTERNAL') || die();
  * Quiz module upgrade function.
  * @param string $oldversion the version we are upgrading from.
  */
-function xmldb_quiz_upgrade($oldversion) {
+function tool_vault_311_xmldb_quiz_upgrade($oldversion) {
     global $CFG, $DB;
     $dbman = $DB->get_manager();
 

@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * This file keeps track of upgrades to Moodle.
  *
@@ -84,10 +86,9 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $oldversion
  * @return bool always true
  */
-function tool_vault_core_upgrade($oldversion) {
+function tool_vault_311_core_upgrade($oldversion) {
     global $CFG, $DB;
 
-    require_once($CFG->libdir.'/upgradelib.php');
     require_once($CFG->libdir.'/db/upgradelib.php'); // Core Upgrade-related functions.
 
     $dbman = $DB->get_manager(); // Loads ddl manager and xmldb classes.

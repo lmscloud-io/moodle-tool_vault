@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Upgrade code for popup message processor
  *
@@ -29,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @param int $oldversion The version that we are upgrading from
  */
-function xmldb_message_popup_upgrade($oldversion) {
+function tool_vault_311_xmldb_message_popup_upgrade($oldversion) {
     global $DB;
 
     // Automatically generated Moodle v3.6.0 release upgrade line.
@@ -49,15 +51,10 @@ function xmldb_message_popup_upgrade($oldversion) {
                    WHERE n.id IS NULL";
         $total = $DB->count_records_sql("SELECT COUNT(mpn.id) " . $fromsql);
         if ($total > 0) {
-            $i = 0;
-            $pbar = new progress_bar('deletepopupnotification', 500, true);
             do {
                 if ($popupnotifications = $DB->get_records_sql("SELECT mpn.id " . $fromsql, null, 0, 1000)) {
                     list($insql, $inparams) = $DB->get_in_or_equal(array_keys($popupnotifications));
                     $DB->delete_records_select('message_popup_notifications', "id $insql", $inparams);
-                    // Update progress.
-                    $i += count($inparams);
-                    $pbar->update($i, $total, "Cleaning up orphaned popup notification records - $i/$total.");
                 }
             } while ($popupnotifications);
         }

@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Upgrade script for tool_moodlenet.
  *
@@ -30,7 +32,7 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $oldversion
  * @return bool always true
  */
-function xmldb_tool_moodlenet_upgrade(int $oldversion) {
+function tool_vault_311_xmldb_tool_moodlenet_upgrade(int $oldversion) {
     global $CFG, $DB;
     if ($oldversion < 2020060500) {
 

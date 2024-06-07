@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * This file keeps track of upgrades to the myoverview block
  *
@@ -30,7 +32,7 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @param int $oldversion
  */
-function xmldb_block_myoverview_upgrade($oldversion) {
+function tool_vault_311_xmldb_block_myoverview_upgrade($oldversion) {
     global $DB, $CFG, $OUTPUT;
 
     if ($oldversion < 2019091800) {
@@ -68,12 +70,7 @@ function xmldb_block_myoverview_upgrade($oldversion) {
             unset_config('displaygroupingstarred', 'block_myoverview');
         }
 
-        if (isset($CFG->forced_plugin_settings['block_myoverview']['displaygroupingstarred'])) {
-            // Check to see if the starred setting is defined in the config file. Display a warning if so.
-            $warn = 'Setting block_myoverview->displaygroupingstarred has been renamed '.
-                    'to block_myoverview->displaygroupingfavourites. Old setting present in config.php.';
-            echo $OUTPUT->notification($warn, 'notifyproblem');
-        }
+        // Notification removed in Vault.
 
         upgrade_block_savepoint(true, 2019111801, 'myoverview', false);
     }
