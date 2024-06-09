@@ -2,6 +2,15 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+# Unreleased
+
+### Added
+- Setting to run upgrade as part of the restore process. When selected, Vault will upgrade
+  from any version that it supports, which means the upgrades directly from 3.9 -> 4.3 will be
+  possible without the need to upgrade to intermediate version (by itself Moodle 4.3 can only
+  upgrade from 3.11.8 or later).
+- This also allows to run "uninstall missing plugins" script after any restore.
+
 ## [1.9] - 2024-05-05
 
 ### Added

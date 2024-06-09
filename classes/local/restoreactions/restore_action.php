@@ -48,8 +48,9 @@ abstract class restore_action {
         'afterdata' => [
         ],
         'afterall' => [
-            uninstall_missing_plugins::class,
             cleanup_existing_files::class,
+            upgrade::class,
+            uninstall_missing_plugins::class,
         ],
     ];
 

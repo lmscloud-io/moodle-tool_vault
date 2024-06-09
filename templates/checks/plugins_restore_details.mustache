@@ -39,6 +39,12 @@
         <span class="badge badge-warning">{{#str}} addonplugins_extraplugins, tool_vault {{/str}}</span>
         {{#str}} addonplugins_extraplugins_desc, tool_vault {{/str}}
     </p>
+    {{#upgradeafterrestore}}
+        <p><strong>{{#str}} addonplugins_autoupgrade, tool_vault, {{settingsurl}} {{/str}}</strong></p>
+    {{/upgradeafterrestore}}
+    {{^upgradeafterrestore}}
+        <p><strong>{{#str}} addonplugins_noautoupgrade, tool_vault, {{settingsurl}} {{/str}}</strong></p>
+    {{/upgradeafterrestore}}
     {{#extraplugins}}
         {{> tool_vault/checks/plugins_restore_details_table}}
     {{/extraplugins}}
@@ -49,6 +55,12 @@
         <span class="badge badge-warning">{{#str}} addonplugins_willrequireupgrade, tool_vault {{/str}}</span>
         {{#str}} addonplugins_willrequireupgrade_desc, tool_vault {{/str}}
     </p>
+    {{#upgradeafterrestore}}
+        <p><strong>{{#str}} addonplugins_autoupgrade, tool_vault, {{settingsurl}} {{/str}}</strong></p>
+    {{/upgradeafterrestore}}
+    {{^upgradeafterrestore}}
+        <p><strong>{{#str}} addonplugins_noautoupgrade, tool_vault, {{settingsurl}} {{/str}}</strong></p>
+    {{/upgradeafterrestore}}
     {{#tobeupgraded}}
         {{> tool_vault/checks/plugins_restore_details_table}}
     {{/tobeupgraded}}
