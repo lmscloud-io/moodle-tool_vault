@@ -26,7 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['addonplugins'] = 'Add-on plugins';
-$string['addonplugins_autoupgrade'] = 'Upgrade process will be performed automatically during restore. <a href="{$a}">Change</a>.';
+$string['addonplugins_autoupgrade'] = 'Moodle upgrade process will be performed automatically during restore. <a href="{$a}">Change</a>.';
 $string['addonplugins_extraplugins'] = 'Extra plugins';
 $string['addonplugins_extraplugins_desc'] = "The following plugins are present on this site but not present in the backup. All data associated with these plugins will be deleted during the restore process. After the restore process is finished you will be prompted to run the Moodle upgrade process that will re-install these plugins.";
 $string['addonplugins_fail'] = 'The backup contains plugins with higher versions than the code on this site. You must upgrade the code for these plugins before restoring from this backup.';
@@ -34,7 +34,7 @@ $string['addonplugins_missing'] = 'Missing plugins';
 $string['addonplugins_missing_autoremove'] = 'Missing plugins will be automatically removed after restore. <a href="{$a}">Change</a>';
 $string['addonplugins_missing_desc'] = "The following plugins are present in the backup but are not installed on this site. After the restore these plugins will be listed as \"Missing from disk\", you can choose to uninstall them or keep the data until you add the code for the plugins. Until then, you may experience errors, for example, missing scheduled tasks.";
 $string['addonplugins_missing_noautoremove'] = 'You can choose to automatically remove missing plugins after restore in the <a href="{$a}">settings</a>';
-$string['addonplugins_noautoupgrade'] = 'You can choose to automatically run upgrade process as part of the restore in the <a href="{$a}">settings</a>';
+$string['addonplugins_noautoupgrade'] = 'You can choose to automatically run the Moodle upgrade process as part of the restore on the <a href="{$a}">settings page</a>';
 $string['addonplugins_notpresent'] = 'Plugins found on this site but not present in the backup';
 $string['addonplugins_pluginsdirectory'] = 'Plugins directory';
 $string['addonplugins_pluginversioninbackup'] = 'Version in the backup';
@@ -163,11 +163,11 @@ $string['manageremoteaccount'] = 'Manage your account';
 $string['messageprovider:statusupdate'] = 'Status update for Vault - Site migration';
 $string['moodleversion_backupinfo'] = 'Backup made in version {$a->version} (Moodle {$a->branch})';
 $string['moodleversion_fail'] = "Site version number has to be greater than or equal to the version in the backup. This backup is {\$a->version} and this site is {\$a->siteversion}";
-$string['moodleversion_fail_cannotupgrade'] = 'Restore is blocked because Moodle can not upgrade from {$a->backuprelease} to {$a->currentrelease}. See <a href="{$a->url}">environment page</a> for upgrade requirements. Vault is able to upgrade from this version, to enable it, you need to choose "Automatically upgrade after restore" in the <a href="{$a->settingsurl}">settings</a>.';
+$string['moodleversion_fail_cannotupgrade'] = 'Restore is blocked because Moodle cannot upgrade from {$a->backuprelease} to {$a->currentrelease}. See the <a href="{$a->url}">environment page</a> for upgrade requirements. Vault is able to upgrade from this version if you choose "Automatically upgrade Moodle after restore" in the <a href="{$a->settingsurl}">settings</a>.';
 $string['moodleversion_siteinfo'] = 'This website has version {$a->version} (Moodle {$a->branch})';
 $string['moodleversion_success'] = 'Moodle version matches';
-$string['moodleversion_success_withautoupgrade'] = 'Restore can be performed. Vault will automatically launch upgrade process as part of the restore.';
-$string['moodleversion_success_withextraupgrade'] = 'Restore can be performed. Vault will upgrade the site from {$a->backuprelease} to {$a->intermediaryrelease} and then will launch a standard Moodle upgrade to {$a->currentrelease}.';
+$string['moodleversion_success_withautoupgrade'] = 'Restore can be performed. Vault will automatically run the Moodle upgrade process as part of the restore.';
+$string['moodleversion_success_withextraupgrade'] = 'Restore can be performed. Vault will upgrade the site from {$a->backuprelease} to {$a->intermediaryrelease} and then perform a standard Moodle upgrade to {$a->currentrelease}.';
 $string['moodleversion_success_withupgrade'] = 'Restore can be performed but you will need to run the Moodle upgrade process after it completes.';
 $string['nobackupsavailable'] = 'There are no remote backups avaiable for restore';
 $string['nopastbackups'] = "You don't have any past backups";
@@ -201,9 +201,9 @@ $string['setting_restoreremovemissing'] = 'Automatically remove missing plugins 
 $string['setting_restoreremovemissing_desc'] = "If a backup contains data for plugins that are not present in this site codebase, they will be marked as \"Missing from disk\" in the plugin overview.<br>
 - Enabling this option will automatically uninstall these plugins and remove all data associated with them from the database and file storage.<br>
 - Disabling this option will leave the data in the database and you will be able to add the plugins code after the restore is finished or run the uninstall script manually.<br>
-<em>Missing plugins will not be removed if the upgrade is pending after the restore, i.e. if you restore into a higher Moodle version or other plugins need to be upgraded. In this case you can select \"Automatically upgrade after restore\".</em>";
-$string['setting_upgradeafterrestore'] = 'Automatically upgrade after restore';
-$string['setting_upgradeafterrestore_desc'] = 'After the site is restored immediately launch the upgrade process. When selected, Vault will be able to upgrade from any version it supported for the backup. For example, you can upgrade from 3.9 directly to 4.3, even though Moodle by itself would require you to first upgrade to 3.11.8-4.2 and only then to 4.3.';
+<em>Missing plugins will not be removed if the upgrade is pending after the restore, i.e. if you restore into a higher Moodle version or other plugins need to be upgraded. In this case you can select \"Automatically upgrade Moodle after restore\".</em>";
+$string['setting_upgradeafterrestore'] = 'Automatically upgrade Moodle after restore';
+$string['setting_upgradeafterrestore_desc'] = 'After the site is restored, immediately launch the Moodle upgrade process. When selected, Vault will be able to upgrade Moodle from any version it supported for the backup. For example, you can upgrade from 3.9 directly to 4.3, even though Moodle by itself would require you to first upgrade to 3.11.8-4.2 and only then to 4.3.';
 $string['settings_allowrestore'] = 'Allow restores on this site';
 $string['settings_allowrestore_desc'] = 'Site restore will completely remove all contents of this site and replace with the restored contents. Double check everything before enabling this option';
 $string['settings_backupexcludedataroot'] = 'Exclude paths in dataroot';
