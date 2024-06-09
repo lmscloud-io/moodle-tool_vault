@@ -39,6 +39,7 @@ class behat_tool_vault extends behat_base {
      * Skip tests if the test API url is not set
      *
      * @Given test API key for :type account is specified for tool_vault
+     * @param string $type
      */
     public function test_api_key_is_specified_for_tool_vault($type) {
         $key = '';
@@ -63,6 +64,7 @@ class behat_tool_vault extends behat_base {
      * Skip tests if the storage is not in whitelisted
      *
      * @Given storage :storage should be tested in tool_vault
+     * @param string $storage
      */
     public function storage_should_be_tested_in_tool_vault($storage) {
         $definedstorage = defined('TOOL_VAULT_TEST_STORAGE') && !empty(TOOL_VAULT_TEST_STORAGE) ?
@@ -97,6 +99,7 @@ class behat_tool_vault extends behat_base {
      * Generate a random backup name and set it in the form
      *
      * @Given I set vault backup storage field to :storage
+     * @param string $storage
      */
     public function set_vault_backup_storage_field($storage) {
         global $CFG;
