@@ -109,9 +109,17 @@ if ($hassiteconfig) {
     ));
 
     $settings->add(new admin_setting_configselect(
+        'tool_vault/upgradeafterrestore',
+        get_string('setting_upgradeafterrestore', 'tool_vault'),
+        get_string('setting_upgradeafterrestore_desc', 'tool_vault'),
+        0,
+        $yesnooptions
+    ));
+
+    $settings->add(new admin_setting_configselect(
         'tool_vault/restoreremovemissing',
-        get_string('restoreremovemissing', 'tool_vault'),
-        get_string('restoreremovemissing_desc', 'tool_vault'),
+        get_string('setting_restoreremovemissing', 'tool_vault'),
+        get_string('setting_restoreremovemissing_desc', 'tool_vault'),
         0,
         $yesnooptions
     ));

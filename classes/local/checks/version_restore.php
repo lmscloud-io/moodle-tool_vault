@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\checks;
 
+use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\models\dryrun_model;
 
@@ -54,7 +55,15 @@ class version_restore extends check_base_restore {
         }
         $details = $this->model->get_details();
         $version = (float)($details['backupversion']);
-        return ((float)($CFG->version) >= $version);
+        if ((float)($CFG->version) < $version) {
+            return false;
+        }
+        if (((float)($CFG->version) == $version) || api::get_setting_checkbox('upgradeafterrestore')) {
+            return true;
+        }
+        // Moodle needs upgrading and auto upgrade is not enabled. Only return true if direct upgrade is possible.
+        $intermediaryrelease = self::get_required_core_intermediate_release($details['backuprelease'] ?? '', $CFG->release);
+        return $intermediaryrelease === null;
     }
 
     /**
@@ -70,7 +79,7 @@ class version_restore extends check_base_restore {
      * @param string $torelease i.e. 4.2.8
      * @return string|null
      */
-    public static function get_required_core_intermediary_release(string $fromrelease, string $torelease): ?string {
+    public static function get_required_core_intermediate_release(string $fromrelease, string $torelease): ?string {
         global $CFG;
         require_once($CFG->dirroot.'/lib/environmentlib.php');
 
@@ -115,11 +124,12 @@ class version_restore extends check_base_restore {
         $details = $this->model->get_details();
         $branch = $details['backupbranch'] ?? null;
         $version = $details['backupversion'];
+        $backuprelease = normalize_version($details['backuprelease'] ?? '');
+        $currentrelease = normalize_version($CFG->release);
+        $intermediaryrelease = $this->core_needs_upgrade() ?
+            self::get_required_core_intermediate_release($backuprelease, $currentrelease) : null;
         if ($this->success()) {
             if ($this->core_needs_upgrade()) {
-                $backuprelease = normalize_version($details['backuprelease'] ?? '');
-                $currentrelease = normalize_version($CFG->release);
-                $intermediaryrelease = self::get_required_core_intermediary_release($backuprelease, $currentrelease);
                 if ($intermediaryrelease !== null) {
                     $a = (object)[
                         'intermediaryrelease' => $intermediaryrelease,
@@ -128,6 +138,8 @@ class version_restore extends check_base_restore {
                         'url' => (new \moodle_url('/admin/environment.php'))->out(false),
                     ];
                     return get_string('moodleversion_success_withextraupgrade', 'tool_vault', $a);
+                } else if (api::get_setting_checkbox('upgradeafterrestore')) {
+                    return get_string('moodleversion_success_withautoupgrade', 'tool_vault');
                 }
                 return get_string('moodleversion_success_withupgrade', 'tool_vault');
             } else {
@@ -139,6 +151,14 @@ class version_restore extends check_base_restore {
             // return "Can not restore backup made on a different branch (major version) of Moodle. ".
             // "This backup branch is '{$branch}' and this site branch is '{$CFG->branch}'";
             // End.
+        } else if ($this->core_needs_upgrade() && $intermediaryrelease) {
+            $a = (object)[
+                'backuprelease' => $backuprelease,
+                'currentrelease' => $currentrelease,
+                'url' => (new \moodle_url('/admin/environment.php'))->out(),
+                'settingsurl' => (new \moodle_url('/admin/settings.php', ['section' => 'tool_vault']))->out(),
+            ];
+            return get_string('moodleversion_fail_cannotupgrade', 'tool_vault', $a);
         } else {
             $a = (object)[
                 'version' => $version,

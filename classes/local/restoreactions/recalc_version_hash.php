@@ -29,6 +29,25 @@ use tool_vault\site_restore;
  */
 class recalc_version_hash extends restore_action {
 
+    /** @var string[] */
+    protected $alwaysexcluded = [
+        // TODO reuse from admin/tool/vault/classes/local/checks/configoverride.php .
+        'dbtype', 'dblibrary', 'dbhost', 'dbname', 'dbuser', 'dbpass', 'prefix', 'dboptions',
+        'wwwroot', 'dataroot',
+        'dirroot', 'libdir',
+        'yui2version', 'yui3version', 'yuipatchlevel', 'yuipatchedmodules',
+        'phpunit_dataroot', 'phpunit_prefix',
+        'behat_wwwroot', 'behat_prefix', 'behat_dataroot', 'behat_dbname', 'behat_dbuser',
+        'behat_dbpass', 'behat_dbhost',
+    ];
+
+    /** @var string[] */
+    protected $otherexcluded = [
+        'config_php_settings', 'debugdeveloper', 'forced_plugin_settings', 'ostype', 'httpswwwroot',
+        'dbfamily', 'sessiontimeout', 'sessiontimeoutwarning', 'wordlist', 'moddata', 'os',
+        'debugdisplay', 'taskruntimewarn', 'taskruntimeerror',
+    ];
+
     /**
      * Get the core version of the code
      *
@@ -38,7 +57,37 @@ class recalc_version_hash extends restore_action {
         global $CFG;
         $version = null; // Prevent IDE complaints.
         require($CFG->dirroot . '/version.php');
-        return ['version' => (float)$version, 'release' => (string)$release];
+        return [
+            'version' => (float)$version,
+            'release' => (string)$release,
+            'branch' => (string)($branch ?? ''),
+        ];
+    }
+
+    /**
+     * Make sure $CFG object corresponds to the values in the config table
+     *
+     * At this moment, as we just finished the restore, the values in $CFG are cached as they were
+     * on the site before the restore. The upgrade script needs them to reflect the DB state.
+     *
+     * @return void
+     */
+    protected function reinitialise_cfg() {
+        global $CFG, $DB;
+        \cache::make('core', 'config')->purge();
+        $preservekeys = array_merge(
+            array_keys($CFG->config_php_settings),
+            $this->otherexcluded,
+            $this->alwaysexcluded);
+        $removekeys = array_diff(array_keys((array)$CFG), $preservekeys);
+        foreach ($removekeys as $key) {
+            unset($CFG->$key);
+        }
+
+        $CFG->siteidentifier = $DB->get_field('config', 'value', ['name' => 'siteidentifier']);
+        initialise_cfg();
+        $CFG->debug = $CFG->debug ?? 0;
+        $CFG->debugdeveloper = (($CFG->debug & (E_ALL | E_STRICT)) === (E_ALL | E_STRICT));
     }
 
     /**
@@ -50,25 +99,35 @@ class recalc_version_hash extends restore_action {
      */
     public function execute(site_restore $logger, string $stage) {
         global $CFG;
-        if (!api::get_setting_checkbox('restoreremovemissing') && $stage == self::STAGE_AFTER_ALL) {
-            return;
-        }
+
+        $logger->add_to_log('Rebuilding $CFG...');
+        $this->reinitialise_cfg();
+        $logger->add_to_log('...done');
+
+        self::recalculate_version_hash($logger);
+    }
+
+    /**
+     * Recalculate version hash
+     *
+     * @param site_restore $logger
+     * @return void
+     */
+    public static function recalculate_version_hash(site_restore $logger) {
+        global $CFG, $DB;
 
         $logger->add_to_log('Recalculating all versions hash...');
 
         $manager = \core_plugin_manager::instance();
-        // Purge caches to make sure we have the fresh information about versions.
-        $manager::reset_caches();
-        $configcache = \cache::make('core', 'config');
-        $configcache->purge();
+        $dbversion = $DB->get_field('config', 'value', ['name' => 'version']);
         $needsupgrade = [];
         $versiontoohigh = [];
 
         // Check that the main version hasn't changed.
-        $version = self::fetch_core_version()['version'];
-        if ((float) $CFG->version > $version) {
+        $codeversion = self::fetch_core_version()['version'];
+        if ((float)$dbversion > $codeversion) {
             $versiontoohigh[] = 'core';
-        } else if ('' . $CFG->version !== '' . $version) {
+        } else if ('' . $dbversion !== '' . $codeversion) {
             $needsupgrade[] = 'core';
         }
 
@@ -94,7 +153,7 @@ class recalc_version_hash extends restore_action {
 
         // Purge relevant caches again.
         $manager::reset_caches();
-        $configcache->purge();
+        \cache::make('core', 'config')->purge();
 
         $logger->add_to_log('...done');
     }

@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace tool_vault\local\restoreactions\upgrade_311;
+use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\site_restore;
 
@@ -33,8 +34,14 @@ class upgrade_311 {
      * @return void
      */
     public static function upgrade(site_restore $logger) {
-        self::upgrade_core($logger);
-        self::upgrade_plugins($logger);
+        try {
+            self::upgrade_core($logger);
+            self::upgrade_plugins($logger);
+        } catch (\Throwable $t) {
+            $logger->add_to_log("Exception executing core upgrade script: ".
+               $t->getMessage(), constants::LOGLEVEL_WARNING);
+            api::report_error($t);
+        }
     }
 
     /**
@@ -50,6 +57,7 @@ class upgrade_311 {
 
         set_config('version', 2021051708.00);
         set_config('release', '3.11.8');
+        set_config('branch', '311');
     }
 
     /**
@@ -75,6 +83,7 @@ class upgrade_311 {
                 } catch (\Throwable $t) {
                     $logger->add_to_log("Exception executing upgrade script for plugin {$plugin}: ".
                         $t->getMessage(), constants::LOGLEVEL_WARNING);
+                    api::report_error($e);
                 }
             }
             set_config('version', $version, $plugin);

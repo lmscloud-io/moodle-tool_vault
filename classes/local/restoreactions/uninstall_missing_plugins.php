@@ -91,6 +91,6 @@ class uninstall_missing_plugins extends restore_action {
 
         $logger->add_to_log('...done');
 
-        (new recalc_version_hash())->execute($logger, $stage);
+        recalc_version_hash::recalculate_version_hash($logger);
     }
 }

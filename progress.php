@@ -25,6 +25,7 @@
 define('NO_MOODLE_COOKIES', true);
 define('CACHE_DISABLE_ALL', true);
 define('NO_OUTPUT_BUFFERING', true);
+define('NO_UPGRADE_CHECK', true);
 
 require(__DIR__ . '/../../../config.php');
 

@@ -43,7 +43,7 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Upgrade the recentlyaccesseditems db table.
  *
- * @param $oldversion
+ * @param int $oldversion
  * @return bool
  */
 function tool_vault_311_xmldb_block_recentlyaccesseditems_upgrade($oldversion) {
