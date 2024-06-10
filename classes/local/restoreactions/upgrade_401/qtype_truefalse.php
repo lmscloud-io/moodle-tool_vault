@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * True/false question type upgrade code
  *
@@ -28,7 +30,7 @@
  * @param int $oldversion
  * @return bool
  */
-function xmldb_qtype_truefalse_upgrade(int $oldversion): bool {
+function tool_vault_401_xmldb_qtype_truefalse_upgrade(int $oldversion): bool {
     global $DB;
 
     $dbman = $DB->get_manager();

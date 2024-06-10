@@ -13,6 +13,9 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+// phpcs:ignoreFile
+
 /**
  * Book module upgrade code
  *
@@ -29,22 +32,13 @@ defined('MOODLE_INTERNAL') || die;
  * @param int $oldversion the version we are upgrading from
  * @return bool always true
  */
-function xmldb_book_upgrade($oldversion) {
+function tool_vault_401_xmldb_book_upgrade($oldversion) {
     global $CFG, $DB;
 
     $dbman = $DB->get_manager();
 
     // Automatically generated Moodle v3.9.0 release upgrade line.
     // Put any upgrade step following this.
-
-    if ($oldversion < 2021052501) {
-        $table = new xmldb_table('book_chapters');
-        $index = new xmldb_index('bookid', XMLDB_INDEX_NOTUNIQUE, ['bookid']);
-        if (!$dbman->index_exists($table, $index)) {
-            $dbman->add_index($table, $index);
-        }
-        upgrade_mod_savepoint(true, 2021052501, 'book');
-    }
 
     // Automatically generated Moodle v4.0.0 release upgrade line.
     // Put any upgrade step following this.

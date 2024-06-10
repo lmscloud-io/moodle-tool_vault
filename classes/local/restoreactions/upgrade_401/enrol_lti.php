@@ -13,7 +13,8 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-//
+
+// phpcs:ignoreFile
 
 /**
  * This file keeps track of upgrades to the lti enrolment plugin
@@ -36,7 +37,7 @@
  *
  * @return boolean
  */
-function xmldb_enrol_lti_upgrade($oldversion) {
+function tool_vault_401_xmldb_enrol_lti_upgrade($oldversion) {
     global $CFG, $OUTPUT, $DB;
     $dbman = $DB->get_manager();
 
@@ -45,9 +46,8 @@ function xmldb_enrol_lti_upgrade($oldversion) {
 
     if ($oldversion < 2021052501) {
         // LTI 1.3: Set a private key for this site (which is acting as a tool in LTI 1.3).
-        require_once($CFG->dirroot . '/enrol/lti/upgradelib.php');
 
-        $warning = enrol_lti_verify_private_key();
+        $warning = tool_vault_401_enrol_lti_verify_private_key();
         if (!empty($warning)) {
             echo $OUTPUT->notification($warning, 'notifyproblem');
         }
@@ -508,4 +508,40 @@ function xmldb_enrol_lti_upgrade($oldversion) {
     // Put any upgrade step following this.
 
     return true;
+}
+
+/**
+ * This function checks if a private key has been generated for this enrolment instance.
+ *
+ * If the key does not exist it generates a new one. If the openssl
+ * extension is not installed or configured properly it returns a warning message.
+ *
+ * @return string A warning message if a private key does not exist and cannot be generated.
+ */
+function tool_vault_401_enrol_lti_verify_private_key() {
+
+    $name = 'lti_13_kid';
+    $key = get_config('enrol_lti', $name);
+
+    // If we already generated a valid key, no need to check.
+    if (empty($key)) {
+        // Create the private key.
+        $kid = bin2hex(openssl_random_pseudo_bytes(10));
+        set_config($name, $kid, 'enrol_lti');
+        $config = array(
+            "digest_alg" => "sha256",
+            "private_key_bits" => 2048,
+            "private_key_type" => OPENSSL_KEYTYPE_RSA,
+        );
+        $res = openssl_pkey_new($config);
+        openssl_pkey_export($res, $privatekey);
+
+        if (!empty($privatekey)) {
+            set_config('lti_13_privatekey', $privatekey, 'enrol_lti');
+        } else {
+            return get_string('opensslconfiginvalid', 'enrol_lti');
+        }
+    }
+
+    return '';
 }

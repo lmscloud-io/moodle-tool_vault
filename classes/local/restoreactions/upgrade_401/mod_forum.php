@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * This file keeps track of upgrades to
  * the forum module
@@ -42,54 +44,13 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-function xmldb_forum_upgrade($oldversion) {
+function tool_vault_401_xmldb_forum_upgrade($oldversion) {
     global $CFG, $DB;
 
     $dbman = $DB->get_manager(); // Loads ddl manager and xmldb classes.
 
     // Automatically generated Moodle v3.9.0 release upgrade line.
     // Put any upgrade step following this.
-
-    if ($oldversion < 2020072100) {
-        // Add index privatereplyto (not unique) to the forum_posts table.
-        $table = new xmldb_table('forum_posts');
-        $index = new xmldb_index('privatereplyto', XMLDB_INDEX_NOTUNIQUE, ['privatereplyto']);
-
-        if (!$dbman->index_exists($table, $index)) {
-            $dbman->add_index($table, $index);
-        }
-
-        upgrade_mod_savepoint(true, 2020072100, 'forum');
-    }
-
-    if ($oldversion < 2021101100) {
-        // Add custom data to digest tasks to stop duplicates being created after this patch.
-        $timenow = time();
-
-        $sitetimezone = \core_date::get_server_timezone();
-        $servermidnight = usergetmidnight($timenow, $sitetimezone);
-        $digesttime = $servermidnight + ($CFG->digestmailtime * 3600);
-        if ($digesttime < $timenow) {
-            // Digest time is in the past. set for tomorrow.
-            $servermidnight = usergetmidnight($timenow + DAYSECS, $sitetimezone);
-        }
-
-        $customdata = json_encode(['servermidnight' => $servermidnight]);
-
-        $params = [
-            'component' => 'mod_forum',
-            'classname' => '\mod_forum\task\send_user_digests',
-            'customdata' => '', // We do not want to overwrite any tasks that already have the custom data.
-        ];
-
-        $textfield = $DB->sql_compare_text('customdata', 1);
-
-        $sql = "component = :component AND classname = :classname AND $textfield = :customdata";
-
-        $DB->set_field_select('task_adhoc', 'customdata', $customdata, $sql, $params);
-
-        upgrade_mod_savepoint(true, 2021101100, 'forum');
-    }
 
     if ($oldversion < 2021101101) {
         // Remove the userid-forumid index as it gets replaces with forumid-userid.

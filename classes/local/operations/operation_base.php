@@ -127,9 +127,12 @@ abstract class operation_base implements logger {
             return;
         }
         if ($this->model && $this->model->id) {
-            $logrecord = $this->model->add_log($message, $loglevel);
-            if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
-                mtrace($this->model->format_log_line($logrecord, false));
+            $parts = str_split($message, 1333);
+            foreach ($parts as $part) {
+                $logrecord = $this->model->add_log($part, $loglevel);
+                if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
+                    mtrace($this->model->format_log_line($logrecord, false));
+                }
             }
         }
     }

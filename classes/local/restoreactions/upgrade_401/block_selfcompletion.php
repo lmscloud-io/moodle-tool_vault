@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * This file keeps track of upgrades to the self completion block
  *
@@ -43,9 +45,8 @@ defined('MOODLE_INTERNAL') || die();
  * Handles upgrading instances of this block.
  *
  * @param int $oldversion
- * @param object $block
  */
-function xmldb_block_selfcompletion_upgrade($oldversion, $block) {
+function tool_vault_401_xmldb_block_selfcompletion_upgrade($oldversion) {
     global $CFG, $DB;
 
     // Automatically generated Moodle v3.9.0 release upgrade line.

@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Atto text editor recordrtc upgrade script.
  *
@@ -30,14 +32,13 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $oldversion the version we are upgrading from.
  * @return bool
  */
-function xmldb_atto_recordrtc_upgrade($oldversion) {
+function tool_vault_401_xmldb_atto_recordrtc_upgrade($oldversion) {
     global $CFG;
 
     // Change settings from timelimit to audiotimelimit and videotimelimit.
-    require_once($CFG->dirroot . '/lib/editor/atto/plugins/recordrtc/lib.php');
     if ($oldversion < 2021073000) {
         $timelimit = get_config('atto_recordrtc', 'timelimit');
-        if ($timelimit != DEFAULT_TIME_LIMIT) {
+        if ($timelimit != 120) {
             set_config('audiotimelimit', $timelimit, 'atto_recordrtc');
             set_config('videotimelimit', $timelimit, 'atto_recordrtc');
         }

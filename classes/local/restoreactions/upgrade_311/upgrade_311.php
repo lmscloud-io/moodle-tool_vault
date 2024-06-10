@@ -34,14 +34,9 @@ class upgrade_311 {
      * @return void
      */
     public static function upgrade(site_restore $logger) {
-        try {
-            self::upgrade_core($logger);
-            self::upgrade_plugins($logger);
-        } catch (\Throwable $t) {
-            $logger->add_to_log("Exception executing core upgrade script: ".
-               $t->getMessage(), constants::LOGLEVEL_WARNING);
-            api::report_error($t);
-        }
+        self::upgrade_core($logger);
+        self::upgrade_plugins($logger);
+        set_config('upgraderunning', 0);
     }
 
     /**
@@ -53,7 +48,14 @@ class upgrade_311 {
     protected static function upgrade_core(site_restore $logger) {
         global $CFG;
         require_once(__DIR__ ."/core.php");
-        tool_vault_311_core_upgrade($CFG->version);
+
+        try {
+            tool_vault_311_core_upgrade($CFG->version);
+        } catch (\Throwable $t) {
+            $logger->add_to_log("Exception executing core upgrade script: ".
+               $t->getMessage(), constants::LOGLEVEL_WARNING);
+            api::report_error($t);
+        }
 
         set_config('version', 2021051708.00);
         set_config('release', '3.11.8');
@@ -83,7 +85,7 @@ class upgrade_311 {
                 } catch (\Throwable $t) {
                     $logger->add_to_log("Exception executing upgrade script for plugin {$plugin}: ".
                         $t->getMessage(), constants::LOGLEVEL_WARNING);
-                    api::report_error($e);
+                    api::report_error($t);
                 }
             }
             set_config('version', $version, $plugin);

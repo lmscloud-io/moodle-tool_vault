@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * VideoJS media player upgrade code
  *
@@ -50,7 +52,7 @@ defined('MOODLE_INTERNAL') || die;
  * @param int $oldversion
  * @return bool always true
  */
-function xmldb_media_videojs_upgrade($oldversion) {
+function tool_vault_401_xmldb_media_videojs_upgrade($oldversion) {
     global $CFG;
 
     if ($oldversion < 2021052503) {

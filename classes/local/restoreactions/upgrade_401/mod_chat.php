@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Upgrade code for the chat activity
  *
@@ -24,10 +26,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-function xmldb_chat_upgrade($oldversion) {
+function tool_vault_401_xmldb_chat_upgrade($oldversion) {
     global $CFG, $DB;
-
-    require_once($CFG->libdir.'/db/upgradelib.php'); // Core Upgrade-related functions.
 
     $dbman = $DB->get_manager(); // Loads ddl manager and xmldb classes.
 

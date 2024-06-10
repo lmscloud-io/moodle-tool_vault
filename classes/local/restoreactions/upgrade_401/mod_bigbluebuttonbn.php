@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Upgrade logic.
  *
@@ -24,17 +26,13 @@
  * @author    Fred Dixon  (ffdixon [at] blindsidenetworks [dt] com)
  */
 
-use mod_bigbluebuttonbn\plugin;
-use mod_bigbluebuttonbn\local\config;
-use mod_bigbluebuttonbn\task\upgrade_recordings_task;
-
 /**
  * Performs data migrations and updates on upgrade.
  *
  * @param int $oldversion
  * @return bool
  */
-function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
+function tool_vault_401_xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
     global $DB;
     $dbman = $DB->get_manager();
     if ($oldversion < 2015080605) {
@@ -47,13 +45,13 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
         // Change welcome, allow null.
         $fielddefinition = ['type' => XMLDB_TYPE_TEXT, 'precision' => null, 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => null, 'previous' => 'type'];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'welcome',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'welcome',
             $fielddefinition);
         // Change userid definition in bigbluebuttonbn_log.
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '10', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => null,
             'previous' => 'bigbluebuttonbnid'];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn_log', 'userid',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn_log', 'userid',
             $fielddefinition);
         // No settings to migrate.
         // Update db version tag.
@@ -91,22 +89,22 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
         // Add field type.
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '2', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => 'id'];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'type',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'type',
             $fielddefinition);
         // Add field recordings_html.
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => null];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'recordings_html',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'recordings_html',
             $fielddefinition);
         // Add field recordings_deleted.
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 1, 'previous' => null];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'recordings_deleted',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'recordings_deleted',
             $fielddefinition);
         // Add field recordings_imported.
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => null];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'recordings_imported',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'recordings_imported',
             $fielddefinition);
         // Drop field newwindow.
         $table2 = new xmldb_table('bigbluebuttonbn');
@@ -130,7 +128,7 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
         // Add field recordings_preview.
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => null];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'recordings_preview',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'recordings_preview',
             $fielddefinition);
         // Update db version tag.
         upgrade_mod_savepoint(true, 2017101009, 'bigbluebuttonbn');
@@ -147,8 +145,8 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
             $sql .= "WHERE moderatorpass = ? OR viewerpass = ?";
             $instances = $DB->get_records_sql($sql, ['', '']);
             foreach ($instances as $instance) {
-                $instance->moderatorpass = plugin::random_password(12);
-                $instance->viewerpass = plugin::random_password(12, $instance->moderatorpass);
+                $instance->moderatorpass = tool_vault_401_bbb_random_password(12);
+                $instance->viewerpass = tool_vault_401_bbb_random_password(12, $instance->moderatorpass);
                 // Store passwords in the database.
                 $DB->update_record('bigbluebuttonbn', $instance);
             }
@@ -160,22 +158,22 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
         // Update field type (Fix for CONTRIB-7302).
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '2', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => 'id'];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'type',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'type',
             $fielddefinition);
         // Update field meetingid (Fix for CONTRIB-7302).
         $fielddefinition = ['type' => XMLDB_TYPE_CHAR, 'precision' => '255', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => null, 'previous' => 'introformat'];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'meetingid',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'meetingid',
             $fielddefinition);
         // Update field recordings_imported (Fix for CONTRIB-7302).
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => null];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'recordings_imported',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'recordings_imported',
             $fielddefinition);
         // Add field recordings_preview.(Fix for CONTRIB-7302).
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => null];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'recordings_preview',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'recordings_preview',
             $fielddefinition);
         // Update db version tag.
         upgrade_mod_savepoint(true, 2017101012, 'bigbluebuttonbn');
@@ -184,7 +182,7 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
         // Add field for client technology choice.
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => null];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'clienttype',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'clienttype',
             $fielddefinition);
         // Update db version tag.
         upgrade_mod_savepoint(true, 2017101015, 'bigbluebuttonbn');
@@ -193,17 +191,17 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
         // Add field for Mute on start feature.
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => null];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'muteonstart',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'muteonstart',
             $fielddefinition);
         // Add field for record all from start.
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => null];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'recordallfromstart',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'recordallfromstart',
             $fielddefinition);
         // Add field for record hide button.
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => null];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'recordhidebutton',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'recordhidebutton',
             $fielddefinition);
         // Update db version tag.
         upgrade_mod_savepoint(true, 2019042000, 'bigbluebuttonbn');
@@ -212,39 +210,39 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
         // Add field for Completion with attendance.
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '9', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => null];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'completionattendance',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'completionattendance',
             $fielddefinition);
         // Add field for Completion with engagement through chats.
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '9', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => null];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'completionengagementchats',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'completionengagementchats',
             $fielddefinition);
         // Add field for Completion with engagement through talks.
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '9', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => null];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'completionengagementtalks',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'completionengagementtalks',
             $fielddefinition);
         // Add field for Completion with engagement through raisehand.
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '9', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => null];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'completionengagementraisehand',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'completionengagementraisehand',
             $fielddefinition);
         // Add field for Completion with engagement through pollvotes.
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '9', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => null];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'completionengagementpollvotes',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'completionengagementpollvotes',
             $fielddefinition);
         // Add field for Completion with engagement through emojis.
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '9', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => null];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'completionengagementemojis',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'completionengagementemojis',
             $fielddefinition);
         // Add index to bigbluebuttonbn_logs (Fix for CONTRIB-8157).
-        xmldb_bigbluebuttonbn_index_table($dbman, 'bigbluebuttonbn_logs', 'courseid',
+        tool_vault_401_xmldb_bigbluebuttonbn_index_table($dbman, 'bigbluebuttonbn_logs', 'courseid',
             ['courseid']);
-        xmldb_bigbluebuttonbn_index_table($dbman, 'bigbluebuttonbn_logs', 'log',
+        tool_vault_401_xmldb_bigbluebuttonbn_index_table($dbman, 'bigbluebuttonbn_logs', 'log',
             ['log']);
-        xmldb_bigbluebuttonbn_index_table($dbman, 'bigbluebuttonbn_logs', 'logrow',
+        tool_vault_401_xmldb_bigbluebuttonbn_index_table($dbman, 'bigbluebuttonbn_logs', 'logrow',
             ['courseid', 'bigbluebuttonbnid', 'userid', 'log']);
         // Update db version tag.
         upgrade_mod_savepoint(true, 2019101001, 'bigbluebuttonbn');
@@ -254,47 +252,47 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
 
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => 'muteonstart'];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'disablecam',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'disablecam',
             $fielddefinition);
 
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => 'disablecam'];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'disablemic',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'disablemic',
             $fielddefinition);
 
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => 'disablemic'];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'disableprivatechat',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'disableprivatechat',
             $fielddefinition);
 
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => 'disableprivatechat'];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'disablepublicchat',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'disablepublicchat',
             $fielddefinition);
 
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => 'disablepublicchat'];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'disablenote',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'disablenote',
             $fielddefinition);
 
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => 'disablenote'];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'hideuserlist',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'hideuserlist',
             $fielddefinition);
 
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => 'hideuserlist'];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'lockedlayout',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'lockedlayout',
             $fielddefinition);
 
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => 'lockedlayout'];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'lockonjoin',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'lockonjoin',
             $fielddefinition);
 
         $fielddefinition = ['type' => XMLDB_TYPE_INTEGER, 'precision' => '1', 'unsigned' => null,
             'notnull' => XMLDB_NOTNULL, 'sequence' => null, 'default' => 0, 'previous' => 'lockonjoin'];
-        xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'lockonjoinconfigurable',
+        tool_vault_401_xmldb_bigbluebuttonbn_add_change_field($dbman, 'bigbluebuttonbn', 'lockonjoinconfigurable',
             $fielddefinition);
 
         // Bigbluebuttonbn savepoint reached.
@@ -303,7 +301,7 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
 
     if ($oldversion < 2019101004) {
         // Add index to bigbluebuttonbn_logs (Leftover for CONTRIB-8157).
-        xmldb_bigbluebuttonbn_index_table($dbman, 'bigbluebuttonbn_logs', 'userlog',
+        tool_vault_401_xmldb_bigbluebuttonbn_index_table($dbman, 'bigbluebuttonbn_logs', 'userlog',
             ['userid', 'log']);
         // Bigbluebuttonbn savepoint reached.
         upgrade_mod_savepoint(true, 2019101004, 'bigbluebuttonbn');
@@ -400,9 +398,9 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
 
     if ($oldversion < 2021091408) {
         // Change BigBliueButton Server credentials to new defaults if test-install is being used.
-        if (config::get('server_url') == 'http://test-install.blindsidenetworks.com/bigbluebutton/') {
-            set_config('bigbluebuttonbn_server_url', config::DEFAULT_SERVER_URL);
-            set_config('bigbluebuttonbn_shared_secret', config::DEFAULT_SHARED_SECRET);
+        if (tool_vault_401_bbb_config_get('server_url') == 'http://test-install.blindsidenetworks.com/bigbluebutton/') {
+            set_config('bigbluebuttonbn_server_url', 'https://test-moodle.blindsidenetworks.com/bigbluebutton/');
+            set_config('bigbluebuttonbn_shared_secret', '0b21fcaf34673a8c3ec8ed877d76ae34');
         }
         // Bigbluebuttonbn savepoint reached.
         upgrade_mod_savepoint(true, 2021091408, 'bigbluebuttonbn');
@@ -410,8 +408,8 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
 
     if ($oldversion < 2022021601) {
         // Create adhoc task for upgrading of existing bigbluebuttonbn_logs related to recordings.
-        upgrade_recordings_task::schedule_upgrade_per_meeting();
-        upgrade_recordings_task::schedule_upgrade_per_meeting(true);
+        tool_vault_401_bbb_schedule_upgrade_per_meeting();
+        tool_vault_401_bbb_schedule_upgrade_per_meeting(true);
         // Bigbluebuttonbn savepoint reached.
         upgrade_mod_savepoint(true, 2022021601, 'bigbluebuttonbn');
     }
@@ -424,7 +422,7 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
         set_config('bigbluebuttonbn_default_dpa_accepted', false);
 
         // If the default server configuration is used.
-        if (config::get('server_url') === config::DEFAULT_SERVER_URL) {
+        if (tool_vault_401_bbb_config_get('server_url') === 'https://test-moodle.blindsidenetworks.com/bigbluebutton/') {
             // Disable the BigBlueButton activity module.
             $DB->set_field('modules', 'visible', 0, ['name' => 'bigbluebuttonbn']);
 
@@ -496,9 +494,8 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
  * @param string $tablename
  * @param string $fieldname
  * @param array $fielddefinition
- * @deprecated  please do not use this anymore (historical migrations)
  */
-function xmldb_bigbluebuttonbn_add_change_field(database_manager $dbman, string $tablename, string $fieldname,
+function tool_vault_401_xmldb_bigbluebuttonbn_add_change_field(database_manager $dbman, string $tablename, string $fieldname,
     array $fielddefinition) {
     $table = new xmldb_table($tablename);
     $field = new xmldb_field($fieldname);
@@ -528,9 +525,8 @@ function xmldb_bigbluebuttonbn_add_change_field(database_manager $dbman, string 
  * @param string $indexname
  * @param array $indexfields
  * @param string|false|null $indextype
- * @deprecated please do not use this anymore (historical migrations)
  */
-function xmldb_bigbluebuttonbn_index_table(database_manager $dbman, string $tablename, string $indexname, array $indexfields,
+function tool_vault_401_xmldb_bigbluebuttonbn_index_table(database_manager $dbman, string $tablename, string $indexname, array $indexfields,
     $indextype = XMLDB_INDEX_NOTUNIQUE) {
     $table = new xmldb_table($tablename);
     if (!$dbman->table_exists($table)) {
@@ -541,4 +537,58 @@ function xmldb_bigbluebuttonbn_index_table(database_manager $dbman, string $tabl
         $dbman->drop_index($table, $index);
     }
     $dbman->add_index($table, $index, true, true);
+}
+
+function tool_vault_401_bbb_config_get(string $setting): string {
+    global $CFG;
+    if (isset($CFG->bigbluebuttonbn[$setting])) {
+        return (string) $CFG->bigbluebuttonbn[$setting];
+    }
+    if (isset($CFG->{'bigbluebuttonbn_' . $setting})) {
+        return (string) $CFG->{'bigbluebuttonbn_' . $setting};
+    }
+    $defaultvalues = [
+        'server_url' => 'https://test-moodle.blindsidenetworks.com/bigbluebutton/',
+    ];
+    if (!array_key_exists($setting, $defaultvalues)) {
+        return null;
+    }
+    return $defaultvalues[$setting];
+}
+
+
+/**
+ * Helper generates a random password.
+ *
+ * @param int $length
+ * @param string $unique
+ *
+ * @return string
+ */
+function tool_vault_401_bbb_random_password($length = 8, $unique = "") {
+    $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    do {
+        $password = substr(str_shuffle($chars), 0, $length);
+    } while ($unique == $password);
+    return $password;
+}
+
+/**
+ * Schedule all upgrading tasks.
+ *
+ * @param bool $importedrecordings
+ * @return void
+ * @throws \dml_exception
+ */
+function tool_vault_401_bbb_schedule_upgrade_per_meeting($importedrecordings = false) {
+    global $DB;
+    $meetingids = $DB->get_fieldset_sql(
+        'SELECT DISTINCT meetingid FROM {bigbluebuttonbn_logs} WHERE log = :createorimport',
+        ['createorimport' => $importedrecordings ? 'Import' : 'Create']
+    );
+    foreach ($meetingids as $mid) {
+        $createdrecordingtask = new static();
+        $createdrecordingtask->set_custom_data((object) ['meetingid' => $mid, 'isimported' => $importedrecordings]);
+        \core\task\manager::queue_adhoc_task($createdrecordingtask);
+    }
 }

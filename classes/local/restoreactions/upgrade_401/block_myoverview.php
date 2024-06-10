@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * This file keeps track of upgrades to the myoverview block
  *
@@ -23,30 +25,29 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+use tool_vault\local\restoreactions\upgrade_401\helpers\blocks_helper;
 
-require_once("{$CFG->dirroot}/my/lib.php");
-require_once("{$CFG->libdir}/db/upgradelib.php");
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Upgrade code for the MyOverview block.
  *
  * @param int $oldversion
  */
-function xmldb_block_myoverview_upgrade($oldversion) {
+function tool_vault_401_xmldb_block_myoverview_upgrade($oldversion) {
     global $DB, $CFG, $OUTPUT;
 
     // Automatically generated Moodle v3.9.0 release upgrade line.
     // Put any upgrade step following this.
 
     if ($oldversion < 2021052504) {
-        upgrade_block_delete_instances('myoverview', '__default', 'my-index');
+        blocks_helper::upgrade_block_delete_instances('myoverview', '__default', 'my-index');
 
         // Add new instance to the /my/courses.php page.
         $subpagepattern = $DB->get_record('my_pages', [
             'userid' => null,
-            'name' => MY_PAGE_COURSES,
-            'private' => MY_PAGE_PUBLIC,
+            'name' => '__courses' /* MY_PAGE_COURSES */,
+            'private' => 0 /* MY_PAGE_PUBLIC */,
         ], 'id', IGNORE_MULTIPLE)->id;
 
         $blockname = 'myoverview';
@@ -71,7 +72,7 @@ function xmldb_block_myoverview_upgrade($oldversion) {
     }
 
     if ($oldversion < 2022041901) {
-        upgrade_block_set_my_user_parent_context('myoverview', '__default', 'my-index');
+        blocks_helper::upgrade_block_set_my_user_parent_context('myoverview', '__default', 'my-index');
         upgrade_block_savepoint(true, 2022041901, 'myoverview', false);
     }
 

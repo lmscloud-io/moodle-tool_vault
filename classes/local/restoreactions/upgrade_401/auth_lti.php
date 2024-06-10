@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * LTI authentication plugin upgrade code
  *
@@ -30,7 +32,7 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $oldversion the version we are upgrading from.
  * @return bool result.
  */
-function xmldb_auth_lti_upgrade($oldversion) {
+function tool_vault_401_xmldb_auth_lti_upgrade($oldversion) {
     global $DB;
 
     $dbman = $DB->get_manager();

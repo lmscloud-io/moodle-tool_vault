@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Upgrade script for the quiz module.
  *
@@ -28,28 +30,12 @@ defined('MOODLE_INTERNAL') || die();
  * Quiz module upgrade function.
  * @param string $oldversion the version we are upgrading from.
  */
-function xmldb_quiz_upgrade($oldversion) {
+function tool_vault_401_xmldb_quiz_upgrade($oldversion) {
     global $CFG, $DB;
     $dbman = $DB->get_manager();
 
     // Automatically generated Moodle v3.9.0 release upgrade line.
     // Put any upgrade step following this.
-
-    if ($oldversion < 2020061501) {
-
-        // Define field completionminattempts to be added to quiz.
-        $table = new xmldb_table('quiz');
-        $field = new xmldb_field('completionminattempts', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0',
-            'completionpass');
-
-        // Conditionally launch add field completionminattempts.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Quiz savepoint reached.
-        upgrade_mod_savepoint(true, 2020061501, 'quiz');
-    }
 
     if ($oldversion < 2021052503) {
         $table = new xmldb_table('quiz');

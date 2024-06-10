@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Database upgrades for the RSS block.
  *
@@ -30,7 +32,7 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $oldversion The version number of the plugin that was installed.
  * @return boolean
  */
-function xmldb_block_rss_client_upgrade($oldversion) {
+function tool_vault_401_xmldb_block_rss_client_upgrade($oldversion) {
     global $CFG, $DB;
 
     // Automatically generated Moodle v3.9.0 release upgrade line.

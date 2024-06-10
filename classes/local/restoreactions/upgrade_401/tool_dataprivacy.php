@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * tool_dataprivacy plugin upgrade code
  *
@@ -30,44 +32,13 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $oldversion the version we are upgrading from
  * @return bool result
  */
-function xmldb_tool_dataprivacy_upgrade($oldversion) {
+function tool_vault_401_xmldb_tool_dataprivacy_upgrade($oldversion) {
     global $CFG, $DB;
 
     $dbman = $DB->get_manager();
 
     // Automatically generated Moodle v3.9.0 release upgrade line.
     // Put any upgrade step following this.
-
-    if ($oldversion < 2020061501) {
-
-        // Define field commentsformat to be added to tool_dataprivacy_request.
-        $table = new xmldb_table('tool_dataprivacy_request');
-        $field = new xmldb_field('commentsformat', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'comments');
-
-        // Conditionally launch add field commentsformat.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Define field dpocommentformat to be added to tool_dataprivacy_request.
-        $field = new xmldb_field('dpocommentformat', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'dpocomment');
-
-        // Conditionally launch add field dpocommentformat.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Define field systemapproved to be added to tool_dataprivacy_request.
-        $field = new xmldb_field('systemapproved', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0', 'dpocommentformat');
-
-        // Conditionally launch add field systemapproved.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Dataprivacy savepoint reached.
-        upgrade_plugin_savepoint(true, 2020061501, 'tool', 'dataprivacy');
-    }
 
     // Automatically generated Moodle v4.0.0 release upgrade line.
     // Put any upgrade step following this.

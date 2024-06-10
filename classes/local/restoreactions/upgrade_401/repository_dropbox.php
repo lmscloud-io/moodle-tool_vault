@@ -14,13 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 defined('MOODLE_INTERNAL') || die();
 
 /**
  * @param int $oldversion the version we are upgrading from
  * @return bool result
  */
-function xmldb_repository_dropbox_upgrade($oldversion) {
+function tool_vault_401_xmldb_repository_dropbox_upgrade($oldversion) {
     global $CFG, $DB;
 
     // Automatically generated Moodle v3.9.0 release upgrade line.

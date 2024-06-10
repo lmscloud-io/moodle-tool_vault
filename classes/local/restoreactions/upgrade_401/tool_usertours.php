@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Upgrade code for install
  *
@@ -33,34 +35,13 @@ use tool_usertours\tour;
  * @param int $oldversion The old version of the user tours plugin
  * @return bool
  */
-function xmldb_tool_usertours_upgrade($oldversion) {
+function tool_vault_401_xmldb_tool_usertours_upgrade($oldversion) {
     global $CFG, $DB;
 
     $dbman = $DB->get_manager();
 
     // Automatically generated Moodle v3.9.0 release upgrade line.
     // Put any upgrade step following this.
-
-    if ($oldversion < 2021052501) {
-        // Clean up user preferences of deleted tours.
-        $select = $DB->sql_like('name', ':lastcompleted') . ' OR ' . $DB->sql_like('name', ':requested');
-        $params = [
-            'lastcompleted' => tour::TOUR_LAST_COMPLETED_BY_USER . '%',
-            'requested' => tour::TOUR_REQUESTED_BY_USER . '%',
-        ];
-
-        $preferences = $DB->get_records_select('user_preferences', $select, $params, '', 'DISTINCT name');
-        foreach ($preferences as $preference) {
-            // Match tour ID at the end of the preference name, remove all of that preference type if tour ID doesn't exist.
-            if (preg_match('/(?<tourid>\d+)$/', $preference->name, $matches) &&
-                    !$DB->record_exists('tool_usertours_tours', ['id' => $matches['tourid']])) {
-
-                $DB->delete_records('user_preferences', ['name' => $preference->name]);
-            }
-        }
-
-        upgrade_plugin_savepoint(true, 2021052501, 'tool', 'usertours');
-    }
 
     if ($oldversion < 2021092300) {
         // Define field endtourlabel to be added to tool_usertours_tours.

@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Atto equation plugin upgrade script.
  *
@@ -29,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $oldversion The old version of atto equation in the DB.
  * @return bool
  */
-function xmldb_atto_equation_upgrade($oldversion) {
+function tool_vault_401_xmldb_atto_equation_upgrade($oldversion) {
     global $CFG;
 
     // Automatically generated Moodle v3.9.0 release upgrade line.

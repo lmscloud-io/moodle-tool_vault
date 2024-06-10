@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * This file keeps track of upgrades to the recentlyaccesseditems block
  *
@@ -36,17 +38,17 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+use tool_vault\local\restoreactions\upgrade_401\helpers\blocks_helper;
 
-require_once("{$CFG->libdir}/db/upgradelib.php");
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Upgrade the recentlyaccesseditems db table.
  *
- * @param $oldversion
+ * @param int $oldversion
  * @return bool
  */
-function xmldb_block_recentlyaccesseditems_upgrade($oldversion, $block) {
+function tool_vault_401_xmldb_block_recentlyaccesseditems_upgrade($oldversion) {
     global $DB;
 
     // Automatically generated Moodle v3.9.0 release upgrade line.
@@ -54,12 +56,12 @@ function xmldb_block_recentlyaccesseditems_upgrade($oldversion, $block) {
 
     if ($oldversion < 2022030200) {
         // Update all recentlyaccesseditems blocks in the my-index to be in the main side-post region.
-        upgrade_block_set_defaultregion('recentlyaccesseditems', '__default', 'my-index', 'side-post');
+        blocks_helper::upgrade_block_set_defaultregion('recentlyaccesseditems', '__default', 'my-index', 'side-post');
         upgrade_block_savepoint(true, 2022030200, 'recentlyaccesseditems', false);
     }
 
     if ($oldversion < 2022041901) {
-        upgrade_block_set_my_user_parent_context('recentlyaccesseditems', '__default', 'my-index');
+        blocks_helper::upgrade_block_set_my_user_parent_context('recentlyaccesseditems', '__default', 'my-index');
         upgrade_block_savepoint(true, 2022041901, 'recentlyaccesseditems', false);
     }
 

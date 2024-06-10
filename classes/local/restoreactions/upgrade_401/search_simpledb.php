@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Calculated question type upgrade code.
  *
@@ -26,7 +28,7 @@
  * Upgrade code for the simpledb search engine.
  * @param int $oldversion the version we are upgrading from.
  */
-function xmldb_search_simpledb_upgrade($oldversion = 0) {
+function tool_vault_401_xmldb_search_simpledb_upgrade($oldversion = 0) {
     global $DB;
 
     $dbman = $DB->get_manager();

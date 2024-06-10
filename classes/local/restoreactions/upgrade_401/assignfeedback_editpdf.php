@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Upgrade code for the feedback_editpdf module.
  *
@@ -29,31 +31,10 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $oldversion
  * @return bool
  */
-function xmldb_assignfeedback_editpdf_upgrade($oldversion) {
+function tool_vault_401_xmldb_assignfeedback_editpdf_upgrade($oldversion) {
     global $CFG, $DB;
 
     $dbman = $DB->get_manager();
-
-    // Automatically generated Moodle v3.9.0 release upgrade line.
-    // Put any upgrade step following this.
-
-    if ($oldversion < 2021060400) {
-        // Remove submissions from the processing queue that have been processed.
-        $sql = 'DELETE
-                  FROM {assignfeedback_editpdf_queue}
-                 WHERE EXISTS (SELECT 1
-                                 FROM {assign_submission} s,
-                                      {assign_grades} g
-                                WHERE s.id = submissionid
-                                  AND s.assignment = g.assignment
-                                  AND s.userid = g.userid
-                                  AND s.attemptnumber = g.attemptnumber)';
-
-        $DB->execute($sql);
-
-        // Editpdf savepoint reached.
-        upgrade_plugin_savepoint(true, 2021060400, 'assignfeedback', 'editpdf');
-    }
 
     // Automatically generated Moodle v4.0.0 release upgrade line.
     // Put any upgrade step following this.

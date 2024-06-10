@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * This file keeps track of upgrades to the feedback module.
  *
@@ -41,7 +43,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-function xmldb_feedback_upgrade($oldversion) {
+function tool_vault_401_xmldb_feedback_upgrade($oldversion) {
     global $CFG, $DB;
 
     $dbman = $DB->get_manager(); // Loads ddl manager and xmldb classes.

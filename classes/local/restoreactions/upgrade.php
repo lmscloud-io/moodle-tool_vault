@@ -20,6 +20,7 @@ use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\checks\version_restore;
 use tool_vault\local\restoreactions\upgrade_311\upgrade_311;
+use tool_vault\local\restoreactions\upgrade_401\upgrade_401;
 use tool_vault\site_restore;
 
 /**
@@ -52,13 +53,20 @@ class upgrade extends restore_action {
 
         $siteupgraded = false;
 
-        // Upgrade to intermediate release (only 3.11.8 is currently supported).
+        // Upgrade to intermediate release.
         $intermediaterelease = version_restore::get_required_core_intermediate_release($CFG->release, $coderelease);
-        if ($intermediaterelease === '3.11.8') {
+
+        if ($intermediaterelease && version_compare(normalize_version($CFG->release), '3.11.8', '<=')) {
             $siteupgraded = true;
-            $logger->add_to_log('Upgrading Moodle from '.$CFG->release.' to '.$intermediaterelease.'...');
+            $logger->add_to_log('Upgrading Moodle from '.$CFG->release.' to 3.11.8...');
             upgrade_311::upgrade($logger);
-            set_config('upgraderunning', 0);
+            $logger->add_to_log('...done');
+        }
+
+        if ($intermediaterelease === '4.1.2') {
+            $siteupgraded = true;
+            $logger->add_to_log('Upgrading Moodle from '.$CFG->release.' to 4.1.2...');
+            upgrade_401::upgrade($logger);
             $logger->add_to_log('...done');
         }
 

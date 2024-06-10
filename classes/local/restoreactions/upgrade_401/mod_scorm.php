@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Upgrade script for the scorm module.
  *
@@ -29,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $oldversion
  * @return bool
  */
-function xmldb_scorm_upgrade($oldversion) {
+function tool_vault_401_xmldb_scorm_upgrade($oldversion) {
     global $DB;
 
     $dbman = $DB->get_manager();

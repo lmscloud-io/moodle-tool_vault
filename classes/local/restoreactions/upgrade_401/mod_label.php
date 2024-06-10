@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * Label module upgrade
  *
@@ -44,7 +46,7 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-function xmldb_label_upgrade($oldversion) {
+function tool_vault_401_xmldb_label_upgrade($oldversion) {
     global $CFG, $DB;
 
     // Automatically generated Moodle v3.9.0 release upgrade line.
