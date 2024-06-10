@@ -10,6 +10,8 @@ All notable changes to the tool_vault plugin will be documented in this file.
   possible without the need to upgrade to intermediate version (by itself Moodle 4.3 can only
   upgrade from 3.11.8 or later).
 - This also allows to run "uninstall missing plugins" script after any restore.
+- Added "Tools" section and the "Uninstall missing plugins" as a tool that can be run
+  independently.
 
 ## [1.9] - 2024-05-05
 

@@ -18,6 +18,7 @@ namespace tool_vault\local\restoreactions;
 
 use tool_vault\api;
 use tool_vault\constants;
+use tool_vault\local\logger;
 use tool_vault\site_restore;
 
 /**
@@ -110,10 +111,10 @@ class recalc_version_hash extends restore_action {
     /**
      * Recalculate version hash
      *
-     * @param site_restore $logger
+     * @param logger $logger
      * @return void
      */
-    public static function recalculate_version_hash(site_restore $logger) {
+    public static function recalculate_version_hash(logger $logger) {
         global $CFG, $DB;
 
         $logger->add_to_log('Recalculating all versions hash...');

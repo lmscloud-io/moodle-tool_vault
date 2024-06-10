@@ -24,7 +24,9 @@ use tool_vault\local\models\check_model;
 use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\operation_model;
 use tool_vault\local\models\restore_model;
+use tool_vault\local\models\tool_model;
 use tool_vault\local\operations\operation_base;
+use tool_vault\local\tools\tool_base;
 use tool_vault\site_backup;
 use tool_vault\site_restore;
 use tool_vault\site_restore_dryrun;
@@ -183,6 +185,8 @@ class cron_task extends \core\task\scheduled_task {
                 $model->set_status(constants::STATUS_FAILEDTOSTART)->set_error($t)->save();
                 return;
             }
+        } else if ($model instanceof tool_model) {
+            $operation = tool_base::load($model->id);
         } else {
             $model->set_status(constants::STATUS_FAILEDTOSTART)->save();
             return;

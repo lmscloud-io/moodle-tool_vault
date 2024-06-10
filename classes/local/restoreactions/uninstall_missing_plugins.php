@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\restoreactions;
 
+use PHPUnit\Framework\MockObject\Stub\ReturnArgument;
 use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\site_restore;
@@ -41,9 +42,21 @@ class uninstall_missing_plugins extends restore_action {
         if (!api::get_setting_checkbox('restoreremovemissing')) {
             return;
         }
+        \core_plugin_manager::reset_caches();
+        self::remove_missing_plugins($logger);
+    }
+
+    /**
+     * Uinstall missing plugins if there are any and if no upgrade is pending.
+     *
+     * @param \tool_vault\local\logger $logger
+     * @return void
+     */
+    public static function remove_missing_plugins(\tool_vault\local\logger $logger) {
+        global $CFG;
+        require_once($CFG->libdir . '/adminlib.php'); // Core core_plugin_manager does not include it!
 
         $needsupgrade = recalc_version_hash::fetch_core_version()['version'] != (float)$CFG->version;
-        \core_plugin_manager::reset_caches();
         $pluginman = \core_plugin_manager::instance();
         /** @var \core\plugininfo\base[][] $plugininfo */
         $plugininfo = $pluginman->get_plugins();
@@ -60,6 +73,7 @@ class uninstall_missing_plugins extends restore_action {
             }
         }
         if (!$missingplugins) {
+            $logger->add_to_log('There are no missing plugins. Nothing to do.');
             return;
         }
 
