@@ -2,7 +2,7 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-# Unreleased
+# [2.0] - 2024-06-10
 
 ### Added
 - Setting to run upgrade as part of the restore process. When selected, Vault will upgrade
