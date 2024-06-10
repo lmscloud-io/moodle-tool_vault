@@ -587,7 +587,7 @@ function tool_vault_401_bbb_schedule_upgrade_per_meeting($importedrecordings = f
         ['createorimport' => $importedrecordings ? 'Import' : 'Create']
     );
     foreach ($meetingids as $mid) {
-        $createdrecordingtask = new static();
+        $createdrecordingtask = new \mod_bigbluebuttonbn\task\upgrade_recordings_task();
         $createdrecordingtask->set_custom_data((object) ['meetingid' => $mid, 'isimported' => $importedrecordings]);
         \core\task\manager::queue_adhoc_task($createdrecordingtask);
     }
