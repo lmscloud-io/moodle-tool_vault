@@ -2,7 +2,7 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-# Unreleased
+# [2.1] - 2024-06-12
 
 ### Fixed
 - Fixed error in the "uninstall missing plugins" script when it is executed right after
