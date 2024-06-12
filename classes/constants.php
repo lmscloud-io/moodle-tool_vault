@@ -106,4 +106,11 @@ class constants {
 
     /** @var int */
     const LOG_FREQUENCY = 15; // 15s.
+
+    /**
+     * @var array
+     * list of file extensions that do not benefit from compression and can be added to archives as is
+     * to improve performance. Note that there are many more compressed formats, these are just the common ones.
+     */
+    const COMPRESSED_FILE_EXTENSIONS = ['jpg', 'jpeg', 'zip', 'mbz', 'gz', 'mp4'];
 }

@@ -450,8 +450,10 @@ class site_backup extends operation_base {
             mkdir(dirname($fullpath), $CFG->directorypermissions, true);
         }
         if ($file->copy_content_to($fullpath)) {
+            $ext = pathinfo($file->get_filename(), PATHINFO_EXTENSION);
+            $isarchive = in_array(strtolower($ext), constants::COMPRESSED_FILE_EXTENSIONS);
             $this->get_files_backup(constants::FILENAME_FILEDIR)
-                ->add_file($fullpath, $filename);
+                ->add_file($fullpath, $filename, true, true, $isarchive);
             return true;
         }
         $this->add_to_log('- can not back up file with contenthash ' . $chash . ' - skipping', constants::LOGLEVEL_WARNING);

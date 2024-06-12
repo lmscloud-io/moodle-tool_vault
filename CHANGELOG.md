@@ -7,6 +7,9 @@ All notable changes to the tool_vault plugin will be documented in this file.
 ### Fixed
 - Fixed error in the "uninstall missing plugins" script when it is executed right after
   upgrade
+- Improved performance by skipping compression of the files that are already compressed
+  (for example, zip, jpg, mbz, mp4, etc). It may very slightly increase the backup size
+  however it will noticeably reduce the time needed to create archives.
 
 # [2.0] - 2024-06-10
 
