@@ -92,6 +92,7 @@ class upgrade extends restore_action {
                     constants::LOGLEVEL_WARNING);
                 api::report_error($e);
             }
+            set_config('upgraderunning', 0);
             $logger->add_to_log('...done');
         }
 
