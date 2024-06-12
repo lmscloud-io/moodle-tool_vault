@@ -450,8 +450,10 @@ class site_backup extends operation_base {
             mkdir(dirname($fullpath), $CFG->directorypermissions, true);
         }
         if ($file->copy_content_to($fullpath)) {
+            $ext = pathinfo($file->get_filename(), PATHINFO_EXTENSION);
+            $isarchive = in_array($ext, ['zip', 'gz', 'jpg', 'mp4']); // TODO more types.
             $this->get_files_backup(constants::FILENAME_FILEDIR)
-                ->add_file($fullpath, $filename);
+                ->add_file($fullpath, $filename, true, true, $isarchive);
             return true;
         }
         $this->add_to_log('- can not back up file with contenthash ' . $chash . ' - skipping', constants::LOGLEVEL_WARNING);
@@ -485,10 +487,18 @@ class site_backup extends operation_base {
                 LEFT JOIN {files_reference} r ON f.referencefileid = r.id
                 ORDER BY filehash.contenthash";
             $records = $DB->get_records_sql($sql, [$lasthash], 0, constants::FILES_BATCH);
+            $this->add_to_log('Start files batch. '.count($records).' files', constants::LOGLEVEL_VERBOSE);
+            $cnt = 0;
             foreach ($records as $filerecord) {
                 $cntexported += (int)$this->export_one_file($fs->get_file_instance($filerecord), $dir);
                 $lasthash = $filerecord->contenthash;
+                $cnt++;
+                if ($cnt % 100 == 0) {
+                    $this->add_to_log("Processed {$cnt}/".count($records)." files from the current batch",
+                        constants::LOGLEVEL_VERBOSE);
+                }
             }
+            $this->add_to_log("Finished files batch", constants::LOGLEVEL_VERBOSE);
         } while (count($records) >= constants::FILES_BATCH - 1);
 
         $filesbackup->finish();

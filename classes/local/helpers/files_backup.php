@@ -93,10 +93,13 @@ class files_backup {
         ]);
 
         $this->ziparchive = new \zip_archive();
+        $this->sitebackup->add_to_log('Opening zip archive '.$this->get_archive_file_path().'...',
+            constants::LOGLEVEL_VERBOSE);
         if (!$this->ziparchive->open($this->get_archive_file_path(), \file_archive::CREATE)) {
             // TODO?
             throw new \moodle_exception('error_cannotcreatezip', 'tool_vault');
         }
+        $this->sitebackup->add_to_log('...archive opened', constants::LOGLEVEL_VERBOSE);
     }
 
     /**
@@ -118,7 +121,10 @@ class files_backup {
      */
     public function finish(bool $startnew = false) {
         if ($this->ziparchive) {
+            $this->sitebackup->add_to_log('Packing zip archive '.$this->currentbackupfile->get_file_name()
+                .'...', constants::LOGLEVEL_VERBOSE);
             $this->ziparchive->close();
+            $this->sitebackup->add_to_log('...packed', constants::LOGLEVEL_VERBOSE);
             $this->ziparchive = null;
         }
 
@@ -165,16 +171,20 @@ class files_backup {
      * @param string|null $localname
      * @param bool $allownewzip allow to break after this file and start a new archive
      * @param bool $removesource remove $filepath on completion
+     * @param bool $isarchive this file is already an arhive and should be added without compression
      * @return self
      */
     public function add_file(string $filepath, ?string $localname = null, bool $allownewzip = true,
-                             bool $removesource = true): self {
+                             bool $removesource = true, bool $isarchive = false): self {
         $localname = $localname ?? basename($filepath);
         if (is_dir($filepath)) {
             $this->add_folder($filepath, $localname, $removesource);
             return $this;
         }
         $this->ziparchive->add_file_from_pathname($localname, $filepath);
+        if ($isarchive) {
+            $this->set_file_compression_store($localname);
+        }
         if ($removesource) {
             $this->filestoremove[] = $filepath;
         }
@@ -184,6 +194,24 @@ class files_backup {
             $this->check_if_new_zip_needed();
         }
         return $this;
+    }
+
+    /**
+     * Store file in zip as is, without archiving
+     *
+     * Improves performance for files that are already compressed.
+     *
+     * Example:
+     *   $this->set_file_compression_store($localname);
+     *
+     * @param string $localname
+     * @return void
+     */
+    protected function set_file_compression_store(string $localname): void {
+        $reflection = new \ReflectionClass($this->ziparchive);
+        $property = $reflection->getProperty('za');
+        $property->setAccessible(true);
+        $property->getValue($this->ziparchive)->setCompressionName($localname, \ZipArchive::CM_STORE);
     }
 
     /**
