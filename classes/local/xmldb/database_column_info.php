@@ -67,7 +67,8 @@ class database_column_info extends \database_column_info {
             if ($this->type === 'float') {
                 // There is some code in pgsql_native_moodle_database::fetch_columns() that returns very weird small
                 // field size and precision for float type.
-                if ($deftable && ($deffield = $deftable->get_xmldb_table()->getField($this->name))) {
+                if ($deftable && ($deffield = $deftable->get_xmldb_table()->getField($this->name))
+                        && $deffield->getType() == $field->getType()) {
                     $field->setDecimals($deffield->getDecimals());
                     $field->setLength($deffield->getLength());
                 } else if ($field->getLength() == 4) {
@@ -97,7 +98,9 @@ class database_column_info extends \database_column_info {
      */
     protected function fix_field_precision(\xmldb_field $actualfield, dbtable $deftable) {
         global $DB;
-        if (!($deffield = $deftable->get_xmldb_table()->getField($this->name))) {
+        if (!($deffield = $deftable->get_xmldb_table()->getField($this->name)) ||
+                $deffield->getType() != $actualfield->getType()) {
+            // Field definition is not present in the schema or its type does not match the actual field.
             return;
         }
         $checksql = false;
@@ -133,7 +136,7 @@ class database_column_info extends \database_column_info {
     }
 
     /**
-     * Fix field properties, for example default value
+     * Fix field properties, for example length or default value, otherwise xmldb_field::validateDefinition() returns error
      *
      * @param \xmldb_field $actualfield
      * @param dbtable|null $deftable
