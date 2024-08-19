@@ -2,6 +2,11 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+# [2.2] - 2024-08-19
+
+### Fixed
+- Avoid exception when the field type in the actual database does not match definition
+
 # [2.1] - 2024-06-12
 
 ### Fixed
