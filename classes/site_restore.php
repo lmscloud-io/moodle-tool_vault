@@ -296,11 +296,19 @@ class site_restore extends operation_base {
             $data['preservedrecords'] = $this->preserve_some_plugins_data($table);
         }
 
-        if ($tablename === 'user' && api::get_setting_checkbox('restorepreservepassword')) {
-            $data['password'] = $DB->get_field_select('user', 'password', 'username = ? AND auth = ?', ['admin', 'manual']);
-            if (empty($data['password'])) {
-                $this->add_to_log('Could not preserve password of the "admin" user, user does not exist on this site '.
-                    'or does not have a password', constants::LOGLEVEL_WARNING);
+        if ($tablename === 'user') {
+            $usernames = api::get_setting_array('restorepreservepasswords');
+            if ($usernames) {
+                $data['passwords'] = [];
+                foreach ($usernames as $username) {
+                    $data['passwords'][$username] = $DB->get_field_select('user', 'password', 'username = ? AND auth = ?',
+                        [$username, 'manual']);
+                    if (empty($data['passwords'][$username])) {
+                        $this->add_to_log('Could not preserve password of the "' . $username .
+                            '" user, user does not exist on this site '.
+                            'or does not have a password', constants::LOGLEVEL_WARNING);
+                    }
+                }
             }
         }
 
@@ -326,13 +334,17 @@ class site_restore extends operation_base {
         // Delete data associated with the preserved plugins and re-insert their data.
         $this->restore_preserved_plugins_data($table, $data['preservedrecords']);
 
-        if ($tablename === 'user' && api::get_setting_checkbox('restorepreservepassword') && !empty($data['password'])) {
-            $userid = $DB->get_field_select('user', 'id', 'username = ? AND auth = ?', ['admin', 'manual']) ?: null;
-            if ($userid) {
-                $DB->update_record('user', (object)['id' => $userid, 'password' => $data['password']]);
-            } else {
-                $this->add_to_log('Could not preserve password of the "admin" user, user does not exist on the backed up site '.
-                    'or has a different authentication method', constants::LOGLEVEL_WARNING);
+        if ($tablename === 'user' && !empty($data['passwords'])) {
+            $usernames = array_intersect(api::get_setting_array('restorepreservepasswords'), array_keys($data['passwords']));
+            foreach ($usernames as $username) {
+                $userid = $DB->get_field_select('user', 'id', 'username = ? AND auth = ?', [$username, 'manual']) ?: null;
+                if ($userid) {
+                    $DB->update_record('user', (object)['id' => $userid, 'password' => $data['passwords'][$username]]);
+                } else {
+                    $this->add_to_log('Could not preserve password of the "' . $username .
+                        '" user, user does not exist on the backed up site '.
+                        'or has a different authentication method', constants::LOGLEVEL_WARNING);
+                }
             }
         }
     }
