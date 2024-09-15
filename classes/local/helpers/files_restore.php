@@ -225,6 +225,19 @@ class files_restore {
     }
 
     /**
+     * Total unpacked size of all archives of this type
+     *
+     * @return int
+     */
+    public function get_total_orig_size(): int {
+        $size = 0;
+        foreach ($this->backupfiles as $file) {
+            $size += $file->origsize;
+        }
+        return $size;
+    }
+
+    /**
      * Returns the next table in the backup file and all files
      *
      * @return array|null [table name, [path to file with json dump]]

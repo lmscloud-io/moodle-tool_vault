@@ -349,7 +349,8 @@ class site_restore extends operation_base {
             return !siteinfo::is_table_preserved_in_restore($tablename, $tableobj);
         }, ARRAY_FILTER_USE_BOTH);
 
-        $this->add_to_log('Starting database restore ('.count($tables).' tables)...');
+        $totaltables = count($tables);
+        $this->add_to_log('Starting database restore ('.$totaltables.' tables)...');
 
         $structurefiles = $this->get_files_restore(constants::FILENAME_DBSTRUCTURE)->get_all_files();
         $filepath = $structurefiles[constants::FILE_SEQUENCE] ?? null;
@@ -358,11 +359,26 @@ class site_restore extends operation_base {
         }
         $sequences = $filepath ? json_decode(file_get_contents($filepath), true) : [];
 
-        $totaltables = count($tables);
-        $tablescnt = $lasttablescnt = 0;
+        $tablescnt = 0;
         $lastlog = time();
 
         $helper = $this->get_files_restore(constants::FILENAME_DBDUMP);
+        $totalorigsize = $helper->get_total_orig_size();
+        $totalextracted = 0;
+
+        $logprogress = function($lastlog, $tablescnt, $totalextracted, $force = false) use ($totaltables, $totalorigsize) {
+            if (!$force && time() - $lastlog <= constants::LOG_FREQUENCY) {
+                return $lastlog;
+            }
+            $totalcnt = (string)$totaltables;
+            $percent = sprintf("%3d", (int)(100.0 * $totalextracted / $totalorigsize));
+            $totalsize = display_size($totalorigsize);
+            $cnt = str_pad($tablescnt, strlen($totalcnt), " ", STR_PAD_LEFT);
+            $size = str_pad(display_size($totalextracted), max(9, strlen($totalsize)), " ", STR_PAD_LEFT);
+            $this->add_to_log("Restored {$cnt}/{$totalcnt} tables, {$size}/{$totalsize} ({$percent}%)");
+            return time();
+        };
+
         while (($tabledata = $helper->get_next_table()) !== null) {
             [$tablename, $filesfortable] = $tabledata;
             if (!array_key_exists($tablename, $tables)) {
@@ -397,6 +413,7 @@ class site_restore extends operation_base {
 
             // Insert new data.
             foreach ($filesfortable as $filepath) {
+                $totalextracted += filesize($filepath);
                 $data = json_decode(file_get_contents($filepath), true);
                 if ($data) {
                     $this->add_to_log("- File ".basename($filepath)." -- table $tablename -- inserting ".count($data)." records",
@@ -405,6 +422,8 @@ class site_restore extends operation_base {
                     dbops::insert_records($tablename, $fields, $data, $this);
                 }
                 unlink($filepath);
+                // Add to log.
+                $lastlog = $logprogress($lastlog, $tablescnt, $totalextracted);
             }
 
             // Change sequences.
@@ -422,21 +441,7 @@ class site_restore extends operation_base {
 
             // Add to log.
             $tablescnt++;
-            if (time() - $lastlog > constants::LOG_FREQUENCY) {
-                $a = (object)[
-                    'cnt' => sprintf("%".strlen(''.$totaltables)."d", $tablescnt),
-                    'totalcnt' => $totaltables,
-                    'percent' => sprintf("%3d", (int)(100.0 * $tablescnt / $totaltables)),
-                ];
-                $this->add_to_log("Restored {$a->cnt}/{$a->totalcnt} tables ({$a->percent}%)");
-                $lastlog = time();
-                $lasttablescnt = $tablescnt;
-            }
-        }
-
-        if ($lasttablescnt < $tablescnt) {
-            $cnt = sprintf("%".strlen(''.$totaltables)."d", $tablescnt);
-            $this->add_to_log("Restored {$cnt}/{$tablescnt} tables (100%)");
+            $lastlog = $logprogress($lastlog, $tablescnt, $totalextracted, $tablescnt == $totaltables);
         }
 
         // Drop all extra tables.

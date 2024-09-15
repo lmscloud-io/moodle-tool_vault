@@ -6,6 +6,8 @@ All notable changes to the tool_vault plugin will be documented in this file.
 
 ### Added
 - Setting to preserve admin password after restore
+- Improved logging of the database restore progress (showing restored size rather than
+  number of tables).
 
 ## [2.2] - 2024-08-19
 
