@@ -102,16 +102,6 @@ EOF;
     }
 
     /**
-     * Overrides protected static property dmops::$maxallowedpacket
-     *
-     * @param int|false|null $newvalue
-     */
-    protected function mock_maxallowedpacket($newvalue): void {
-        $class = new ReflectionClass(dbops::class);
-        $class->setStaticPropertyValue('maxallowedpacket', $newvalue);
-    }
-
-    /**
      * Test for method prepare_next_chunk
      * @uses dbops::prepare_next_chunk()
      */
@@ -122,24 +112,24 @@ EOF;
         $packetsizes = [15, 20, 16, 19, 30, 30];
 
         // Very large packet size.
-        $this->mock_maxallowedpacket(100000);
+        dbops::set_max_allowed_packet(100000);
         $endrow = $this->call_static_method('prepare_next_chunk', [$tablename, $fields, &$packetsizes, 0]);
         $this->assertEquals(6, $endrow);
 
         // Very small packet size.
-        $this->mock_maxallowedpacket(5);
+        dbops::set_max_allowed_packet(5);
         $endrow = $this->call_static_method('prepare_next_chunk', [$tablename, $fields, &$packetsizes, 0]);
         $this->assertEquals(1, $endrow);
         $endrow = $this->call_static_method('prepare_next_chunk', [$tablename, $fields, &$packetsizes, 2]);
         $this->assertEquals(3, $endrow);
 
         // Packet size just enough to fit two rows but not three.
-        $this->mock_maxallowedpacket(79 + strlen($CFG->phpunit_prefix));
+        dbops::set_max_allowed_packet(79 + strlen($CFG->phpunit_prefix));
         $endrow = $this->call_static_method('prepare_next_chunk', [$tablename, $fields, &$packetsizes, 0]);
         $this->assertEquals(2, $endrow);
         $endrow = $this->call_static_method('prepare_next_chunk', [$tablename, $fields, &$packetsizes, 2]);
         $this->assertEquals(4, $endrow);
 
-        $this->mock_maxallowedpacket(false);
+        dbops::set_max_allowed_packet(false);
     }
 }

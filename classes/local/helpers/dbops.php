@@ -35,16 +35,31 @@ class dbops {
      *
      * @return int|null
      */
-    protected static function get_max_allowed_packet(): ?int {
+    public static function get_max_allowed_packet(): ?int {
         global $DB, $CFG;
-        if ($DB->get_dbfamily() !== 'mysql') {
-            self::$maxallowedpacket = null;
-        } else if (self::$maxallowedpacket === false) {
-            $sql = "SHOW VARIABLES LIKE 'max_allowed_packet'";
-            $res = $DB->get_record_sql($sql);
-            self::$maxallowedpacket = $res ? (int)$res->value : null;
+        if (self::$maxallowedpacket === false) {
+            if ($DB->get_dbfamily() === 'mysql') {
+                $sql = "SHOW VARIABLES LIKE 'max_allowed_packet'";
+                $res = $DB->get_record_sql($sql);
+                self::$maxallowedpacket = $res ? (int)$res->value : null;
+            } else {
+                self::$maxallowedpacket = null;
+            }
         }
         return self::$maxallowedpacket;
+    }
+
+    /**
+     * Manipulates the static cache for tests
+     *
+     * @param int|false|null $newvalue
+     */
+    public static function set_max_allowed_packet($newvalue): void {
+        if (defined('PHPUNIT_TEST') && PHPUNIT_TEST) {
+            self::$maxallowedpacket = $newvalue;
+        } else {
+            debugging('Function '.__FUNCTION__.' can not be called outside of unittests', DEBUG_DEVELOPER);
+        }
     }
 
     /**
