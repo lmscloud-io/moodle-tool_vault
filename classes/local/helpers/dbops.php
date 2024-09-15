@@ -89,9 +89,8 @@ class dbops {
                     $t->getMessage(), constants::LOGLEVEL_WARNING);
                 if ($t instanceof \dml_exception) {
                     $logger->add_to_log(shorten_text($t->debuginfo, 1000, true), constants::LOGLEVEL_VERBOSE);
-                }
-                if ($t instanceof \Exception) {
-                    $logger->add_to_log($t->getTraceAsString(), constants::LOGLEVEL_VERBOSE);
+                } else if ($t instanceof \Exception) {
+                    $logger->add_to_log(shorten_text($t->getTraceAsString(), 1000, true), constants::LOGLEVEL_VERBOSE);
                 }
                 self::insert_records_one_by_one($tablename, $fields, $data, $startrow, $endrow, $logger);
             }
@@ -115,6 +114,12 @@ class dbops {
         $cfg = $DB->export_dbconfig();
         if (!empty($cfg->dboptions) && !empty($cfg->dboptions['bulkinsertsize']) && (int)$cfg->dboptions['bulkinsertsize'] > 0) {
             $maxendrow = min($maxendrow, $startrow + (int)$cfg->dboptions['bulkinsertsize']);
+        }
+
+        if ($DB->get_dbfamily() === 'postgres') {
+            // Can not pass more than 65535 parameters in one query to postgres.
+            $maxrows = floor(65535 / count($fields));
+            $maxendrow = min($maxendrow, $startrow + $maxrows);
         }
 
         if (!self::get_max_allowed_packet()) {

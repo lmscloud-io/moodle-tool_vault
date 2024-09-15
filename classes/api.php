@@ -613,6 +613,19 @@ class api {
     }
 
     /**
+     * Additional details to pass to server when starting backup or restore
+     *
+     * @return array
+     */
+    protected static function extra_details(): array {
+        global $CFG, $DB;
+        return [
+            'vaultversion' => get_config('tool_vault', 'version'),
+            'vaultenv' => "PHP ".PHP_VERSION." / Moodle {$CFG->release} / DB ".$DB->get_dbfamily()
+        ];
+    }
+
+    /**
      * Request backup key
      *
      * @param array $info
@@ -620,7 +633,7 @@ class api {
      * @throws \moodle_exception
      */
     public static function request_new_backup_key(array $info): string {
-        $info['vaultversion'] = get_config('tool_vault', 'version');
+        $info += self::extra_details();
         $res = self::api_call('backups', 'PUT', $info);
         if (empty($res['backupkey'])) {
             throw new \moodle_exception('error_serverreturnednodata', 'tool_vault');
@@ -636,6 +649,7 @@ class api {
      * @throws \moodle_exception
      */
     public static function request_new_restore_key(array $info): string {
+        $info += self::extra_details();
         $res = self::api_call('restores', 'PUT', $info);
         if (empty($res['restorekey'])) {
             throw new \moodle_exception('error_serverreturnednodata', 'tool_vault');
