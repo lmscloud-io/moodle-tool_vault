@@ -621,7 +621,7 @@ class api {
         global $CFG, $DB;
         return [
             'vaultversion' => get_config('tool_vault', 'version'),
-            'vaultenv' => "PHP ".PHP_VERSION." / Moodle {$CFG->release} / DB ".$DB->get_dbfamily()
+            'vaultenv' => "PHP ".PHP_VERSION." / Moodle {$CFG->release} / DB ".$DB->get_dbfamily(),
         ];
     }
 
