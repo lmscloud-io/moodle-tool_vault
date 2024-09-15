@@ -383,11 +383,11 @@ class site_restore extends operation_base {
                 return $lastlog;
             }
             $totalcnt = (string)$totaltables;
-            $percent = sprintf("%3d", (int)(100.0 * $totalextracted / $totalorigsize));
-            $totalsize = display_size($totalorigsize);
+            $percent = $totalorigsize ? sprintf("(%3d)", (int)(100.0 * $totalextracted / $totalorigsize)) : '';
+            $totalsize = $totalorigsize ? display_size($totalorigsize) : '?';
             $cnt = str_pad($tablescnt, strlen($totalcnt), " ", STR_PAD_LEFT);
             $size = str_pad(display_size($totalextracted), max(9, strlen($totalsize)), " ", STR_PAD_LEFT);
-            $this->add_to_log("Restored {$cnt}/{$totalcnt} tables, {$size}/{$totalsize} ({$percent}%)");
+            $this->add_to_log("Restored {$cnt}/{$totalcnt} tables, {$size}/{$totalsize} {$percent}%");
             return time();
         };
 

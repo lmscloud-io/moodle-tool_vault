@@ -8,6 +8,8 @@ All notable changes to the tool_vault plugin will be documented in this file.
 - Setting to preserve admin password after restore
 - Improved logging of the database restore progress (showing restored size rather than
   number of tables).
+- Increased size of batches when inserting data in the DB taking into account
+  mysql config variable max_allowed_packet
 
 ## [2.2] - 2024-08-19
 

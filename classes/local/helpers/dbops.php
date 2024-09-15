@@ -27,6 +27,26 @@ use tool_vault\local\logger;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class dbops {
+    /** @var int|null|false stores the cached value for max_allowed_packet (null - no limit, false - unknown) */
+    protected static $maxallowedpacket = false;
+
+    /**
+     * Returns the size of max_allowed_packet variable for mysql or null for postgres
+     *
+     * @return int|null
+     */
+    protected static function get_max_allowed_packet(): ?int {
+        global $DB, $CFG;
+        if ($DB->get_dbfamily() !== 'mysql') {
+            self::$maxallowedpacket = null;
+        } else if (self::$maxallowedpacket === false) {
+            $sql = "SHOW VARIABLES LIKE 'max_allowed_packet'";
+            $res = $DB->get_record_sql($sql);
+            self::$maxallowedpacket = $res ? (int)$res->value : null;
+        }
+        return self::$maxallowedpacket;
+    }
+
     /**
      * Insert a number of records into the database
      *
@@ -42,11 +62,13 @@ class dbops {
         if (empty($data)) {
             return;
         }
-        $chunksize = 20;
-        $chunks = array_chunk($data, $chunksize);
-        foreach ($chunks as $chunk) {
+        $packetsizes = self::calculate_row_packet_sizes(count($fields), $data);
+        $nofrows = count($data);
+        $startrow = 0;
+        while ($startrow < $nofrows) {
+            $endrow = self::prepare_next_chunk($tablename, $fields, $packetsizes, $startrow);
             try {
-                self::insert_chunk($tablename, $fields, $chunk);
+                self::insert_chunk($tablename, $fields, $data, $startrow, $endrow);
             } catch (\Throwable $t) {
                 $logger->add_to_log("- failed to insert chunk of records into table $tablename: ".
                     $t->getMessage(), constants::LOGLEVEL_WARNING);
@@ -56,9 +78,106 @@ class dbops {
                 if ($t instanceof \Exception) {
                     $logger->add_to_log($t->getTraceAsString(), constants::LOGLEVEL_VERBOSE);
                 }
-                self::insert_records_one_by_one($tablename, $fields, $chunk, $logger);
+                self::insert_records_one_by_one($tablename, $fields, $data, $startrow, $endrow, $logger);
+            }
+            $startrow = $endrow;
+        }
+    }
+
+    /**
+     * Calculates how many records can be inserted in the next chunk
+     *
+     * @param string $tablename
+     * @param array $fields
+     * @param array $packetsizes size in bytes of each row in $data if it was added to the SQL query
+     * @param int $startrow
+     * @return int index of the row after the last row in the chunk
+     */
+    protected static function prepare_next_chunk(string $tablename, array $fields, array &$packetsizes, int $startrow): int {
+        global $DB;
+        $maxendrow = count($packetsizes);
+
+        $cfg = $DB->export_dbconfig();
+        if (!empty($cfg->dboptions) && !empty($cfg->dboptions['bulkinsertsize']) && (int)$cfg->dboptions['bulkinsertsize'] > 0) {
+            $maxendrow = min($maxendrow, $startrow + (int)$cfg->dboptions['bulkinsertsize']);
+        }
+
+        if (!self::get_max_allowed_packet()) {
+            return $maxendrow;
+        }
+
+        [$sql, $params] = $DB->fix_sql_params(self::prepare_insert_sql($tablename, $fields, 0), []);
+        $baselen = strlen($sql);
+        $len = $baselen + $packetsizes[$startrow];
+        for ($irow = $startrow + 1; $irow < $maxendrow; $irow++) {
+            $len += $packetsizes[$irow] + 1;
+            if ($len > self::get_max_allowed_packet()) {
+                return $irow;
             }
         }
+        return $maxendrow;
+    }
+
+    /**
+     * Calculates the size in bytes of SQL query fragment for each of the data rows (only for mysql)
+     *
+     * @param int $noffields
+     * @param array $data
+     * @return int[] size in bytes of each row in $data if it was added to the SQL query
+     */
+    protected static function calculate_row_packet_sizes(int $noffields, array &$data): array {
+        global $DB;
+        $nofrows = count($data);
+        if (!self::get_max_allowed_packet()) {
+            // If there is no packet restriction, it is not needed.
+            return array_fill(0, $nofrows, 0);
+        }
+
+        // Function mysqli_native_moodle_database::emulate_bound_params() is protected but we need to call it
+        // to get the exact length of the query.
+        $reflector = new \ReflectionObject($DB);
+        $method = $reflector->getMethod('emulate_bound_params');
+        $method->setAccessible(true);
+
+        $res = [];
+        $valuerowsql = self::prepare_value_sql($noffields, 1);
+        for ($i = 0; $i < $nofrows; $i++) {
+            $res[$i] = strlen($method->invoke($DB, $valuerowsql, $data[$i]));
+        }
+        return $res;
+    }
+
+    /**
+     * Prepares SQL for inserting values
+     *
+     * @param int $noffields
+     * @param int $nofrows
+     * @return string
+     */
+    protected static function prepare_value_sql(int $noffields, int $nofrows): string {
+        if (!$nofrows) {
+            return '';
+        }
+        $valuerowsql = '('.implode(',', array_fill(0, $noffields, '?')).')';
+        return implode(',', array_fill(0, $nofrows, $valuerowsql));
+    }
+
+    /**
+     * Prepares SQL for the whole INSERT statement
+     *
+     * @param string $tablename
+     * @param array $fields
+     * @param int $nofrows
+     * @return string
+     */
+    protected static function prepare_insert_sql(string $tablename, array $fields, int $nofrows): string {
+        global $DB;
+        $dbgen = $DB->get_manager()->generator;
+        $fieldssql = '(' . implode(',', array_map(function ($f) use ($dbgen) {
+            return $dbgen->getEncQuoted($f);
+        }, $fields)) . ')';
+        $valuessql = self::prepare_value_sql(count($fields), $nofrows);
+        return "INSERT INTO {".$tablename."} $fieldssql VALUES $valuessql";
     }
 
     /**
@@ -67,26 +186,23 @@ class dbops {
      * @param string $tablename
      * @param array $fields
      * @param array $rows
+     * @param int $startrow
+     * @param int $endrow
      * @return void
      */
-    protected static function insert_chunk(string $tablename, array $fields, array &$rows) {
+    protected static function insert_chunk(string $tablename, array $fields, array &$rows, int $startrow, int $endrow) {
         global $DB;
-        $dbgen = $DB->get_manager()->generator;
-        $fieldssql = '(' . implode(',', array_map(function ($f) use ($dbgen) {
-            return $dbgen->getEncQuoted($f);
-        }, $fields)) . ')';
 
-        $valuerowsql = '('.implode(',', array_fill(0, count($fields), '?')).')';
-        $valuessql = implode(',', array_fill(0, count($rows), $valuerowsql));
+        $sql = self::prepare_insert_sql($tablename, $fields, $endrow - $startrow);
 
         $params = [];
-        foreach ($rows as $dataobject) {
-            foreach ($fields as $idx => $field) {
-                $params[] = $dataobject[$idx];
+        $noffields = count($fields);
+        for ($i = $startrow; $i < $endrow; $i++) {
+            for ($j = 0; $j < $noffields; $j++) {
+                $params[] = $rows[$i][$j];
             }
         }
 
-        $sql = "INSERT INTO {".$tablename."} $fieldssql VALUES $valuessql";
         $DB->execute($sql, $params);
     }
 
@@ -96,12 +212,16 @@ class dbops {
      * @param string $tablename
      * @param array $fields
      * @param array $rows
+     * @param int $startrow
+     * @param int $endrow
      * @param logger $logger
      * @return void
      */
-    protected static function insert_records_one_by_one(string $tablename, array $fields, array &$rows, logger $logger) {
+    protected static function insert_records_one_by_one(string $tablename, array $fields, array &$rows, int $startrow,
+            int $endrow, logger $logger) {
         global $DB;
-        foreach ($rows as &$row) {
+        for ($i = $startrow; $i < $endrow; $i++) {
+            $row = $rows[$i];
             try {
                 $entry = array_combine($fields, $row);
                 $DB->insert_record_raw($tablename, $entry, false, true, true);
