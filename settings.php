@@ -143,4 +143,11 @@ if ($hassiteconfig) {
         60,
         2
     ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'tool_vault/restorepreservepassword',
+        new lang_string('settings_restorepreservepassword', 'tool_vault'),
+        new lang_string('settings_restorepreservepassword_desc', 'tool_vault'),
+        0
+    ));
 }

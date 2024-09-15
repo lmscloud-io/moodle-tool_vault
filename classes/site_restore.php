@@ -279,6 +279,65 @@ class site_restore extends operation_base {
     }
 
     /**
+     * Executed before we delete the contents of the DB table during restore. Allows to save data that needs to be preserved.
+     *
+     * @param dbtable $table
+     * @param dbtable|null $originaltable
+     * @return array
+     */
+    protected function before_table_restore(dbtable $table, ?dbtable $originaltable): array {
+        global $DB;
+        $tablename = $table->get_xmldb_table()->getName();
+
+        $data = ['preservedrecords' => []];
+        if ($originaltable) {
+            // If some plugins are marked as "Preserve during restore" (tool_vault is one of them) - save the current
+            // data from this table.
+            $data['preservedrecords'] = $this->preserve_some_plugins_data($table);
+        }
+
+        if ($tablename === 'user' && api::get_setting_checkbox('restorepreservepassword')) {
+            $data['password'] = $DB->get_field_select('user', 'password', 'username = ? AND auth = ?', ['admin', 'manual']);
+            if (empty($data['password'])) {
+                $this->add_to_log('Could not preserve password of the "admin" user, user does not exist on this site '.
+                    'or does not have a password', constants::LOGLEVEL_WARNING);
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Executed after we restore contents of the DB table. Allows to re-insert data that needed to be preserved.
+     *
+     * @param \tool_vault\local\xmldb\dbtable $table
+     * @param array $data data that was returned by {@see self::before_table_restore()}
+     * @return void
+     */
+    protected function after_table_restore(dbtable $table, array $data) {
+        global $DB;
+        $tablename = $table->get_xmldb_table()->getName();
+
+        // Apply config overrides.
+        if ($tablename === 'config' || $tablename === 'config_overrides') {
+            $this->apply_config_overrides($tablename);
+        }
+
+        // Delete data associated with the preserved plugins and re-insert their data.
+        $this->restore_preserved_plugins_data($table, $data['preservedrecords']);
+
+        if ($tablename === 'user' && api::get_setting_checkbox('restorepreservepassword') && !empty($data['password'])) {
+            $userid = $DB->get_field_select('user', 'id', 'username = ? AND auth = ?', ['admin', 'manual']) ?: null;
+            if ($userid) {
+                $DB->update_record('user', (object)['id' => $userid, 'password' => $data['password']]);
+            } else {
+                $this->add_to_log('Could not preserve password of the "admin" user, user does not exist on the backed up site '.
+                    'or has a different authentication method', constants::LOGLEVEL_WARNING);
+            }
+        }
+    }
+
+    /**
      * Restore db
      *
      * @return void
@@ -315,14 +374,12 @@ class site_restore extends operation_base {
             // The existing respective table on this site.
             $originaltable = $this->dbstructure->get_tables_actual()[$tablename] ?? null;
 
+            // Tool vault may need to preserve some data from the table before deleting it.
+            $preserveddata = $this->before_table_restore($table, $originaltable);
+
             if ($originaltable) {
-                // If some plugins are marked as "Preserve during restore" (tool_vault is one of them) - save the current
-                // data from this table.
-                $preservedrecords = $this->preserve_some_plugins_data($table);
                 // Truncate table.
                 $DB->delete_records($tablename);
-            } else {
-                $preservedrecords = [];
             }
 
             // Alter table structure in the DB if needed.
@@ -360,13 +417,8 @@ class site_restore extends operation_base {
                 }
             }
 
-            // Apply config overrides.
-            if ($tablename === 'config' || $tablename === 'config_overrides') {
-                $this->apply_config_overrides($tablename);
-            }
-
-            // Delete data associated with the preserved plugins and re-insert their data.
-            $this->restore_preserved_plugins_data($table, $preservedrecords);
+            // Restore preserved data, apply config overrides, reset admin password, etc.
+            $this->after_table_restore($table, $preserveddata);
 
             // Add to log.
             $tablescnt++;

@@ -222,6 +222,8 @@ $string['settings_headerbackup'] = 'Backup settings';
 $string['settings_headerrestore'] = 'Restore settings';
 $string['settings_restorepreservedataroot'] = 'Preserve paths in dataroot';
 $string['settings_restorepreservedataroot_desc'] = 'During restore all paths within the dataroot folder will be removed except for: <b>filedir</b> (restored separately), <b>{$a->always}</b>.<br>If you want to keep more paths, list them here. Examples of paths that can be preserved: <b>{$a->examples}</b>';
+$string['settings_restorepreservepassword'] = 'Preserve admin password';
+$string['settings_restorepreservepassword_desc'] = "During restore the 'user' table will be overridden with the contents of the 'user' table in the backup. This means that after the restore the admin will need to login with the password that was set on the backed up site.  When this setting is checked, the password of the user 'admin' will be changed after restore to match the value on the current site. This setting will have no effect if either of the sites does not have a user with the username 'admin'.";
 $string['settings_restorepreserveplugins'] = 'Preserve plugins';
 $string['settings_restorepreserveplugins_desc'] = "Only for plugins with server-specific configuration, for example, file storage or session management. <br>
 Restore process will attempt to preserve existing data associated with these plugins and not restore data from the backup if the same plugin is included.<br>

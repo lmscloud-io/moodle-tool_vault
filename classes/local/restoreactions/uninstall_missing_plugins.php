@@ -16,7 +16,6 @@
 
 namespace tool_vault\local\restoreactions;
 
-use PHPUnit\Framework\MockObject\Stub\ReturnArgument;
 use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\site_restore;

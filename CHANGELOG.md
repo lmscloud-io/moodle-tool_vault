@@ -2,12 +2,17 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-# [2.2] - 2024-08-19
+## Unreleased
+
+### Added
+- Setting to preserve admin password after restore
+
+## [2.2] - 2024-08-19
 
 ### Fixed
 - Avoid exception when the field type in the actual database does not match definition
 
-# [2.1] - 2024-06-12
+## [2.1] - 2024-06-12
 
 ### Fixed
 - Fixed error in the "uninstall missing plugins" script when it is executed right after
@@ -16,7 +21,7 @@ All notable changes to the tool_vault plugin will be documented in this file.
   (for example, zip, jpg, mbz, mp4, etc). It may very slightly increase the backup size
   however it will noticeably reduce the time needed to create archives.
 
-# [2.0] - 2024-06-10
+## [2.0] - 2024-06-10
 
 ### Added
 - Setting to run upgrade as part of the restore process. When selected, Vault will upgrade
