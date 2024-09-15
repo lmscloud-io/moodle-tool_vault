@@ -728,7 +728,9 @@ class api {
             }
             return !empty($records);
         } catch (\Throwable $t) {
-            debugging($t->getMessage(), DEBUG_DEVELOPER);
+            if (get_config('tool_vault', 'version')) {
+                debugging($t->getMessage(), DEBUG_DEVELOPER);
+            }
             return false;
         }
     }

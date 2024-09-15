@@ -11,6 +11,9 @@ All notable changes to the tool_vault plugin will be documented in this file.
 - Increased size of batches when inserting data in the DB taking into account
   mysql config variable max_allowed_packet
 
+### Fixed
+- Migrated after_config callback to hook for Moodle 4.5
+
 ## [2.2] - 2024-08-19
 
 ### Fixed

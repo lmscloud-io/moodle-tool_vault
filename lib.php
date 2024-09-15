@@ -33,6 +33,10 @@ use tool_vault\output\start_backup_popup;
  * @return void
  */
 function tool_vault_after_config() {
+    // This is an implementation of a legacy callback that will only be called in older Moodle versions.
+    // It will not be called in Moodle versions that contain the hook core\hook\after_config,
+    // instead, the callback tool_vault\hook_callbacks::after_config will be executed.
+
     global $PAGE, $FULLME;
     if (during_initial_install()) {
         return;
