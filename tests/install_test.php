@@ -14,32 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+namespace tool_vault;
+
 /**
- * Code to be executed after the plugin's database scheme has been installed is defined here.
+ * Tests for \tool_vault\db\install.php
  *
  * @package     tool_vault
- * @category    upgrade
- * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
+ * @category    test
+ * @copyright   2024 Petr Skoda
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+final class install_test extends \advanced_testcase {
+    /**
+     * Test pre-checks that are normally scheduled via db/install.php
+     *
+     * @covers ::xmldb_tool_vault_install
+     */
+    public function test_xmldb_tool_vault_install(): void {
+        $this->resetAfterTest();
 
-/**
- * Custom code to be run on installing the plugin.
- */
-function xmldb_tool_vault_install() {
+        \tool_vault\local\checks\check_base::get_all_checks();
 
-    if (defined('BEHAT_UTIL') && BEHAT_UTIL) {
-        // Do not run the checks in every scenario that runs cron,
-        // also default timeouts in Behat are not long enough to wait for vault checks.
-        return true;
+        $task = new \tool_vault\task\cron_task();
+        $task->execute();
     }
-
-    if (defined('PHPUNIT_UTIL') && PHPUNIT_UTIL) {
-        // Run the test only once in tests/install_test.php!
-        return true;
-    }
-
-    \tool_vault\local\checks\check_base::get_all_checks();
-
-    return true;
 }
