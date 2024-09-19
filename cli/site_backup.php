@@ -22,7 +22,8 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define('CLI_SCRIPT', true);
+ define('CLI_SCRIPT', true);
+ define('TOOL_VAULT_CLI_SCRIPT', true);
 
 use tool_vault\local\cli_helper;
 use tool_vault\local\helpers\tempfiles;

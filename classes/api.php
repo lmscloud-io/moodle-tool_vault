@@ -17,6 +17,7 @@
 namespace tool_vault;
 
 use tool_vault\local\exceptions\api_exception;
+use tool_vault\local\helpers\dbops;
 use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\logger;
 use tool_vault\local\models\backup_file;
@@ -621,7 +622,13 @@ class api {
         global $CFG, $DB;
         return [
             'vaultversion' => get_config('tool_vault', 'version'),
-            'vaultenv' => ["PHP" => PHP_VERSION, "Moodle" => $CFG->release, "DB" => $DB->get_dbfamily()],
+            'vaultenv' => ["PHP" => PHP_VERSION,
+                "Moodle" => $CFG->release,
+                "DB" => $DB->get_dbfamily() . ' (' . $DB->get_server_info()['description'] . ')',
+                "max_execution_time" => ini_get("max_execution_time"),
+                "isvaultcli" => defined('TOOL_VAULT_CLI_SCRIPT') && TOOL_VAULT_CLI_SCRIPT,
+                "max_allowed_packet" => dbops::get_max_allowed_packet(),
+            ],
         ];
     }
 

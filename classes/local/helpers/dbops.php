@@ -41,7 +41,8 @@ class dbops {
             if ($DB->get_dbfamily() === 'mysql') {
                 $sql = "SHOW VARIABLES LIKE 'max_allowed_packet'";
                 $res = $DB->get_record_sql($sql);
-                self::$maxallowedpacket = $res ? (int)$res->value : null;
+                $value = $res ? (int)$res->value : 4 * 1024 * 1024;
+                self::$maxallowedpacket = (int)floor($value / 1024) * 1024;
             } else {
                 self::$maxallowedpacket = null;
             }

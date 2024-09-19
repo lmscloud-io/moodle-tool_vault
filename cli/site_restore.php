@@ -23,6 +23,7 @@
  */
 
 define('CLI_SCRIPT', true);
+define('TOOL_VAULT_CLI_SCRIPT', true);
 
 use tool_vault\api;
 use tool_vault\local\cli_helper;
