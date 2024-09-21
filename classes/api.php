@@ -624,7 +624,7 @@ class api {
             'vaultversion' => get_config('tool_vault', 'version'),
             'vaultenv' => ["PHP" => PHP_VERSION,
                 "Moodle" => $CFG->release,
-                "DB" => $DB->get_dbfamily() . ' (' . $DB->get_server_info()['description'] . ')',
+                "DB" => $DB->get_dbfamily() . ' ' . $DB->get_server_info()['description'],
                 "max_execution_time" => ini_get("max_execution_time"),
                 "isvaultcli" => defined('TOOL_VAULT_CLI_SCRIPT') && TOOL_VAULT_CLI_SCRIPT,
                 "max_allowed_packet" => dbops::get_max_allowed_packet(),
