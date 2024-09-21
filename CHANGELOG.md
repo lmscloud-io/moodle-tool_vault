@@ -5,6 +5,9 @@ All notable changes to the tool_vault plugin will be documented in this file.
 ## Unreleased
 
 ### Added
+- CHANGE OF DEFAULT BEHAVIOR! New setting "Allow restore with missing plugins", when
+  disabled (default), the restore pre-check will fail if there are plugins in the backup
+  that are not present on this site.
 - Setting to preserve admin password after restore
 - Improved logging of the database restore progress (showing restored size rather than
   number of tables).

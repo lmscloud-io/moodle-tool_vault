@@ -109,6 +109,14 @@ if ($hassiteconfig) {
     ));
 
     $settings->add(new admin_setting_configselect(
+        'tool_vault/allowrestorewithmissing',
+        get_string('settings_allowrestorewithmissing', 'tool_vault'),
+        get_string('settings_allowrestorewithmissing_desc', 'tool_vault'),
+        0,
+        $yesnooptions
+    ));
+
+    $settings->add(new admin_setting_configselect(
         'tool_vault/upgradeafterrestore',
         get_string('setting_upgradeafterrestore', 'tool_vault'),
         get_string('setting_upgradeafterrestore_desc', 'tool_vault'),

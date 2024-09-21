@@ -30,6 +30,7 @@ $string['addonplugins_autoupgrade'] = 'Moodle upgrade process will be performed 
 $string['addonplugins_extraplugins'] = 'Extra plugins';
 $string['addonplugins_extraplugins_desc'] = "The following plugins are present on this site but not present in the backup. All data associated with these plugins will be deleted during the restore process. After the restore process is finished you will be prompted to run the Moodle upgrade process that will re-install these plugins.";
 $string['addonplugins_fail'] = 'The backup contains plugins with higher versions than the code on this site. You must upgrade the code for these plugins before restoring from this backup.';
+$string['addonplugins_fail_missing'] = 'Some add-on plugins are present in the backup but not installed on this site. You must either install these plugins or enable the setting "Allow restore with missing plugins".';
 $string['addonplugins_missing'] = 'Missing plugins';
 $string['addonplugins_missing_autoremove'] = 'Missing plugins will be automatically removed after restore. <a href="{$a}">Change</a>';
 $string['addonplugins_missing_desc'] = "The following plugins are present in the backup but are not installed on this site. After the restore these plugins will be listed as \"Missing from disk\", you can choose to uninstall them or keep the data until you add the code for the plugins. Until then, you may experience errors, for example, missing scheduled tasks.";
@@ -39,6 +40,7 @@ $string['addonplugins_notpresent'] = 'Plugins found on this site but not present
 $string['addonplugins_pluginsdirectory'] = 'Plugins directory';
 $string['addonplugins_pluginversioninbackup'] = 'Version in the backup';
 $string['addonplugins_pluginversiononsite'] = 'Current version on this site';
+$string['addonplugins_restorewithmissing_not_allowed'] = 'Restore with missing plugins is not allowed. <a href="{$a}">Change</a>.';
 $string['addonplugins_subpluginof'] = 'Subplugin of';
 $string['addonplugins_success'] = 'All plugins in the backup have the same version as the plugins on this site';
 $string['addonplugins_success_needsupgrade'] = 'Some plugins will need to be upgraded after restore';
@@ -206,6 +208,8 @@ $string['setting_upgradeafterrestore'] = 'Automatically upgrade Moodle after res
 $string['setting_upgradeafterrestore_desc'] = 'After the site is restored, immediately launch the Moodle upgrade process. When selected, Vault will be able to upgrade Moodle from any version it supported for the backup. For example, you can upgrade from 3.9 directly to 4.3, even though Moodle by itself would require you to first upgrade to 3.11.8-4.2 and only then to 4.3.';
 $string['settings_allowrestore'] = 'Allow restores on this site';
 $string['settings_allowrestore_desc'] = 'Site restore will completely remove all contents of this site and replace with the restored contents. Double check everything before enabling this option';
+$string['settings_allowrestorewithmissing'] = 'Allow restore with missing plugins';
+$string['settings_allowrestorewithmissing_desc'] = 'If there were add-on plugins present in the backed up site but the code for these plugins is not present on this site, the restore can still be performed. After the restore these plugins will be listed as "Missing from disk", and you can choose to uninstall them or keep the data until you add the code for the plugins. Until then, you may experience errors, for example, missing scheduled tasks.';
 $string['settings_backupexcludedataroot'] = 'Exclude paths in dataroot';
 $string['settings_backupexcludedataroot_desc'] = 'All paths within the dataroot folder will be included in the backup except for: <b>filedir</b> (backed up separately), <b>{$a->always}</b>.<br>If you want to exclude more paths, list them here.<br>Examples of paths that can be excluded: <b>{$a->examples}</b>';
 $string['settings_backupexcludeplugins'] = 'Exclude plugins';
@@ -223,10 +227,10 @@ $string['settings_headerrestore'] = 'Restore settings';
 $string['settings_restorepreservedataroot'] = 'Preserve paths in dataroot';
 $string['settings_restorepreservedataroot_desc'] = 'During restore all paths within the dataroot folder will be removed except for: <b>filedir</b> (restored separately), <b>{$a->always}</b>.<br>If you want to keep more paths, list them here. Examples of paths that can be preserved: <b>{$a->examples}</b>';
 $string['settings_restorepreservepasswords'] = 'Preserve user passwords';
-$string['settings_restorepreservepasswords_desc'] = "List of usernames of the users whose passwords need to be preserved after restore (for example, \"admin\").
+$string['settings_restorepreservepasswords_desc'] = "List of usernames (comma-separated) of the users whose passwords need to be preserved after restore (for example, \"admin\").
 During restore the 'user' table will be overridden with the contents of the 'user' table in the backup.
 This means that after the restore the admin will need to login with the password that was set on the backed up site.
-When this setting is checked, the password of the listed users will be changed after restore to match the value on the current site.
+When this setting is not empty, the password of the listed users will be changed after restore to match the value on the current site.
 This will apply only to users with the 'manual' authentication method.";
 $string['settings_restorepreserveplugins'] = 'Preserve plugins';
 $string['settings_restorepreserveplugins_desc'] = "Only for plugins with server-specific configuration, for example, file storage or session management. <br>
