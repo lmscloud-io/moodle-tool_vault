@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 // phpcs:ignoreFile
+// Mdlcode-disable unknown-db-tablename.
+// Mdlcode-disable incorrect-package-name.
 
 /**
  * Upgrade script for the quiz module.

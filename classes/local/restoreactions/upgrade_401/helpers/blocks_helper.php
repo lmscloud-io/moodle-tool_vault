@@ -152,6 +152,7 @@ class blocks_helper {
         $subpageempty = $DB->sql_isnotempty('block_instances', 'bi.subpagepattern', true, false);
 
         $dbman = $DB->get_manager();
+        // Mdlcode-disable-next-line unknown-db-tablename.
         $temptablename = 'block_instance_context';
         $xmldbtable = new \xmldb_table($temptablename);
         $xmldbtable->add_field('instanceid', XMLDB_TYPE_INTEGER, 10, null, XMLDB_NOTNULL, null, null);

@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 // phpcs:ignoreFile
+// Mdlcode-disable unknown-db-tablename.
+// Mdlcode-disable incorrect-package-name.
 
 /**
  * Upgrade logic.
@@ -497,6 +499,7 @@ function tool_vault_401_xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
  */
 function tool_vault_401_xmldb_bigbluebuttonbn_add_change_field(database_manager $dbman, string $tablename, string $fieldname,
     array $fielddefinition) {
+    // Mdlcode assume: $tablename ['bigbluebuttonbn','bigbluebuttonbn_logs'].
     $table = new xmldb_table($tablename);
     $field = new xmldb_field($fieldname);
     $field->set_attributes($fielddefinition['type'], $fielddefinition['precision'], $fielddefinition['unsigned'],
@@ -528,6 +531,7 @@ function tool_vault_401_xmldb_bigbluebuttonbn_add_change_field(database_manager 
  */
 function tool_vault_401_xmldb_bigbluebuttonbn_index_table(database_manager $dbman, string $tablename, string $indexname, array $indexfields,
     $indextype = XMLDB_INDEX_NOTUNIQUE) {
+    // Mdlcode assume: $tablename ['bigbluebuttonbn','bigbluebuttonbn_logs'].
     $table = new xmldb_table($tablename);
     if (!$dbman->table_exists($table)) {
         return;

@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 // phpcs:ignoreFile
+// Mdlcode-disable missing-package-name.
 
 defined('MOODLE_INTERNAL') || die();
 

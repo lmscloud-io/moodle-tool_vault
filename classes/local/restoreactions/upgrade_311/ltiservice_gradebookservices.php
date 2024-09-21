@@ -33,6 +33,7 @@
 // Contact info: Marc Alier Forment granludo @ gmail.com or marc.alier @ upc.edu.
 
 // phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
 
 /**
  * This file defines tasks performed by the plugin.

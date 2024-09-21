@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 // phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
 
 /**
  * This file keeps track of upgrades to

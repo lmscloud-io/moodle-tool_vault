@@ -245,6 +245,7 @@ class dbops {
             $row = $rows[$i];
             try {
                 $entry = array_combine($fields, $row);
+                // Mdlcode-disable-next-line cannot-parse-db-tablename.
                 $DB->insert_record_raw($tablename, $entry, false, true, true);
             } catch (\Throwable $t) {
                 $logger->add_to_log("- failed to insert record with id {$entry['id']} into table $tablename: ".
