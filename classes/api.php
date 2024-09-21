@@ -749,6 +749,8 @@ class api {
             }
             return !empty($records);
         } catch (\Throwable $t) {
+            // If the error happened because tool_vault is not installed yet and the DB table does not exist - ignore it.
+            // Otherwise show debugging message.
             if (get_config('tool_vault', 'version')) {
                 debugging($t->getMessage(), DEBUG_DEVELOPER);
             }
