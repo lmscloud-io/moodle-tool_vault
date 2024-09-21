@@ -35,8 +35,13 @@ class kill_sessions extends restore_action {
      * @return void
      */
     public function execute(site_restore $logger, string $stage) {
+        global $CFG;
         $logger->add_to_log('Killing all sessions...');
-        \core\session\manager::kill_all_sessions();
+        if ($CFG->version >= 2024092000) {
+            \core\session\manager::destroy_all();
+        } else {
+            \core\session\manager::kill_all_sessions();
+        }
         $logger->add_to_log('...done');
     }
 }
