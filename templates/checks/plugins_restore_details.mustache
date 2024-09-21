@@ -67,6 +67,7 @@
 {{/hastobeupgraded}}
 
 {{#hasmissing}}
+{{#allowrestorewithmissing}}
 <p>
     <span class="badge {{#restoreremovemissing}}badge-info{{/restoreremovemissing}}{{^restoreremovemissing}}badge-warning{{/restoreremovemissing}}"
         >{{#str}} addonplugins_missing, tool_vault {{/str}}</span>
@@ -78,6 +79,15 @@
 {{^restoreremovemissing}}
     <p><strong>{{#str}} addonplugins_missing_noautoremove, tool_vault, {{settingsurl}} {{/str}}</strong></p>
 {{/restoreremovemissing}}
+{{/allowrestorewithmissing}}
+{{^allowrestorewithmissing}}
+<p>
+    <span class="badge badge-danger"
+        >{{#str}} addonplugins_missing, tool_vault {{/str}}</span>
+    {{#str}} addonplugins_fail_missing, tool_vault {{/str}}
+</p>
+<p><strong>{{#str}} addonplugins_restorewithmissing_not_allowed, tool_vault, {{settingsurl}} {{/str}}</strong></p>
+{{/allowrestorewithmissing}}
 {{#missingplugins}}
     {{> tool_vault/checks/plugins_restore_details_table}}
 {{/missingplugins}}

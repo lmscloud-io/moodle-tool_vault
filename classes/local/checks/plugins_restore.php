@@ -145,8 +145,13 @@ class plugins_restore extends check_base_restore {
         if ($this->model->status !== constants::STATUS_FINISHED) {
             return false;
         }
-        $problemplugins = $this->problem_plugins();
-        return empty($problemplugins);
+        if ($this->problem_plugins()) {
+            return false;
+        }
+        if (!api::get_setting_checkbox('allowrestorewithmissing') && $this->missing_plugins()) {
+            return false;
+        }
+        return true;
     }
 
 
@@ -165,7 +170,11 @@ class plugins_restore extends check_base_restore {
                 return get_string('addonplugins_success', 'tool_vault');
             }
         } else {
-            return get_string('addonplugins_fail', 'tool_vault');
+            if ($this->problem_plugins()) {
+                return get_string('addonplugins_fail', 'tool_vault');
+            } else {
+                return get_string('addonplugins_fail_missing', 'tool_vault');
+            }
         }
     }
 
@@ -295,6 +304,7 @@ class plugins_restore extends check_base_restore {
             $r['missingplugins'] = $this->prepare_for_template($p);
         }
 
+        $r['allowrestorewithmissing'] = (int)api::get_setting_checkbox('allowrestorewithmissing');
         $r['restoreremovemissing'] = (int)api::get_setting_checkbox('restoreremovemissing');
         $r['upgradeafterrestore'] = (int)api::get_setting_checkbox('upgradeafterrestore');
         $r['settingsurl'] = (new moodle_url('/admin/settings.php', ['section' => 'tool_vault']))->out(false);
