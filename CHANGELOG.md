@@ -2,7 +2,7 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-## Unreleased
+## [2.3] - 2024-09-22
 
 ### Added
 - CHANGE OF DEFAULT BEHAVIOR! New setting "Allow restore with missing plugins", when
