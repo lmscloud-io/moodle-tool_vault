@@ -93,6 +93,14 @@ if ($hassiteconfig) {
         2
     ));
 
+    $settings->add(new admin_setting_configselect(
+        'tool_vault/backupplugincode',
+        get_string('settings_backupplugincode', 'tool_vault'),
+        get_string('settings_backupplugincode_desc', 'tool_vault'),
+        0,
+        $yesnooptions
+    ));
+
     // Restore settings.
     $settings->add(new admin_setting_heading(
         'tool_vault/restoresettings',
