@@ -101,6 +101,14 @@ if ($hassiteconfig) {
     ));
 
     $settings->add(new admin_setting_configselect(
+        'tool_vault/backupplugincode',
+        get_string('settings_backupplugincode', 'tool_vault'),
+        get_string('settings_backupplugincode_desc', 'tool_vault'),
+        0,
+        $yesnooptions
+    ));
+
+    $settings->add(new admin_setting_configselect(
         'tool_vault/backupcompressionlevel',
         new lang_string('settings_backupcompressionlevel', 'tool_vault'),
         new lang_string('settings_backupcompressionlevel_desc', 'tool_vault',
