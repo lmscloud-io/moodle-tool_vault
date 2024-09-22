@@ -16,6 +16,7 @@ All notable changes to the tool_vault plugin will be documented in this file.
 
 ### Fixed
 - Migrated after_config callback to hook for Moodle 4.5
+- Do not schedule backup precheck in unittests and behat, improving test performance #12
 
 ## [2.2] - 2024-08-19
 
