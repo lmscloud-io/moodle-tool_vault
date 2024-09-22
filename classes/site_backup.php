@@ -407,6 +407,34 @@ class site_backup extends operation_base {
         tempfiles::remove_temp_dir($dir);
     }
 
+    public function export_plugin_code() {
+        if (!api::get_setting_checkbox('backupplugincode')) {
+            return;
+        }
+        $excludedplugins = siteinfo::get_excluded_plugins_backup();
+        $pluginlist = array_diff_key(siteinfo::get_plugins_list_full(), array_fill_keys($excludedplugins, true));
+        $subplugins = [];
+        foreach ($pluginlist as $pluginname => $plugininfo) {
+            if (!empty($plugininfo['isaddon']) && !empty($plugininfo['parent'])) {
+                if (empty($subplugins[$plugininfo['parent']])) {
+                    $subplugins[$plugininfo['parent']] = [];
+                }
+                $subplugins[$plugininfo['parent']][] = $plugininfo['path'];
+            }
+        }
+
+        foreach ($pluginlist as $pluginname => $plugininfo) {
+            $dir = $plugininfo['path'];
+            $excludesubdirs = ['.git'];
+            if (!empty($subplugins[$pluginname])) {
+                foreach ($subplugins[$pluginname] as $subplugindir) {
+                    $excludesubdirs[] = preg_replace('/^'.preg_quote("{$dir}/", '/').'/', "", $subplugindir);
+                }
+            }
+            // TODO Create archive of folder $dir excluding subdirectories $excludesubdirs.
+        }
+    }
+
     /**
      * Export $CFG->dataroot
      */

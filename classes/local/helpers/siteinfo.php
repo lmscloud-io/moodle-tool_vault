@@ -35,6 +35,7 @@ class siteinfo {
      * @return array
      */
     public static function get_plugins_list_full(bool $withnames = false): array {
+        global $CFG;
         $list = [];
         foreach (core_component::get_plugin_types() as $type => $unused1) {
             $standard = \core_plugin_manager::standard_plugins_list($type) ?: [];
@@ -46,6 +47,7 @@ class siteinfo {
                     'isaddon' => $isaddon,
                     'parent' => core_component::get_subtype_parent($type),
                     'name' => ($withnames || $isaddon) ? self::get_plugin_name($pluginname) : null,
+                    'path' => $isaddon ? preg_replace('/^'.preg_quote("{$CFG->dirroot}/", '/').'/', "", $dir) : null,
                 ]);
             }
         }
