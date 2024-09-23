@@ -59,6 +59,8 @@ class constants {
     const FILENAME_DATAROOT = 'dataroot';
     /** @var string */
     const FILENAME_FILEDIR = 'filedir';
+    /** @var string */
+    const FILENAME_PLUGINSCODE = 'pluginscode';
 
     /** @var string */
     const STATUS_INPROGRESS = 'inprogress';
