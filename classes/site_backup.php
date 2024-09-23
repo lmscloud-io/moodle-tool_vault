@@ -23,6 +23,7 @@ use tool_vault\local\checks\dbstatus;
 use tool_vault\local\checks\diskspace;
 use tool_vault\local\checks\environ;
 use tool_vault\local\helpers\files_backup;
+use tool_vault\local\helpers\plugincode;
 use tool_vault\local\helpers\plugindata;
 use tool_vault\local\helpers\siteinfo;
 use tool_vault\local\helpers\tempfiles;
@@ -234,6 +235,7 @@ class site_backup extends operation_base {
         $this->export_db();
         $this->export_dataroot();
         $this->export_filedir();
+        $this->export_plugin_code();
 
         $totalsize = 0;
         foreach ($this->filesbackups as $filesbackup) {
@@ -408,31 +410,22 @@ class site_backup extends operation_base {
     }
 
     public function export_plugin_code() {
+        global $CFG;
         if (!api::get_setting_checkbox('backupplugincode')) {
             return;
         }
-        $excludedplugins = siteinfo::get_excluded_plugins_backup();
-        $pluginlist = array_diff_key(siteinfo::get_plugins_list_full(), array_fill_keys($excludedplugins, true));
-        $subplugins = [];
-        foreach ($pluginlist as $pluginname => $plugininfo) {
-            if (!empty($plugininfo['isaddon']) && !empty($plugininfo['parent'])) {
-                if (empty($subplugins[$plugininfo['parent']])) {
-                    $subplugins[$plugininfo['parent']] = [];
-                }
-                $subplugins[$plugininfo['parent']][] = $plugininfo['path'];
-            }
+        $this->add_to_log('Starting add-on code backup');
+        $filesbackup = $this->get_files_backup(constants::FILENAME_PLUGINSCODE);
+        $paths = plugincode::get_addon_directories_list();
+        if (!$paths) {
+            $this->add_to_log('Nothing to do');
+            return;
         }
-
-        foreach ($pluginlist as $pluginname => $plugininfo) {
-            $dir = $plugininfo['path'];
-            $excludesubdirs = ['.git'];
-            if (!empty($subplugins[$pluginname])) {
-                foreach ($subplugins[$pluginname] as $subplugindir) {
-                    $excludesubdirs[] = preg_replace('/^'.preg_quote("{$dir}/", '/').'/', "", $subplugindir);
-                }
-            }
-            // TODO Create archive of folder $dir excluding subdirectories $excludesubdirs.
+        foreach ($paths as $path) {
+            $filesbackup->add_file($CFG->dirroot . '/' . $path, $path, false, false);
         }
+        $filesbackup->finish();
+        $this->add_to_log('Finished add-on code backup');
     }
 
     /**

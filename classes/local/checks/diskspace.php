@@ -16,7 +16,9 @@
 
 namespace tool_vault\local\checks;
 
+use tool_vault\api;
 use tool_vault\constants;
+use tool_vault\local\helpers\plugincode;
 use tool_vault\local\helpers\siteinfo;
 use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\xmldb\dbstructure;
@@ -67,6 +69,7 @@ class diskspace extends check_base {
         $dbtotalsize = array_sum($this->tablesizes);
         $dbmaxsize = max($this->tablesizes);
         [$datarootsize, $maxdatarootfilesize, $datarootunreadable] = $this->get_dataroot_size();
+        $codesize = api::get_setting_checkbox('backupplugincode') ? plugincode::get_total_addon_size() : null;
 
         // This is a rough estimate!
         // There should be enough space to archive the largest file. In the worst case we already have almost
@@ -75,9 +78,9 @@ class diskspace extends check_base {
         $requiredspacefiles = min($totalsize, constants::UPLOAD_SIZE + $maxfilesize) * 2;
         $requiredspacedb = min($dbtotalsize, constants::UPLOAD_SIZE + $dbmaxsize) * 2;
         $requiredspacedataroot = min($datarootsize, constants::UPLOAD_SIZE + $maxdatarootfilesize) * 2;
-        $requiredspace = max($requiredspacefiles, $requiredspacedb, $requiredspacedataroot);
+        $requiredspace = max($requiredspacefiles, $requiredspacedb, $requiredspacedataroot, $codesize * 2);
         $freespace = tempfiles::get_free_space($requiredspace);
-        $enoughspace = $freespace === true || $requiredspace < $freespace;
+        $enoughspace = $requiredspace < $freespace;
 
         // Save results.
         $this->model->set_details([
@@ -89,6 +92,8 @@ class diskspace extends check_base {
             'dbtotalsize' => $dbtotalsize,
             'dbmaxsize' => $dbmaxsize,
             'datarootsize' => $datarootsize,
+            'pluginscount' => plugincode::get_addon_plugins_count(),
+            'codesize' => $codesize,
             'maxdatarootfilesize' => $maxdatarootfilesize,
             'datarootunreadable' => $datarootunreadable,
             'enoughspace' => $enoughspace,
@@ -196,6 +201,7 @@ class diskspace extends check_base {
                 display_size($details['dbmaxsize']).'</li>'.
             '<li>' . get_string('diskspacebackup_datarootsize', 'tool_vault') . ': ' .
                 display_size($details['datarootsize']).'</li>'.
+            (isset($details['codesize']) ? '<li>Code ('.$details['pluginscount'].' plugins): '.display_size($details['codesize']).'</li>' : '').
             '<li>' . get_string('diskspacebackup_maxdatarootfilesize', 'tool_vault') . ': ' .
                 display_size($details['maxdatarootfilesize'] ?? 0).'</li>'.
             ($details['freespace'] !== true ?
