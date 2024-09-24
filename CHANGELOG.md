@@ -2,6 +2,12 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## [2.4] - 2024-09-24
+
+### Fixed
+- Fixed failing restore pre-check when restoring into a higher Moodle version where
+  some standard plugins were removed.
+
 ## [2.3] - 2024-09-22
 
 ### Added
