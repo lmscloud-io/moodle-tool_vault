@@ -148,7 +148,7 @@ class plugins_restore extends check_base_restore {
         if ($this->problem_plugins()) {
             return false;
         }
-        if (!api::get_setting_checkbox('allowrestorewithmissing') && $this->missing_plugins()) {
+        if (!api::get_setting_checkbox('allowrestorewithmissing') && $this->missing_plugins(false)) {
             return false;
         }
         return true;
@@ -240,6 +240,28 @@ class plugins_restore extends check_base_restore {
     }
 
     /**
+     * Additional check if the plugin was a standard plugin but is now removed
+     *
+     * Fix for the core function core_plugin_manager::is_deleted_standard_plugin
+     *
+     * @param string $type
+     * @param string $name
+     * @return bool
+     */
+    protected function is_deleted_standard_plugin_fix(string $type, string $name): bool {
+        global $CFG;
+        // For Moodle 4.0 and 4.1 there was a mistake in the function is_deleted_standard_plugin().
+        // It was fixed in https://tracker.moodle.org/browse/MDL-80868 and may still be present in some 4.2 (<4.2.7)
+        // and 4.3 (<4.3.4) versions.
+        if (in_array("{$CFG->branch}", ['400', '401', '402', '403'])) {
+            if ($type === 'qformat' && in_array($name, ['blackboard', 'learnwise', 'examview'])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Checks if a plugin is standard or deleted standard plugin
      *
      * @param string $pluginname
@@ -251,7 +273,8 @@ class plugins_restore extends check_base_restore {
         if (!isset($standardplugins) || !is_array($standardplugins)) {
             list($type, $name) = \core_component::normalize_component($pluginname);
             $allplugins = core_plugin_manager::standard_plugins_list($type) ?: [];
-            return in_array($name, $allplugins) || core_plugin_manager::is_deleted_standard_plugin($type, $name);
+            return in_array($name, $allplugins) || core_plugin_manager::is_deleted_standard_plugin($type, $name)
+                || $this->is_deleted_standard_plugin_fix($type, $name);
         } else {
             return in_array($pluginname, $standardplugins);
         }
