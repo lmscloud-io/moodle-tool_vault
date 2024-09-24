@@ -35,4 +35,48 @@ abstract class check_base_restore extends check_base {
     public function get_fullreport_url(): ?\moodle_url {
         return restore_checkreport::url(['id' => $this->get_model()->id]);
     }
+
+    /**
+     * Displays a badge with text
+     *
+     * @param string $class one of: 'badge-info', 'badge-warning', 'badge-danger'
+     * @param string $text text inside the badge
+     * @return string
+     */
+    protected function badge(string $class, string $text): string {
+        if (!in_array($class, ['badge-info', 'badge-warning', 'badge-danger'])) {
+            throw new \coding_exception('Unrecognised badge class: '.s($class));
+        }
+        return "<span class=\"badge {$class} mr-1\">{$text}</span><span class=\"accesshide\">. </span>";
+    }
+
+    /**
+     * Displays an "Error" badge
+     *
+     * @param string|null $text
+     * @return string
+     */
+    protected function badge_error(?string $text = null): string {
+        return $this->badge('badge-danger', $text ?? get_string('error', 'moodle'));
+    }
+
+    /**
+     * Displays a "Warning" badge
+     *
+     * @param string|null $text
+     * @return string
+     */
+    protected function badge_warning(?string $text = null): string {
+        return $this->badge('badge-warning', $text ?? get_string('warning', 'moodle'));
+    }
+
+    /**
+     * Displays an "Info" badge
+     *
+     * @param string|null $text
+     * @return string
+     */
+    protected function badge_info(?string $text = null): string {
+        return $this->badge('badge-info', $text ?? get_string('statusinfo', 'moodle'));
+    }
 }
