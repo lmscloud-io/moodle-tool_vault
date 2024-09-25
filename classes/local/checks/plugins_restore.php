@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\checks;
 
+use core_form\dynamic_form;
 use core_plugin_manager;
 use moodle_url;
 use tool_vault\api;
@@ -60,10 +61,107 @@ class plugins_restore extends check_base_restore {
         $list = [];
         $allplugins = array_keys($backupplugins + $plugins);
         foreach ($allplugins as $pluginname) {
-            $list[$pluginname] = [$backupplugins[$pluginname] ?? [], $plugins[$pluginname] ?? []];
+            $info = [
+                $backupplugins[$pluginname] ?? [],
+                $plugins[$pluginname] ?? [],
+                ['isstandard' => $this->is_standard_plugin($pluginname, true)],
+            ];
+            $v1 = $info[0]['version'] ?? null;
+            $v2 = $info[1]['version'] ?? null;
+            if ($info[0]) {
+                // Plugins that is present in the backup.
+                $info[2]['isproblem'] = $v2 && $v1 > $v2; // Version of the plugin in the backup is higher than on this site.
+                $info[2]['ismissing'] = !$v2; // Plugin is present in the backup but absent on this site.
+                $parent = !empty($info[0]['parent']) ? $backupplugins[$info[0]['parent']] ?? null : null;
+                $info[2]['parentismissing'] = $parent && !empty($parent['isaddon']) &&
+                    empty($plugins[$info[0]['parent']]['version']);
+            }
+            if ($v1 && !$info[2]['isstandard'] && (!empty($info[2]['isproblem']) || !empty($info[2]['ismissing']))) {
+                // Non-standard plugins with a problem or missing - try to find them in the plugins directory.
+                if (empty($info[2]['parentismissing'])) {
+                    // Do not do anything if the parent is also missing, it will be reported under the missing parent.
+                    try {
+                        $info[2]['latest'] = $this->check_on_moodle_org($pluginname);
+                    } catch (\Throwable $e) {
+                        $info[2]['latest'] = ['error' => $e->getMessage()];
+                    }
+                    $latestversion = $info[2]['latest']['version'] ?? null;
+                    if ("{$latestversion}" !== "{$v1}") {
+                        try {
+                            $info[2]['exact'] = $this->check_on_moodle_org($pluginname . '@' . $v1);
+                        } catch (\Throwable $e) {
+                            $info[2]['exact'] = ['error' => $e->getMessage()];
+                        }
+                    }
+                }
+            }
+            $list[$pluginname] = $info;
         }
-        return $list;
 
+        return $list;
+    }
+
+    /**
+     * Check if plugin is available on moodle.org
+     *
+     * @param string $pluginname either only plugin name or "pluginname @ version" (without spaces)
+     * @throws \moodle_exception
+     * @return array
+     */
+    protected function check_on_moodle_org(string $pluginname): array {
+        global $CFG;
+        require_once($CFG->libdir.'/filelib.php');
+
+        $url = 'https://download.moodle.org/api/1.3/pluginfo.php';
+        $params = ['plugin' => $pluginname, 'format' => 'json', 'minversion' => 0, 'branch' => moodle_major_version()];
+        $options = ['CURLOPT_SSL_VERIFYHOST' => 2, 'CURLOPT_SSL_VERIFYPEER' => true];
+
+        $curl = new \curl(['proxy' => true]);
+        $response = $curl->get($url, $params, $options);
+        $response = $this->prepare_moodle_org_response($curl, $response);
+
+        if (empty($response['pluginfo']['version']['version'])) {
+            throw new \moodle_exception('No available version');
+        }
+        $shortinfo = [
+            'version' => $response['pluginfo']['version']['version'],
+            'release' => $response['pluginfo']['version']['release'],
+            'downloadurl' => $response['pluginfo']['version']['downloadurl'],
+            'supportedmoodles' => array_column($response['pluginfo']['version']['supportedmoodles'], 'release'),
+            // Also available: name, source, doc, bugs, discussion...
+            // Also available under 'version': maturity, downloadmd5, vscsystem...
+        ];
+        return $shortinfo;
+    }
+
+    /**
+     * Check moodle.org response for errors, return json-decoded response
+     *
+     * @param \curl $curl
+     * @param string|null $response
+     * @throws \moodle_exception
+     * @return array
+     */
+    protected function prepare_moodle_org_response(\curl $curl, ?string $response): array {
+        $curlerrno = $curl->get_errno();
+        if (!empty($curlerrno)) {
+            $error = get_string('err_response_curl', 'core_plugin') . ' ' .
+                $curlerrno . ': ' . $curl->error;
+            throw new \moodle_exception($error);
+        }
+        $curlinfo = $curl->get_info();
+        if ($curlinfo['http_code'] != 200) {
+            $error = get_string('err_response_http_code', 'core_plugin') . $curlinfo['http_code'];
+            throw new \moodle_exception($error);
+        }
+
+        $response = json_decode($response, true);
+
+        if (empty($response['status']) || $response['status'] !== 'OK') {
+            throw new \moodle_exception('Unrecognised response');
+        }
+
+        return $response ?? [];
     }
 
     /**
@@ -130,10 +228,24 @@ class plugins_restore extends check_base_restore {
      * @return array
      */
     protected function missing_plugins(bool $includestandard = true): array {
-        return array_filter($this->model->get_details()['list'], function($info, $pluginname) use ($includestandard)  {
+        $plugins = array_filter($this->model->get_details()['list'], function($info, $pluginname) use ($includestandard)  {
             return empty($info[1]) && !empty($info[0])
                 && ($includestandard || !$this->is_standard_plugin($pluginname));
         }, ARRAY_FILTER_USE_BOTH);
+
+        // Do not return subplugins of missing plugins as individual entries.
+        foreach (array_keys($plugins) as $pluginname) {
+            if (!empty($plugins[$pluginname][2]['parentismissing'])) {
+                $parent = $plugins[$pluginname][0]['parent'];
+                if (array_key_exists($parent, $plugins)) {
+                    $plugins[$parent][0]['subplugins'] = $plugins[$parent][0]['subplugins'] ?? [];
+                    $plugins[$parent][0]['subplugins'][$pluginname] = $plugins[$pluginname][0];
+                    unset($plugins[$pluginname]);
+                }
+            }
+        }
+
+        return $plugins;
     }
 
     /**
@@ -282,12 +394,131 @@ class plugins_restore extends check_base_restore {
     }
 
     /**
+     * What should be an absolute (file system) path to the plugin
+     *
+     * @param string $pluginname
+     * @return string
+     */
+    protected function guess_plugin_path(string $pluginname): string {
+        $dir = \core_component::get_component_directory($pluginname);
+        if ($dir) {
+            return $dir;
+        }
+        [$ptype, $pname] = \core_component::normalize_component($pluginname);
+        return \core_component::get_plugin_types()[$ptype] . '/' . $pname;
+    }
+
+    /**
+     * What should be a relative path to the plugin
+     *
+     * @param string $pluginname
+     * @return array|string|null
+     */
+    protected function guess_plugin_path_relative(string $pluginname): string {
+        global $CFG;
+        $dir = $this->guess_plugin_path($pluginname);
+        return preg_replace('/^'.preg_quote("{$CFG->dirroot}/", '/').'/', "", $dir);
+    }
+
+    /**
+     * Can tool_vault create/override plugin folder
+     *
+     * @param string $pluginname
+     * @return bool
+     */
+    protected function can_write_to_plugin_dir(string $pluginname): bool {
+        $dir = $this->guess_plugin_path($pluginname);
+        if (file_exists($dir)) {
+            if (!is_writable($dir)) {
+                return false;
+            }
+            // TODO check if we can delete every file and subfolder from this directory.
+            return true;
+        } else {
+            return is_writable(dirname($dir));
+        }
+    }
+
+    /**
+     * Is tool_vault allowed to install and write to the codebase
+     *
+     * Due to implementation limitation we use dynamic_form and can only allow to write in Moodle 3.11 and above
+     * where dynamic_form clas is available
+     *
+     * @return bool
+     */
+    protected static function allow_vault_to_install(): bool {
+        return class_exists(dynamic_form::class);
+    }
+
+    /**
+     * Prepare download information about a single version of a plugin
+     *
+     * @param string $pluginname
+     * @param array $minfo
+     * @param string $versionpostfix
+     * @return string
+     */
+    protected function prepare_link_to_install(string $pluginname, array $minfo, string $versionpostfix = ''): string {
+        $currentversion = moodle_major_version();
+
+        $s = 'Version '.$minfo['version'];
+        $s .= $versionpostfix;
+        $s .= ' for Moodle '.join(', ', $minfo['supportedmoodles']);
+        $s .= ' is available in the plugins directory. ';
+        if (!in_array($currentversion, $minfo['supportedmoodles'])) {
+            $s .= ' Current Moodle version '.$currentversion.' is not supported!';
+        }
+        $s .= ' '.
+            'You can <a href="'.$minfo['downloadurl'].'">download it as zip</a> and unpack in '.
+            $this->guess_plugin_path_relative($pluginname).' in your Moodle codebase';
+        if ($this->can_write_to_plugin_dir($pluginname) && self::allow_vault_to_install()) {
+            $s .= ', or <a href="#">install</a> now.';
+        }
+        return $s;
+    }
+
+    /**
+     * Prepare details of the missing or problem plugin (download information)
+     *
+     * @param string $pluginname
+     * @param array $info
+     * @return string
+     */
+    protected function prepare_details_for_template(string $pluginname, array $info): string {
+        $ismissing = !empty($info[2]['ismissing']);
+        if ($ismissing) {
+            $res = [];
+            $hasboth = !empty($info[2]['latest']) && !empty($info[2]['exact']);
+            if (!empty($info[2]['latest'])) {
+                $res[] = $this->prepare_link_to_install($pluginname, $info[2]['latest'],
+                    $hasboth ? ' (latest)' : '');
+            }
+            if (!empty($info[2]['exact'])) {
+                $res[] = $this->prepare_link_to_install($pluginname, $info[2]['exact'],
+                    $hasboth ? ' (same as in backup)' : '');
+            }
+            if ($res) {
+                $res = '<ul><li>'.join('</li><li>', $res).'</li></ul>';
+                if (!$this->can_write_to_plugin_dir($pluginname) && self::allow_vault_to_install()) {
+                    $res .= '<p>Tool vault does not have permission to write to the codebase and can not install it for you.</p>';
+                }
+                return $res;
+            }
+            return '<p>This plugin is not available in the plugins directory.</p>';
+        }
+        return "<a href=\"https://moodle.org/plugins/{$pluginname}\" target=\"_blank\">".
+                get_string('addonplugins_pluginsdirectory', 'tool_vault')."</a>";
+    }
+
+    /**
      * Prepare a list of plugins for template export
      *
      * @param array $list
+     * @param bool $withdetails
      * @return array
      */
-    protected function prepare_for_template(array $list) {
+    protected function prepare_for_template(array $list, bool $withdetails = false): array {
         $plugins = [];
         $showparents = false;
         foreach ($list as $pluginname => $info) {
@@ -297,6 +528,7 @@ class plugins_restore extends check_base_restore {
                 'versionbackup' => $info[0]['version'] ?? '',
                 'versionlocal' => $info[1]['version'] ?? '',
                 'parent' => $parent ? $this->plugin_with_name($parent) : [],
+                'details' => $withdetails ? $this->prepare_details_for_template($pluginname, $info) : '',
             ];
         }
         return ['plugins' => $plugins, 'showparents' => $showparents];
@@ -313,7 +545,7 @@ class plugins_restore extends check_base_restore {
         $r = [];
         if ($p = $this->problem_plugins()) {
             $r['hasproblems'] = true;
-            $r['problemplugins'] = $this->prepare_for_template($p);
+            $r['problemplugins'] = $this->prepare_for_template($p, true);
         }
         if ($p = $this->extra_plugins(false)) {
             $r['hasextra'] = true;
@@ -325,7 +557,8 @@ class plugins_restore extends check_base_restore {
         }
         if ($p = $this->missing_plugins(false)) {
             $r['hasmissing'] = true;
-            $r['missingplugins'] = $this->prepare_for_template($p);
+            $r['missingplugins'] = $this->prepare_for_template($p, true) +
+                ['hideversionlocal' => true];
         }
 
         $r['allowrestorewithmissing'] = (int)api::get_setting_checkbox('allowrestorewithmissing');
