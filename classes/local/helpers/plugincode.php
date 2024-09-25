@@ -64,7 +64,8 @@ class plugincode {
         $bytestotal = 0;
         $path = realpath($path);
         if ($path !== false && $path != '' && file_exists($path)) {
-            foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS)) as $object) {
+            foreach (new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS)) as $object) {
                 // TODO check that $object->getPath() does not contain /.git/ etc. Or find a way to exclude them from iterator.
                 try {
                     $bytestotal += $object->getSize();
