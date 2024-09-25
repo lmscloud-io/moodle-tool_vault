@@ -25,6 +25,11 @@ namespace tool_vault\local\helpers;
  */
 class plugincode {
 
+    /**
+     * Get list of directories with add-on plugins (do not list the same dir twice for the subplugins)
+     *
+     * @return array
+     */
     public static function get_addon_directories_list() {
         $excludedplugins = siteinfo::get_excluded_plugins_backup();
         $pluginlistfull = siteinfo::get_plugins_list_full();
@@ -44,6 +49,11 @@ class plugincode {
         return $paths;
     }
 
+    /**
+     * Get number of add-on plugins (except tool_vault)
+     *
+     * @return int
+     */
     public static function get_addon_plugins_count(): int {
         $excludedplugins = siteinfo::get_excluded_plugins_backup();
         $pluginlistfull = siteinfo::get_plugins_list_full();
@@ -60,6 +70,12 @@ class plugincode {
         return $count;
     }
 
+    /**
+     * Get size of a single directory
+     *
+     * @param string $path
+     * @return int
+     */
     public static function get_directory_size(string $path): int {
         $bytestotal = 0;
         $path = realpath($path);
@@ -69,13 +85,20 @@ class plugincode {
                 // TODO check that $object->getPath() does not contain /.git/ etc. Or find a way to exclude them from iterator.
                 try {
                     $bytestotal += $object->getSize();
+                // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
                 } catch (\Throwable $e) {
+                    // Means we will not be able to copy this file anyway.
                 }
             }
         }
         return $bytestotal;
     }
 
+    /**
+     * Get total size of all add-on plugins code
+     *
+     * @return int
+     */
     public static function get_total_addon_size(): int {
         global $CFG;
         $paths = self::get_addon_directories_list();
@@ -84,24 +107,5 @@ class plugincode {
             $total += self::get_directory_size($CFG->dirroot . '/' . $path);
         }
         return $total;
-    }
-
-    public static function copy_addons(string $dest) {
-        global $CFG;
-        mkdir($dest, 0755, true);
-        foreach (self::get_addon_directories_list() as $path) {
-            $source = $CFG->dirroot . '/' . $path;
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS),
-                \RecursiveIteratorIterator::SELF_FIRST);
-            foreach ($iterator as $item) {
-                // TODO skip /.git/ and similar.
-                if ($item->isDir()) {
-                    mkdir($dest . DIRECTORY_SEPARATOR . $iterator->getSubPathname(), true);
-                } else {
-                    copy($item, $dest . DIRECTORY_SEPARATOR . $iterator->getSubPathname());
-                }
-            }
-        }
     }
 }
