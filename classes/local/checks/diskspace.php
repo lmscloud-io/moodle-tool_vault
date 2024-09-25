@@ -201,7 +201,10 @@ class diskspace extends check_base {
                 display_size($details['dbmaxsize']).'</li>'.
             '<li>' . get_string('diskspacebackup_datarootsize', 'tool_vault') . ': ' .
                 display_size($details['datarootsize']).'</li>'.
-            (isset($details['codesize']) ? '<li>Code ('.$details['pluginscount'].' plugins): '.display_size($details['codesize']).'</li>' : '').
+            (isset($details['codesize']) ?
+                '<li>Code ('.$details['pluginscount'].' plugins): '.
+                    display_size($details['codesize']).'</li>' :
+                '').
             '<li>' . get_string('diskspacebackup_maxdatarootfilesize', 'tool_vault') . ': ' .
                 display_size($details['maxdatarootfilesize'] ?? 0).'</li>'.
             ($details['freespace'] !== true ?

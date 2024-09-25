@@ -409,7 +409,10 @@ class site_backup extends operation_base {
         tempfiles::remove_temp_dir($dir);
     }
 
-    public function export_plugin_code() {
+    /**
+     * Export code of the add-on plugins
+     */
+    public function export_plugin_code(): void {
         global $CFG;
         if (!api::get_setting_checkbox('backupplugincode')) {
             return;
