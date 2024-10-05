@@ -2,6 +2,11 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## Unreleased
+
+### Fixed
+- Moved missing plugins information on the top of pre-check results
+
 ## [2.4] - 2024-09-24
 
 ### Fixed
