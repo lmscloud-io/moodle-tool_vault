@@ -28,4 +28,5 @@ export const SELECTORS = {
     SIGNUP_BUTTON: '#getapikey_signup',
     ENTER_KEY_BUTTON: '#getapikey_enterapikey',
     LEGACY_FORM_CONTAINER: '#getapikey_legacyform',
+    INSTALL_ADDON_LINK: '[data-action="installaddon"]',
 };

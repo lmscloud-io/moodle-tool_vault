@@ -50,11 +50,15 @@ class cli_helper {
     const SCRIPT_BACKUP = 'backup';
     /** @var string */
     const SCRIPT_LIST = 'list';
+    /** @var string */
+    const SCRIPT_ADDONS = 'addons';
 
     /** @var string script name, one of the SCRIPT* constants above */
     protected $script;
     /** @var string Name of php file containing the caller script (for printing help) */
     protected $scriptfilename;
+    /** @var string|null */
+    protected $extrahelp;
     /** @var array */
     protected $clioptions;
 
@@ -63,10 +67,12 @@ class cli_helper {
      *
      * @param string $script script name, one of the SCRIPT* constants above
      * @param string $scriptfilename Name of php file containing the caller script (for printing help)
+     * @param string $extrahelp Additional information to add to the help text after peramters and before example
      */
-    public function __construct(string $script, string $scriptfilename) {
+    public function __construct(string $script, string $scriptfilename, ?string $extrahelp = null) {
         $this->script = $script;
         $this->scriptfilename = $scriptfilename;
+        $this->extrahelp = $extrahelp;
         $optionsdefinitions = $this->options_definitions();
         $longoptions = [];
         $shortmapping = [];
@@ -81,6 +87,25 @@ class cli_helper {
             $longoptions,
             $shortmapping
         );
+    }
+
+    protected function options_definitions_addons(): array {
+        return [
+            'name' => [
+                'hasvalue' => 'PLUGINNAME',
+                'description' => 'Name of the plugin or comma-separated names of plugins. '.
+                    'For specific versions use syntax PLUGINNAME@VERSION where VERSION is a 10-digit plugin version number',
+                'default' => null,
+                'validation' => function($plugins) {
+                    // TODO.
+                    return true;
+                },
+            ],
+            'overwrite' => [
+                'hasvalue' => false,
+                'description' => 'Overwrite the code of existing plugins (only if the version in the new code is higher)',
+            ]
+        ];
     }
 
     /**
@@ -98,14 +123,17 @@ class cli_helper {
                 'alias' => 'h',
             ],
         ];
-        if ($this->script === self::SCRIPT_RESTORE) {
+        if ($this->script === self::SCRIPT_ADDONS) {
+            $options = array_merge($options, $this->options_definitions_addons());
+        }
+        if ($this->script === self::SCRIPT_RESTORE || $this->script === self::SCRIPT_ADDONS) {
             $options += [
                 'backupkey' => [
                     'hasvalue' => 'BACKUPKEY',
                     'description' => 'Backup key',
                     'default' => null,
                     'validation' => function ($backupkey) {
-                        if (!$backupkey) {
+                        if (!$backupkey && $this->script === self::SCRIPT_RESTORE) {
                             $this->cli_error('Argument --backupkey is required');
                         }
                     },
@@ -143,16 +171,24 @@ class cli_helper {
                 ],
             ];
         }
-        if ($this->script === self::SCRIPT_BACKUP || $this->script === self::SCRIPT_RESTORE) {
+
+        if ($this->script === self::SCRIPT_BACKUP || $this->script === self::SCRIPT_RESTORE
+                || $this->script === self::SCRIPT_ADDONS) {
+            if ($this->script === self::SCRIPT_BACKUP) {
+                $dryrundescription = 'Check only, do not backup';
+            } else if ($this->script === self::SCRIPT_RESTORE) {
+                $dryrundescription = 'Check only, do not restore';
+            } else if ($this->script === self::SCRIPT_ADDONS) {
+                $dryrundescription = 'Display status only, do not add code';
+            }
             $options += [
-                'dryrun' => [
-                    'description' => ($this->script === self::SCRIPT_RESTORE) ?
-                        'Check only, do not restore' : 'Check only, do not backup',
-                    'hasvalue' => false,
-                ],
                 'passphrase' => [
                     'description' => 'Passphrase to use for encryption',
                     'hasvalue' => 'PHRASE',
+                ],
+                'dryrun' => [
+                    'description' => $dryrundescription,
+                    'hasvalue' => false,
                 ],
             ];
         }
@@ -192,20 +228,32 @@ class cli_helper {
      */
     public function print_help(): void {
         $titles = [
-            'backup' => 'Command line site backup',
-            'list' => 'Command line remote backup list',
-            'restore' => 'Command line site restore',
+            self::SCRIPT_BACKUP => 'Command line site backup',
+            self::SCRIPT_LIST => 'Command line remote backup list',
+            self::SCRIPT_RESTORE => 'Command line site restore',
+            self::SCRIPT_ADDONS => 'Add code for add-on plugins to the Moodle codebase',
         ];
         $this->cli_writeln($titles[$this->script]);
         $this->cli_writeln('');
         $this->print_help_options($this->options_definitions());
+
+        if ($this->extrahelp) {
+            $this->cli_writeln('');
+            $this->cli_writeln(wordwrap($this->extrahelp, self::OUTPUTWIDTH));
+        }
+
         $this->cli_writeln('');
         $this->cli_writeln('Example:');
+        $needswwwuser = $this->script !== self::SCRIPT_ADDONS;
         $params = '';
-        if (array_key_exists('backupkey', $this->options_definitions())) {
+        if ($this->script === self::SCRIPT_RESTORE) {
             $params = ' --backupkey=BACKUPKEY';
         }
-        $this->cli_writeln('$sudo -u www-data /usr/bin/php admin/tool/vault/cli/'.$this->scriptfilename.$params);
+        if ($this->script === self::SCRIPT_ADDONS) {
+            $params = ' --name=local_plugin';
+        }
+        $this->cli_writeln('$ ' . ($needswwwuser ? 'sudo -u www-data ' : '') .
+            '/usr/bin/php admin/tool/vault/cli/'.$this->scriptfilename.$params);
     }
 
     /**
