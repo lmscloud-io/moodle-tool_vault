@@ -192,6 +192,7 @@ class cron_task extends \core\task\scheduled_task {
             return;
         }
 
+        @set_time_limit(0);
         try {
             if (method_exists($this, 'get_pid')) {
                 $pid = (int)$this->get_pid();

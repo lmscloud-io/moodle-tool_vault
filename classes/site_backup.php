@@ -21,6 +21,7 @@ use tool_vault\local\checks\check_base;
 use tool_vault\local\checks\configoverride;
 use tool_vault\local\checks\dbstatus;
 use tool_vault\local\checks\diskspace;
+use tool_vault\local\checks\environ;
 use tool_vault\local\helpers\files_backup;
 use tool_vault\local\helpers\plugindata;
 use tool_vault\local\helpers\siteinfo;
@@ -189,6 +190,7 @@ class site_backup extends operation_base {
             dbstatus::class,
             diskspace::class,
             configoverride::class,
+            environ::class,
         ];
     }
 

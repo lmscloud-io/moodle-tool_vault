@@ -70,6 +70,34 @@ class ui {
     }
 
     /**
+     * Duration (used for max_execution_time)
+     *
+     * @param int $value
+     * @return string
+     */
+    public static function format_duration(int $value): string {
+        if ($value <= MINSECS) {
+            return get_string('numseconds', 'moodle', $value);
+        }
+        $parts = [];
+        $hrs = floor($value / HOURSECS);
+        $mins = floor(($value % HOURSECS) / MINSECS);
+        $secs = $value % MINSECS;
+        if ($hrs) {
+            $parts[] = get_string('numhours', 'moodle', $hrs);
+        }
+        if ($mins) {
+            $parts[] = get_string('numminutes', 'moodle', $mins);
+        }
+        if ($secs) {
+            $parts[] = get_string('numseconds', 'moodle', $secs);
+        }
+        return
+            get_string('numseconds', 'moodle', $value) . ' (' .
+            implode(' ', $parts) . ')';
+    }
+
+    /**
      * Format status
      *
      * @param string $status

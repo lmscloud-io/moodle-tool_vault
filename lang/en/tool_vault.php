@@ -104,6 +104,10 @@ $string['diskspacerestore_success'] = 'There is enough disk space in the tempora
 $string['diskspacerestore_success_warning'] = "There is enough disk space in the temporary directory however there may not be enough space for all files and dataroot if they are in the same local disk partition";
 $string['enterapikey'] = 'I have an API key';
 $string['enterpassphrase'] = 'This backup is protected with a passphrase';
+$string['environ_fail'] = 'Tool vault was not able to raise max_execution_time setting. Please refer to <a href="{$a}" target="_blank">{$a}</a>';
+$string['environ_success_warning'] = 'Tool vault was not able to raise max_execution_time setting. If your backup does not finish within {$a->value}, it will be aborted. Please refer to <a href="{$a->url}" target="_blank">{$a->url}</a>';
+$string['environbackup'] = 'Environment check';
+$string['environbackup_maxexecutiontime'] = 'Maximum execution time (max_execution_time)';
 $string['error_accesskeyisnotvalid'] = 'Accesskey is not valid';
 $string['error_anotherbackupisinprogress'] = 'Another backup is in progress';
 $string['error_anotherrestoreisinprogress'] = 'Another restore is in progress';
