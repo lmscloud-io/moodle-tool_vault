@@ -18,6 +18,7 @@ namespace tool_vault;
 
 use tool_vault\local\checks\check_base;
 use tool_vault\local\checks\diskspace_restore;
+use tool_vault\local\checks\environ_restore;
 use tool_vault\local\checks\plugins_restore;
 use tool_vault\local\checks\restore_precheck_failed;
 use tool_vault\local\checks\version_restore;
@@ -144,6 +145,7 @@ class site_restore_dryrun extends operation_base {
             version_restore::class,
             plugins_restore::class,
             diskspace_restore::class,
+            environ_restore::class,
         ];
         $prechecks = [];
         foreach ($precheckclasses as $classname) {
