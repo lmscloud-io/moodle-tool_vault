@@ -21,6 +21,7 @@ use core_plugin_manager;
 use moodle_url;
 use tool_vault\api;
 use tool_vault\constants;
+use tool_vault\local\helpers\plugincode;
 use tool_vault\local\helpers\siteinfo;
 
 /**
@@ -81,14 +82,14 @@ class plugins_restore extends check_base_restore {
                 if (empty($info[2]['parentismissing'])) {
                     // Do not do anything if the parent is also missing, it will be reported under the missing parent.
                     try {
-                        $info[2]['latest'] = $this->check_on_moodle_org($pluginname);
+                        $info[2]['latest'] =  plugincode::check_on_moodle_org($pluginname);
                     } catch (\Throwable $e) {
                         $info[2]['latest'] = ['error' => $e->getMessage()];
                     }
                     $latestversion = $info[2]['latest']['version'] ?? null;
                     if ("{$latestversion}" !== "{$v1}") {
                         try {
-                            $info[2]['exact'] = $this->check_on_moodle_org($pluginname . '@' . $v1);
+                            $info[2]['exact'] = plugincode::check_on_moodle_org($pluginname . '@' . $v1);
                         } catch (\Throwable $e) {
                             $info[2]['exact'] = ['error' => $e->getMessage()];
                         }
@@ -99,69 +100,6 @@ class plugins_restore extends check_base_restore {
         }
 
         return $list;
-    }
-
-    /**
-     * Check if plugin is available on moodle.org
-     *
-     * @param string $pluginname either only plugin name or "pluginname @ version" (without spaces)
-     * @throws \moodle_exception
-     * @return array
-     */
-    protected function check_on_moodle_org(string $pluginname): array {
-        global $CFG;
-        require_once($CFG->libdir.'/filelib.php');
-
-        $url = 'https://download.moodle.org/api/1.3/pluginfo.php';
-        $params = ['plugin' => $pluginname, 'format' => 'json', 'minversion' => 0, 'branch' => moodle_major_version()];
-        $options = ['CURLOPT_SSL_VERIFYHOST' => 2, 'CURLOPT_SSL_VERIFYPEER' => true];
-
-        $curl = new \curl(['proxy' => true]);
-        $response = $curl->get($url, $params, $options);
-        $response = $this->prepare_moodle_org_response($curl, $response);
-
-        if (empty($response['pluginfo']['version']['version'])) {
-            throw new \moodle_exception('No available version');
-        }
-        $shortinfo = [
-            'version' => $response['pluginfo']['version']['version'],
-            'release' => $response['pluginfo']['version']['release'],
-            'downloadurl' => $response['pluginfo']['version']['downloadurl'],
-            'supportedmoodles' => array_column($response['pluginfo']['version']['supportedmoodles'], 'release'),
-            // Also available: name, source, doc, bugs, discussion...
-            // Also available under 'version': maturity, downloadmd5, vscsystem...
-        ];
-        return $shortinfo;
-    }
-
-    /**
-     * Check moodle.org response for errors, return json-decoded response
-     *
-     * @param \curl $curl
-     * @param string|null $response
-     * @throws \moodle_exception
-     * @return array
-     */
-    protected function prepare_moodle_org_response(\curl $curl, ?string $response): array {
-        $curlerrno = $curl->get_errno();
-        if (!empty($curlerrno)) {
-            $error = get_string('err_response_curl', 'core_plugin') . ' ' .
-                $curlerrno . ': ' . $curl->error;
-            throw new \moodle_exception($error);
-        }
-        $curlinfo = $curl->get_info();
-        if ($curlinfo['http_code'] != 200) {
-            $error = get_string('err_response_http_code', 'core_plugin') . $curlinfo['http_code'];
-            throw new \moodle_exception($error);
-        }
-
-        $response = json_decode($response, true);
-
-        if (empty($response['status']) || $response['status'] !== 'OK') {
-            throw new \moodle_exception('Unrecognised response');
-        }
-
-        return $response ?? [];
     }
 
     /**
@@ -394,52 +332,6 @@ class plugins_restore extends check_base_restore {
     }
 
     /**
-     * What should be an absolute (file system) path to the plugin
-     *
-     * @param string $pluginname
-     * @return string
-     */
-    protected function guess_plugin_path(string $pluginname): string {
-        $dir = \core_component::get_component_directory($pluginname);
-        if ($dir) {
-            return $dir;
-        }
-        [$ptype, $pname] = \core_component::normalize_component($pluginname);
-        return \core_component::get_plugin_types()[$ptype] . '/' . $pname;
-    }
-
-    /**
-     * What should be a relative path to the plugin
-     *
-     * @param string $pluginname
-     * @return array|string|null
-     */
-    protected function guess_plugin_path_relative(string $pluginname): string {
-        global $CFG;
-        $dir = $this->guess_plugin_path($pluginname);
-        return preg_replace('/^'.preg_quote("{$CFG->dirroot}/", '/').'/', "", $dir);
-    }
-
-    /**
-     * Can tool_vault create/override plugin folder
-     *
-     * @param string $pluginname
-     * @return bool
-     */
-    protected function can_write_to_plugin_dir(string $pluginname): bool {
-        $dir = $this->guess_plugin_path($pluginname);
-        if (file_exists($dir)) {
-            if (!is_writable($dir)) {
-                return false;
-            }
-            // TODO check if we can delete every file and subfolder from this directory.
-            return true;
-        } else {
-            return is_writable(dirname($dir));
-        }
-    }
-
-    /**
      * Is tool_vault allowed to install and write to the codebase
      *
      * Due to implementation limitation we use dynamic_form and can only allow to write in Moodle 3.11 and above
@@ -471,9 +363,16 @@ class plugins_restore extends check_base_restore {
         }
         $s .= ' '.
             'You can <a href="'.$minfo['downloadurl'].'">download it as zip</a> and unpack in '.
-            $this->guess_plugin_path_relative($pluginname).' in your Moodle codebase';
-        if ($this->can_write_to_plugin_dir($pluginname) && self::allow_vault_to_install()) {
-            $s .= ', or <a href="#">install</a> now.';
+            plugincode::guess_plugin_path_relative($pluginname).' in your Moodle codebase';
+        if (plugincode::can_write_to_plugin_dir($pluginname) && self::allow_vault_to_install()) {
+            $params = ['data-id' => $this->get_model()->id,
+                'data-action' => 'installaddon',
+                'data-source' => 'moodleorg',
+                'data-pluginname' => $pluginname,
+                'data-version' => $minfo['version'],
+                'data-downloadurl' => $minfo['downloadurl'],
+            ];
+            $s .= ', or '.\html_writer::link(new moodle_url('#'), 'install', $params).' now.';
         }
         return $s;
     }
@@ -500,7 +399,7 @@ class plugins_restore extends check_base_restore {
             }
             if ($res) {
                 $res = '<ul><li>'.join('</li><li>', $res).'</li></ul>';
-                if (!$this->can_write_to_plugin_dir($pluginname) && self::allow_vault_to_install()) {
+                if (!plugincode::can_write_to_plugin_dir($pluginname) && self::allow_vault_to_install()) {
                     $res .= '<p>Tool vault does not have permission to write to the codebase and can not install it for you.</p>';
                 }
                 return $res;
@@ -565,6 +464,9 @@ class plugins_restore extends check_base_restore {
         $r['restoreremovemissing'] = (int)api::get_setting_checkbox('restoreremovemissing');
         $r['upgradeafterrestore'] = (int)api::get_setting_checkbox('upgradeafterrestore');
         $r['settingsurl'] = (new moodle_url('/admin/settings.php', ['section' => 'tool_vault']))->out(false);
+        if (self::allow_vault_to_install()) {
+            $PAGE->requires->js_call_amd('tool_vault/install_addon', 'init');
+        }
         return $renderer->render_from_template('tool_vault/checks/plugins_restore_details', $r);
     }
 
