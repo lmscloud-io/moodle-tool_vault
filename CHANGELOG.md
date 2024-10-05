@@ -6,6 +6,8 @@ All notable changes to the tool_vault plugin will be documented in this file.
 
 ### Fixed
 - Moved missing plugins information on the top of pre-check results
+- Added lang string for 'API key' and changed quotes for some lang strings to
+  work around AMOS import bug #14
 
 ## [2.4] - 2024-09-24
 

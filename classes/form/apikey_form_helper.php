@@ -33,7 +33,7 @@ class apikey_form_helper {
      * @param \MoodleQuickForm $mform
      */
     public static function definition(\MoodleQuickForm $mform) {
-        $mform->addElement('text', 'apikey', 'API key', ['style' => 'width:100%']);
+        $mform->addElement('text', 'apikey', get_string('apikey', 'tool_vault'), ['style' => 'width:100%']);
         $mform->setType('apikey', PARAM_RAW_TRIMMED);
         $mform->addRule('apikey', null, 'required', null, 'client');
     }
