@@ -159,7 +159,7 @@ class site_restore_dryrun extends operation_base {
                     $logger->add_to_log('...OK');
                 }
             } else {
-                $logger->add_to_log('...Failed: '.$chk->get_status_message(), constants::LOGLEVEL_ERROR);
+                $logger->add_to_log('...Failed: '.strip_tags($chk->get_status_message()), constants::LOGLEVEL_ERROR);
             }
         }
         return $prechecks;
