@@ -53,6 +53,7 @@ final class cleanup_existing_files_test extends \advanced_testcase {
      */
     public function tearDown(): void {
         tempfiles::cleanup();
+        parent::tearDown();
     }
 
     public function test_execute(): void {

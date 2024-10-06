@@ -54,6 +54,7 @@ final class files_restore_test extends \advanced_testcase {
      */
     public function tearDown(): void {
         tempfiles::cleanup();
+        parent::tearDown();
     }
 
     /**

@@ -36,6 +36,7 @@ final class api_test extends \advanced_testcase {
      */
     public function tearDown(): void {
         tempfiles::cleanup();
+        parent::tearDown();
     }
 
     /**

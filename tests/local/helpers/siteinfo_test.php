@@ -36,6 +36,7 @@ final class siteinfo_test extends \advanced_testcase {
      */
     public function tearDown(): void {
         tempfiles::cleanup();
+        parent::tearDown();
     }
 
     public function test_get_plugins_list_full(): void {

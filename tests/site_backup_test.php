@@ -53,6 +53,7 @@ final class site_backup_test extends \advanced_testcase {
      */
     public function tearDown(): void {
         tempfiles::cleanup();
+        parent::tearDown();
     }
 
     /**
