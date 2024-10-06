@@ -259,6 +259,15 @@ abstract class check_base extends operation_base {
     abstract public function success(): bool;
 
     /**
+     * Pre-check is successful but there is a warning
+     *
+     * @return bool
+     */
+    public function warning(): bool {
+        return false;
+    }
+
+    /**
      * Display a check status message
      *
      * @param string $status

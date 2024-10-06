@@ -55,7 +55,7 @@ class environ_restore extends check_base_restore {
     public function success(): bool {
         $maxexectime = $this->model->get_details()['max_execution_time'];
         return $this->model->status === constants::STATUS_FINISHED
-            && (!$maxexectime || $maxexectime >= HOURSECS);
+            && (!$maxexectime || $maxexectime >= constants::MIN_REQUIRED_EXEC_TIME);
     }
 
     /**
@@ -93,7 +93,7 @@ class environ_restore extends check_base_restore {
      *
      * @return bool
      */
-    protected function warning(): bool {
+    public function warning(): bool {
         return $this->success() && !empty($this->model->get_details()['max_execution_time']);
     }
 

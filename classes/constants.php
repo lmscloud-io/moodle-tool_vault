@@ -113,4 +113,7 @@ class constants {
      * to improve performance. Note that there are many more compressed formats, these are just the common ones.
      */
     const COMPRESSED_FILE_EXTENSIONS = ['jpg', 'jpeg', 'zip', 'mbz', 'gz', 'mp4'];
+
+    /** Required minimum value for the 'max_execution_time' setting in the backup/restore pre-checks */
+    const MIN_REQUIRED_EXEC_TIME = HOURSECS;
 }

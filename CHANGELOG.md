@@ -4,6 +4,9 @@ All notable changes to the tool_vault plugin will be documented in this file.
 
 ## Unreleased
 
+### Added
+- Pre-check for both backup and restore checking the PHP setting max_execution_time.
+  Fail if it is under one hour, warn if it has a limit.
 ### Fixed
 - Moved missing plugins information on the top of pre-check results
 - Added lang string for 'API key' and changed quotes for some lang strings to

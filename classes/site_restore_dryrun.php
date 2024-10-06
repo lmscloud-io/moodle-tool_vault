@@ -153,9 +153,13 @@ class site_restore_dryrun extends operation_base {
             $chk = $classname::create_and_run($model);
             $prechecks[$chk->get_name()] = $chk;
             if ($chk->success()) {
-                $logger->add_to_log('... OK');
+                if ($chk->warning()) {
+                    $logger->add_to_log('...Warning: ' . strip_tags($chk->get_status_message()), constants::LOGLEVEL_WARNING);
+                } else {
+                    $logger->add_to_log('...OK');
+                }
             } else {
-                $logger->add_to_log('... Failed: '.$chk->get_status_message());
+                $logger->add_to_log('...Failed: '.$chk->get_status_message(), constants::LOGLEVEL_ERROR);
             }
         }
         return $prechecks;

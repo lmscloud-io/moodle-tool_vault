@@ -33,7 +33,7 @@ use tool_vault\local\helpers\tempfiles;
 require_once(__DIR__ . '/../../../../config.php');
 
 // Increase time and memory limit.
-core_php_time_limit::raise();
+@set_time_limit(0);
 raise_memory_limit(MEMORY_HUGE);
 
 $clihelper = new cli_helper(cli_helper::SCRIPT_RESTORE, basename(__FILE__));

@@ -36,7 +36,7 @@ if (moodle_needs_upgrading()) {
 }
 
 // Increase time and memory limit.
-core_php_time_limit::raise();
+@set_time_limit(0);
 raise_memory_limit(MEMORY_HUGE);
 
 $clihelper = new cli_helper(cli_helper::SCRIPT_BACKUP, basename(__FILE__));

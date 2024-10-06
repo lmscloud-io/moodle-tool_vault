@@ -206,7 +206,11 @@ class site_backup extends operation_base {
             $this->add_to_log('Backup pre-check: '.$classname::get_display_name().'...');
             if (($chk = $classname::create_and_run($this->model)) && $chk->success()) {
                 $this->prechecks[$chk->get_name()] = $chk;
-                $this->add_to_log('...OK');
+                if ($chk->warning()) {
+                    $this->add_to_log('...Warning: ' . strip_tags($chk->get_status_message()), constants::LOGLEVEL_WARNING);
+                } else {
+                    $this->add_to_log('...OK');
+                }
             } else if ($chk) {
                 throw new backup_precheck_failed($chk);
             } else {
