@@ -99,9 +99,9 @@ jobs:
             fi
           fi
           if [[ "${{ github.event.inputs.apikey }}" != "" ]]; then
-            if [[ "${{ github.event.inputs.apikey }}" == "light" ]]; then
+            if [[ "${{ github.event.inputs.apikeytype }}" == "light" ]]; then
               moodle-plugin-ci add-config "define('TOOL_VAULT_TEST_API_KEY_LIGHT', '${{ github.event.inputs.apikey }}');"
-            elif [[ "${{ github.event.inputs.apikey }}" == "free" ]]; then
+            elif [[ "${{ github.event.inputs.apikeytype }}" == "free" ]]; then
               moodle-plugin-ci add-config "define('TOOL_VAULT_TEST_API_KEY_FREE', '${{ github.event.inputs.apikey }}');"
             else
               moodle-plugin-ci add-config "define('TOOL_VAULT_TEST_API_KEY', '${{ github.event.inputs.apikey }}');"
