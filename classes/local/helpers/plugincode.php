@@ -28,7 +28,7 @@ class plugincode {
     /**
      * Get list of directories with add-on plugins (do not list the same dir twice for the subplugins)
      *
-     * @return array
+     * @return array array of relative paths
      */
     public static function get_addon_directories_list() {
         $excludedplugins = siteinfo::get_excluded_plugins_backup();
