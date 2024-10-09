@@ -42,12 +42,16 @@ class siteinfo {
             foreach (core_component::get_plugin_list($type) as $plug => $dir) {
                 $pluginname = $type.'_'.$plug;
                 $isaddon = in_array($plug, $standard) ? null : true;
+                $plugininfo = ($withnames || $isaddon) ? self::get_plugin_info($pluginname) : null;
                 $list[$pluginname] = array_filter([
                     'version' => get_config($pluginname, 'version'),
                     'isaddon' => $isaddon,
                     'parent' => core_component::get_subtype_parent($type),
-                    'name' => ($withnames || $isaddon) ? self::get_plugin_name($pluginname) : null,
+                    'name' => $plugininfo ? $plugininfo->displayname : null,
                     'path' => $isaddon ? preg_replace('/^'.preg_quote("{$CFG->dirroot}/", '/').'/', "", $dir) : null,
+                    'dependencies' => $isaddon ? $plugininfo->dependencies : null,
+                    'pluginsupported' => $isaddon ? $plugininfo->pluginsupported : null,
+                    'pluginincompatible' => $isaddon ? $plugininfo->pluginincompatible : null,
                 ]);
             }
         }
@@ -55,15 +59,16 @@ class siteinfo {
     }
 
     /**
-     * Get human readable name of a plugin
+     * Get info about plugin
      *
      * @param string $plugin
-     * @return string
+     * @return \core\plugininfo\base
      */
-    protected static function get_plugin_name(string $plugin) {
+    protected static function get_plugin_info(string $plugin): \core\plugininfo\base {
         $pluginman = \core_plugin_manager::instance();
-        $inf = $pluginman->get_plugin_info($plugin);
-        return $inf->displayname;
+        $plugin = $pluginman->get_plugin_info($plugin);
+        $plugin->load_disk_version();
+        return $plugin;
     }
 
     /**
