@@ -1,5 +1,4 @@
 <?php
-use tool_vault\local\helpers\plugincode;
 // This file is part of plugin tool_vault - https://lmsvault.io
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -26,6 +25,7 @@ use tool_vault\local\helpers\plugincode;
 define('CLI_SCRIPT', true);
 
 use tool_vault\local\cli_helper;
+use tool_vault\local\helpers\plugincode;
 
 require_once(__DIR__ . '/../../../../config.php');
 
@@ -57,8 +57,9 @@ if ($names !== null) {
 }
 
 $backupkey = $clihelper->get_cli_option('backupkey');
+// phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
 if ($backupkey !== null) {
-    // TODO make sure we downloaded the dbstructure and codebase
+    // TODO make sure we downloaded the dbstructure and codebase.
     // TODO if $names are specified, make sure they are present in the backup.
     // TODO if $names are not specified, set it to the list of missing/problem plugins.
 }

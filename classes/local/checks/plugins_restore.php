@@ -82,7 +82,7 @@ class plugins_restore extends check_base_restore {
                 if (empty($info[2]['parentismissing'])) {
                     // Do not do anything if the parent is also missing, it will be reported under the missing parent.
                     try {
-                        $info[2]['latest'] =  plugincode::check_on_moodle_org($pluginname);
+                        $info[2]['latest'] = plugincode::check_on_moodle_org($pluginname);
                     } catch (\Throwable $e) {
                         $info[2]['latest'] = ['error' => $e->getMessage()];
                     }

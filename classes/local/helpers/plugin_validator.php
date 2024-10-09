@@ -25,8 +25,17 @@ namespace tool_vault\local\helpers;
  */
 class plugin_validator extends \core\update\validator {
 
+    /** @var array */
     protected static $allowedassertions = ['component', 'moodleversion', 'plugintype'];
 
+    /**
+     * Validate a plugin and return an instance of this class
+     *
+     * @param string $zipcontentpath
+     * @param array $zipcontentfiles
+     * @param array $assertions
+     * @return \tool_vault\local\helpers\plugin_validator
+     */
     public static function validate(string $zipcontentpath, array $zipcontentfiles, array $assertions = []): self {
         $validator = new static($zipcontentpath, $zipcontentfiles);
 
@@ -50,7 +59,14 @@ class plugin_validator extends \core\update\validator {
         return $validator;
     }
 
-    protected function get_full_error_message($msgcode, $addinfo): string {
+    /**
+     * Human-readable error message
+     *
+     * @param string $msgcode
+     * @param array|null $addinfo
+     * @return string
+     */
+    protected function get_full_error_message(string $msgcode, ?array $addinfo): string {
         // Some common errors with better explanations than in the parent class.
         if ($msgcode === 'pathwritable') {
             $pluginpath = plugincode::guess_plugin_path($this->get_component());
@@ -69,7 +85,7 @@ class plugin_validator extends \core\update\validator {
         // For other errors take descriptions from the parent class.
         $error = $msgcode . ' ' . $this->message_code_name($msgcode);
         if ($info = $this->message_code_info($msgcode, $addinfo)) {
-            $error .= str_ends_with($info, '.') ? '' : '.';
+            $error .= substr($info, -1) === '.' ? '' : '.';
             $error .= ' ' . $info;
         }
         return $error;
@@ -110,6 +126,11 @@ class plugin_validator extends \core\update\validator {
         return $result;
     }
 
+    /**
+     * Full plugin name (to be called after it is validated)
+     *
+     * @return string
+     */
     public function get_component(): string {
         $component = $this->get_versionphp_info()['component'] ?? null;
         if ($component === null) {
@@ -121,6 +142,11 @@ class plugin_validator extends \core\update\validator {
         return $component;
     }
 
+    /**
+     * Version of the plugin (to be called after it is validated)
+     *
+     * @return string
+     */
     public function get_version(): string {
         return $this->get_versionphp_info()['version'] ?? '';
     }
