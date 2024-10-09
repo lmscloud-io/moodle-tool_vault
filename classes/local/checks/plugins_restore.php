@@ -23,6 +23,7 @@ use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\helpers\plugincode;
 use tool_vault\local\helpers\siteinfo;
+use tool_vault\local\models\dryrun_model;
 
 /**
  * Check plugins version on restore
@@ -37,6 +38,21 @@ class plugins_restore extends check_base_restore {
      * Evaluate check and store results in model details
      */
     public function perform(): void {
+        global $CFG;
+        /** @var dryrun_model $parent */
+        $parent = $this->get_parent();
+        $backupbranch = $parent->get_metadata()['branch'];
+        if ($backupbranch > $CFG->branch) {
+            // Skip this check if backup has a higher major moodle version, or it will be unreadable
+            // and full of confusing errors.
+            $this->model->set_details([
+                'list' => [],
+                'standardplugins' => [],
+                'skipped' => true,
+            ])->save();
+            return;
+        }
+
         $excludedplugins = ['tool_vault']; // TODO more from settings.
         $pluginlist = array_diff_key(siteinfo::get_plugins_list_full(true), array_fill_keys($excludedplugins, true));
         $parent = $this->get_parent();
@@ -195,6 +211,9 @@ class plugins_restore extends check_base_restore {
         if ($this->model->status !== constants::STATUS_FINISHED) {
             return false;
         }
+        if (!empty($this->model->get_details()['skipped'])) {
+            return false;
+        }
         if ($this->problem_plugins()) {
             return false;
         }
@@ -220,7 +239,9 @@ class plugins_restore extends check_base_restore {
                 return get_string('addonplugins_success', 'tool_vault');
             }
         } else {
-            if ($this->problem_plugins()) {
+            if (!empty($this->get_model()->get_details()['skipped'])) {
+                return get_string('addonplugins_fail_skipped', 'tool_vault');
+            } else if ($this->problem_plugins()) {
                 return get_string('addonplugins_fail', 'tool_vault');
             } else {
                 return get_string('addonplugins_fail_missing', 'tool_vault');
@@ -353,6 +374,11 @@ class plugins_restore extends check_base_restore {
      */
     protected function prepare_link_to_install(string $pluginname, array $minfo, string $versionpostfix = ''): string {
         $currentversion = moodle_major_version();
+
+        if (!empty($minfo['error'])) {
+            // TODO process/display nicer?
+            return $minfo['error'];
+        }
 
         $s = 'Version '.$minfo['version'];
         $s .= $versionpostfix;
