@@ -15,7 +15,6 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace tool_vault\local\helpers;
-use core\update\code_manager;
 
 /**
  * Class plugincode
@@ -150,7 +149,7 @@ class plugincode {
                 return false;
             }
             // TODO check if we can delete every file and subfolder from this directory.
-            // see lib/classes/plugin_manager.php is_directory_removable()
+            // see lib/classes/plugin_manager.php is_directory_removable() .
             return true;
         } else {
             return is_writable(dirname($dir));
@@ -220,6 +219,13 @@ class plugincode {
         return $shortinfo;
     }
 
+    /**
+     * Detect the root folder in the zip
+     *
+     * @param array $filelist list of files from the zip
+     * @throws \moodle_exception
+     * @return string
+     */
     protected static function find_root_folder(array &$filelist): string {
         $found = null;
         foreach ($filelist as $file => $unused) {
@@ -235,7 +241,17 @@ class plugincode {
         return $found;
     }
 
-    protected static function copy_plugin_files(string $sourcepath, string $pluginpath, array $files, ?string $rootfolder = null): void {
+    /**
+     * Copy plugin files from one folder to another
+     *
+     * @param string $sourcepath path where zip was extracted to
+     * @param string $pluginpath path where plugin needs to be installed
+     * @param array $files list of files - content of the zip file
+     * @param string|null $rootfolder rootfolder to strip from the filenames in $files
+     * @return void
+     */
+    protected static function copy_plugin_files(string $sourcepath, string $pluginpath,
+            array $files, ?string $rootfolder = null): void {
         global $CFG;
         $dirpermissions = file_exists($pluginpath) ? fileperms($pluginpath) : fileperms(dirname($pluginpath));
         $filepermissions = $dirpermissions & 0666;
@@ -260,12 +276,19 @@ class plugincode {
         }
     }
 
+    /**
+     * Install a plugin from moodle.org/plugins
+     *
+     * @param string $url
+     * @param string $pluginname either just the name or 'name @ version' (without spaces)
+     * @param bool $dryrun
+     * @return void
+     */
     public static function install_addon_from_moodleorg(string $url, string $pluginname, bool $dryrun = false) {
         global $CFG;
-        // Download zip
+        // Download zip.
         $tempdir = make_request_directory();
         $zipfile = $tempdir.'/plugin.zip';
-        //$result = $this->download_plugin_zip_file($url, $tempfile);
         $headers = null;
         $postdata = null;
         $fullresponse = false;
@@ -302,21 +325,5 @@ class plugincode {
         } else {
             mtrace("Plugin $component with version $version can be installed into $pluginpathrel");
         }
-
-        //$zipcontents = $fp->extract_to_pathname($zipfile, $tmp, ['attendance/version.php']);
-
-
-        //mtrace("Unzipped to: ".$tmp);
-        //print_r($zipcontents);
-
-
-
-        // Move
-        // if (file_exists($target.'/'.$pluginname)) {
-        //     $this->remove_plugin_folder($this->get_plugin_info($plugin->component));
-        // }
-
-        // TODO copy contents of $tmp/$name into $pluginpath
-
     }
 }

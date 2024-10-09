@@ -67,7 +67,7 @@ class cli_helper {
      *
      * @param string $script script name, one of the SCRIPT* constants above
      * @param string $scriptfilename Name of php file containing the caller script (for printing help)
-     * @param string $extrahelp Additional information to add to the help text after peramters and before example
+     * @param string|null $extrahelp Additional information to add to the help text after peramters and before example
      */
     public function __construct(string $script, string $scriptfilename, ?string $extrahelp = null) {
         $this->script = $script;
@@ -89,6 +89,11 @@ class cli_helper {
         );
     }
 
+    /**
+     * Specific options for the addon_plugins script
+     *
+     * @return array
+     */
     protected function options_definitions_addons(): array {
         return [
             'name' => [
@@ -104,7 +109,7 @@ class cli_helper {
             'overwrite' => [
                 'hasvalue' => false,
                 'description' => 'Overwrite the code of existing plugins (only if the version in the new code is higher)',
-            ]
+            ],
         ];
     }
 
