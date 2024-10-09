@@ -116,12 +116,14 @@ class plugincode {
      * @return string
      */
     public static function guess_plugin_path(string $pluginname): string {
+        global $CFG;
         $dir = \core_component::get_component_directory($pluginname);
         if ($dir) {
             return $dir;
         }
         [$ptype, $pname] = \core_component::normalize_component($pluginname);
-        return \core_component::get_plugin_types()[$ptype] . '/' . $pname;
+        $path = \core_component::get_plugin_types()[$ptype] ?? ($CFG->dirroot .'/'. $ptype);
+        return $path . '/' . $pname;
     }
 
     /**

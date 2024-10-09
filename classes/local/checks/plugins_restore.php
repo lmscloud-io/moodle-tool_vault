@@ -377,6 +377,11 @@ class plugins_restore extends check_base_restore {
     protected function prepare_link_to_install(string $pluginname, array $minfo, string $versionpostfix = ''): string {
         $currentversion = moodle_major_version();
 
+        if (!empty($minfo['error'])) {
+            // TODO process/display nicer?
+            return $minfo['error'];
+        }
+
         $s = 'Version '.$minfo['version'];
         $s .= $versionpostfix;
         $s .= ' for Moodle '.join(', ', $minfo['supportedmoodles']);
