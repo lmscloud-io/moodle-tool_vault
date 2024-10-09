@@ -103,6 +103,14 @@ class site_backup extends operation_base {
         $precheck = $this->prechecks[diskspace::get_name()] ?? null;
         $excludedplugins = siteinfo::get_excluded_plugins_backup();
         $pluginlist = array_diff_key(siteinfo::get_plugins_list_full(), array_fill_keys($excludedplugins, true));
+        if (api::get_setting_checkbox('backupplugincode')) {
+            $paths = plugincode::get_addon_directories_list();
+            foreach ($pluginlist as $pluginname => &$data) {
+                if (!empty($data['path']) && in_array($data['path'], $paths)) {
+                    $data['codeincluded'] = true;
+                }
+            }
+        }
         return [
             // TODO - what other metadata do we want - languages, estimated size?
             'wwwroot' => $CFG->wwwroot,
