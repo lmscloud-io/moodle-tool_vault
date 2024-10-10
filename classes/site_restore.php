@@ -448,6 +448,13 @@ class site_restore extends operation_base {
                 }
             }
 
+            // Distribution callback if present.
+            if (class_exists('core\distribution')) {
+                if (is_callable(['core\distribution', 'tool_vault_after_table_restore'])) {
+                    \core\distribution::tool_vault_after_table_restore($tablename);
+                }
+            }
+
             // Restore preserved data, apply config overrides, reset admin password, etc.
             $this->after_table_restore($table, $preserveddata);
 
