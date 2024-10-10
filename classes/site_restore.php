@@ -347,6 +347,16 @@ class site_restore extends operation_base {
                 }
             }
         }
+
+        if ($tablename === 'context' && file_exists(__DIR__ . '/../../../../local/olms_work/version.php')) {
+            $table = new \xmldb_table('context');
+            $field = new \xmldb_field('tenantid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+            if (!$DB->get_manager()->field_exists($table, $field)) {
+                $DB->get_manager()->add_field($table, $field);
+                $index = new \xmldb_index('tenantid', XMLDB_INDEX_NOTUNIQUE, ['tenantid']);
+                $DB->get_manager()->add_index($table, $index);
+            }
+        }
     }
 
     /**
