@@ -51,6 +51,8 @@ class site_restore extends operation_base {
     protected $dbstructure = null;
     /** @var files_restore[] */
     protected $filesrestore = [];
+    /** @var array */
+    protected $callbacks = [];
 
     /**
      * Constructor
@@ -148,6 +150,18 @@ class site_restore extends operation_base {
     }
 
     /**
+     * Returns a list of all 'tool_vault_restore' callbacks
+     *
+     * The list of the callbacks is saved before the restore starts because it becomes unavilable later
+     * when plugins are not marked as installed/upgraded.
+     *
+     * @return array
+     */
+    public function get_callbacks() {
+        return $this->callbacks;
+    }
+
+    /**
      * Perform restore
      *
      * @return void
@@ -170,6 +184,7 @@ class site_restore extends operation_base {
         // From this moment on we can not throw any exceptions, we have to try to restore as much as possible skipping problems.
         $this->add_to_log('Restore started');
 
+        $this->callbacks = get_plugins_with_function('tool_vault_restore');
         restore_action::execute_before_restore($this);
         $this->restore_db();
         restore_action::execute_after_db_restore($this);

@@ -103,7 +103,7 @@ abstract class restore_action {
      */
     private static function execute_actions(site_restore $logger, string $stage) {
         // Allow any plugin to execute their own code at this stage.
-        $callbacks = get_plugins_with_function('tool_vault_restore');
+        $callbacks = $logger->get_callbacks();
         foreach ($callbacks as $plugintype => $plugins) {
             foreach ($plugins as $plugin => $callback) {
                 try {
