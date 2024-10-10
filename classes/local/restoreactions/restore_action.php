@@ -102,6 +102,20 @@ abstract class restore_action {
      * @return void
      */
     private static function execute_actions(site_restore $logger, string $stage) {
+        // Allow any plugin to execute their own code at this stage.
+        $callbacks = get_plugins_with_function('tool_vault_restore');
+        foreach ($callbacks as $plugintype => $plugins) {
+            foreach ($plugins as $plugin => $callback) {
+                try {
+                    $callback($logger, $stage);
+                } catch (\Throwable $e) {
+                    $logger->add_to_log('Error while executing callback '.$callback.' : '.$e->getMessage(),
+                        \tool_vault\constants::LOGLEVEL_ERROR);
+                }
+            }
+        }
+
+        // Execute stage actions provided by tool_vault.
         $actions = self::ACTIONS[$stage] ?? [];
         foreach ($actions as $action) {
             (new $action())->execute($logger, $stage);
