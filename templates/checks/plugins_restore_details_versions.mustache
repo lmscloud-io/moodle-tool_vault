@@ -1,0 +1,56 @@
+{{!
+    This file is part of plugin tool_vault - https://lmsvault.io
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tool_vault/checks/plugins_restore_details_versions
+
+    TODO describe template plugins_restore_details_versions
+
+    Example context (json):
+    {
+    }
+}}
+{{#debuginfo}}
+<pre>{{{.}}}</pre>
+{{/debuginfo}}
+{{{general}}}
+
+{{#versions}}
+<div>
+    <input type="radio" name="install_{{pluginname}}">
+    {{{description}}}
+    {{#downloadurl}}
+        <a href="{{.}}">Download</a>
+    {{/downloadurl}}
+</div>
+{{/versions}}
+
+{{#showbuttons}}
+<div style="width:100%">
+    <div class="row">
+        <div class="col-sm">
+            <button>CLI instructions</button>
+            <button>Install</button>
+        </div>
+        <div class="col-sm text-right">
+            Path: {{pluginpath}}
+            Writable:
+                {{#writable}}{{#str}} yes, moodle {{/str}}{{/writable}}
+                {{^writable}}{{#str}} no, moodle {{/str}}{{/writable}}
+        </div>
+    </div>
+</div>
+{{/showbuttons}}
