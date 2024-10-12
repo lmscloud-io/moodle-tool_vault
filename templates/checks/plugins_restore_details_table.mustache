@@ -71,7 +71,9 @@
             {{^hideversionlocal}}
             <td>{{versionlocal}}</td>
             {{/hideversionlocal}}
-            <td>{{{details}}}</td>
+            <td>{{#versiondetails}}
+{{> tool_vault/checks/plugins_restore_details_versions}}
+            {{/versiondetails}}</td>
         </tr>
     {{/plugins}}
 </table>

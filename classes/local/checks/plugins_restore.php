@@ -372,37 +372,33 @@ class plugins_restore extends check_base_restore {
      * @param string $pluginname
      * @param array $minfo
      * @param string $versionpostfix
-     * @return string
+     * @return array
      */
-    protected function prepare_link_to_install(string $pluginname, array $minfo, string $versionpostfix = ''): string {
+    protected function prepare_version_option(string $pluginname, array $minfo, string $versionpostfix = ''): array {
         $currentversion = moodle_major_version();
 
-        if (!empty($minfo['error'])) {
-            // TODO process/display nicer?
-            return $minfo['error'];
-        }
-
-        $s = 'Version '.$minfo['version'];
+        //$s = print_r($minfo, true).'<br>';
+        $s = 'Version '.$minfo['version'].' from plugins directory';
         $s .= $versionpostfix;
         $s .= ' for Moodle '.join(', ', $minfo['supportedmoodles']);
-        $s .= ' is available in the plugins directory. ';
+        //$s .= ' is available in the plugins directory. ';
         if (!in_array($currentversion, $minfo['supportedmoodles'])) {
             $s .= ' Current Moodle version '.$currentversion.' is not supported!';
         }
-        $s .= ' '.
-            'You can <a href="'.$minfo['downloadurl'].'">download it as zip</a> and unpack in '.
-            plugincode::guess_plugin_path_relative($pluginname).' in your Moodle codebase';
         if (plugincode::can_write_to_plugin_dir($pluginname) && self::allow_vault_to_install()) {
-            $params = ['data-id' => $this->get_model()->id,
+            $installparams = ['data-id' => $this->get_model()->id,
                 'data-action' => 'installaddon',
                 'data-source' => 'moodleorg',
                 'data-pluginname' => $pluginname,
                 'data-version' => $minfo['version'],
                 'data-downloadurl' => $minfo['downloadurl'],
             ];
-            $s .= ', or '.\html_writer::link(new moodle_url('#'), 'install', $params).' now.';
         }
-        return $s;
+        return [
+            'description' => $s,
+            'downloadurl' => $minfo['downloadurl'],
+            'installparams' => $installparams ?? [],
+        ];
     }
 
     /**
@@ -410,42 +406,52 @@ class plugins_restore extends check_base_restore {
      *
      * @param string $pluginname
      * @param array $info
-     * @return string
+     * @return array
      */
-    protected function prepare_details_for_template(string $pluginname, array $info): string {
+    protected function prepare_version_details_for_template(string $pluginname, array $info): array {
         $ismissing = !empty($info[2]['ismissing']);
-        if ($ismissing) {
-            $res = [];
+        $isproblem = !empty($info[2]['isproblem']);
+        $rv = [
+            //'debuginfo' => print_r($info, true),
+            'pluginpath' => plugincode::guess_plugin_path_relative($pluginname),
+            'writable' => plugincode::can_write_to_plugin_dir($pluginname) && self::allow_vault_to_install(),
+            'versions' => [],
+        ];
+        if ($ismissing || $isproblem) {
             $hasboth = !empty($info[2]['latest']) && !empty($info[2]['exact']);
-            if (!empty($info[2]['latest'])) {
-                $res[] = $this->prepare_link_to_install($pluginname, $info[2]['latest'],
+            if (!empty($info[2]['latest']) && empty($info[2]['latest']['error'])) {
+                $rv['versions'][] = $this->prepare_version_option($pluginname, $info[2]['latest'],
                     $hasboth ? ' (latest)' : '');
             }
-            if (!empty($info[2]['exact'])) {
-                $res[] = $this->prepare_link_to_install($pluginname, $info[2]['exact'],
+            if (!empty($info[2]['exact']) && empty($info[2]['exact']['error'])) {
+                $rv['versions'][] = $this->prepare_version_option($pluginname, $info[2]['exact'],
                     $hasboth ? ' (same as in backup)' : '');
             }
-            if ($res) {
-                $res = '<ul><li>'.join('</li><li>', $res).'</li></ul>';
-                if (!plugincode::can_write_to_plugin_dir($pluginname) && self::allow_vault_to_install()) {
-                    $res .= '<p>Tool vault does not have permission to write to the codebase and can not install it for you.</p>';
-                }
-                return $res;
+            if (!empty($info[0]['codeincluded'])) {
+                $rv['versions'][] = [
+                    'description' => 'Version '.$info[0]['version'].' from backup', // TODO more about supported Moodle versions
+                    // TODO downloadurl, installparams
+                ];
             }
-            return '<p>This plugin is not available in the plugins directory.</p>';
+            if (empty($rv['versions'])) {
+                $rv['general'] = '<p>This plugin is not available in the plugins directory.</p>';
+            } else {
+                $rv['versions'][] = [
+                    'description' => 'Skip',
+                ];
+                $rv['showbuttons'] = true;
+            }
         }
-        return "<a href=\"https://moodle.org/plugins/{$pluginname}\" target=\"_blank\">".
-                get_string('addonplugins_pluginsdirectory', 'tool_vault')."</a>";
+        return $rv;
     }
 
     /**
      * Prepare a list of plugins for template export
      *
      * @param array $list
-     * @param bool $withdetails
      * @return array
      */
-    protected function prepare_for_template(array $list, bool $withdetails = false): array {
+    protected function prepare_for_template(array $list): array {
         $plugins = [];
         $showparents = false;
         foreach ($list as $pluginname => $info) {
@@ -455,7 +461,7 @@ class plugins_restore extends check_base_restore {
                 'versionbackup' => $info[0]['version'] ?? '',
                 'versionlocal' => $info[1]['version'] ?? '',
                 'parent' => $parent ? $this->plugin_with_name($parent) : [],
-                'details' => $withdetails ? $this->prepare_details_for_template($pluginname, $info) : '',
+                'versiondetails' => $this->prepare_version_details_for_template($pluginname, $info),
             ];
         }
         return ['plugins' => $plugins, 'showparents' => $showparents];
@@ -472,7 +478,7 @@ class plugins_restore extends check_base_restore {
         $r = [];
         if ($p = $this->problem_plugins()) {
             $r['hasproblems'] = true;
-            $r['problemplugins'] = $this->prepare_for_template($p, true);
+            $r['problemplugins'] = $this->prepare_for_template($p);
         }
         if ($p = $this->extra_plugins(false)) {
             $r['hasextra'] = true;
@@ -484,7 +490,7 @@ class plugins_restore extends check_base_restore {
         }
         if ($p = $this->missing_plugins(false)) {
             $r['hasmissing'] = true;
-            $r['missingplugins'] = $this->prepare_for_template($p, true) +
+            $r['missingplugins'] = $this->prepare_for_template($p) +
                 ['hideversionlocal' => true];
         }
 
