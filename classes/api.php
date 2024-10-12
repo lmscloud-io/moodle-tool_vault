@@ -17,8 +17,8 @@
 namespace tool_vault;
 
 use tool_vault\local\exceptions\api_exception;
+use tool_vault\local\helpers\curl;
 use tool_vault\local\helpers\dbops;
-use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\logger;
 use tool_vault\local\models\backup_file;
 use tool_vault\local\models\operation_model;
@@ -293,7 +293,8 @@ class api {
     protected static function prepare_s3_exception(\curl $curl, ?string $response): api_exception {
         $errno = $curl->get_errno();
         $error = $curl->error;
-        $httpcode = (int)($curl->get_info()['http_code'] ?? 0);
+        $info = $curl->get_info();
+        $httpcode = (int)($info['http_code'] ?? 0);
         if ($httpcode) {
             // This is an error returned by the server.
             $errormessage = "AWS S3 error ({$httpcode})";
@@ -315,6 +316,117 @@ class api {
     }
 
     /**
+     * Upload a file or a part of a file to a presigned url
+     *
+     * @param \tool_vault\site_backup $sitebackup
+     * @param string $s3url
+     * @param array $uploadheaders
+     * @param string $filepath
+     * @param int $filesize
+     * @param int $partno number of the file part being uploaded (0-based)
+     * @return string
+     */
+    protected static function upload_file_to_presigned_url(site_backup $sitebackup,
+            string $s3url,
+            array $uploadheaders,
+            string $filepath,
+            int $filesize,
+            int $partno): string {
+        $filename = basename($filepath);
+        $parts = $filesize >= constants::S3_MULTIPART_UPLOAD_THRESHOLD ?
+            ceil($filesize / constants::S3_MULTIPART_UPLOAD_PARTSIZE) : 1;
+
+        if ($parts > 1) {
+            $size = ($partno == $parts - 1) ? ($filesize % constants::S3_MULTIPART_UPLOAD_PARTSIZE) :
+                constants::S3_MULTIPART_UPLOAD_PARTSIZE;
+            $sitebackup->add_to_log('Uploading file '.$filename.' ('.display_size($filesize).
+                ') using multipart upload: part '.($partno + 1).' of '.$parts.' ('.
+                display_size($size).')...');
+        } else {
+            $size = $filesize;
+            $sitebackup->add_to_log('Uploading file '.$filename.' ('.display_size($filesize).')...');
+        }
+
+        $options = [
+            'CURLOPT_TIMEOUT' => constants::REQUEST_S3_TIMEOUT,
+            'CURLOPT_HTTPHEADER' => $uploadheaders,
+        ];
+
+        $etag = '';
+        $offset = $partno * constants::S3_MULTIPART_UPLOAD_PARTSIZE;
+        for ($i = 0; $i < constants::REQUEST_S3_RETRIES; $i++) {
+            $curl = new curl();
+            $res = $curl->put_file_part($s3url, $filepath, $offset, $size, $options);
+            $resheader = $curl->get_response_headers();
+
+            if ($curl->request_failed()) {
+                // On error retry several times.
+                $s3exception = self::prepare_s3_exception($curl, $res);
+                $sitebackup->add_to_log("Error uploading file $filename (attempt ".($i + 1)."/".
+                    constants::REQUEST_S3_RETRIES."): ".$s3exception->getMessage(), constants::LOGLEVEL_WARNING);
+                if ($i == constants::REQUEST_S3_RETRIES - 1) {
+                    throw $s3exception;
+                }
+                $sitebackup->add_to_log("Retrying");
+            } else {
+                // On success extract ETag from the response headers.
+                if (preg_match('/\nETag: (.+?)\r?\n/', "\n{$resheader}\n", $match)) {
+                    $etag = trim($match[1]);
+                } else {
+                    $sitebackup->add_to_log("Unable to detect 'ETag' header of the uploaded file $filename",
+                        constants::LOGLEVEL_WARNING);
+                    $etag = 'Unknown';
+                }
+                break;
+            }
+        }
+        return $etag;
+    }
+
+    /**
+     * Sends a command initiate multipart upload through the presigned url
+     *
+     * @param \tool_vault\site_backup $sitebackup
+     * @param string $s3url
+     * @param array $uploadheaders
+     * @throws \tool_vault\local\exceptions\api_exception
+     * @return string uploadid
+     */
+    protected static function initiate_multipart_upload(site_backup $sitebackup, string $s3url, array $uploadheaders): string {
+        $options = [
+            'CURLOPT_HTTPHEADER' => $uploadheaders,
+            'CURLOPT_HTTPAUTH' => CURLAUTH_NONE,
+        ];
+
+        for ($i = 0; $i < constants::REQUEST_S3_RETRIES; $i++) {
+            $curl = new curl();
+            $res = $curl->post($s3url, '', $options);
+
+            if ($curl->request_failed()) {
+                // On error retry several times.
+                $s3exception = self::prepare_s3_exception($curl, $res);
+                $sitebackup->add_to_log("Error initiating upload (attempt ".($i + 1)."/".
+                    constants::REQUEST_S3_RETRIES."): ".$s3exception->getMessage(), constants::LOGLEVEL_WARNING);
+                if ($i == constants::REQUEST_S3_RETRIES - 1) {
+                    throw $s3exception;
+                }
+                $sitebackup->add_to_log("Retrying");
+            } else {
+                break;
+            }
+        }
+
+        $xmlarr = xmlize($res);
+        $uploadid = $xmlarr['InitiateMultipartUploadResult']['#']['UploadId'][0]['#'] ?? null;
+
+        if (!$uploadid) {
+            throw new api_exception(get_string('error_failedmultipartupload', 'tool_vault', $res));
+        }
+
+        return $uploadid;
+    }
+
+    /**
      * Upload a backup file to the cloud
      *
      * @param site_backup $sitebackup
@@ -325,43 +437,56 @@ class api {
         $filename = basename($filepath);
         $backupkey = $sitebackup->get_backup_key();
         $contenttype = 'application/zip';
+        $uploadid = null;
 
-        $sitebackup->add_to_log('Uploading file '.$filename.' ('.display_size($backupfile->filesize).')...');
-
-        $result = self::api_call("backups/$backupkey/upload/$filename", 'post', ['contenttype' => $contenttype], $sitebackup);
-        $s3url = $result['uploadurl'] ?? null;
         $encryptionkey = $sitebackup->get_model()->get_details()['encryptionkey'] ?? '';
+        $encryptionheaders = self::prepare_s3_headers($encryptionkey);
 
-        // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
-        if ($encryptionkey && !preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
-            throw new \moodle_exception('error_invaliduploadlink', 'tool_vault', '', $filename);
-        }
+        // For large files, we need to request a multipart upload.
+        if ($backupfile->filesize >= constants::S3_MULTIPART_UPLOAD_THRESHOLD) {
+            // Determine the number of parts we need to upload.
+            $parts = ceil($backupfile->filesize / constants::S3_MULTIPART_UPLOAD_PARTSIZE);
 
-        $options = [
-            'CURLOPT_TIMEOUT' => constants::REQUEST_S3_TIMEOUT,
-            'CURLOPT_HTTPHEADER' => array_merge(self::prepare_s3_headers($encryptionkey),
-                $result['uploadheaders'] ?? []),
-            'CURLOPT_RETURNTRANSFER' => 1,
-            'CURLOPT_HTTPAUTH' => CURLAUTH_NONE,
-        ];
+            // Get pre-signed URL to initiate multipart upload.
+            $result = self::api_call("backups/$backupkey/upload/$filename", 'post',
+                ['contenttype' => $contenttype, 'multipart' => ['parts' => $parts]], $sitebackup);
+            $s3url = $result['multiplarturl'] ?? null;
 
-        for ($i = 0; $i < constants::REQUEST_S3_RETRIES; $i++) {
-            $curl = new \curl();
-            $res = $curl->put($s3url, ['file' => $filepath], $options);
-            if ($curl->errno || (($curl->get_info()['http_code'] ?? 0) != 200)) {
-                $s3exception = self::prepare_s3_exception($curl, $res);
-                $sitebackup->add_to_log("Error uploading file $filename (attempt ".($i + 1)."/".
-                    constants::REQUEST_S3_RETRIES."): ".$s3exception->getMessage(), constants::LOGLEVEL_WARNING);
-                if ($i == constants::REQUEST_S3_RETRIES - 1) {
-                    throw $s3exception;
-                }
-            } else {
-                break;
+            // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
+            if ($encryptionkey && !preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
+                throw new \moodle_exception('error_invaliduploadlink', 'tool_vault', '', $filename);
             }
+
+            // Get the list of the upload urls.
+            $uploadheaders = array_merge($encryptionheaders, $result['uploadheaders'] ?? []);
+            $uploadid = self::initiate_multipart_upload($sitebackup, $s3url, $uploadheaders);
+            $result = self::api_call("backups/$backupkey/upload/$filename", 'post',
+                ['contenttype' => $contenttype, 'multipart' => ['parts' => $parts, 'uploadid' => $uploadid]], $sitebackup);
+            $s3urls = $result['uploadurls'];
+        } else {
+            $parts = 1;
+            $result = self::api_call("backups/$backupkey/upload/$filename", 'post', ['contenttype' => $contenttype], $sitebackup);
+            $s3urls = [$result['uploadurl']];
         }
 
-        self::api_call("backups/$backupkey/uploadcompleted/$filename", 'post',
-            ['origsize' => $backupfile->origsize], $sitebackup);
+        $etags = [];
+        $uploadheaders = array_merge($encryptionheaders, $result['uploadheaders'] ?? []);
+        foreach ($s3urls as $partno => $s3url) {
+            // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
+            if ($encryptionkey && !preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
+                throw new \moodle_exception('error_invaliduploadlink', 'tool_vault', '', $filename);
+            }
+            // Upload the file or a part of the file to the pre-signed URL.
+            $etag = self::upload_file_to_presigned_url($sitebackup, $s3url, $uploadheaders,
+                $filepath, $backupfile->filesize, $partno);
+            $etags[] = $etag;
+        }
+
+        $params = ['origsize' => $backupfile->origsize];
+        if ($parts > 1) {
+            $params['multipart'] = ['UploadId' => $uploadid, 'ETags' => $etags];
+        }
+        self::api_call("backups/$backupkey/uploadcompleted/$filename", 'post', $params, $sitebackup);
         $sitebackup->add_to_log('...done');
     }
 
@@ -496,7 +621,7 @@ class api {
                 $result['downloadheaders'] ?? []),
             'CURLOPT_HTTPAUTH' => CURLAUTH_NONE,
         ];
-        $curl = new \curl();
+        $curl = new curl();
         // Perform a 'head' request to the pre-signed S3 url to check if the encryption key is correct.
         $res = $curl->head($s3url, $options);
         $httpcode = $curl->get_info()['http_code'] ?? 0;
@@ -543,15 +668,10 @@ class api {
         ];
 
         for ($i = 0; $i < constants::REQUEST_S3_RETRIES; $i++) {
-            $curl = new \curl();
-            if ((defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
-                // Unfortunately curl::download_one does not process 'file' option correctly if response is mocked.
-                $res = file_put_contents($filepath, $curl->get($s3url));
-            } else {
-                $file = fopen($filepath, 'w');
-                $res = $curl->download_one($s3url, [], $options + ['file' => $file]);
-                fclose($file);
-            }
+            $curl = new curl();
+            $file = fopen($filepath, 'w');
+            $curl->download_one($s3url, [], $options + ['file' => $file]);
+            fclose($file);
 
             if ($curl->errno || (($curl->get_info()['http_code'] ?? 0) != 200)) {
                 $s3exception = self::prepare_s3_exception($curl, filesize($filepath) < 10000 ? file_get_contents($filepath) : '');
@@ -562,6 +682,9 @@ class api {
                 unlink($filepath);
                 if ($i == constants::REQUEST_S3_RETRIES - 1) {
                     throw $s3exception;
+                }
+                if ($logger) {
+                    $logger->add_to_log("Retrying");
                 }
             } else {
                 break;

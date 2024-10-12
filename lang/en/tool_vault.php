@@ -123,6 +123,7 @@ $string['error_backupnotfinished'] = 'Backup with the key {$a} is not yet comple
 $string['error_backupprecheckfailed'] = 'Error occurred while executing backup pre-check \'{$a->name}\': {$a->message}';
 $string['error_cannotcreatezip'] = 'Can not create ZIP file';
 $string['error_dbstructurenotvalid'] = 'Archive {$a} does not contain database structure';
+$string['error_failedmultipartupload'] = 'Failed to start multipart upload. UploadId not found in the command output: {$a}';
 $string['error_filenotfound'] = 'Expected file {$a} not found';
 $string['error_invaliddownloadlink'] = 'Vault API did not return a valid download link for {$a->filename}: {$a->url}';
 $string['error_invaliduploadlink'] = 'Vault API did not return a valid upload link {$a}';

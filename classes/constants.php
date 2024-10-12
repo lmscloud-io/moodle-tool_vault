@@ -114,6 +114,11 @@ class constants {
      */
     const COMPRESSED_FILE_EXTENSIONS = ['jpg', 'jpeg', 'zip', 'mbz', 'gz', 'mp4'];
 
-    /** Required minimum value for the 'max_execution_time' setting in the backup/restore pre-checks */
+    /** @var int Required minimum value for the 'max_execution_time' setting in the backup/restore pre-checks */
     const MIN_REQUIRED_EXEC_TIME = HOURSECS;
+
+    /** @var int Split file in chunks if it is larger than this number. S3 limit is 5Gb, we set it to 4Gb to be sure. */
+    const S3_MULTIPART_UPLOAD_THRESHOLD = 4 * 1024 * 1024 * 1024;
+    /** @var int Part size when large file needs to be split. Set to 1Gb */
+    const S3_MULTIPART_UPLOAD_PARTSIZE = 1 * 1024 * 1024 * 1024;
 }

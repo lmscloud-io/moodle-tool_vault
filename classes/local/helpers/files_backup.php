@@ -92,6 +92,7 @@ class files_backup {
             'details' => json_encode([]),
         ]);
 
+        $this->sitebackup->add_to_log("Creating new zip file ".  $this->currentbackupfile->get_file_name());
         $this->ziparchive = new \zip_archive();
         if (!$this->ziparchive->open($this->get_archive_file_path(), \file_archive::CREATE)) {
             // TODO?

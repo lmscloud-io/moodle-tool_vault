@@ -2,6 +2,12 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## Unreleased
+
+### Fixed
+- Files over 5Gb were rejected by the storage provider. They are now uploaded using
+  multipart upload.
+
 ## [2.5] - 2024-10-06
 
 ### Added
