@@ -27,6 +27,7 @@ namespace tool_vault\local\helpers;
 
 use tool_vault\constants;
 use tool_vault\fixtures\site_backup_mock;
+use tool_vault\local\helpers\zip_archive;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\restore_model;
 use tool_vault\site_restore;
@@ -88,7 +89,7 @@ final class files_restore_test extends \advanced_testcase {
      * @return string path to the archive
      */
     protected function create_archive(string $filename, array $files) {
-        $ziparchive = new \zip_archive();
+        $ziparchive = new zip_archive();
         $path = make_request_directory() . DIRECTORY_SEPARATOR . $filename;
         $ziparchive->open($path, \file_archive::CREATE);
 

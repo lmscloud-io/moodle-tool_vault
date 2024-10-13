@@ -216,6 +216,9 @@ $string['settings_allowrestore'] = 'Allow restores on this site';
 $string['settings_allowrestore_desc'] = 'Site restore will completely remove all contents of this site and replace with the restored contents. Double check everything before enabling this option';
 $string['settings_allowrestorewithmissing'] = 'Allow restore with missing plugins';
 $string['settings_allowrestorewithmissing_desc'] = 'If there were add-on plugins present in the backed up site but the code for these plugins is not present on this site, the restore can still be performed. After the restore these plugins will be listed as "Missing from disk", and you can choose to uninstall them or keep the data until you add the code for the plugins. Until then, you may experience errors, for example, missing scheduled tasks.';
+$string['settings_backupcompressionlevel'] = 'Zip compression level';
+$string['settings_backupcompressionlevel_desc'] = 'When the compression level is lower, it will take less time to create zip archives but archives will be larger and it will increase the size of the backup.<br>
+Note that files with extensions {$a} are always added to the zip archives with compression level 0, since they are already compressed.';
 $string['settings_backupexcludedataroot'] = 'Exclude paths in dataroot';
 $string['settings_backupexcludedataroot_desc'] = 'All paths within the dataroot folder will be included in the backup except for: <b>filedir</b> (backed up separately), <b>{$a->always}</b>.<br>If you want to exclude more paths, list them here.<br>Examples of paths that can be excluded: <b>{$a->examples}</b>';
 $string['settings_backupexcludeplugins'] = 'Exclude plugins';

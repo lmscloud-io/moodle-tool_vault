@@ -35,7 +35,7 @@ class files_backup {
     protected $filetype;
     /** @var backup_file[] */
     protected $backupfiles = [];
-    /** @var \zip_archive */
+    /** @var zip_archive */
     protected $ziparchive;
     /** @var string */
     protected $zipdir;
@@ -93,7 +93,7 @@ class files_backup {
         ]);
 
         $this->sitebackup->add_to_log("Creating new zip file ".  $this->currentbackupfile->get_file_name());
-        $this->ziparchive = new \zip_archive();
+        $this->ziparchive = new zip_archive();
         if (!$this->ziparchive->open($this->get_archive_file_path(), \file_archive::CREATE)) {
             // TODO?
             throw new \moodle_exception('error_cannotcreatezip', 'tool_vault');
@@ -177,9 +177,8 @@ class files_backup {
             return $this;
         }
         $this->ziparchive->add_file_from_pathname($localname, $filepath);
-        if ($isarchive) {
-            $this->set_file_compression_store($localname);
-        }
+        $defaultlevel = (int)(get_config('tool_vault', 'backupcompressionlevel') ?? 9);
+        $this->ziparchive->set_file_compression_level($localname, $isarchive ? 0 : $defaultlevel);
         if ($removesource) {
             $this->filestoremove[] = $filepath;
         }
@@ -189,24 +188,6 @@ class files_backup {
             $this->check_if_new_zip_needed();
         }
         return $this;
-    }
-
-    /**
-     * Store file in zip as is, without compression
-     *
-     * Improves performance for files that are already archives or have their own compression.
-     *
-     * Example:
-     *   $this->set_file_compression_store($localname);
-     *
-     * @param string $localname
-     * @return void
-     */
-    protected function set_file_compression_store(string $localname): void {
-        $reflection = new \ReflectionClass($this->ziparchive);
-        $property = $reflection->getProperty('za');
-        $property->setAccessible(true);
-        $property->getValue($this->ziparchive)->setCompressionName($localname, \ZipArchive::CM_STORE);
     }
 
     /**

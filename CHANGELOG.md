@@ -6,6 +6,7 @@ All notable changes to the tool_vault plugin will be documented in this file.
 
 ### Added
 - Callback to allow custom distributions to execute code after each table is restored #17
+- Setting to change the zip compression level at the backup
 ### Fixed
 - Files over 5Gb were rejected by the storage provider. They are now uploaded using
   multipart upload.
