@@ -79,11 +79,30 @@ EOF;
      */
     public function test_prepare_insert_sql(): void {
         global $DB;
+        $this->resetAfterTest(true);
 
         [$tablename, $fields, $data] = $this->get_sample_data();
 
         $sql = $this->call_static_method('prepare_insert_sql', [$tablename, $fields, 2]);
         $this->assertEquals('INSERT INTO {config} (id,name,value) VALUES (?,?,?),(?,?,?)', $sql);
+
+        // Create a temp table with a column that is a reserved word and make sure that the sql statement can be executed.
+        $dbman = $DB->get_manager();
+        $table = new \xmldb_table('test_table');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, 10, null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('desc', XMLDB_TYPE_CHAR, 255);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $dbman->create_temp_table($table);
+
+        $fields = ['desc'];
+        $sql = $this->call_static_method('prepare_insert_sql', ['test_table', $fields, 2]);
+        $DB->execute($sql, ['a', 'b']);
+        $records = array_values($DB->get_records('test_table', null, 'id'));
+        $this->assertCount(2, $records);
+        $this->assertEquals('a', $records[0]->desc);
+        $this->assertEquals('b', $records[1]->desc);
+
+        $dbman->drop_table($table);
     }
 
     /**

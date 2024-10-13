@@ -99,7 +99,7 @@ if ($hassiteconfig) {
         new lang_string('settings_backupcompressionlevel_desc', 'tool_vault',
             join(', ', \tool_vault\constants::COMPRESSED_FILE_EXTENSIONS)),
         9,
-        array_combine(range(0, 9), range(0, 9)),
+        array_combine(range(0, 9), range(0, 9))
     ));
 
     // Restore settings.
