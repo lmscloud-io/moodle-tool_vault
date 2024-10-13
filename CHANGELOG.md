@@ -2,7 +2,7 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-## Unreleased
+## [2.6] - 2024-10-13
 
 ### Added
 - Callback to allow custom distributions to execute code after each table is restored #17
