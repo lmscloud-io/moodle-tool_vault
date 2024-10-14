@@ -350,6 +350,20 @@ class site_restore extends operation_base {
     }
 
     /**
+     * In tool_vault versions <=2024101300 the fields were added to JSON with db-specific quotes
+     *
+     * This caused problems during restore into a different db engine, i.e. mysql quotes (`) could not be parsed in posgtres
+     *
+     * @param array $fields
+     * @return array
+     */
+    protected static function fix_field_quotes(array $fields): array {
+        return array_map(function($f) {
+            return trim($f, '"`'); // phpcs:ignore
+        }, $fields);
+    }
+
+    /**
      * Restore db
      *
      * @return void
@@ -430,7 +444,7 @@ class site_restore extends operation_base {
                 if ($data) {
                     $this->add_to_log("- File ".basename($filepath)." -- table $tablename -- inserting ".count($data)." records",
                         constants::LOGLEVEL_VERBOSE);
-                    $fields = array_shift($data);
+                    $fields = self::fix_field_quotes(array_shift($data));
                     dbops::insert_records($tablename, $fields, $data, $this);
                 }
                 unlink($filepath);

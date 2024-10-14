@@ -108,6 +108,40 @@ final class site_backup_test extends \advanced_testcase {
         $curl->get('');
     }
 
+    public function test_export_table_with_reserved_words(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        // Create a temp table with a column that is a reserved word.
+        $dbman = $DB->get_manager();
+        $table = new \xmldb_table('test_table');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, 10, null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('desc', XMLDB_TYPE_CHAR, 255);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $dbman->create_temp_table($table);
+        // Insert some data.
+        $id = $DB->execute("INSERT INTO {test_table} (" .
+            $dbman->generator->getEncQuoted('desc') . ") VALUES (?)", ['value']);
+
+        // Export this table. Make sure data is exported and there are no quotes in the field names in the json.
+        $sitebackup = $this->create_site_backup();
+        $tableobj = dbtable::create_from_actual_db('test_table', $sitebackup->get_db_structure());
+        $dir = tempfiles::make_temp_dir('test-dbstruct-');
+        $sitebackup->export_table_data($tableobj, $dir);
+        $jsoncontens = json_decode(file_get_contents($dir.DIRECTORY_SEPARATOR.'test_table.0.json'), true);
+
+        $this->assertEquals([['id', 'desc'], [(string)$id, 'value']], $jsoncontens);
+
+        // Close archive, remove temp folder and also clear the curl mock stack. Drop temp table.
+        $sitebackup->get_files_backup(constants::FILENAME_DBDUMP)->finish();
+        tempfiles::remove_temp_dir($dir);
+        $curl = new \curl();
+        $curl->get('');
+        $curl->get('');
+        $curl->get('');
+        $dbman->drop_table($table);
+    }
+
     public function test_export_db(): void {
         if (!PHPUNIT_LONGTEST) {
             $this->markTestSkipped('PHPUNIT_LONGTEST is not defined');

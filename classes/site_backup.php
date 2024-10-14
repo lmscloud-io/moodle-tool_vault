@@ -309,11 +309,14 @@ class site_backup extends operation_base {
         global $DB;
         $dbgen = $DB->get_manager()->generator;
 
-        $fields = array_map(function(\xmldb_field $f) use ($dbgen) {
-            return $dbgen->getEncQuoted($f->getName());
+        $fields = array_map(function(\xmldb_field $f) {
+            return $f->getName();
         }, $table->get_xmldb_table()->getFields());
-        $sortby = in_array('id', $fields) ? 'id' : reset($fields);
-        $fieldslist = join(',', $fields);
+        $quotedfields = array_map(function($f) use ($dbgen) {
+            return $dbgen->getEncQuoted($f);
+        }, $fields);
+        $sortby = in_array('id', $fields) ? 'id' : reset($quotedfields);
+        $fieldslist = join(',', $quotedfields);
 
         $chunksize = $this->get_chunk_size($table->get_xmldb_table()->getName());
         $lastvalue = null;
