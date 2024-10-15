@@ -193,7 +193,7 @@ class plugins_restore extends check_base_restore {
             if (count($p) > count($paddon)) {
                 $paddon[get_string('containsstandardplugins', 'tool_vault', count($p) - count($paddon))] = true;
             }
-            $r[] = get_string('addonplugins_withlowerversion', 'tool_vault') . ": " .
+            $r[] = $this->badge_error() . get_string('addonplugins_withlowerversion', 'tool_vault') . ": " .
                 join(', ', array_keys($paddon));
         }
         if ($p = $this->missing_plugins(false)) {
