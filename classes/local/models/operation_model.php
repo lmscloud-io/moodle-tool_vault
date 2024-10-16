@@ -281,7 +281,7 @@ abstract class operation_model {
             'operationid' => $this->id,
             'timecreated' => time(),
             'loglevel' => $loglevel,
-            'message' => substr($message, 0, 1333),
+            'message' => $message,
             'pid' => $this->pid,
         ];
         $record->id = $DB->insert_record(self::LOGTABLE, $record);
@@ -328,12 +328,28 @@ abstract class operation_model {
                 $format = preg_replace('|%H:%M|', '%H:%M:%S', $format);
             }
         }
-        $message =
-            "[".userdate($log->timecreated, $format, 99, false, false)."] ".
-            ($log->loglevel ? "[{$log->loglevel}] " : '') .
-            ($log->pid ? "[pid {$log->pid}] " : '') .
-            $log->message;
+        if ($log->loglevel === constants::LOGLEVEL_UNKNOWN) {
+            $message = $log->message;
+        } else {
+            $message =
+                "[".userdate($log->timecreated, $format, 99, false, false)."] ".
+                ($log->loglevel ? "[{$log->loglevel}] " : '') .
+                ($log->pid ? "[pid {$log->pid}] " : '') .
+                $log->message;
+        }
         return $usehtml ? \html_writer::span($message, $class) : $message;
+    }
+
+    /**
+     * Is this line an output from tool_vault (to avoid recording it in the DB twice)
+     *
+     * @param string $message
+     * @return bool
+     */
+    public function is_vault_output(string $message): bool {
+        return preg_match('/^\\[([^\\]]*)\\] \\[(\\w+)\\] \\[pid (\\d+)\\] /', $message, $matches)
+            // TODO maybe also check time format and level?
+            && (int)$matches[3] == $this->pid;
     }
 
     /** @var array */

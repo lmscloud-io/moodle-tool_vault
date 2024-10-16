@@ -26,7 +26,6 @@
  define('TOOL_VAULT_CLI_SCRIPT', true);
 
 use tool_vault\local\cli_helper;
-use tool_vault\local\helpers\tempfiles;
 use tool_vault\output\start_backup_popup;
 
 require_once(__DIR__ . '/../../../../config.php');
@@ -63,12 +62,7 @@ if ($precheckonly) {
     ]);
 }
 
-try {
-    $operation->start((int)getmypid());
-    $operation->execute();
-} catch (\Throwable $t) {
-    $operation->mark_as_failed($t);
-    tempfiles::cleanup();
+if (!$operation->safe_start_and_execute((int)getmypid())) {
     die(1);
 }
 

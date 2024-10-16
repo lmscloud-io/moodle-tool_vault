@@ -81,6 +81,8 @@ class constants {
     const LOGLEVEL_PROGRESS = 'progress';
     /** @var string */
     const LOGLEVEL_VERBOSE = 'verbose';
+    /** @var string */
+    const LOGLEVEL_UNKNOWN = 'unknown';
 
     /** @var int */
     const REQUEST_API_TIMEOUT = 20; // 20 seconds.

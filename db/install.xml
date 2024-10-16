@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="admin/tool/vault/db" VERSION="20230118" COMMENT="XMLDB file for Moodle admin/tool/vault"
+<XMLDB PATH="admin/tool/vault/db" VERSION="20241016" COMMENT="XMLDB file for Moodle admin/tool/vault"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
 >
@@ -46,7 +46,7 @@
         <FIELD NAME="operationid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="loglevel" TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="info" SEQUENCE="false"/>
-        <FIELD NAME="message" TYPE="char" LENGTH="1333" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="message" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="pid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>

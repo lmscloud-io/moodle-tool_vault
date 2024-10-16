@@ -28,7 +28,6 @@ define('TOOL_VAULT_CLI_SCRIPT', true);
 use tool_vault\api;
 use tool_vault\local\cli_helper;
 use tool_vault\local\exceptions\api_exception;
-use tool_vault\local\helpers\tempfiles;
 
 require_once(__DIR__ . '/../../../../config.php');
 
@@ -68,12 +67,7 @@ if ($clihelper->get_cli_option('dryrun')) {
     $operation = \tool_vault\site_restore::schedule($params);
 }
 
-try {
-    $operation->start((int)getmypid());
-    $operation->execute();
-} catch (\Throwable $t) {
-    $operation->mark_as_failed($t);
-    tempfiles::cleanup();
+if (!$operation->safe_start_and_execute((int)getmypid())) {
     die(1);
 }
 

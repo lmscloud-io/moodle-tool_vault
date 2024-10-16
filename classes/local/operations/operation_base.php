@@ -20,6 +20,8 @@ use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\checks\backup_precheck_failed;
 use tool_vault\local\checks\restore_precheck_failed;
+use tool_vault\local\helpers\log_capture;
+use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\logger;
 use tool_vault\local\models\operation_model;
 
@@ -127,13 +129,50 @@ abstract class operation_base implements logger {
             return;
         }
         if ($this->model && $this->model->id) {
-            $parts = str_split($message, 1333);
-            foreach ($parts as $part) {
-                $logrecord = $this->model->add_log($part, $loglevel);
-                if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
-                    mtrace($this->model->format_log_line($logrecord, false));
-                }
+            $part = $message;
+            $logrecord = $this->model->add_log($part, $loglevel);
+            if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
+                mtrace($this->model->format_log_line($logrecord, false));
             }
+        }
+    }
+
+    /**
+     * Starts and executes the operation, marks it as faled on exception or on shutdown
+     *
+     * @param int $pid process id for logging
+     * @return bool
+     */
+    public function safe_start_and_execute(int $pid): bool {
+        \core_shutdown_manager::register_function([$this, 'on_shutdown']);
+        $rv = false;
+        log_capture::start_capturing($this->model);
+        try {
+            $this->start($pid);
+            $this->execute();
+            $rv = true;
+        } catch (\Throwable $t) {
+            $this->mark_as_failed($t);
+            tempfiles::cleanup();
+        }
+        log_capture::finalise_log();
+        return $rv;
+    }
+
+    /**
+     * Shutdown handler
+     *
+     * @return void
+     */
+    public function on_shutdown() {
+        $status = $this->model->status;
+        if ($status === constants::STATUS_INPROGRESS) {
+            $source = defined('TOOL_VAULT_CLI_SCRIPT') && TOOL_VAULT_CLI_SCRIPT ?
+                get_string('cliprocess', 'tool_vault') :
+                get_string('scheduledtask', 'tool_vault');
+            $this->mark_as_failed(new \moodle_exception('error_shutdown', 'tool_vault', '', $source));
+            tempfiles::cleanup();
+            log_capture::finalise_log();
         }
     }
 }

@@ -18,14 +18,12 @@ namespace tool_vault\task;
 
 use tool_vault\constants;
 use tool_vault\local\checks\check_base;
-use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\check_model;
 use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\operation_model;
 use tool_vault\local\models\restore_model;
 use tool_vault\local\models\tool_model;
-use tool_vault\local\operations\operation_base;
 use tool_vault\local\tools\tool_base;
 use tool_vault\site_backup;
 use tool_vault\site_restore;
@@ -193,17 +191,7 @@ class cron_task extends \core\task\scheduled_task {
         }
 
         @set_time_limit(0);
-        try {
-            if (method_exists($this, 'get_pid')) {
-                $pid = (int)$this->get_pid();
-            } else {
-                $pid = (int)getmypid();
-            }
-            $operation->start($pid);
-            $operation->execute();
-        } catch (\Throwable $t) {
-            $operation->mark_as_failed($t);
-            tempfiles::cleanup();
-        }
+        $pid = method_exists($this, 'get_pid') ? $this->get_pid() : getmypid();
+        $operation->safe_start_and_execute((int)$pid);
     }
 }

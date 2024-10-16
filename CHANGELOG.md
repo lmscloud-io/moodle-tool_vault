@@ -4,6 +4,9 @@ All notable changes to the tool_vault plugin will be documented in this file.
 
 ## Unreleased
 
+### Added
+- Shutdown handler to detect if the process was cancelled
+- Capture all output and show in the vault log
 ### Fixed
 - Fixed error when restoring data into tables with reserved words as fields if backup and
   restore sites are on different database engines (mysql/postgres)

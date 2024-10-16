@@ -285,5 +285,24 @@ function xmldb_tool_vault_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2023011800, 'tool', 'vault');
     }
 
+    if ($oldversion < 2024101304) {
+
+        // Define field fullmessage to be added to tool_vault_log.
+        $table = new xmldb_table('tool_vault_log');
+        $oldfield = new xmldb_field('message');
+        $field = new xmldb_field('fullmessage', XMLDB_TYPE_TEXT, null, null, null, null, null, 'loglevel');
+
+        // Add field fullmessage, copy data from message to fullmessage, drop message, rename fullmessage.
+        if ($dbman->field_exists($table, $oldfield) && !$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+            $DB->execute("UPDATE {tool_vault_log} SET fullmessage = message");
+            $dbman->drop_field($table, $oldfield);
+            $dbman->rename_field($table, $field, 'message');
+        }
+
+        // Vault savepoint reached.
+        upgrade_plugin_savepoint(true, 2024101304, 'tool', 'vault');
+    }
+
     return true;
 }
