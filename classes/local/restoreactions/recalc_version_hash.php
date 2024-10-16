@@ -18,6 +18,7 @@ namespace tool_vault\local\restoreactions;
 
 use tool_vault\api;
 use tool_vault\constants;
+use tool_vault\local\helpers\log_capture;
 use tool_vault\local\logger;
 use tool_vault\site_restore;
 
@@ -75,6 +76,7 @@ class recalc_version_hash extends restore_action {
      */
     protected function reinitialise_cfg() {
         global $CFG, $DB;
+        log_capture::reset_debug();
         \cache::make('core', 'config')->purge();
         $preservekeys = array_merge(
             array_keys($CFG->config_php_settings),
@@ -89,6 +91,7 @@ class recalc_version_hash extends restore_action {
         initialise_cfg();
         $CFG->debug = $CFG->debug ?? 0;
         $CFG->debugdeveloper = (($CFG->debug & (E_ALL | E_STRICT)) === (E_ALL | E_STRICT));
+        log_capture::force_debug();
     }
 
     /**

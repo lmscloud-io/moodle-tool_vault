@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\helpers;
 
+use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\models\operation_model;
 
@@ -32,7 +33,55 @@ class log_capture {
     protected static $oblevel = null;
     /** @var operation_model current operation */
     protected static $model = null;
+    /** @var array|null old value for debug-related cfg variables before we forced it */
+    protected static $olddebug = null;
 
+    /**
+     * Force developer debug and debug display during backup or restore
+     *
+     * Note: Must be called again after $CFG is recalculated during restore
+     *
+     * @return void
+     */
+    public static function force_debug() {
+        global $CFG;
+        if (!self::is_capturing() || !self::$model) {
+            return;
+        }
+
+        if (!api::get_setting_checkbox('forcedebug')) {
+            return;
+        }
+        self::$olddebug = [
+            'debug' => $CFG->debug ?? null,
+            'debugdisplay' => $CFG->debugdisplay ?? null,
+            'debugdeveloper' => $CFG->debugdeveloper ?? false,
+        ];
+        $CFG->debug = (E_ALL | E_STRICT);
+        $CFG->debugdisplay = 1;
+        $CFG->debugdeveloper = true;
+        if (!self::$olddebug['debugdeveloper']) {
+            self::$model->add_log('Developer debugging is forced for this operation even though it is not enabled on the site.');
+        }
+        if (!self::$olddebug['debugdisplay']) {
+            self::$model->add_log('Debug display is forced for this operation even though it is not enabled on the site.');
+        }
+    }
+
+    /**
+     * Reset the initial values for the debug and debugdisplay properties
+     *
+     * @return void
+     */
+    public static function reset_debug() {
+        global $CFG;
+        if (self::$olddebug !== null) {
+            $CFG->debug = self::$olddebug['debug'];
+            $CFG->debugdisplay = self::$olddebug['debugdisplay'];
+            $CFG->debugdeveloper = self::$olddebug['debugdeveloper'];
+            self::$olddebug = null;
+        }
+    }
 
     /**
      * Start capturing output
@@ -57,6 +106,8 @@ class log_capture {
 
         // Start capturing output.
         ob_start([self::class, 'add_line'], 1);
+
+        self::force_debug();
     }
 
     /**
@@ -111,6 +162,7 @@ class log_capture {
 
         // Tidy up.
         self::$model = null;
+        self::reset_debug();
     }
 
     /**

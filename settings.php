@@ -46,6 +46,13 @@ if ($hassiteconfig) {
         0
     ));
 
+    $settings->add(new admin_setting_configcheckbox(
+        'tool_vault/forcedebug',
+        get_string('settings_forcedebug', 'tool_vault'),
+        get_string('settings_forcedebug_desc', 'tool_vault'),
+        1
+    ));
+
     $yesnooptions = [
         0 => get_string('no'),
         1 => get_string('yes'),
