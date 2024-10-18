@@ -115,6 +115,9 @@
         <p><a href="{{siteurl}}">{{#str}} returntothesite, tool_vault {{/str}}</a></p>
     {{/timefinished}}
     {{^timefinished}}
+        {{#timeoutwarning}}
+            <p>{{#str}} therewasnoactivity, tool_vault, { "elapsedtime": "{{elapsedtime}}", "locktimeout": "{{locktimeout}}" } {{/str}}</p>
+        {{/timeoutwarning}}
         <p><em>{{#str}} refreshpage, tool_vault, {{#quote}}javascript:window.location.href=window.location.href{{/quote}} {{/str}}</em></p>
     {{/timefinished}}
 {{/isprogresspage}}

@@ -75,6 +75,17 @@ class restore_details implements \templatable {
             'prechecks' => [],
         ];
 
+        if ($this->restore->status == constants::STATUS_INPROGRESS) {
+            $lastmodified = $this->restore->get_last_modified();
+            $elapsedtime = time() - $lastmodified;
+            if ($elapsedtime > constants::LOCK_WARNING) {
+                $rv['timeoutwarning'] = [
+                    'elapsedtime' => ui::format_duration($elapsedtime),
+                    'locktimeout' => get_string('numminutes', 'moodle', constants::LOCK_TIMEOUT / 60),
+                ];
+            }
+        }
+
         // Add failed pre-checks to the output.
         if ($this->restore->status === constants::STATUS_FAILED) {
             $prechecks = check_base::get_all_checks_for_operation($this->restore->id);

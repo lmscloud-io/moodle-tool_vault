@@ -94,7 +94,9 @@ class constants {
     const REQUEST_S3_RETRIES = 4;
 
     /** @var int */
-    const LOCK_TIMEOUT = 60 * 60; // 1 hour.
+    const LOCK_WARNING = 10 * MINSECS;
+    /** @var int */
+    const LOCK_TIMEOUT = 30 * MINSECS;
 
     /** @var int */
     const DBFILE_SIZE = 1024 * 1024 * 2; // 2 Mb.

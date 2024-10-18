@@ -18,6 +18,7 @@ namespace tool_vault\task;
 
 use tool_vault\constants;
 use tool_vault\local\checks\check_base;
+use tool_vault\local\helpers\ui;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\check_model;
 use tool_vault\local\models\dryrun_model;
@@ -159,7 +160,14 @@ class cron_task extends \core\task\scheduled_task {
      */
     protected function resume_operation(operation_model $model) {
         // TODO implement resume.
-        $model->add_log('Operation timed out');
+        $postfix = '';
+        if ($model instanceof restore_model) {
+            $postfix = "\nIf the database restore did not finish, your site may be in an inconsistent state and will not work.".
+            ' You will need to re-install Moodle and repeat restore.';
+        }
+        $model->add_log('There was no activity for over ' . (constants::LOCK_TIMEOUT / 60) .
+            ' minutes. It is possible that cron was interrupted or timed out. '.
+            'Operation is marked as failed, access to the site is now allowed.' . $postfix, constants::LOGLEVEL_ERROR);
         $model->set_status(constants::STATUS_FAILED)->save();
     }
 

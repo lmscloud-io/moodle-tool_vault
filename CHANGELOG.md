@@ -11,6 +11,7 @@ All notable changes to the tool_vault plugin will be documented in this file.
 ### Fixed
 - Fixed error when restoring data into tables with reserved words as fields if backup and
   restore sites are on different database engines (mysql/postgres).
+- Improved warning message about operation timeout and restoring access to the site.
 
 ## [2.6] - 2024-10-13
 

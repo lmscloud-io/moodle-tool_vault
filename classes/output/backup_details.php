@@ -95,6 +95,18 @@ class backup_details implements \templatable {
             'isprogresspage' => $this->isprogresspage,
             'siteurl' => $CFG->wwwroot,
         ];
+
+        if ($this->isprogresspage && $status == constants::STATUS_INPROGRESS) {
+            $lastmodified = $this->backup->get_last_modified();
+            $elapsedtime = time() - $lastmodified;
+            if ($elapsedtime > constants::LOCK_WARNING) {
+                $rv['timeoutwarning'] = [
+                    'elapsedtime' => ui::format_duration($elapsedtime),
+                    'locktimeout' => get_string('numminutes', 'moodle', constants::LOCK_TIMEOUT / 60),
+                ];
+            }
+        }
+
         if ($this->backup) {
             $rv['performedby'] = s($this->backup->get_performedby());
             $rv['backupdetailsurl'] = \tool_vault\local\uiactions\backup_details::url(['id' => $this->backup->id])->out(false);
