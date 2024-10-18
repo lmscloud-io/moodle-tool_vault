@@ -61,7 +61,8 @@ class log_capture {
         $CFG->debugdisplay = 1;
         $CFG->debugdeveloper = true;
         if (!self::$olddebug['debugdeveloper']) {
-            self::$model->add_log('Developer debugging is enabled for this operation even though it is not enabled at the site level.');
+            self::$model->add_log(
+                'Developer debugging is enabled for this operation even though it is not enabled at the site level.');
         }
         if (!self::$olddebug['debugdisplay']) {
             self::$model->add_log('Debug display is enabled for this operation even though it is not enabled at the site level.');
