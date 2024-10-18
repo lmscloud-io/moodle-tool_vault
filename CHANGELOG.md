@@ -2,7 +2,7 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-## Unreleased
+## [2.7] - 2024-10-18
 
 ### Added
 - Shutdown handler to detect if the process was interrupted.
