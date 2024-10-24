@@ -377,11 +377,10 @@ class plugins_restore extends check_base_restore {
     protected function prepare_version_option(string $pluginname, array $minfo, string $versionpostfix = ''): array {
         $currentversion = moodle_major_version();
 
-        //$s = print_r($minfo, true).'<br>';
         $s = 'Version '.$minfo['version'].' from plugins directory';
         $s .= $versionpostfix;
         $s .= ' for Moodle '.join(', ', $minfo['supportedmoodles']);
-        //$s .= ' is available in the plugins directory. ';
+        $s .= '.';
         if (!in_array($currentversion, $minfo['supportedmoodles'])) {
             $s .= ' Current Moodle version '.$currentversion.' is not supported!';
         }
@@ -402,6 +401,60 @@ class plugins_restore extends check_base_restore {
     }
 
     /**
+     * Convert 39->3.9, 311->3.11, 400->4.0, 405->4.5, etc
+     *
+     * @param mixed $branch
+     * @return string
+     */
+    public static function major_version_from_branch($branch): string {
+        $branch = (string)$branch;
+        if (strlen($branch) >= 3) {
+            return substr($branch, 0, -2) . '.' . ((int)substr($branch, -2));
+        } else if (strlen($branch) == 2) {
+            return substr($branch, 0, -1) . '.' . substr($branch, -1);
+        } else {
+            return $branch;
+        }
+    }
+
+    /**
+     * Prepare download information about a plugin version included in the backup
+     *
+     * @param string $pluginname
+     * @param array $minfo contains: version, name, path,
+     *          optionally: pluginsupported, dependencies, subplugins
+     * @return array
+     */
+    protected function prepare_codeincluded_version_option(string $pluginname, array $minfo): array {
+        global $CFG;
+        $currentversion = moodle_major_version();
+        $currentbranch = $CFG->branch;
+
+        $backupbranch = $this->model->get_details()['backupbranch'];
+        $s = 'Version '.$minfo['version'].' from backup';
+        if (!empty($minfo['pluginsupported'])) {
+            $supported = array_map([$this, 'major_version_from_branch'], $minfo['pluginsupported']);
+            $s .= ' for Moodle ';
+            $s .= ($supported[0] !== $supported[1]) ? "{$supported[0]} - {$supported[1]}" : $supported[0];
+            $s .= '.';
+            if ((int)$currentbranch > (int)$minfo['pluginsupported'][1]) {
+                $s .= ' Current Moodle version '.$currentversion.' is not supported!';
+            }
+        } else if ((int)$currentbranch > (int)$backupbranch) {
+            $s .= '.';
+            $s .= ' There is no information whether '.$currentversion.' is supported or not. Backup was made in '.
+                self::major_version_from_branch($backupbranch);
+        } else {
+            $s .= '.';
+        }
+
+        return [
+            'description' => $s, // TODO more about supported Moodle versions.
+            // TODO downloadurl, installparams.
+        ];
+    }
+
+    /**
      * Prepare details of the missing or problem plugin (download information)
      *
      * @param string $pluginname
@@ -412,10 +465,10 @@ class plugins_restore extends check_base_restore {
         $ismissing = !empty($info[2]['ismissing']);
         $isproblem = !empty($info[2]['isproblem']);
         $rv = [
-            //'debuginfo' => print_r($info, true),
             'pluginpath' => plugincode::guess_plugin_path_relative($pluginname),
             'writable' => plugincode::can_write_to_plugin_dir($pluginname) && self::allow_vault_to_install(),
             'versions' => [],
+            'showbuttons' => false,
         ];
         if ($ismissing || $isproblem) {
             $hasboth = !empty($info[2]['latest']) && !empty($info[2]['exact']);
@@ -428,10 +481,7 @@ class plugins_restore extends check_base_restore {
                     $hasboth ? ' (same as in backup)' : '');
             }
             if (!empty($info[0]['codeincluded'])) {
-                $rv['versions'][] = [
-                    'description' => 'Version '.$info[0]['version'].' from backup', // TODO more about supported Moodle versions
-                    // TODO downloadurl, installparams
-                ];
+                $rv['versions'][] = $this->prepare_codeincluded_version_option($pluginname, $info[0]);
             }
             if (empty($rv['versions'])) {
                 $rv['general'] = '<p>This plugin is not available in the plugins directory.</p>';
