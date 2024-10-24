@@ -23,9 +23,6 @@
     {
     }
 }}
-{{#debuginfo}}
-<pre>{{{.}}}</pre>
-{{/debuginfo}}
 {{{general}}}
 
 {{#versions}}
@@ -33,7 +30,7 @@
     <input type="radio" name="install_{{pluginname}}">
     {{{description}}}
     {{#downloadurl}}
-        <a href="{{.}}">Download</a>
+        <a href="{{.}}">{{#pix}} download, tool_vault, {{#str}} download, moodle {{/str}} {{/pix}}</a>
     {{/downloadurl}}
 </div>
 {{/versions}}
