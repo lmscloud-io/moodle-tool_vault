@@ -54,19 +54,6 @@ class site_restore_dryrun extends operation_base {
     }
 
     /**
-     * Last dryrun
-     *
-     * @param string $backupkey
-     * @return static|null
-     */
-    public static function get_last_dryrun(string $backupkey): ?self {
-        if ($model = dryrun_model::get_last_dry_run($backupkey)) {
-            return new static($model);
-        }
-        return null;
-    }
-
-    /**
      * Schedule dry-run
      *
      * @param array $params ['backupkey' => ?, 'passphrase' => ?]

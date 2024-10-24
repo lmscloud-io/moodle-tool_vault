@@ -63,10 +63,10 @@ class plugin_validator extends \core\update\validator {
      * Human-readable error message
      *
      * @param string $msgcode
-     * @param array|null $addinfo
+     * @param array|string|null $addinfo
      * @return string
      */
-    protected function get_full_error_message(string $msgcode, ?array $addinfo): string {
+    protected function get_full_error_message(string $msgcode, $addinfo): string {
         // Some common errors with better explanations than in the parent class.
         if ($msgcode === 'pathwritable') {
             $pluginpath = plugincode::guess_plugin_path($this->get_component());

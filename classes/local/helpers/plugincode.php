@@ -314,6 +314,7 @@ class plugincode {
             $validator = plugin_validator::validate($tmp, $files, ['component' => $pluginname]);
         } catch (\moodle_exception $e) {
             mtrace("ERROR. ".$e->getMessage());
+            remove_dir($tmp);
             return;
         }
 
@@ -327,5 +328,69 @@ class plugincode {
         } else {
             mtrace("Plugin $component with version $version can be installed into $pluginpathrel");
         }
+        remove_dir($tmp);
+    }
+
+    /**
+     * Install a plugin from a pluginscode archive in a backup
+     *
+     * @param string $zipfile
+     * @param string $pluginname
+     * @param bool $dryrun
+     * @return void
+     */
+    public static function install_addon_from_backup(string $zipfile, string $pluginname, bool $dryrun = false) {
+        $pluginpathrel = self::guess_plugin_path_relative($pluginname);
+
+        // Make a list of files from the zip that are relevant only to this plugin.
+        $fp = get_file_packer('application/zip');
+        $pluginfiles = [];
+        foreach ($fp->list_files($zipfile) as $file) {
+            if (strpos($file->pathname, $pluginpathrel . '/') === 0) {
+                $pluginfiles[] = $file->pathname;
+            }
+        }
+        if (!$pluginfiles) {
+            mtrace("ERROR. Code not found for plugin $pluginname");
+            return;
+        }
+
+        // Extract only files that are related to this plugin.
+        $tmp = make_request_directory();
+        $files = $fp->extract_to_pathname($zipfile, $tmp, $pluginfiles);
+
+        // For validator we need a path that is one level above the plugin directory.
+        $pseudodir = $tmp . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, dirname($pluginpathrel));
+        // Create a list of files as if we extracted to the $pseudodir. Also add missing folder paths.
+        $pseudofiles = [];
+        $offset = strlen(dirname($pluginpathrel)) + 1;
+        foreach ($files as $file => $status) {
+            $newname = substr($file, $offset);
+            $pseudofiles[$newname] = $status;
+            for ($d = dirname($newname); strpos($d, '/') !== false; $d = dirname($d)) {
+                $pseudofiles["$d/"] = true;
+            }
+        }
+
+        // Check version.php for consistency - that it has component that matches $pluginname, version, etc.
+        try {
+            $validator = plugin_validator::validate($pseudodir, $pseudofiles, ['component' => $pluginname]);
+        } catch (\moodle_exception $e) {
+            mtrace("ERROR. ".$e->getMessage());
+            remove_dir($tmp);
+            return;
+        }
+
+        // Copy files to the plugin directory.
+        $pluginpath = self::guess_plugin_path($pluginname);
+        $component = $validator->get_component();
+        $version = $validator->get_version();
+        if (!$dryrun) {
+            self::copy_plugin_files($pseudodir, $pluginpath, $pseudofiles);
+            mtrace("Plugin $component with version $version was installed into $pluginpathrel");
+        } else {
+            mtrace("Plugin $component with version $version can be installed into $pluginpathrel");
+        }
+        remove_dir($tmp);
     }
 }

@@ -79,4 +79,27 @@ abstract class check_base_restore extends check_base {
     protected function badge_info(?string $text = null): string {
         return $this->badge('badge-info', $text ?? get_string('statusinfo', 'moodle'));
     }
+
+    /**
+     * Get last check of this type for the specified backup
+     *
+     * @param string $backupkey
+     * @param int $maxage if >0, max number of seconds since the operation finished
+     * @return check_base_restore|null
+     */
+    public static function get_last_check_for_backup(string $backupkey, int $maxage = 0): ?self {
+        $parent = \tool_vault\local\models\operation_model::get_last_of(
+            [\tool_vault\local\models\restore_model::class, \tool_vault\local\models\dryrun_model::class],
+            ['backupkey' => $backupkey]);
+        if (!$parent || !$parent->get_finished_time() || ($maxage && $parent->get_finished_time() < time() - $maxage)) {
+            return null;
+        }
+        $checks = check_base::get_all_checks_for_operation($parent->id);
+        foreach ($checks as $check) {
+            if ($check instanceof static) {
+                return $check;
+            }
+        }
+        return null;
+    }
 }
