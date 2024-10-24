@@ -157,7 +157,7 @@ class site_restore extends operation_base {
         $this->add_to_log('Preparing to restore');
 
         $this->prechecks = site_restore_dryrun::execute_prechecks(
-            $this->get_files_restore(constants::FILENAME_DBSTRUCTURE), $this->model, $this);
+            $this->get_files_restore(constants::FILENAME_DBSTRUCTURE), $this);
 
         foreach ($this->prechecks as $chk) {
             if (!$chk->success()) {
