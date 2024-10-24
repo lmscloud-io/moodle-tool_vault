@@ -19,6 +19,7 @@ namespace tool_vault\local\checks;
 use core_form\dynamic_form;
 use core_plugin_manager;
 use moodle_url;
+use stored_file;
 use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\helpers\plugincode;
@@ -560,5 +561,50 @@ class plugins_restore extends check_base_restore {
      */
     public static function get_display_name(): string {
         return get_string('addonplugins', 'tool_vault');
+    }
+
+    /**
+     * Returns the pluginscode files
+     *
+     * @return stored_file[]
+     */
+    public function get_pluginscode_stored_files(): array {
+        $fs = get_file_storage();
+        return array_values($fs->get_area_files(\context_system::instance()->id,
+            'tool_vault',
+            constants::FILENAME_PLUGINSCODE,
+            $this->model->parentid,
+            'sortorder, filename',
+            false));
+    }
+
+    /**
+     * Checks if the code for the plugin is included in the backup
+     *
+     * @param string $pluginname
+     * @return null|array array with keys 'version', 'name', 'path', 'pluginsupported', etc
+     */
+    public function is_plugin_code_included(string $pluginname): ?array {
+        $info = $this->model->get_details()['list'][$pluginname] ?? null;
+        if ($info && !empty($info[0]['codeincluded'])) {
+            return $info[0];
+        }
+        return null;
+    }
+
+    /**
+     * List of all the names of missing and problem plugins that have code
+     *
+     * @return array
+     */
+    public function get_all_plugins_to_install(): array {
+        $plugins = array_merge($this->missing_plugins(false), $this->problem_plugins(false));
+        $pluginnames = [];
+        foreach ($plugins as $pluginname => $info) {
+            if (!empty($info[0]['codeincluded'])) {
+                $pluginnames[] = $pluginname;
+            }
+        }
+        return $pluginnames;
     }
 }

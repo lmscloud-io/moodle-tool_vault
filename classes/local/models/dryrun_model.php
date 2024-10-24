@@ -28,16 +28,4 @@ use tool_vault\constants;
 class dryrun_model extends restore_base_model {
     /** @var string */
     protected static $defaulttype = 'dryrun';
-
-    /**
-     * Get last record for a given backupkey, if exists
-     *
-     * @param string $backupkey
-     * @return static|null
-     */
-    public static function get_last_dry_run(string $backupkey): ?self {
-        $records = self::get_records_select('type = ? AND backupkey = ?',
-            [static::$defaulttype, $backupkey]);
-        return $records ? reset($records) : null;
-    }
 }
