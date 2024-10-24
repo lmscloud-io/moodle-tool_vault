@@ -109,12 +109,13 @@ class site_restore_dryrun extends operation_base {
      * Runs all pre-checks (executed from both "dryrun" and the actual restore)
      *
      * @param files_restore $restorehelper
-     * @param restore_base_model $model
-     * @param logger $logger
+     * @param operation_base $logger
      * @return check_base[] array of executed prechecks
      */
-    public static function execute_prechecks(files_restore $restorehelper, restore_base_model $model,
-                                             logger $logger): array {
+    public static function execute_prechecks(files_restore $restorehelper, operation_base $logger): array {
+        /** @var restore_base_model $model */
+        $model = $logger->model;
+
         $backupmetadata = api::get_remote_backup($model->backupkey, constants::STATUS_FINISHED);
 
         files_restore::populate_backup_files($model->id, $backupmetadata->files ?? []);
@@ -139,6 +140,12 @@ class site_restore_dryrun extends operation_base {
         $model
             ->set_remote_details($remotedetails)
             ->save();
+
+        try {
+            (new files_restore($logger, constants::FILENAME_PLUGINSCODE))->save_to_fs();
+        } catch (\Throwable $e) {
+            $logger->add_to_log('Error downloading plugins code: '.$e->getMessage(), constants::LOGLEVEL_WARNING);
+        }
 
         /** @var check_base[] $precheckclasses */
         $precheckclasses = [
@@ -175,7 +182,7 @@ class site_restore_dryrun extends operation_base {
         $this->add_to_log('Restore pre-check started');
 
         $helper = new files_restore($this, constants::FILENAME_DBSTRUCTURE);
-        $this->prechecks = self::execute_prechecks($helper, $this->model, $this);
+        $this->prechecks = self::execute_prechecks($helper, $this);
         $helper->finish();
         $this->model->set_details(['encryptionkey' => '']);
 

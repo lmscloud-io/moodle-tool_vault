@@ -86,7 +86,9 @@ class files_restore {
             $backupfile = new backup_file((array)$record);
             $this->backupfiles[$backupfile->seq] = $backupfile;
         }
-        $this->open_next_archive();
+        if (!$this->is_pluginscode_backup()) {
+            $this->open_next_archive();
+        }
     }
 
     /**
@@ -174,6 +176,15 @@ class files_restore {
      */
     protected function is_dataroot_backup(): bool {
         return $this->filetype === constants::FILENAME_DATAROOT;
+    }
+
+    /**
+     * Plugins code backup
+     *
+     * @return bool
+     */
+    protected function is_pluginscode_backup(): bool {
+        return $this->filetype === constants::FILENAME_PLUGINSCODE;
     }
 
     /**
@@ -402,6 +413,38 @@ class files_restore {
         $this->nextfileidx = 0;
         tempfiles::remove_temp_dir($tempdir);
         return true;
+    }
+
+    /**
+     * Download all zip files and save them to file storage
+     *
+     * @return int number of files saved
+     */
+    public function save_to_fs(): int {
+        if (!$this->is_pluginscode_backup()) {
+            throw new \coding_exception('Can only be called for the pluginscode file type');
+        }
+        if ($this->dir || $this->currentseq !== -1) {
+            throw new \coding_exception('Can not save into FS after the files were extracted');
+        }
+        $filesno = 0;
+        while (($this->currentseq = $this->find_next_seq()) !== null) {
+            $tempdir = tempfiles::make_temp_dir('backupzip-');
+            $zippath = $this->download_backup_file($tempdir);
+            $fs = get_file_storage();
+            $fs->create_file_from_pathname([
+                'contextid' => \context_system::instance()->id,
+                'component' => 'tool_vault',
+                'filearea' => constants::FILENAME_PLUGINSCODE,
+                'itemid' => $this->siterestore->get_model()->id,
+                'filepath' => '/',
+                'filename' => $this->currentseq . '.zip',
+                'sortorder' => $this->currentseq,
+            ], $zippath);
+            tempfiles::remove_temp_dir($tempdir);
+            $filesno++;
+        }
+        return $filesno;
     }
 
     /**
