@@ -28,6 +28,7 @@ use tool_vault\local\cli_helper;
 use tool_vault\local\helpers\plugincode;
 use tool_vault\constants;
 use tool_vault\local\checks\plugins_restore;
+use tool_vault\local\helpers\ui;
 
 require_once(__DIR__ . '/../../../../config.php');
 
@@ -51,7 +52,7 @@ $clihelper->validate_cli_options();
 $precheckonly = $clihelper->get_cli_option('dryrun');
 $overwrite = $clihelper->get_cli_option('overwrite');
 
-$clihelper->cli_writeln('Hello');
+$clihelper->cli_writeln('Adding code for the missing add-on plugins.');
 
 $names = $clihelper->get_cli_option('name');
 if ($names !== null) {
@@ -60,17 +61,26 @@ if ($names !== null) {
 }
 
 $backupkey = $clihelper->get_cli_option('backupkey');
-// phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
+$installedcount = 0;
+
 if ($backupkey !== null) {
+    // Installing from the backup.
+
     // Make sure we downloaded the dbstructure and codebase.
     /** @var plugins_restore $model */
     $model = plugins_restore::get_last_check_for_backup($backupkey, constants::RESTORE_PRECHECK_MAXAGE);
+    $precheckexample = "Example (without passphrase):\n" .
+            "    sudo -u www-data php admin/tool/vault/cli/site_restore.php --backupkey={$backupkey} --dryrun";
     if (!$model) {
-        $maxage = round(constants::RESTORE_PRECHECK_MAXAGE / DAYSECS) . " days";
+        $maxage = ui::format_duration(constants::RESTORE_PRECHECK_MAXAGE, false);
         cli_error("No recent restore pre-check for this backup was found. " .
             "You need to execute restore pre-check first. Plugins code from backup will be stored on this site for $maxage\n\n" .
-            "Example (without passphrase):\n" .
-            "    sudo -u www-data php admin/tool/vault/site_restore.php --backupkey={$backupkey} --dryrun");
+            $precheckexample);
+    } else {
+        $age = ui::format_duration(time() - $model->get_parent()->get_finished_time(), false);
+        $clihelper->cli_writeln("\nLast restore pre-check was performed $age ago.\n".
+            "If your environment changed since then it is recommended to perform another restore pre-check.\n\n" .
+            $precheckexample);
     }
 
     $files = $model->get_pluginscode_stored_files();
@@ -86,48 +96,64 @@ if ($backupkey !== null) {
     }
 
     foreach ($names as $name) {
-        $clihelper->cli_writeln("\n=== Plugin $name ===");
         $pluginname = preg_split('/@/', $name)[0];
         $pluginversion = preg_split('/@/', $name)[1] ?? null;
+        $clihelper->cli_writeln("\n=== Plugin $pluginname ===");
         // If $names are specified, make sure they are present in the backup.
         if ($info = $model->is_plugin_code_included($pluginname)) {
             if ($pluginversion !== null && $pluginversion !== (string)$info['version']) {
                 $clihelper->cli_writeln('ERROR. Plugin '.$pluginname.' has version '.$info['version'].
-                    ' in the backup, it does not match requested '.$pluginversion);
+                    ' in the backup, which does not match requested '.$pluginversion);
             } else if (core_component::get_component_directory($pluginname) && !$overwrite) {
-                $clihelper->cli_writeln('SKIP. Plugin ' . $pluginname .
+                $clihelper->cli_writeln('SKIPPED. Plugin ' . $pluginname .
                     ' is already installed and the --overwrite option is not specified.');
             } else {
-                plugincode::install_addon_from_backup($pathtozip, $pluginname, (bool)$precheckonly);
+                $clihelper->cli_writeln($model->prepare_codeincluded_version_description($pluginname, $info, false));
+                flush();
+                $installedcount += (int)plugincode::install_addon_from_backup($pathtozip, $pluginname, (bool)$precheckonly);
             }
         } else {
             $clihelper->cli_writeln('ERROR. Plugin not found in the backup.');
         }
     }
-    exit;
+
+} else {
+
+    // Installing from moodle.org.
+    $currentversion = moodle_major_version();
+    foreach ($names as $name) {
+        $pluginname = preg_split('/@/', $name)[0];
+        $clihelper->cli_writeln("\n=== Plugin $pluginname ===");
+        if (core_component::get_component_directory($pluginname) && !$overwrite) {
+            $clihelper->cli_writeln('SKIPPED. Plugin ' . $pluginname .
+                ' is already installed and the --overwrite option is not specified.');
+            continue;
+        }
+        try {
+            $shortinfo = plugincode::check_on_moodle_org($name);
+        } catch (moodle_exception $e) {
+            $clihelper->cli_writeln('ERROR. Plugin '.$name.' is not found on moodle.org');
+            continue;
+        }
+
+        $clihelper->cli_writeln(plugins_restore::prepare_moodleorg_version_description($pluginname, $shortinfo, '', false));
+        flush();
+        $installedcount += (int)plugincode::install_addon_from_moodleorg(
+            $shortinfo['downloadurl'], $pluginname, (bool)$precheckonly);
+    }
+
 }
 
-$currentversion = moodle_major_version();
-foreach ($names as $name) {
-    $clihelper->cli_writeln("\n=== Plugin $name ===");
-    $pluginname = preg_split('/@/', $name)[0];
-    if (core_component::get_component_directory($pluginname) && !$overwrite) {
-        $clihelper->cli_writeln('SKIP. Plugin ' . $pluginname .
-            ' is already installed and the --overwrite option is not specified.');
-        continue;
-    }
-    try {
-        $shortinfo = plugincode::check_on_moodle_org($name);
-    } catch (moodle_exception $e) {
-        $clihelper->cli_writeln('ERROR. Plugin '.$name.' is not found on moodle.org');
-        continue;
-    }
-
-    $moodleversions = join(', ', $shortinfo['supportedmoodles']);
-    $clihelper->cli_writeln('Plugin '.$pluginname.' for Moodle '.$moodleversions.' is found on moodle.org');
-    if (!in_array($currentversion, $shortinfo['supportedmoodles'])) {
-        $clihelper->cli_writeln('WARNING. Current Moodle version '.$currentversion.' is not supported!');
-    }
-    flush();
-    plugincode::install_addon_from_moodleorg($shortinfo['downloadurl'], $pluginname, (bool)$precheckonly);
+$clihelper->cli_writeln('');
+if ($installedcount > 0 && !$precheckonly) {
+    $clihelper->cli_writeln($installedcount." plugins were added to the codebase. Now you must run Moodle upgrade script ".
+        "to complete installation.\nUpgrade will start if you visit 'Site administration' page on your site as an admin or ".
+        "you can execute it from CLI.");
+    $clihelper->cli_writeln('Unlike this script the upgrade script must be executed as a www user:');
+    $clihelper->cli_writeln('');
+    $clihelper->cli_writeln("    sudo -u www-data /usr/bin/php admin/cli/upgrade.php --non-interactive");
+} else if ($installedcount) {
+    $clihelper->cli_writeln($installedcount.' plugins can be added to the codebase.');
+} else {
+    $clihelper->cli_writeln('There were no changes to the codebase.');
 }

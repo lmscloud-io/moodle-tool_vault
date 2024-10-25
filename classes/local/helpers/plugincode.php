@@ -16,6 +16,8 @@
 
 namespace tool_vault\local\helpers;
 
+use core\update\code_manager;
+
 /**
  * Class plugincode
  *
@@ -284,9 +286,9 @@ class plugincode {
      * @param string $url
      * @param string $pluginname either just the name or 'name @ version' (without spaces)
      * @param bool $dryrun
-     * @return void
+     * @return bool whether plugin was installed (or can be installed in case of dryrun)
      */
-    public static function install_addon_from_moodleorg(string $url, string $pluginname, bool $dryrun = false) {
+    public static function install_addon_from_moodleorg(string $url, string $pluginname, bool $dryrun = false): bool {
         global $CFG;
         // Download zip.
         $tempdir = make_request_directory();
@@ -306,29 +308,12 @@ class plugincode {
         // Extract zip into temp directory.
         $tmp = make_request_directory();
 
-        $fp = get_file_packer('application/zip');
-        $files = $fp->extract_to_pathname($zipfile, $tmp);
+        [$plugintype, $rootdir] = \core_component::normalize_component($pluginname);
+        $files = \core_plugin_manager::instance()->unzip_plugin_file($zipfile, $tmp, $rootdir);
 
-        // Check version.php for consistency - that it has component that matches $pluginname, version, etc.
-        try {
-            $validator = plugin_validator::validate($tmp, $files, ['component' => $pluginname]);
-        } catch (\moodle_exception $e) {
-            mtrace("ERROR. ".$e->getMessage());
-            remove_dir($tmp);
-            return;
-        }
-
-        $pluginpath = self::guess_plugin_path($pluginname);
-        $pluginpathrel = self::guess_plugin_path_relative($pluginname);
-        $component = $validator->get_component();
-        $version = $validator->get_version();
-        if (!$dryrun) {
-            self::copy_plugin_files($tmp, $pluginpath, $files);
-            mtrace("Plugin $component with version $version was installed into $pluginpathrel");
-        } else {
-            mtrace("Plugin $component with version $version can be installed into $pluginpathrel");
-        }
+        $rv = self::validate_and_install_addon_files($tmp, $files, $pluginname, $dryrun);
         remove_dir($tmp);
+        return $rv;
     }
 
     /**
@@ -337,9 +322,9 @@ class plugincode {
      * @param string $zipfile
      * @param string $pluginname
      * @param bool $dryrun
-     * @return void
+     * @return bool whether plugin was installed (or can be installed in case of dryrun)
      */
-    public static function install_addon_from_backup(string $zipfile, string $pluginname, bool $dryrun = false) {
+    public static function install_addon_from_backup(string $zipfile, string $pluginname, bool $dryrun = false): bool {
         $pluginpathrel = self::guess_plugin_path_relative($pluginname);
 
         // Make a list of files from the zip that are relevant only to this plugin.
@@ -352,7 +337,7 @@ class plugincode {
         }
         if (!$pluginfiles) {
             mtrace("ERROR. Code not found for plugin $pluginname");
-            return;
+            return false;
         }
 
         // Extract only files that are related to this plugin.
@@ -364,33 +349,48 @@ class plugincode {
         // Create a list of files as if we extracted to the $pseudodir. Also add missing folder paths.
         $pseudofiles = [];
         $offset = strlen(dirname($pluginpathrel)) + 1;
-        foreach ($files as $file => $status) {
-            $newname = substr($file, $offset);
+        foreach ($files as $filename => $status) {
+            $newname = substr($filename, $offset);
             $pseudofiles[$newname] = $status;
             for ($d = dirname($newname); strpos($d, '/') !== false; $d = dirname($d)) {
                 $pseudofiles["$d/"] = true;
             }
         }
+        ksort($pseudofiles, SORT_STRING);
 
+        $rv = self::validate_and_install_addon_files($pseudodir, $pseudofiles, $pluginname, $dryrun);
+        remove_dir($tmp);
+        return $rv;
+    }
+
+    /**
+     * Validate and install extracted files for addon plugin
+     *
+     * @param string $tmp path to the folder where the files were extracted
+     * @param array $files list of the files (filename=>status)
+     * @param string $pluginname
+     * @param bool $dryrun
+     * @return bool
+     */
+    protected static function validate_and_install_addon_files(string $tmp, array $files, string $pluginname, bool $dryrun): bool {
         // Check version.php for consistency - that it has component that matches $pluginname, version, etc.
         try {
-            $validator = plugin_validator::validate($pseudodir, $pseudofiles, ['component' => $pluginname]);
+            $validator = plugin_validator::validate($tmp, $files, ['component' => $pluginname]);
         } catch (\moodle_exception $e) {
             mtrace("ERROR. ".$e->getMessage());
-            remove_dir($tmp);
-            return;
+            return false;
         }
 
-        // Copy files to the plugin directory.
         $pluginpath = self::guess_plugin_path($pluginname);
+        $pluginpathrel = self::guess_plugin_path_relative($pluginname);
         $component = $validator->get_component();
         $version = $validator->get_version();
         if (!$dryrun) {
-            self::copy_plugin_files($pseudodir, $pluginpath, $pseudofiles);
-            mtrace("Plugin $component with version $version was installed into $pluginpathrel");
+            self::copy_plugin_files($tmp, $pluginpath, $files);
+            mtrace("Plugin $component with version $version was installed into $pluginpathrel/.");
         } else {
-            mtrace("Plugin $component with version $version can be installed into $pluginpathrel");
+            mtrace("Plugin $component with version $version can be installed into $pluginpathrel/.");
         }
-        remove_dir($tmp);
+        return true;
     }
 }

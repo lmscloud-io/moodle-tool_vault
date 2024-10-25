@@ -43,7 +43,7 @@ abstract class check_base_restore extends check_base {
      * @param string $text text inside the badge
      * @return string
      */
-    protected function badge(string $class, string $text): string {
+    protected static function badge(string $class, string $text): string {
         if (!in_array($class, ['badge-info', 'badge-warning', 'badge-danger'])) {
             throw new \coding_exception('Unrecognised badge class: '.s($class));
         }
@@ -56,8 +56,8 @@ abstract class check_base_restore extends check_base {
      * @param string|null $text
      * @return string
      */
-    protected function badge_error(?string $text = null): string {
-        return $this->badge('badge-danger', $text ?? get_string('error', 'moodle'));
+    protected static function badge_error(?string $text = null): string {
+        return self::badge('badge-danger', $text ?? get_string('error', 'moodle'));
     }
 
     /**
@@ -66,8 +66,8 @@ abstract class check_base_restore extends check_base {
      * @param string|null $text
      * @return string
      */
-    protected function badge_warning(?string $text = null): string {
-        return $this->badge('badge-warning', $text ?? get_string('warning', 'moodle'));
+    protected static function badge_warning(?string $text = null): string {
+        return self::badge('badge-warning', $text ?? get_string('warning', 'moodle'));
     }
 
     /**
@@ -76,8 +76,8 @@ abstract class check_base_restore extends check_base {
      * @param string|null $text
      * @return string
      */
-    protected function badge_info(?string $text = null): string {
-        return $this->badge('badge-info', $text ?? get_string('statusinfo', 'moodle'));
+    protected static function badge_info(?string $text = null): string {
+        return self::badge('badge-info', $text ?? get_string('statusinfo', 'moodle'));
     }
 
     /**
@@ -97,6 +97,7 @@ abstract class check_base_restore extends check_base {
         $checks = check_base::get_all_checks_for_operation($parent->id);
         foreach ($checks as $check) {
             if ($check instanceof static) {
+                $check->parent = $parent;
                 return $check;
             }
         }

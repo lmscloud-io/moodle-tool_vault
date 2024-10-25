@@ -73,16 +73,22 @@ class ui {
      * Duration (used for max_execution_time)
      *
      * @param int $value
+     * @param bool $asseconds true: display number of seconds and in the brackets the interval as days/hours/min
+     *    false: display the interval as days/hours/min only
      * @return string
      */
-    public static function format_duration(int $value): string {
+    public static function format_duration(int $value, bool $asseconds = true): string {
         if ($value <= MINSECS) {
             return get_string('numseconds', 'moodle', $value);
         }
         $parts = [];
-        $hrs = floor($value / HOURSECS);
+        $days = floor($value / DAYSECS);
+        $hrs = floor(($value % DAYSECS) / HOURSECS);
         $mins = floor(($value % HOURSECS) / MINSECS);
         $secs = $value % MINSECS;
+        if ($days) {
+            $parts[] = get_string('numdays', 'moodle', $days);
+        }
         if ($hrs) {
             $parts[] = get_string('numhours', 'moodle', $hrs);
         }
@@ -92,9 +98,13 @@ class ui {
         if ($secs) {
             $parts[] = get_string('numseconds', 'moodle', $secs);
         }
-        return
-            get_string('numseconds', 'moodle', $value) . ' (' .
-            implode(' ', $parts) . ')';
+        if ($asseconds) {
+            return
+                get_string('numseconds', 'moodle', $value) . ' (' .
+                implode(' ', $parts) . ')';
+        } else {
+            return implode(' ', $parts);
+        }
     }
 
     /**
