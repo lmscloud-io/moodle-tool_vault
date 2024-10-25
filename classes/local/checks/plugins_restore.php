@@ -367,6 +367,29 @@ class plugins_restore extends check_base_restore {
     }
 
     /**
+     * Prepare version description for a plugin in plugins directory
+     *
+     * @param string $pluginname
+     * @param array $minfo information received from plugins directory API - version, supportedmoodles, etc
+     * @param string $versionpostfix text to add after the version number
+     * @param bool $ashtml result as html
+     * @return string
+     */
+    public static function prepare_moodleorg_version_description(string $pluginname, array $minfo,
+            string $versionpostfix = '', bool $ashtml = true): string {
+        $currentversion = moodle_major_version();
+        $warning = '';
+        $s = 'Version '.$minfo['version'].' from plugins directory';
+        $s .= $versionpostfix;
+        $s .= ' for Moodle '.join(', ', $minfo['supportedmoodles']);
+        $s .= '.';
+        if (!in_array($currentversion, $minfo['supportedmoodles'])) {
+            $warning = 'Current Moodle version '.$currentversion.' is not supported!';
+        }
+        return $s . self::format_warning_for_version_description($warning, $ashtml);
+    }
+
+    /**
      * Prepare download information about a single version of a plugin
      *
      * @param string $pluginname
@@ -375,15 +398,7 @@ class plugins_restore extends check_base_restore {
      * @return array
      */
     protected function prepare_version_option(string $pluginname, array $minfo, string $versionpostfix = ''): array {
-        $currentversion = moodle_major_version();
-
-        $s = 'Version '.$minfo['version'].' from plugins directory';
-        $s .= $versionpostfix;
-        $s .= ' for Moodle '.join(', ', $minfo['supportedmoodles']);
-        $s .= '.';
-        if (!in_array($currentversion, $minfo['supportedmoodles'])) {
-            $s .= ' Current Moodle version '.$currentversion.' is not supported!';
-        }
+        $s = $this->prepare_moodleorg_version_description($pluginname, $minfo, $versionpostfix);
         if (plugincode::can_write_to_plugin_dir($pluginname) && self::allow_vault_to_install()) {
             $installparams = ['data-id' => $this->get_model()->id,
                 'data-action' => 'installaddon',
@@ -418,6 +433,58 @@ class plugins_restore extends check_base_restore {
     }
 
     /**
+     * Prepare description of a plugin version that is included in the backup
+     *
+     * @param string $pluginname
+     * @param array $minfo information about the plugin: version, name, path, pluginsupported, dependencies, subplugins
+     * @param bool $ashtml
+     * @return string
+     */
+    public function prepare_codeincluded_version_description(string $pluginname, array $minfo, bool $ashtml = true): string {
+        global $CFG;
+        $currentversion = moodle_major_version();
+        $currentbranch = $CFG->branch;
+        $backupbranch = $this->model->get_details()['backupbranch'];
+
+        $s = 'Version '.$minfo['version'].' from backup';
+        $warning = '';
+        if (!empty($minfo['pluginsupported'])) {
+            $supported = array_map([$this, 'major_version_from_branch'], $minfo['pluginsupported']);
+            $s .= ' for Moodle ';
+            $s .= ($supported[0] !== $supported[1]) ? "{$supported[0]} - {$supported[1]}" : $supported[0];
+            $s .= '.';
+            if ((int)$currentbranch > (int)$minfo['pluginsupported'][1]) {
+                $warning = 'Current Moodle version '.$currentversion.' is not supported!';
+            }
+        } else if ((int)$currentbranch > (int)$backupbranch) {
+            $s .= '.';
+            $warning = 'There is no information whether '.$currentversion.' is supported or not. Backup was made in '.
+                self::major_version_from_branch($backupbranch);
+        } else {
+            $s .= '.';
+        }
+
+        return $s . self::format_warning_for_version_description($warning, $ashtml);
+    }
+
+    /**
+     * Format warning for version description
+     *
+     * @param string $warning
+     * @param bool $ashtml
+     * @return string
+     */
+    protected static function format_warning_for_version_description(string $warning, bool $ashtml): string {
+        if (!$warning) {
+            return '';
+        } else if ($ashtml) {
+            return ' ' . self::badge_warning() . $warning;
+        } else {
+            return "\nWARNING: $warning";
+        }
+    }
+
+    /**
      * Prepare download information about a plugin version included in the backup
      *
      * @param string $pluginname
@@ -427,26 +494,7 @@ class plugins_restore extends check_base_restore {
      */
     protected function prepare_codeincluded_version_option(string $pluginname, array $minfo): array {
         global $CFG;
-        $currentversion = moodle_major_version();
-        $currentbranch = $CFG->branch;
-
-        $backupbranch = $this->model->get_details()['backupbranch'];
-        $s = 'Version '.$minfo['version'].' from backup';
-        if (!empty($minfo['pluginsupported'])) {
-            $supported = array_map([$this, 'major_version_from_branch'], $minfo['pluginsupported']);
-            $s .= ' for Moodle ';
-            $s .= ($supported[0] !== $supported[1]) ? "{$supported[0]} - {$supported[1]}" : $supported[0];
-            $s .= '.';
-            if ((int)$currentbranch > (int)$minfo['pluginsupported'][1]) {
-                $s .= ' Current Moodle version '.$currentversion.' is not supported!';
-            }
-        } else if ((int)$currentbranch > (int)$backupbranch) {
-            $s .= '.';
-            $s .= ' There is no information whether '.$currentversion.' is supported or not. Backup was made in '.
-                self::major_version_from_branch($backupbranch);
-        } else {
-            $s .= '.';
-        }
+        $s = $this->prepare_codeincluded_version_description($pluginname, $minfo);
 
         return [
             'description' => $s, // TODO more about supported Moodle versions.

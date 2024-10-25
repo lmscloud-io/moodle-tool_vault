@@ -27,11 +27,13 @@
 
 {{#versions}}
 <div>
-    <input type="radio" name="install_{{pluginname}}">
-    {{{description}}}
-    {{#downloadurl}}
-        <a href="{{.}}">{{#pix}} download, tool_vault, {{#str}} download, moodle {{/str}} {{/pix}}</a>
-    {{/downloadurl}}
+    <label class="mb-0">
+        <input type="radio" name="install_{{pluginname}}">
+        {{{description}}}
+        {{#downloadurl}}
+            <a href="{{.}}">{{#pix}} download, tool_vault, {{#str}} download, moodle {{/str}} {{/pix}}</a>
+        {{/downloadurl}}
+    </label>
 </div>
 {{/versions}}
 
