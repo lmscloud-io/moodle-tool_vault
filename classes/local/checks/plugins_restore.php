@@ -547,25 +547,35 @@ class plugins_restore extends check_base_restore {
      * Prepare a list of plugins for template export
      *
      * @param array $list
+     * @param bool $withbulkactions
      * @return array
      */
-    protected function prepare_for_template(array $list): array {
+    protected function prepare_for_template(array $list, bool $withbulkactions = false): array {
         global $PAGE;
         $plugins = [];
         $showparents = false;
+        $haswritablepaths = false;
         foreach ($list as $pluginname => $info) {
             $parent = $info[1]['parent'] ?? $info[0]['parent'] ?? null;
             $showparents = $showparents || !empty($parent);
             $helpicon = new \help_icon('pathnotwritable', 'tool_vault');
-            $plugins[] = $this->plugin_with_name($pluginname) + [
+            $plugins[] = $p = $this->plugin_with_name($pluginname) + [
                 'versionbackup' => $info[0]['version'] ?? '',
                 'versionlocal' => $info[1]['version'] ?? '',
                 'parent' => $parent ? $this->plugin_with_name($parent) : [],
                 'versiondetails' => $this->prepare_version_details_for_template($pluginname, $info),
                 'nonwritablehelp' => $helpicon->export_for_template($PAGE->get_renderer('tool_vault')),
             ];
+            $haswritablepaths = $haswritablepaths || !empty($p['versiondetails']['writable']);
         }
-        return ['plugins' => $plugins, 'showparents' => $showparents];
+        $rv = ['plugins' => $plugins, 'showparents' => $showparents];
+        if ($withbulkactions) {
+            $rv['bulkactions'] = [
+                'pluginnames' => join(',', array_keys($list)),
+                'writable' => $haswritablepaths,
+            ];
+        }
+        return $rv;
     }
 
     /**
@@ -579,7 +589,7 @@ class plugins_restore extends check_base_restore {
         $r = [];
         if ($p = $this->problem_plugins()) {
             $r['hasproblems'] = true;
-            $r['problemplugins'] = $this->prepare_for_template($p);
+            $r['problemplugins'] = $this->prepare_for_template($p, count($p) > 1);
         }
         if ($p = $this->extra_plugins(false)) {
             $r['hasextra'] = true;
@@ -591,7 +601,7 @@ class plugins_restore extends check_base_restore {
         }
         if ($p = $this->missing_plugins(false)) {
             $r['hasmissing'] = true;
-            $r['missingplugins'] = $this->prepare_for_template($p) +
+            $r['missingplugins'] = $this->prepare_for_template($p, count($p) > 1) +
                 ['hideversionlocal' => true];
         }
 

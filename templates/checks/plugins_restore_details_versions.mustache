@@ -34,7 +34,7 @@
     }
 }}
 <div data-region="tool_vault-plugin-install" {{#writable}}data-writable="1"{{/writable}}
-        data-pluginname="{{pluginname}}" data-pluginpath={{pluginpath}} data-cliexpanded="0">
+        data-pluginname="{{pluginname}}" data-versionlocal="{{versionlocal}}" data-cliexpanded="0">
     {{{general}}}
 
     {{#versions}}
@@ -56,17 +56,20 @@
                     <button data-action="cli" class="icon-size-2">
                     <span class="cli-expanded-icon">{{#pix}} t/collapsedchevron, core {{/pix}}</span>
                     <span class="cli-collapsed-icon">{{#pix}} t/expandedchevron, core {{/pix}}</span>
-                        CLI instructions</button>
-                    <button data-action="install" {{^writable}}disabled{{/writable}}>Install</button>
+                        {{#str}} addoncliinstructions, tool_vault {{/str}}</button>
+                    <button data-action="install" {{^writable}}disabled{{/writable}}>{{#str}} addoninstall, tool_vault {{/str}}</button>
                 {{/showbuttons}}
             </div>
             <div class="col-sm text-right">
-                <span>Path: {{pluginpath}}</span> &#183;
+                <span>Path: {{pluginpath}}</span>
+                {{#showbuttons}}
+                &#183;
                 <span>Writable:
                     {{#writable}}{{#str}} yes, moodle {{/str}}
                         {{#pix}}spacer, moodle{{/pix}}{{/writable}}
                     {{^writable}}{{#str}} no, moodle {{/str}}
                         {{#nonwritablehelp}}{{>core/help_icon}}{{/nonwritablehelp}}{{/writable}}</span>
+                {{/showbuttons}}
             </div>
         </div>
     </div>
