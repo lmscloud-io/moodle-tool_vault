@@ -21,6 +21,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+const ADDON_PLUGIN_REGION = '[data-region="tool_vault-plugin-install"]';
+
 export const SELECTORS = {
     APIKEY_FORM_CONTAINER: '#getapikey_formplaceholder',
     APIKEY_IFRAME: '#getapikey_iframe',
@@ -28,5 +30,9 @@ export const SELECTORS = {
     SIGNUP_BUTTON: '#getapikey_signup',
     ENTER_KEY_BUTTON: '#getapikey_enterapikey',
     LEGACY_FORM_CONTAINER: '#getapikey_legacyform',
-    INSTALL_ADDON_LINK: '[data-action="installaddon"]',
+    ADDON_PLUGIN_REGION: ADDON_PLUGIN_REGION,
+    ADDON_VERSION_RADIO: 'input[type="radio"]',
+    ADDON_INSTALL_BUTTON: '[data-action="install"]',
+    ADDON_CLI_BUTTON: '[data-action="cli"]',
+    ADDON_CLI_REGION: '[data-purpose="cli"]',
 };

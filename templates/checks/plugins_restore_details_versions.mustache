@@ -17,39 +17,58 @@
 {{!
     @template tool_vault/checks/plugins_restore_details_versions
 
-    TODO describe template plugins_restore_details_versions
+    Details about one version in teh plugins restore table
 
     Example context (json):
     {
+        "general": "<p>Explanation text</p>",
+        "versions": [
+            {"description": "Version 10000000",
+             "downloadurl": "#", "ischecked": 1},
+            {"description": "Version 20000000",
+             "downloadurl": "#"}
+        ],
+        "showbuttons": 1,
+        "pluginpath": "tool/vault",
+        "writable": 0
     }
 }}
-{{{general}}}
+<div data-region="tool_vault-plugin-install" {{#writable}}data-writable="1"{{/writable}}
+        data-pluginname="{{pluginname}}" data-pluginpath={{pluginpath}} data-cliexpanded="0">
+    {{{general}}}
 
-{{#versions}}
-<div>
-    <label class="mb-0">
-        <input type="radio" name="install_{{pluginname}}">
-        {{{description}}}
-        {{#downloadurl}}
-            <a href="{{.}}">{{#pix}} download, tool_vault, {{#str}} download, moodle {{/str}} {{/pix}}</a>
-        {{/downloadurl}}
-    </label>
-</div>
-{{/versions}}
+    {{#versions}}
+    <div>
+        <label class="mb-0">
+            <input type="radio" name="install_{{pluginname}}" value="{{source}}" data-exactversion="{{exactversion}}" {{#ischecked}}checked{{/ischecked}}>
+            {{{description}}}
+            {{#downloadurl}}
+                <a href="{{.}}">{{#pix}} download, tool_vault, {{#str}} download, moodle {{/str}} {{/pix}}</a>
+            {{/downloadurl}}
+        </label>
+    </div>
+    {{/versions}}
 
-{{#showbuttons}}
-<div style="width:100%">
-    <div class="row">
-        <div class="col-sm">
-            <button>CLI instructions</button>
-            <button>Install</button>
-        </div>
-        <div class="col-sm text-right">
-            Path: {{pluginpath}}
-            Writable:
-                {{#writable}}{{#str}} yes, moodle {{/str}}{{/writable}}
-                {{^writable}}{{#str}} no, moodle {{/str}}{{/writable}}
+    <div style="width:100%">
+        <div class="row">
+            <div class="col-sm">
+                {{#showbuttons}}
+                    <button data-action="cli" class="icon-size-2">
+                    <span class="cli-expanded-icon">{{#pix}} t/collapsedchevron, core {{/pix}}</span>
+                    <span class="cli-collapsed-icon">{{#pix}} t/expandedchevron, core {{/pix}}</span>
+                        CLI instructions</button>
+                    <button data-action="install" {{^writable}}disabled{{/writable}}>Install</button>
+                {{/showbuttons}}
+            </div>
+            <div class="col-sm text-right">
+                <span>Path: {{pluginpath}}</span> &#183;
+                <span>Writable:
+                    {{#writable}}{{#str}} yes, moodle {{/str}}
+                        {{#pix}}spacer, moodle{{/pix}}{{/writable}}
+                    {{^writable}}{{#str}} no, moodle {{/str}}
+                        {{#nonwritablehelp}}{{>core/help_icon}}{{/nonwritablehelp}}{{/writable}}</span>
+            </div>
         </div>
     </div>
+    <div data-purpose="cli" class="mt-2 p-1 pt-2" style="border: 1px solid gray"></div>
 </div>
-{{/showbuttons}}

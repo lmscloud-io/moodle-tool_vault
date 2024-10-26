@@ -25,6 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['addoninstallskip'] = 'Skip';
 $string['addonplugins'] = 'Add-on plugins';
 $string['addonplugins_autoupgrade'] = 'Moodle upgrade process will be performed automatically during restore. <a href="{$a}">Change</a>.';
 $string['addonplugins_extraplugins'] = 'Extra plugins';
@@ -188,9 +189,13 @@ $string['operation'] = 'Operation {$a}';
 $string['passphrase'] = 'Passphrase';
 $string['pastbackupslist'] = 'Past backups on this site';
 $string['pastrestoreslist'] = 'Past restores on this site';
+$string['pathnotwritable'] = 'Path not writable';
+$string['pathnotwritable_help'] = 'Tool vault either can not write to the codebase or it is prohibited in the settings. You can still install plugins by connecting to the server and running CLI commands in the terminal.';
 $string['performedby'] = 'Performed by';
 $string['pleasewait'] = 'Please wait...';
+$string['plugincodeadded'] = 'Plugin code added';
 $string['pluginname'] = 'Vault - Site migration';
+$string['pluginnotavailableinmoodle'] = 'This plugin is not available in the plugins directory.';
 $string['precheckdetails'] = 'Pre-check details';
 $string['privacy:metadata'] = 'The Vault plugin doesn\'t store any personal data.';
 $string['privacy:metadata:alldata'] = 'All data from the database, file system and dataroot';

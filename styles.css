@@ -31,6 +31,12 @@
     border-image: initial;
 }
 
+[data-region="tool_vault-plugin-install"][data-cliexpanded="1"] .cli-expanded-icon,
+[data-region="tool_vault-plugin-install"][data-cliexpanded="0"] .cli-collapsed-icon,
+[data-region="tool_vault-plugin-install"][data-cliexpanded="0"] [data-purpose="cli"] {
+    display: none;
+}
+
 /* .tool_vault-apikeyrequired .apiheader {
     font-size: 1em;
 }

@@ -66,6 +66,7 @@ class plugins_restore extends check_base_restore {
             'list' => $list,
             'standardplugins' => $standardplugins,
             'backupbranch' => $backupbranch,
+            'backupkey' => $parent->backupkey,
         ])->save();
     }
 
@@ -399,19 +400,11 @@ class plugins_restore extends check_base_restore {
      */
     protected function prepare_version_option(string $pluginname, array $minfo, string $versionpostfix = ''): array {
         $s = $this->prepare_moodleorg_version_description($pluginname, $minfo, $versionpostfix);
-        if (plugincode::can_write_to_plugin_dir($pluginname) && self::allow_vault_to_install()) {
-            $installparams = ['data-id' => $this->get_model()->id,
-                'data-action' => 'installaddon',
-                'data-source' => 'moodleorg',
-                'data-pluginname' => $pluginname,
-                'data-version' => $minfo['version'],
-                'data-downloadurl' => $minfo['downloadurl'],
-            ];
-        }
         return [
             'description' => $s,
             'downloadurl' => $minfo['downloadurl'],
             'installparams' => $installparams ?? [],
+            'source' => $minfo['downloadurl'],
         ];
     }
 
@@ -497,10 +490,11 @@ class plugins_restore extends check_base_restore {
         $s = $this->prepare_codeincluded_version_description($pluginname, $minfo);
 
         $downloadurl = moodle_url::make_pluginfile_url(\context_system::instance()->id,
-            'tool_vault', constants::FILENAME_PLUGINSCODE, $this->model->parentid, '/', "{$pluginname}.zip", true);
+            'tool_vault', constants::FILENAME_PLUGINSCODE, $this->model->parentid, '/', "{$pluginname}.zip");
         return [
             'description' => $s, // TODO more about supported Moodle versions.
             'downloadurl' => $downloadurl,
+            'source' => 'backupkey/' . $this->model->get_details()['backupkey'],
             // TODO installparams.
         ];
     }
@@ -529,16 +523,19 @@ class plugins_restore extends check_base_restore {
             }
             if (!empty($info[2]['exact']) && empty($info[2]['exact']['error'])) {
                 $rv['versions'][] = $this->prepare_version_option($pluginname, $info[2]['exact'],
-                    $hasboth ? ' (same as in backup)' : '');
+                    $hasboth ? ' (same as in backup)' : '') +
+                    ['exactversion' => '@' . $info[2]['exact']['version']];
             }
             if (!empty($info[0]['codeincluded'])) {
                 $rv['versions'][] = $this->prepare_codeincluded_version_option($pluginname, $info[0]);
             }
             if (empty($rv['versions'])) {
-                $rv['general'] = '<p>This plugin is not available in the plugins directory.</p>';
+                $rv['general'] = '<p>' . get_string('pluginnotavailableinmoodle', 'tool_vault') . '</p>';
             } else {
+                $rv['versions'][0]['ischecked'] = 1;
                 $rv['versions'][] = [
-                    'description' => 'Skip',
+                    'description' => get_string('addoninstallskip', 'tool_vault'),
+                    'source' => '',
                 ];
                 $rv['showbuttons'] = true;
             }
@@ -553,16 +550,19 @@ class plugins_restore extends check_base_restore {
      * @return array
      */
     protected function prepare_for_template(array $list): array {
+        global $PAGE;
         $plugins = [];
         $showparents = false;
         foreach ($list as $pluginname => $info) {
             $parent = $info[1]['parent'] ?? $info[0]['parent'] ?? null;
             $showparents = $showparents || !empty($parent);
+            $helpicon = new \help_icon('pathnotwritable', 'tool_vault');
             $plugins[] = $this->plugin_with_name($pluginname) + [
                 'versionbackup' => $info[0]['version'] ?? '',
                 'versionlocal' => $info[1]['version'] ?? '',
                 'parent' => $parent ? $this->plugin_with_name($parent) : [],
                 'versiondetails' => $this->prepare_version_details_for_template($pluginname, $info),
+                'nonwritablehelp' => $helpicon->export_for_template($PAGE->get_renderer('tool_vault')),
             ];
         }
         return ['plugins' => $plugins, 'showparents' => $showparents];
@@ -599,9 +599,7 @@ class plugins_restore extends check_base_restore {
         $r['restoreremovemissing'] = (int)api::get_setting_checkbox('restoreremovemissing');
         $r['upgradeafterrestore'] = (int)api::get_setting_checkbox('upgradeafterrestore');
         $r['settingsurl'] = (new moodle_url('/admin/settings.php', ['section' => 'tool_vault']))->out(false);
-        if (self::allow_vault_to_install()) {
-            $PAGE->requires->js_call_amd('tool_vault/install_addon', 'init');
-        }
+        $PAGE->requires->js_call_amd('tool_vault/install_addon', 'init');
         return $renderer->render_from_template('tool_vault/checks/plugins_restore_details', $r);
     }
 
