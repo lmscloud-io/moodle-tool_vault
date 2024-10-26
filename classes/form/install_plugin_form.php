@@ -63,6 +63,15 @@ class install_plugin_form extends dynamic_form {
     }
 
     /**
+     * Installation source - 'moodleorg/[pluginname]@[version]' or 'backup/[backupkey]'
+     *
+     * @return string
+     */
+    protected function get_source(): string {
+        return $this->optional_param('source', 0, PARAM_RAW);
+    }
+
+    /**
      * Returns url to set in $PAGE->set_url() when form is being rendered or submitted via AJAX
      *
      * @return \moodle_url
@@ -78,9 +87,7 @@ class install_plugin_form extends dynamic_form {
         $this->set_data([
             'id' => $this->get_id(),
             'pluginname' => $this->optional_param('pluginname', '', PARAM_PLUGIN),
-            'version' => $this->optional_param('version', '', PARAM_TEXT),
-            'source' => $this->optional_param('source', '', PARAM_TEXT),
-            'downloadurl' => $this->optional_param('downloadurl', '', PARAM_URL),
+            'source' => $this->optional_param('source', '', PARAM_RAW),
         ]);
     }
 
@@ -93,16 +100,14 @@ class install_plugin_form extends dynamic_form {
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
         $mform->addElement('hidden', 'source');
-        $mform->setType('source', PARAM_TEXT);
+        $mform->setType('source', PARAM_RAW);
         $mform->addElement('hidden', 'pluginname');
         $mform->setType('pluginname', PARAM_PLUGIN);
-        $mform->addElement('hidden', 'version');
-        $mform->setType('version', PARAM_TEXT);
-        $mform->addElement('hidden', 'downloadurl');
-        $mform->setType('downloadurl', PARAM_URL);
 
+        // TODO strings.
         $mform->addElement('html', 'Code of the plugin '.$this->get_pluginname().
             ' will be added to the folder '.plugincode::guess_plugin_path_relative($this->get_pluginname()).
+            ' from '.s($this->get_source()) .
             ' . Once you added code for all necessary plugins you will need to run Moodle upgrade to install these plugins.');
     }
 
@@ -111,10 +116,23 @@ class install_plugin_form extends dynamic_form {
      */
     public function process_dynamic_submission() {
         $pluginname = $this->get_pluginname();
-        $downloadurl = $this->optional_param('downloadurl', '', PARAM_URL);
         if (!plugincode::can_write_to_plugin_dir($pluginname)) {
-            throw new \moodle_exception('Can not write');
+            throw new \moodle_exception('pathnotwritable', 'tool_vault');
         }
-        plugincode::install_addon_from_moodleorg($downloadurl, $pluginname);
+
+        ob_start();
+        if (preg_match('/^https?:\/\//', $this->get_source()) && ($url = clean_param($this->get_source(), PARAM_URL))) {
+            $rv = plugincode::install_addon_from_moodleorg($url, $pluginname);
+        } else if (preg_match('/^backupkey\/(\w+)$/', $this->get_source(), $matches)) {
+            $model = plugins_restore::get_last_check_for_parent(['backupkey' => $matches[1]]);
+            $rv = plugincode::install_addon_from_backup($model, $pluginname);
+        } else {
+            ob_end_clean();
+            throw new \moodle_exception('invalidparameter', 'debug');
+        }
+        $output = ob_get_contents();
+        ob_end_clean();
+
+        return ['success' => $rv, 'output' => text_to_html($output)];
     }
 }

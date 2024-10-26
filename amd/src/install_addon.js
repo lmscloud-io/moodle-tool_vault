@@ -24,8 +24,11 @@
 import ModalForm from 'core_form/modalform';
 import {SELECTORS} from './selectors';
 import {get_string as getString} from 'core/str';
+import {add as addToast} from 'core/toast';
+import Notification from 'core/notification';
 
 let initialised = false;
+const CLICOMMAND = 'php admin/tool/vault/cli/addon_plugins.php';
 
 /**
  * Initialise listeners on the page
@@ -35,22 +38,68 @@ export const init = () => {
         return;
     }
     initialised = true;
-    document.addEventListener('click', e => {
-        const target = e.target.closest(SELECTORS.INSTALL_ADDON_LINK);
-        if (target) {
+
+    document.querySelectorAll(SELECTORS.ADDON_PLUGIN_REGION).forEach(pluginRegionNode => {
+        pluginRegionNode.querySelectorAll(SELECTORS.ADDON_VERSION_RADIO).forEach(el => {
+            el.addEventListener('change', () => updateCliInstructions(pluginRegionNode, el));
+        });
+        const initialRadio = pluginRegionNode.querySelector(SELECTORS.ADDON_VERSION_RADIO + ':checked');
+        updateCliInstructions(pluginRegionNode, initialRadio);
+
+        const cliButton = pluginRegionNode.querySelector(SELECTORS.ADDON_CLI_BUTTON);
+        const installButton = pluginRegionNode.dataset.writable ?
+            pluginRegionNode.querySelector(SELECTORS.ADDON_INSTALL_BUTTON) : null;
+        const pluginname = pluginRegionNode.dataset.pluginname;
+
+        installButton?.addEventListener('click', e => {
             e.preventDefault();
-            openInstallAddonForm(target);
-        }
+            window.console.log('Add-on install button pressed');
+            const source = pluginRegionNode.querySelector(SELECTORS.ADDON_VERSION_RADIO + ':checked')?.value;
+            openInstallAddonForm(pluginRegionNode, {pluginname, source});
+        });
+
+        cliButton?.addEventListener('click', e => {
+            e.preventDefault();
+            window.console.log('Add-on cli button pressed');
+            pluginRegionNode.dataset.cliexpanded = `${pluginRegionNode.dataset.cliexpanded}` === "1" ? "0" : "1";
+        });
     });
+};
+
+/**
+ * Return value for the 'cli instructions'
+ *
+ * @param {Node} pluginRegionNode
+ * @param {Node} el selected radio input
+ */
+const updateCliInstructions = (pluginRegionNode, el) => {
+    const cli = pluginRegionNode.querySelector(SELECTORS.ADDON_CLI_REGION);
+    if (!cli) {
+        return;
+    }
+    if (!el) {
+        cli.innerHTML = '';
+        return;
+    }
+    const source = `${el.value}`;
+    const pluginname = pluginRegionNode.dataset.pluginname + el.dataset.exactversion;
+    if (source === '') {
+        cli.innerHTML = '';
+    } else if (source.match(/^backupkey\//)) {
+        cli.innerHTML = '<pre>' + CLICOMMAND +
+            ' --backupkey=' + source.substring(10) + ' --name=' + pluginname + '</pre>';
+    } else {
+        cli.innerHTML = '<pre>' + CLICOMMAND + ' --name=' + pluginname + '</pre>';
+    }
 };
 
 /**
  * Open form to enter API key
  *
- * @param {Node} el
+ * @param {Node} pluginRegionNode
+ * @param {Object} args
  */
-const openInstallAddonForm = (el) => {
-    const args = el.dataset;
+const openInstallAddonForm = (pluginRegionNode, args) => {
 
     const modalForm = new ModalForm({
         modalConfig: {
@@ -62,21 +111,26 @@ const openInstallAddonForm = (el) => {
     });
 
     // Show a toast notification when the form is submitted.
-    // modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, event => {
-    //     if (event.detail.result) {
-    //         getString('template_saved', 'feedback').then(addToast).catch();
-    //     } else {
-    //         getString('saving_failed', 'feedback').then(string => {
-    //             return Notification.addNotification({
-    //                 type: 'error',
-    //                 message: string
-    //             });
-    //         }).catch();
-    //     }
-    // });
-
-    // After submitting reresh the page.
-    // installAddonForm.addEventListener(installAddonForm.events.FORM_SUBMITTED, () => location.reload());
+    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, event => {
+        if (event.detail.success) {
+            addToast(event.detail.output);
+            pluginRegionNode.querySelector(SELECTORS.ADDON_CLI_BUTTON)?.remove();
+            pluginRegionNode.querySelector(SELECTORS.ADDON_INSTALL_BUTTON)?.remove();
+            pluginRegionNode.querySelector(SELECTORS.ADDON_CLI_REGION)?.remove();
+            pluginRegionNode.querySelectorAll(SELECTORS.ADDON_VERSION_RADIO).forEach(el => {
+                if (el.value !== args.source) {
+                    el.closest('label')?.classList.add('dimmed_text');
+                }
+                el.remove();
+            });
+        } else {
+            return Notification.alert(
+                getString('error', 'moodle'),
+                event.detail.output
+            );
+        }
+        return event.detail.success;
+    });
 
     modalForm.show();
 };
