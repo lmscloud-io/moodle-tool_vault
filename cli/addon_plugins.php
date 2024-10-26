@@ -68,7 +68,7 @@ if ($backupkey !== null) {
 
     // Make sure we downloaded the dbstructure and codebase.
     /** @var plugins_restore $model */
-    $model = plugins_restore::get_last_check_for_backup($backupkey, constants::RESTORE_PRECHECK_MAXAGE);
+    $model = plugins_restore::get_last_check_for_parent(['backupkey' => $backupkey], constants::RESTORE_PRECHECK_MAXAGE);
     $precheckexample = "Example (without passphrase):\n" .
             "    sudo -u www-data php admin/tool/vault/cli/site_restore.php --backupkey={$backupkey} --dryrun";
     if (!$model) {
@@ -110,12 +110,14 @@ if ($backupkey !== null) {
             } else {
                 $clihelper->cli_writeln($model->prepare_codeincluded_version_description($pluginname, $info, false));
                 flush();
-                $installedcount += (int)plugincode::install_addon_from_backup($pathtozip, $pluginname, (bool)$precheckonly);
+                $installedcount += (int)plugincode::install_addon_from_backup($model, $pluginname, (bool)$precheckonly);
             }
         } else {
             $clihelper->cli_writeln('ERROR. Plugin not found in the backup.');
         }
     }
+
+    @unlink($pathtozip);
 
 } else {
 

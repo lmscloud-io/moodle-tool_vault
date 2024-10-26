@@ -23,6 +23,12 @@
  */
 
 use tool_vault\api;
+use tool_vault\constants;
+use tool_vault\local\checks\check_base;
+use tool_vault\local\checks\plugins_restore;
+use tool_vault\local\helpers\plugincode;
+use tool_vault\local\models\dryrun_model;
+use tool_vault\local\models\restore_model;
 use tool_vault\output\start_backup_popup;
 
 /**
@@ -72,4 +78,39 @@ function tool_vault_output_fragment_start_backup($args): string {
     $result = api::precheck_backup_allowed();
     $data = (new start_backup_popup($result))->export_for_template($OUTPUT);
     return $OUTPUT->render_from_template('tool_vault/start_backup_popup', $data);
+}
+
+/**
+ * Serves a file
+ *
+ * @param mixed $course
+ * @param mixed $cm
+ * @param context $context
+ * @param string $filearea
+ * @param array $args
+ * @param bool $forcedownload
+ * @param array $sendfileoptions
+ */
+function tool_vault_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, $sendfileoptions) {
+    $itemid = clean_param(array_shift($args), PARAM_INT);
+    $filename = array_pop($args); // The last item in the $args array.
+    $filepath = '/' . ($args ? implode('/', $args) . '/' : '');
+
+    if ($filearea === constants::FILENAME_PLUGINSCODE
+            && $itemid
+            && $filepath === '/'
+            && $context->id == context_system::instance()->id) {
+        require_capability('moodle/site:config', $context);
+        $pluginname = basename($filename, '.zip');
+
+        /** @var plugins_restore $model */
+        $model = plugins_restore::get_last_check_for_parent(['id' => $itemid], constants::RESTORE_PRECHECK_MAXAGE);
+
+        if ($model && $model->is_plugin_code_included($pluginname) &&
+                ($filepath = plugincode::create_plugin_zip_from_backup($model, $pluginname))) {
+            send_temp_file($filepath, basename($filepath));
+        }
+    }
+
+    send_file_not_found();
 }

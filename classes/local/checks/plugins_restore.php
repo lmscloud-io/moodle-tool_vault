@@ -497,9 +497,12 @@ class plugins_restore extends check_base_restore {
         global $CFG;
         $s = $this->prepare_codeincluded_version_description($pluginname, $minfo);
 
+        $downloadurl = moodle_url::make_pluginfile_url(\context_system::instance()->id,
+            'tool_vault', constants::FILENAME_PLUGINSCODE, $this->model->parentid, '/', "{$pluginname}.zip", true);
         return [
             'description' => $s, // TODO more about supported Moodle versions.
-            // TODO downloadurl, installparams.
+            'downloadurl' => $downloadurl,
+            // TODO installparams.
         ];
     }
 
