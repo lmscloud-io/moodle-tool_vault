@@ -16,7 +16,7 @@
 
 namespace tool_vault\local\helpers;
 
-use core\update\code_manager;
+use tool_vault\local\checks\plugins_restore;
 
 /**
  * Class plugincode
@@ -317,46 +317,79 @@ class plugincode {
     }
 
     /**
+     * Extracts all the files related to a specified plugin from the pluginscode.zip included in a backup
+     *
+     * @param \tool_vault\local\checks\plugins_restore $model
+     * @param string $pluginname
+     * @return array [$tempdir, $pluginparentdir, $pluginfiles] - temp dir that needs to be removed in the end,
+     *    path to extracted folder that is a parent for this plugin (i.e. for mod/plugin it will be 'mod')
+     *    and list of filepaths relative to this dir [$filename => $status]
+     */
+    protected static function extract_plugin_files_from_backup(plugins_restore $model, string $pluginname): array {
+        $modelfiles = $model->get_pluginscode_stored_files();
+        if (empty($modelfiles)) {
+            return [null, null, []];
+        }
+
+        $fp = get_file_packer('application/zip');
+        $pluginpathrel = self::guess_plugin_path_relative($pluginname);
+
+        // Make a list of files from the zip that are relevant only to this plugin. Find model file that contains those files.
+        $pluginfiles = [];
+        $modelfile = null;
+        for ($i = 0; $i < count($modelfiles); $i++) {
+            foreach ($modelfiles[$i]->list_files($fp) as $file) {
+                if (strpos($file->pathname, $pluginpathrel . '/') === 0) {
+                    $pluginfiles[] = $file->pathname;
+                    $modelfile = $modelfiles[$i];
+                }
+            }
+        }
+        if (!$pluginfiles) {
+            return [null, null, []];
+        }
+
+        // Extract only files that are related to this plugin.
+        $zipfile = $modelfile->copy_content_to_temp();
+        $tmp = make_request_directory();
+        $extractedfiles = $fp->extract_to_pathname($zipfile, $tmp, $pluginfiles);
+        unlink($zipfile);
+        if (!$extractedfiles) {
+            remove_dir($tmp);
+            return [null, null, []];
+        }
+
+        // Prepare list of extracted files relative to the plugin parent directory (this is what we need for both the
+        // validator and for archiving the plugin). Also add missing records for the folders.
+        $pluginparentdir = $tmp . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, dirname($pluginpathrel));
+        $files = [];
+        $offset = strlen(dirname($pluginpathrel)) + 1;
+        foreach ($extractedfiles as $filename => $status) {
+            $newname = substr($filename, $offset);
+            $files[$newname] = $status;
+            for ($d = dirname($newname); strpos($d, '/') !== false; $d = dirname($d)) {
+                $files["$d/"] = true;
+            }
+        }
+        ksort($files, SORT_STRING);
+        return [$tmp, $pluginparentdir, $files];
+    }
+
+    /**
      * Install a plugin from a pluginscode archive in a backup
      *
-     * @param string $zipfile
+     * @param plugins_restore $model
      * @param string $pluginname
      * @param bool $dryrun
      * @return bool whether plugin was installed (or can be installed in case of dryrun)
      */
-    public static function install_addon_from_backup(string $zipfile, string $pluginname, bool $dryrun = false): bool {
-        $pluginpathrel = self::guess_plugin_path_relative($pluginname);
+    public static function install_addon_from_backup(plugins_restore $model, string $pluginname, bool $dryrun = false): bool {
+        [$tmp, $pseudodir, $pseudofiles] = self::extract_plugin_files_from_backup($model, $pluginname);
 
-        // Make a list of files from the zip that are relevant only to this plugin.
-        $fp = get_file_packer('application/zip');
-        $pluginfiles = [];
-        foreach ($fp->list_files($zipfile) as $file) {
-            if (strpos($file->pathname, $pluginpathrel . '/') === 0) {
-                $pluginfiles[] = $file->pathname;
-            }
-        }
-        if (!$pluginfiles) {
+        if (!$pseudofiles) {
             mtrace("ERROR. Code not found for plugin $pluginname");
             return false;
         }
-
-        // Extract only files that are related to this plugin.
-        $tmp = make_request_directory();
-        $files = $fp->extract_to_pathname($zipfile, $tmp, $pluginfiles);
-
-        // For validator we need a path that is one level above the plugin directory.
-        $pseudodir = $tmp . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, dirname($pluginpathrel));
-        // Create a list of files as if we extracted to the $pseudodir. Also add missing folder paths.
-        $pseudofiles = [];
-        $offset = strlen(dirname($pluginpathrel)) + 1;
-        foreach ($files as $filename => $status) {
-            $newname = substr($filename, $offset);
-            $pseudofiles[$newname] = $status;
-            for ($d = dirname($newname); strpos($d, '/') !== false; $d = dirname($d)) {
-                $pseudofiles["$d/"] = true;
-            }
-        }
-        ksort($pseudofiles, SORT_STRING);
 
         $rv = self::validate_and_install_addon_files($pseudodir, $pseudofiles, $pluginname, $dryrun);
         remove_dir($tmp);
@@ -392,5 +425,33 @@ class plugincode {
             mtrace("Plugin $component with version $version can be installed into $pluginpathrel/.");
         }
         return true;
+    }
+
+    /**
+     * Creates a zip file with plugin files from a pluginscode.zip in a backup
+     *
+     * @param \tool_vault\local\checks\plugins_restore $model
+     * @param string $pluginname
+     * @return string|null
+     */
+    public static function create_plugin_zip_from_backup(plugins_restore $model, string $pluginname): ?string {
+        [$tmp, $plugindir, $files] = self::extract_plugin_files_from_backup($model, $pluginname);
+        if (!$files) {
+            return null;
+        }
+
+        $archivefile = make_temp_directory('plugin-'.$pluginname) . DIRECTORY_SEPARATOR . $pluginname . '.zip';
+        $ziparchive = new \zip_archive();
+        if (!$ziparchive->open($archivefile)) {
+            return null;
+        }
+        foreach ($files as $filename => $status) {
+            $ziparchive->add_file_from_pathname($filename, $plugindir . DIRECTORY_SEPARATOR . $filename);
+        }
+        if (!$ziparchive->close()) {
+            $archivefile = null;
+        }
+        remove_dir($tmp);
+        return $archivefile;
     }
 }

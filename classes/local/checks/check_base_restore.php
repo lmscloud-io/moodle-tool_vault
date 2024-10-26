@@ -83,14 +83,14 @@ abstract class check_base_restore extends check_base {
     /**
      * Get last check of this type for the specified backup
      *
-     * @param string $backupkey
+     * @param array $parentselect - select query for the parent, i.e. ['backupkey' => $backupkey] or ['id' => $id]
      * @param int $maxage if >0, max number of seconds since the operation finished
      * @return check_base_restore|null
      */
-    public static function get_last_check_for_backup(string $backupkey, int $maxage = 0): ?self {
+    public static function get_last_check_for_parent(array $parentselect, int $maxage = 0): ?self {
         $parent = \tool_vault\local\models\operation_model::get_last_of(
             [\tool_vault\local\models\restore_model::class, \tool_vault\local\models\dryrun_model::class],
-            ['backupkey' => $backupkey]);
+            $parentselect);
         if (!$parent || !$parent->get_finished_time() || ($maxage && $parent->get_finished_time() < time() - $maxage)) {
             return null;
         }
