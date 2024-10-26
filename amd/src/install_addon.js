@@ -24,7 +24,6 @@
 import ModalForm from 'core_form/modalform';
 import {SELECTORS} from './selectors';
 import {get_string as getString} from 'core/str';
-import {add as addToast} from 'core/toast';
 import Notification from 'core/notification';
 
 let initialised = false;
@@ -41,7 +40,10 @@ export const init = () => {
 
     document.querySelectorAll(SELECTORS.ADDON_PLUGIN_REGION).forEach(pluginRegionNode => {
         pluginRegionNode.querySelectorAll(SELECTORS.ADDON_VERSION_RADIO).forEach(el => {
-            el.addEventListener('change', () => updateCliInstructions(pluginRegionNode, el));
+            el.addEventListener('change', () => {
+                updateCliInstructions(pluginRegionNode, el);
+                updateCliInstructionsBulk();
+            });
         });
         const initialRadio = pluginRegionNode.querySelector(SELECTORS.ADDON_VERSION_RADIO + ':checked');
         updateCliInstructions(pluginRegionNode, initialRadio);
@@ -49,21 +51,23 @@ export const init = () => {
         const cliButton = pluginRegionNode.querySelector(SELECTORS.ADDON_CLI_BUTTON);
         const installButton = pluginRegionNode.dataset.writable ?
             pluginRegionNode.querySelector(SELECTORS.ADDON_INSTALL_BUTTON) : null;
-        const pluginname = pluginRegionNode.dataset.pluginname;
 
         installButton?.addEventListener('click', e => {
             e.preventDefault();
-            window.console.log('Add-on install button pressed');
-            const source = pluginRegionNode.querySelector(SELECTORS.ADDON_VERSION_RADIO + ':checked')?.value;
-            openInstallAddonForm(pluginRegionNode, {pluginname, source});
+            if (pluginRegionNode.dataset.isbulk) {
+                openInstallAddonForm(pluginRegionNode.dataset.pluginnames.split(','));
+            } else {
+                openInstallAddonForm([pluginRegionNode.dataset.pluginname]);
+            }
         });
 
         cliButton?.addEventListener('click', e => {
             e.preventDefault();
-            window.console.log('Add-on cli button pressed');
             pluginRegionNode.dataset.cliexpanded = `${pluginRegionNode.dataset.cliexpanded}` === "1" ? "0" : "1";
         });
     });
+
+    updateCliInstructionsBulk();
 };
 
 /**
@@ -83,53 +87,106 @@ const updateCliInstructions = (pluginRegionNode, el) => {
     }
     const source = `${el.value}`;
     const pluginname = pluginRegionNode.dataset.pluginname + el.dataset.exactversion;
+    let commandName = ' --name=' + pluginname;
+    if (pluginRegionNode.dataset.versionlocal) {
+        commandName += ' --overwrite';
+    }
     if (source === '') {
         cli.innerHTML = '';
     } else if (source.match(/^backupkey\//)) {
         cli.innerHTML = '<pre>' + CLICOMMAND +
-            ' --backupkey=' + source.substring(10) + ' --name=' + pluginname + '</pre>';
+            ' --backupkey=' + source.substring(10) + commandName + '</pre>';
     } else {
-        cli.innerHTML = '<pre>' + CLICOMMAND + ' --name=' + pluginname + '</pre>';
+        cli.innerHTML = '<pre>' + CLICOMMAND + commandName + '</pre>';
     }
 };
+
+const updateCliInstructionsBulk = () => {
+    document.querySelectorAll(SELECTORS.ADDON_PLUGIN_REGION + '[data-isbulk="1"]').forEach(bulkRegion => {
+        const cli = bulkRegion.querySelector(SELECTORS.ADDON_CLI_REGION);
+        if (!cli) {
+            return;
+        }
+        const commands = {};
+        const pluginnames = bulkRegion.dataset.pluginnames.split(',');
+        for (let pluginname of pluginnames) {
+            const pluginRegion = getPluginRegion(pluginname);
+            const el = pluginRegion.querySelector(SELECTORS.ADDON_VERSION_RADIO + ':checked');
+            let k = 'moodleorg';
+            let prefix = CLICOMMAND;
+            if (!el || `${el?.value}` === '') {
+                continue;
+            } else if (el?.value.match(/^backupkey\//)) {
+                k = el.value.substring(10);
+                prefix += ' --backupkey=' + el.value.substring(10);
+            }
+            commands[k] = ((k in commands) ? `${commands[k]},` : `${prefix} --name=`) + pluginname + el.dataset.exactversion;
+        }
+        if (Object.keys(commands).length) {
+            cli.innerHTML = '<pre>' + Object.values(commands).join("\n") + '</pre>';
+        } else {
+            cli.innerHTML = '';
+        }
+    });
+};
+
+const getPluginRegion = (pluginname) =>
+    document.querySelector(SELECTORS.ADDON_PLUGIN_REGION + `[data-pluginname="${pluginname}"]`);
 
 /**
  * Open form to enter API key
  *
- * @param {Node} pluginRegionNode
- * @param {Object} args
+ * @param {Array} pluginnames
  */
-const openInstallAddonForm = (pluginRegionNode, args) => {
+const openInstallAddonForm = (pluginnames) => {
+
+    const args = [];
+    const sources = {};
+    for (let pluginname of pluginnames) {
+        const pluginRegion = getPluginRegion(pluginname);
+        if (pluginRegion?.dataset.writable) {
+            const source = pluginRegion.querySelector(SELECTORS.ADDON_VERSION_RADIO + ':checked')?.value;
+            if (`${source}` !== '') {
+                args.push({pluginname, source});
+                sources[pluginname] = source;
+            }
+        }
+    }
+
+    if (!args.length) {
+        return;
+    }
 
     const modalForm = new ModalForm({
         modalConfig: {
-            title: 'Install add-on plugin',
+            title: getString('addoninstalldialoguetitle', 'tool_vault'),
         },
         formClass: '\\tool_vault\\form\\install_plugin_form',
-        args,
+        args: {plugins: JSON.stringify(args)},
         saveButtonText: getString('continue', 'moodle')
     });
 
     // Show a toast notification when the form is submitted.
     modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, event => {
-        if (event.detail.success) {
-            addToast(event.detail.output);
+        for (let pluginname of event.detail.installed) {
+            const pluginRegionNode = getPluginRegion(pluginname);
             pluginRegionNode.querySelector(SELECTORS.ADDON_CLI_BUTTON)?.remove();
             pluginRegionNode.querySelector(SELECTORS.ADDON_INSTALL_BUTTON)?.remove();
             pluginRegionNode.querySelector(SELECTORS.ADDON_CLI_REGION)?.remove();
             pluginRegionNode.querySelectorAll(SELECTORS.ADDON_VERSION_RADIO).forEach(el => {
-                if (el.value !== args.source) {
+                if (el.value !== sources[pluginname]) {
                     el.closest('label')?.classList.add('dimmed_text');
                 }
                 el.remove();
             });
-        } else {
-            return Notification.alert(
-                getString('error', 'moodle'),
-                event.detail.output
-            );
         }
-        return event.detail.success;
+
+        updateCliInstructionsBulk();
+
+        return Notification.alert(
+            getString('addoninstalldialoguetitle', 'tool_vault'),
+            event.detail.output
+        );
     });
 
     modalForm.show();

@@ -25,6 +25,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['addoncliinstructions'] = 'CLI instructions';
+$string['addoninstall'] = 'Install';
+$string['addoninstalldialoguetitle'] = 'Install add-on plugins';
 $string['addoninstallskip'] = 'Skip';
 $string['addonplugins'] = 'Add-on plugins';
 $string['addonplugins_autoupgrade'] = 'Moodle upgrade process will be performed automatically during restore. <a href="{$a}">Change</a>.';
@@ -52,6 +55,7 @@ $string['addonplugins_willrequireupgrade_desc'] = "The following plugins have a 
 $string['addonplugins_withhigherversion'] = 'Plugins that have a higher code version compared to what exists in the backup';
 $string['addonplugins_withlowerversion'] = 'Plugins that have a lower code version compared to what exists in the backup';
 $string['addonplugins_withlowerversion_desc'] = "The following plugins have a lower version on this site than in the backup. You must upgrade the code for these plugins before restoring from this backup.";
+$string['addonwithallplugins'] = 'With all of the above plugins:';
 $string['apikey'] = 'API key';
 $string['backup'] = 'Backup';
 $string['backupdescription'] = 'Backup description';
