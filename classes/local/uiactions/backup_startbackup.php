@@ -41,7 +41,7 @@ class backup_startbackup extends base {
             'description' => optional_param('description', null, PARAM_NOTAGS),
             'bucket' => optional_param('bucket', '', PARAM_TEXT),
             'expiredays' => optional_param('expiredays', 0, PARAM_INT),
-            'backupplugincode' => get_config('backupplugincode', 'tool_vault') >= 0 ?
+            'backupplugincode' => api::allow_backup_plugincode() >= 0 ?
                 optional_param('backupplugincode', 0, PARAM_BOOL) : 0,
         ]);
         redirect(ui::progressurl(['accesskey' => $backup->get_model()->accesskey]));

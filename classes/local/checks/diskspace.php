@@ -69,7 +69,7 @@ class diskspace extends check_base {
         $dbtotalsize = array_sum($this->tablesizes);
         $dbmaxsize = max($this->tablesizes);
         [$datarootsize, $maxdatarootfilesize, $datarootunreadable] = $this->get_dataroot_size();
-        $includecodesize = (!$this->parent && get_config('backupplugincode', 'tool_vault') >= 0 ) ||
+        $includecodesize = (!$this->parent && api::allow_backup_plugincode() >= 0 ) ||
             ($this->parent && !empty($this->parent->get_details()['backupplugincode']));
         $codesize = $includecodesize ? plugincode::get_total_addon_size() : null;
 

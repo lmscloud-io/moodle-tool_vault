@@ -178,6 +178,15 @@ class api {
     }
 
     /**
+     * Allow backup plugins code
+     *
+     * @return int -1 never allow; 0 or 1 - display checkbox in backup form not checked/checked by default
+     */
+    public static function allow_backup_plugincode(): int {
+        return (int)(get_config('tool_vault', 'backupplugincode') ?? -1);
+    }
+
+    /**
      * Perform a call to vault API
      *
      * @param string $endpoint

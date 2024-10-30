@@ -88,7 +88,7 @@ class start_backup_popup implements \templatable {
         $data['showupgrademessage'] = empty($result['canchangeexpiration']) || $limit > 0;
         $data['vaulturl'] = api::get_frontend_url();
 
-        $backupplugincode = get_config('tool_vault', 'backupplugincode');
+        $backupplugincode = api::allow_backup_plugincode();
         if ($backupplugincode >= 0) {
             $data['allowbackupplugincode'] = 1;
             $data['backupplugincode'] = (bool)$backupplugincode;
