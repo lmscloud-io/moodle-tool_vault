@@ -50,8 +50,6 @@ class cli_helper {
     const SCRIPT_BACKUP = 'backup';
     /** @var string */
     const SCRIPT_LIST = 'list';
-    /** @var string */
-    const SCRIPT_ADDONS = 'addons';
 
     /** @var string script name, one of the SCRIPT* constants above */
     protected $script;
@@ -90,30 +88,6 @@ class cli_helper {
     }
 
     /**
-     * Specific options for the addon_plugins script
-     *
-     * @return array
-     */
-    protected function options_definitions_addons(): array {
-        return [
-            'name' => [
-                'hasvalue' => 'PLUGINNAME',
-                'description' => 'Name of the plugin or comma-separated names of plugins. '.
-                    'For specific versions use syntax PLUGINNAME@VERSION where VERSION is a 10-digit plugin version number',
-                'default' => null,
-                'validation' => function($plugins) {
-                    // TODO.
-                    return true;
-                },
-            ],
-            'overwrite' => [
-                'hasvalue' => false,
-                'description' => 'Overwrite the code of existing plugins (only if the version in the new code is higher)',
-            ],
-        ];
-    }
-
-    /**
      * Options used in this CLI script
      *
      * @return array
@@ -128,10 +102,7 @@ class cli_helper {
                 'alias' => 'h',
             ],
         ];
-        if ($this->script === self::SCRIPT_ADDONS) {
-            $options = array_merge($options, $this->options_definitions_addons());
-        }
-        if ($this->script === self::SCRIPT_RESTORE || $this->script === self::SCRIPT_ADDONS) {
+        if ($this->script === self::SCRIPT_RESTORE) {
             $options += [
                 'backupkey' => [
                     'hasvalue' => 'BACKUPKEY',
@@ -177,14 +148,11 @@ class cli_helper {
             ];
         }
 
-        if ($this->script === self::SCRIPT_BACKUP || $this->script === self::SCRIPT_RESTORE
-                || $this->script === self::SCRIPT_ADDONS) {
+        if ($this->script === self::SCRIPT_BACKUP || $this->script === self::SCRIPT_RESTORE) {
             if ($this->script === self::SCRIPT_BACKUP) {
                 $dryrundescription = 'Check only, do not backup';
             } else if ($this->script === self::SCRIPT_RESTORE) {
                 $dryrundescription = 'Check only, do not restore';
-            } else if ($this->script === self::SCRIPT_ADDONS) {
-                $dryrundescription = 'Display status only, do not add code';
             }
             $options += [
                 'passphrase' => [
@@ -236,7 +204,6 @@ class cli_helper {
             self::SCRIPT_BACKUP => 'Command line site backup',
             self::SCRIPT_LIST => 'Command line remote backup list',
             self::SCRIPT_RESTORE => 'Command line site restore',
-            self::SCRIPT_ADDONS => 'Add code for add-on plugins to the Moodle codebase',
         ];
         $this->cli_writeln($titles[$this->script]);
         $this->cli_writeln('');
@@ -249,13 +216,10 @@ class cli_helper {
 
         $this->cli_writeln('');
         $this->cli_writeln('Example:');
-        $needswwwuser = $this->script !== self::SCRIPT_ADDONS;
+        $needswwwuser = true;
         $params = '';
         if ($this->script === self::SCRIPT_RESTORE) {
             $params = ' --backupkey=BACKUPKEY';
-        }
-        if ($this->script === self::SCRIPT_ADDONS) {
-            $params = ' --name=local_plugin';
         }
         $this->cli_writeln('$ ' . ($needswwwuser ? 'sudo -u www-data ' : '') .
             '/usr/bin/php admin/tool/vault/cli/'.$this->scriptfilename.$params);
