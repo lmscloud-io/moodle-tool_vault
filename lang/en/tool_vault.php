@@ -25,37 +25,51 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['addoncliinstructions'] = 'CLI instructions';
-$string['addoninstall'] = 'Install';
-$string['addoninstalldialoguetitle'] = 'Install add-on plugins';
-$string['addoninstallskip'] = 'Skip';
 $string['addonplugins'] = 'Add-on plugins';
 $string['addonplugins_autoupgrade'] = 'Moodle upgrade process will be performed automatically during restore. <a href="{$a}">Change</a>.';
+$string['addonplugins_cliinstructions'] = 'CLI instructions';
+$string['addonplugins_codewillbeadded'] = 'Code of the plugin {$a->pluginname} will be added to the folder {$a->path}';
+$string['addonplugins_connectionerror'] = 'Error connecting to moodle.org.';
+$string['addonplugins_currentmoodlenotsupported'] = 'Current Moodle version {$a} is not supported!';
 $string['addonplugins_extraplugins'] = 'Extra plugins';
 $string['addonplugins_extraplugins_desc'] = "The following plugins are present on this site but not present in the backup. All data associated with these plugins will be deleted during the restore process. After the restore process is finished you will be prompted to run the Moodle upgrade process that will re-install these plugins.";
 $string['addonplugins_fail'] = 'The backup contains plugins with higher versions than the code on this site. You must upgrade the code for these plugins before restoring from this backup.';
 $string['addonplugins_fail_missing'] = 'Some add-on plugins are present in the backup but not installed on this site. You must either install these plugins or enable the setting "Allow restore with missing plugins".';
 $string['addonplugins_fail_skipped'] = 'Add-on plugins can not be analysed when backup has a higher Moodle branch';
+$string['addonplugins_install'] = 'Install';
+$string['addonplugins_installdialoguetitle'] = 'Install add-on plugins';
+$string['addonplugins_installskip'] = 'Skip';
 $string['addonplugins_missing'] = 'Missing plugins';
 $string['addonplugins_missing_autoremove'] = 'Missing plugins will be automatically removed after restore. <a href="{$a}">Change</a>';
 $string['addonplugins_missing_desc'] = "The following plugins are present in the backup but are not installed on this site. After the restore these plugins will be listed as \"Missing from disk\", you can choose to uninstall them or keep the data until you add the code for the plugins. Until then, you may experience errors, for example, missing scheduled tasks.";
 $string['addonplugins_missing_noautoremove'] = 'You can choose to automatically remove missing plugins after restore in the <a href="{$a}">settings</a>';
 $string['addonplugins_noautoupgrade'] = 'You can choose to automatically run the Moodle upgrade process as part of the restore on the <a href="{$a}">settings page</a>';
 $string['addonplugins_notpresent'] = 'Plugins found on this site but not present in the backup';
+$string['addonplugins_otherheader_missing'] = 'Installation options';
+$string['addonplugins_otherheader_problem'] = 'Upgrade options';
+$string['addonplugins_plugincanbeinstalled'] = 'Plugin {$a->component} with version {$a->version} can be installed into {$a->path}/.';
 $string['addonplugins_pluginsdirectory'] = 'Plugins directory';
 $string['addonplugins_pluginversioninbackup'] = 'Version in the backup';
 $string['addonplugins_pluginversiononsite'] = 'Current version on this site';
+$string['addonplugins_pluginwasinstalled'] = 'Plugin {$a->component} with version {$a->version} was installed into {$a->path}/.';
 $string['addonplugins_restorewithmissing_not_allowed'] = 'Restore with missing plugins is not allowed. <a href="{$a}">Change</a>.';
 $string['addonplugins_subpluginof'] = 'Subplugin of';
 $string['addonplugins_success'] = 'All plugins in the backup have the same version as the plugins on this site';
 $string['addonplugins_success_needsupgrade'] = 'Some plugins will need to be upgraded after restore';
 $string['addonplugins_success_withmissing'] = 'Some plugins are missing but the restore is possible';
+$string['addonplugins_supportunknown'] = 'There is no information whether {$a->currentversion} is supported or not. Backup was made in {$a->backupversion}';
+$string['addonplugins_upgradereminder'] = 'Once you have finished adding code for all necessary plugins you will need to run a Moodle upgrade to install these plugins.';
+$string['addonplugins_versioninfobackup'] = 'Version {$a->version} from backup.';
+$string['addonplugins_versioninfobackupwithsupport'] = 'Version {$a->version} from backup for Moodle {$a->supportedmoodles}.';
+$string['addonplugins_versioninfomoodleorg'] = 'Version {$a->version} from plugins directory{$a->postfix} for Moodle {$a->supportedmoodles}.';
+$string['addonplugins_versionpostfixlatest'] = '(latest)';
+$string['addonplugins_versionpostfixsame'] = '(same as in backup)';
 $string['addonplugins_willrequireupgrade'] = 'Will require upgrade';
 $string['addonplugins_willrequireupgrade_desc'] = "The following plugins have a higher version than in the backup. After the restore process is finished you will be prompted to run the Moodle upgrade process.";
+$string['addonplugins_withallplugins'] = 'With all of the above plugins:';
 $string['addonplugins_withhigherversion'] = 'Plugins that have a higher code version compared to what exists in the backup';
 $string['addonplugins_withlowerversion'] = 'Plugins that have a lower code version compared to what exists in the backup';
 $string['addonplugins_withlowerversion_desc'] = "The following plugins have a lower version on this site than in the backup. You must upgrade the code for these plugins before restoring from this backup.";
-$string['addonwithallplugins'] = 'With all of the above plugins:';
 $string['apikey'] = 'API key';
 $string['backup'] = 'Backup';
 $string['backupdescription'] = 'Backup description';
@@ -194,6 +208,7 @@ $string['operation'] = 'Operation {$a}';
 $string['passphrase'] = 'Passphrase';
 $string['pastbackupslist'] = 'Past backups on this site';
 $string['pastrestoreslist'] = 'Past restores on this site';
+$string['path'] = 'Path';
 $string['pathnotwritable'] = 'Path not writable';
 $string['pathnotwritable_help'] = 'Tool vault either can not write to the codebase or it is prohibited in the settings. You can still install plugins by connecting to the server and running CLI commands in the terminal.';
 $string['performedby'] = 'Performed by';
@@ -243,15 +258,17 @@ Note that this will only exclude data in the plugin's own tables, settings, asso
 $string['settings_backupexcludetables'] = 'Exclude tables';
 $string['settings_backupexcludetables_desc'] = 'Vault will back up all tables that start with the prefix \'{$a->prefix}\' even if they are not listed in xmldb schemas of the core or installed plugins.<br>Here you can list extra tables that should not be backed up. Use an asterisk (\'*\') to exclude all extra tables.<br>You must include the table prefix when excluding tables.';
 $string['settings_backupplugincode'] = 'Backup code of add-on plugins';
-$string['settings_backupplugincode_help'] = "Include the code of the add-on plugins into the backup. It can help with with installing missing or outdated plugins before the restore.<br>
+$string['settings_backupplugincode_allowedno'] = 'Allowed. Default - no';
+$string['settings_backupplugincode_allowedyes'] = 'Allowed. Default - yes';
+$string['settings_backupplugincode_help'] = "Include the code of the add-on plugins into the backup. This can help with installing missing or outdated plugins before the restore.<br>
 Important notes:
 <ul>
-<li>If a plugin code was added using git, no information about git repository or commit history will be included.</li>
-<li>The site where you restore this backup may not allow to write to the codebase and tool_vault may not be able to install these plugins from web interface.</li>
+<li>The site where you restore this backup may not permit Moodle to write to the codebase and tool_vault may not be able to install these plugins from the web interface.</li>
 <li>If you are restoring into a higher version of Moodle, current versions of the plugins may not be compatible with it.</li>
-<li>Neither code modifications to Moodle core nor standard plugins will be included in the backup.</li>
+<li>Modifications to Moodle core or core plugins will not be included in the backup.</li>
 </ul>
 ";
+$string['settings_backupplugincode_notallowed'] = 'Not allowed';
 $string['settings_clionly'] = 'Allow to perform site backup and restore from CLI only';
 $string['settings_clionly_desc'] = 'Checking this will hide the "Vault - Site migration" from the site administration and prevent access to backup and restore. ';
 $string['settings_desc'] = "Vault plugin settings where you can configure what to exclude during backup or preserve during restore.";
@@ -320,4 +337,5 @@ $string['warning_backupdisabledanotherinprogress'] = 'You can not start backup b
 $string['warning_backupdisablednoapikey'] = 'You can not start backup because you do not have API key';
 $string['warning_logsnotavailable'] = 'Not available (backup was performed on a different site)';
 $string['withpassphrase'] = 'Passphrase';
+$string['writable'] = 'Writable';
 $string['youareusingapikey'] = 'You are using API key {$a}';

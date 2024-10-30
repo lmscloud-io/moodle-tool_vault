@@ -159,7 +159,7 @@ const openInstallAddonForm = (pluginnames) => {
 
     const modalForm = new ModalForm({
         modalConfig: {
-            title: getString('addoninstalldialoguetitle', 'tool_vault'),
+            title: getString('addonplugins_installdialoguetitle', 'tool_vault'),
         },
         formClass: '\\tool_vault\\form\\install_plugin_form',
         args: {plugins: JSON.stringify(args)},
@@ -184,7 +184,7 @@ const openInstallAddonForm = (pluginnames) => {
         updateCliInstructionsBulk();
 
         return Notification.alert(
-            getString('addoninstalldialoguetitle', 'tool_vault'),
+            getString('addonplugins_installdialoguetitle', 'tool_vault'),
             event.detail.output
         );
     });

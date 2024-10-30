@@ -380,12 +380,14 @@ class plugins_restore extends check_base_restore {
             string $versionpostfix = '', bool $ashtml = true): string {
         $currentversion = moodle_major_version();
         $warning = '';
-        $s = 'Version '.$minfo['version'].' from plugins directory';
-        $s .= $versionpostfix;
-        $s .= ' for Moodle '.join(', ', $minfo['supportedmoodles']);
-        $s .= '.';
+        $a = [
+            'version' => $minfo['version'],
+            'postfix' => strlen($versionpostfix) ? " $versionpostfix" : '',
+            'supportedmoodles' => join(', ', $minfo['supportedmoodles']),
+        ];
+        $s = get_string('addonplugins_versioninfomoodleorg', 'tool_vault', $a);
         if (!in_array($currentversion, $minfo['supportedmoodles'])) {
-            $warning = 'Current Moodle version '.$currentversion.' is not supported!';
+            $warning = get_string('addonplugins_currentmoodlenotsupported', 'tool_vault', $currentversion);
         }
         return $s . self::format_warning_for_version_description($warning, $ashtml);
     }
@@ -439,22 +441,19 @@ class plugins_restore extends check_base_restore {
         $currentbranch = $CFG->branch;
         $backupbranch = $this->model->get_details()['backupbranch'];
 
-        $s = 'Version '.$minfo['version'].' from backup';
+        $a = ['version' => $minfo['version']];
+        $s = get_string('addonplugins_versioninfobackup', 'tool_vault', $a);
         $warning = '';
         if (!empty($minfo['pluginsupported'])) {
             $supported = array_map([$this, 'major_version_from_branch'], $minfo['pluginsupported']);
-            $s .= ' for Moodle ';
-            $s .= ($supported[0] !== $supported[1]) ? "{$supported[0]} - {$supported[1]}" : $supported[0];
-            $s .= '.';
+            $a['supportedmoodles'] = ($supported[0] !== $supported[1]) ? "{$supported[0]} - {$supported[1]}" : $supported[0];
+            $s = get_string('addonplugins_versioninfobackupwithsupport', 'tool_vault', $a);
             if ((int)$currentbranch > (int)$minfo['pluginsupported'][1]) {
-                $warning = 'Current Moodle version '.$currentversion.' is not supported!';
+                $warning = get_string('addonplugins_currentmoodlenotsupported', 'tool_vault', $currentversion);
             }
         } else if ((int)$currentbranch > (int)$backupbranch) {
-            $s .= '.';
-            $warning = 'There is no information whether '.$currentversion.' is supported or not. Backup was made in '.
-                self::major_version_from_branch($backupbranch);
-        } else {
-            $s .= '.';
+            $a = ['currentversion' => $currentversion, 'backupversion' => self::major_version_from_branch($backupbranch)];
+            $warning = get_string('addonplugins_supportunknown', 'tool_vault', $a);
         }
 
         return $s . self::format_warning_for_version_description($warning, $ashtml);
@@ -473,7 +472,7 @@ class plugins_restore extends check_base_restore {
         } else if ($ashtml) {
             return ' ' . self::badge_warning() . $warning;
         } else {
-            return "\nWARNING: $warning";
+            return "\n".strtoupper(get_string('warning', 'moodle')).": $warning";
         }
     }
 
@@ -492,10 +491,9 @@ class plugins_restore extends check_base_restore {
         $downloadurl = moodle_url::make_pluginfile_url(\context_system::instance()->id,
             'tool_vault', constants::FILENAME_PLUGINSCODE, $this->model->parentid, '/', "{$pluginname}.zip");
         return [
-            'description' => $s, // TODO more about supported Moodle versions.
+            'description' => $s,
             'downloadurl' => $downloadurl,
             'source' => 'backupkey/' . $this->model->get_details()['backupkey'],
-            // TODO installparams.
         ];
     }
 
@@ -519,11 +517,11 @@ class plugins_restore extends check_base_restore {
             $hasboth = !empty($info[2]['latest']) && !empty($info[2]['exact']);
             if (!empty($info[2]['latest']) && empty($info[2]['latest']['error'])) {
                 $rv['versions'][] = $this->prepare_version_option($pluginname, $info[2]['latest'],
-                    $hasboth ? ' (latest)' : '');
+                    $hasboth ? get_string('addonplugins_versionpostfixlatest', 'tool_vault') : '');
             }
             if (!empty($info[2]['exact']) && empty($info[2]['exact']['error'])) {
                 $rv['versions'][] = $this->prepare_version_option($pluginname, $info[2]['exact'],
-                    $hasboth ? ' (same as in backup)' : '') +
+                    $hasboth ? get_string('addonplugins_versionpostfixsame', 'tool_vault') : '') +
                     ['exactversion' => '@' . $info[2]['exact']['version']];
             }
             if (!empty($info[0]['codeincluded'])) {
@@ -534,7 +532,7 @@ class plugins_restore extends check_base_restore {
             } else {
                 $rv['versions'][0]['ischecked'] = 1;
                 $rv['versions'][] = [
-                    'description' => get_string('addoninstallskip', 'tool_vault'),
+                    'description' => get_string('addonplugins_installskip', 'tool_vault'),
                     'source' => '',
                 ];
                 $rv['showbuttons'] = true;
@@ -589,24 +587,21 @@ class plugins_restore extends check_base_restore {
         $r = [];
         if ($p = $this->problem_plugins()) {
             $r['hasproblems'] = true;
-            $r['otherheader'] = 'Upgrade options'; // TODO string.
-            $r['problemplugins'] = $this->prepare_for_template($p, count($p) > 1);
+            $r['problemplugins'] = $this->prepare_for_template($p, count($p) > 1) +
+                ['otherheader' => get_string('addonplugins_otherheader_problem', 'tool_vault')];
         }
         if ($p = $this->extra_plugins(false)) {
             $r['hasextra'] = true;
-            $r['otherheader'] = '';
             $r['extraplugins'] = $this->prepare_for_template($p);
         }
         if ($p = $this->plugins_needing_upgrade(false)) {
             $r['hastobeupgraded'] = true;
-            $r['otherheader'] = '';
             $r['tobeupgraded'] = $this->prepare_for_template($p);
         }
         if ($p = $this->missing_plugins(false)) {
             $r['hasmissing'] = true;
-            $r['otherheader'] = 'Installation options'; // TODO string.
             $r['missingplugins'] = $this->prepare_for_template($p, count($p) > 1) +
-                ['hideversionlocal' => true];
+                ['hideversionlocal' => true, 'otherheader' => get_string('addonplugins_otherheader_missing', 'tool_vault')];
         }
 
         $r['allowrestorewithmissing'] = (int)api::get_setting_checkbox('allowrestorewithmissing');

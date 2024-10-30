@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * TODO describe file addon_plugins
+ * CLI script to add code of add-on plugins either from moodle.org or from a vault backup
  *
  * @package    tool_vault
  * @copyright  Marina Glancy
@@ -57,7 +57,16 @@ $clihelper->cli_writeln('Adding code for the missing add-on plugins.');
 $names = $clihelper->get_cli_option('name');
 if ($names !== null) {
     $names = preg_split('/\s*,\s*/', $names, -1, PREG_SPLIT_NO_EMPTY);
-    // TODO validate each plugin name.
+    // Validate each plugin name.
+    foreach ($names as $name) {
+        $parts = explode('@', $name);
+        if (count($parts) > 2 ||
+                trim($parts[0]) === '' ||
+                (clean_param($parts[0], PARAM_COMPONENT) !== $parts[0]) ||
+                (count($parts) == 2 && !preg_match('/^\d{10}$/', $parts[1]))) {
+            cli_error('ERROR. Plugin name '.$name.' is not valid. Valid examples: "local_myplugin" or "local_myplugin@2024010100".');
+        }
+    }
 }
 
 $backupkey = $clihelper->get_cli_option('backupkey');

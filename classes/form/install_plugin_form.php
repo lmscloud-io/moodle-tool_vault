@@ -83,14 +83,12 @@ class install_plugin_form extends dynamic_form {
         $lines = [];
         foreach ($this->get_plugins() as $plugin) {
             $pluginname = $plugin['pluginname'];
-            $lines[] = '<li>'.'Code of the plugin '.$pluginname.
-            ' will be added to the folder '.plugincode::guess_plugin_path_relative($pluginname).'</li>';
+            $a = ['pluginname' => $pluginname, 'path' => plugincode::guess_plugin_path_relative($pluginname)];
+            $lines[] = '<li>'.get_string('addonplugins_codewillbeadded', 'tool_vault', $a).'</li>';
         }
 
-        // TODO strings.
         $mform->addElement('html', '<ul>'.join('', $lines).'</ul>'.
-            '<p>'.'Once you added code for all necessary plugins you will need to run Moodle upgrade to install these plugins.'.
-            '</p>');
+            '<p>'.get_string('addonplugins_upgradereminder', 'tool_vault').'</p>');
     }
 
     /**

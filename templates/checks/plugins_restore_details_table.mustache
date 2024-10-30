@@ -89,13 +89,13 @@
             <td>
                 <div class="alert alert-warning" role="alert" data-region="tool_vault-plugin-install"
                         data-cliexpanded="0" data-pluginnames="{{pluginnames}}" {{#writable}}data-writable="1"{{/writable}} data-isbulk="1">
-                    <p>{{#str}} addonwithallplugins, tool_vault {{/str}}</p>
+                    <p>{{#str}} addonplugins_withallplugins, tool_vault {{/str}}</p>
                     <div>
                         <button data-action="cli" class="icon-size-2">
                         <span class="cli-expanded-icon">{{#pix}} t/collapsedchevron, core {{/pix}}</span>
                         <span class="cli-collapsed-icon">{{#pix}} t/expandedchevron, core {{/pix}}</span>
-                            {{#str}} addoncliinstructions, tool_vault {{/str}}</button>
-                        <button data-action="install" {{^writable}}disabled{{/writable}}>{{#str}} addoninstall, tool_vault {{/str}}</button>
+                            {{#str}} addonplugins_cliinstructions, tool_vault {{/str}}</button>
+                        <button data-action="install" {{^writable}}disabled{{/writable}}>{{#str}} addonplugins_install, tool_vault {{/str}}</button>
                     </div>
                     <div data-purpose="cli" class="mt-2 p-1 pt-2" style="border: 1px solid gray"></div>
                 </div>

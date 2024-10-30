@@ -19,7 +19,7 @@ namespace tool_vault\local\helpers;
 use tool_vault\local\checks\plugins_restore;
 
 /**
- * Class plugincode
+ * Various methods related to archiving, extracting and validating add-on plugins code
  *
  * @package    tool_vault
  * @copyright  Marina Glancy
@@ -84,7 +84,6 @@ class plugincode {
         if ($path !== false && $path != '' && file_exists($path)) {
             foreach (new \RecursiveIteratorIterator(
                     new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS)) as $object) {
-                // TODO check that $object->getPath() does not contain /.git/ etc. Or find a way to exclude them from iterator.
                 try {
                     $bytestotal += $object->getSize();
                 // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
@@ -149,12 +148,7 @@ class plugincode {
     public static function can_write_to_plugin_dir(string $pluginname): bool {
         $dir = self::guess_plugin_path($pluginname);
         if (file_exists($dir)) {
-            if (!is_writable($dir)) {
-                return false;
-            }
-            // TODO check if we can delete every file and subfolder from this directory.
-            // see lib/classes/plugin_manager.php is_directory_removable() .
-            return true;
+            return (bool)\core_plugin_manager::instance()->is_directory_removable($dir);
         } else {
             return is_writable(dirname($dir));
         }
@@ -184,7 +178,7 @@ class plugincode {
         $response = json_decode($response, true);
 
         if (empty($response['status']) || $response['status'] !== 'OK') {
-            throw new \moodle_exception('Unrecognised response');
+            throw new \moodle_exception(get_string('addonplugins_connectionerror', 'tool_vault'));
         }
 
         return $response ?? [];
@@ -410,19 +404,21 @@ class plugincode {
         try {
             $validator = plugin_validator::validate($tmp, $files, ['component' => $pluginname]);
         } catch (\moodle_exception $e) {
-            mtrace("ERROR. ".$e->getMessage());
+            mtrace(strtoupper(get_string('error', 'moodle')).". ".$e->getMessage());
             return false;
         }
 
         $pluginpath = self::guess_plugin_path($pluginname);
-        $pluginpathrel = self::guess_plugin_path_relative($pluginname);
-        $component = $validator->get_component();
-        $version = $validator->get_version();
+        $a = [
+            'component' => $validator->get_component(),
+            'version' => $validator->get_version(),
+            'path' => self::guess_plugin_path_relative($pluginname),
+        ];
         if (!$dryrun) {
             self::copy_plugin_files($tmp, $pluginpath, $files);
-            mtrace("Plugin $component with version $version was installed into $pluginpathrel/.");
+            mtrace(get_string('addonplugins_pluginwasinstalled', 'tool_vault', $a));
         } else {
-            mtrace("Plugin $component with version $version can be installed into $pluginpathrel/.");
+            mtrace(get_string('addonplugins_plugincanbeinstalled', 'tool_vault', $a));
         }
         return true;
     }
