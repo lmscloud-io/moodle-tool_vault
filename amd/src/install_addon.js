@@ -27,7 +27,7 @@ import {get_string as getString} from 'core/str';
 import Notification from 'core/notification';
 
 let initialised = false;
-const CLICOMMAND = 'php admin/tool/vault/cli/addon_plugins.php';
+const CLICOMMAND = '/usr/bin/php admin/tool/vault/cli/addon_plugins.php';
 
 /**
  * Initialise listeners on the page

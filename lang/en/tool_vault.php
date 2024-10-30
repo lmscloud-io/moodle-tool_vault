@@ -91,6 +91,7 @@ $string['dbmodifications_status_modified'] = "Your database state does not match
 $string['dbmodifications_status_nomodifications'] = 'Site backup can be performed without any database modifications';
 $string['defaultbackupdescription'] = '{$a->site} by {$a->name}';
 $string['diskspacebackup'] = 'Disk space';
+$string['diskspacebackup_codesize'] = 'Total size of add-on plugins code ({$a} plugins)';
 $string['diskspacebackup_countfiles'] = 'Number of files in file storage';
 $string['diskspacebackup_datarootsize'] = 'Required space for dataroot (excluding filedir)';
 $string['diskspacebackup_dbmaxsize'] = 'The largest DB table size (approx)';
@@ -248,12 +249,13 @@ Note that this will only exclude data in the plugin's own tables, settings, asso
 $string['settings_backupexcludetables'] = 'Exclude tables';
 $string['settings_backupexcludetables_desc'] = 'Vault will back up all tables that start with the prefix \'{$a->prefix}\' even if they are not listed in xmldb schemas of the core or installed plugins.<br>Here you can list extra tables that should not be backed up. Use an asterisk (\'*\') to exclude all extra tables.<br>You must include the table prefix when excluding tables.';
 $string['settings_backupplugincode'] = 'Backup code of add-on plugins';
-$string['settings_backupplugincode_desc'] = "Include the code of the add-on plugins into the backup. Important notes:
+$string['settings_backupplugincode_help'] = "Include the code of the add-on plugins into the backup. It can help with with installing missing or outdated plugins before the restore.<br>
+Important notes:
 <ul>
-<li>If a plugin code was added using git, no information about git repository or commit history will be included</li>
-<li>there is no guarantee that the site where you restore this backup will allow to write to the codebase and restore may not be possible</li>
-<li>If you are restoring into a higher version of Moodle, this version of the plugin may not be compatible with it.</li>
-<li>no code modifications to Moodle core or standard plugins will be included in the backup</li>
+<li>If a plugin code was added using git, no information about git repository or commit history will be included.</li>
+<li>The site where you restore this backup may not allow to write to the codebase and tool_vault may not be able to install these plugins from web interface.</li>
+<li>If you are restoring into a higher version of Moodle, current versions of the plugins may not be compatible with it.</li>
+<li>Neither code modifications to Moodle core nor standard plugins will be included in the backup.</li>
 </ul>
 ";
 $string['settings_clionly'] = 'Allow to perform site backup and restore from CLI only';

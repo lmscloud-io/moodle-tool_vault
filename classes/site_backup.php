@@ -86,6 +86,7 @@ class site_backup extends operation_base {
             'expiredays' => $params['expiredays'] ?? '',
             'encryptionkey' => $encryptionkey,
             'encrypted' => (bool)strlen($encryptionkey),
+            'backupplugincode' => (int)(bool)($params['backupplugincode'] ?? 0),
             'fullname' => $USER ? fullname($USER) : '',
             'email' => $USER->email ?? '',
         ])->save();
@@ -103,7 +104,7 @@ class site_backup extends operation_base {
         $precheck = $this->prechecks[diskspace::get_name()] ?? null;
         $excludedplugins = siteinfo::get_excluded_plugins_backup();
         $pluginlist = array_diff_key(siteinfo::get_plugins_list_full(), array_fill_keys($excludedplugins, true));
-        if (api::get_setting_checkbox('backupplugincode')) {
+        if (!empty($this->model->get_details()['backupplugincode'])) {
             $paths = plugincode::get_addon_directories_list();
             foreach ($pluginlist as $pluginname => &$data) {
                 if (!empty($data['path']) && in_array($data['path'], $paths)) {
@@ -144,6 +145,7 @@ class site_backup extends operation_base {
             'encrypted' => !empty($model->get_details()['encrypted']),
             'bucket' => $model->get_details()['bucket'] ?? '',
             'expiredays' => (int)($model->get_details()['expiredays'] ?? 0),
+            'backupplugincode' => (int)($model->get_details()['backupplugincode'] ?? 0),
         ];
         $backupkey = api::request_new_backup_key($params);
         $model
@@ -422,7 +424,7 @@ class site_backup extends operation_base {
      */
     public function export_plugin_code(): void {
         global $CFG;
-        if (!api::get_setting_checkbox('backupplugincode')) {
+        if (empty($this->model->get_details()['backupplugincode'])) {
             return;
         }
         $this->add_to_log('Starting add-on code backup');

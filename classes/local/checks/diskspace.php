@@ -69,7 +69,9 @@ class diskspace extends check_base {
         $dbtotalsize = array_sum($this->tablesizes);
         $dbmaxsize = max($this->tablesizes);
         [$datarootsize, $maxdatarootfilesize, $datarootunreadable] = $this->get_dataroot_size();
-        $codesize = api::get_setting_checkbox('backupplugincode') ? plugincode::get_total_addon_size() : null;
+        $includecodesize = (!$this->parent && get_config('backupplugincode', 'tool_vault') >= 0 ) ||
+            ($this->parent && !empty($this->parent->get_details()['backupplugincode']));
+        $codesize = $includecodesize ? plugincode::get_total_addon_size() : null;
 
         // This is a rough estimate!
         // There should be enough space to archive the largest file. In the worst case we already have almost
@@ -202,8 +204,8 @@ class diskspace extends check_base {
             '<li>' . get_string('diskspacebackup_datarootsize', 'tool_vault') . ': ' .
                 display_size($details['datarootsize']).'</li>'.
             (isset($details['codesize']) ?
-                '<li>Code ('.$details['pluginscount'].' plugins): '.
-                    display_size($details['codesize']).'</li>' :
+                '<li>' . get_string('diskspacebackup_codesize', 'tool_vault', $details['pluginscount']) . ': '.
+                    display_size($details['codesize']) . '</li>' :
                 '').
             '<li>' . get_string('diskspacebackup_maxdatarootfilesize', 'tool_vault') . ': ' .
                 display_size($details['maxdatarootfilesize'] ?? 0).'</li>'.
