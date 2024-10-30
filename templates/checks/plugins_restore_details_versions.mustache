@@ -49,22 +49,22 @@
     </div>
     {{/versions}}
 
-    <div style="width:100%">
-        <div class="row">
-            <div class="col-sm">
+    <div>
+        <div>
+            <div >
                 {{#showbuttons}}
                     <button data-action="cli" class="icon-size-2">
                     <span class="cli-expanded-icon">{{#pix}} t/collapsedchevron, core {{/pix}}</span>
                     <span class="cli-collapsed-icon">{{#pix}} t/expandedchevron, core {{/pix}}</span>
-                        {{#str}} addoncliinstructions, tool_vault {{/str}}</button>
-                    <button data-action="install" {{^writable}}disabled{{/writable}}>{{#str}} addoninstall, tool_vault {{/str}}</button>
+                        {{#str}} addonplugins_cliinstructions, tool_vault {{/str}}</button>
+                    <button data-action="install" {{^writable}}disabled{{/writable}}>{{#str}} addonplugins_install, tool_vault {{/str}}</button>
                 {{/showbuttons}}
             </div>
-            <div class="col-sm text-right">
-                <span>Path: {{pluginpath}}</span>
+            <div >
+                <span>{{#str}} path, tool_vault {{/str}}: {{pluginpath}}</span>
                 {{#showbuttons}}
                 &#183;
-                <span>Writable:
+                <span>{{#str}} writable, tool_vault {{/str}}:
                     {{#writable}}{{#str}} yes, moodle {{/str}}
                         {{#pix}}spacer, moodle{{/pix}}{{/writable}}
                     {{^writable}}{{#str}} no, moodle {{/str}}

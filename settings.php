@@ -100,16 +100,15 @@ if ($hassiteconfig) {
         2
     ));
 
-    // TODO strings.
     $plugincodeoptions = [
-        -1 => 'Not allowed',
-        0 => 'Allowed. Default - no',
-        1 => 'Allowed. Default - yes',
+        -1 => new lang_string('settings_backupplugincode_notallowed', 'tool_vault'),
+        0 => new lang_string('settings_backupplugincode_allowedno', 'tool_vault'),
+        1 => new lang_string('settings_backupplugincode_allowedyes', 'tool_vault'),
     ];
     $settings->add(new admin_setting_configselect(
         'tool_vault/backupplugincode',
-        get_string('settings_backupplugincode', 'tool_vault'),
-        get_string('settings_backupplugincode_help', 'tool_vault'),
+        new lang_string('settings_backupplugincode', 'tool_vault'),
+        new lang_string('settings_backupplugincode_help', 'tool_vault'),
         0,
         $plugincodeoptions
     ));
