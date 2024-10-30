@@ -33,6 +33,4 @@ export const SELECTORS = {
     ADDON_PLUGIN_REGION: ADDON_PLUGIN_REGION,
     ADDON_VERSION_RADIO: 'input[type="radio"]',
     ADDON_INSTALL_BUTTON: '[data-action="install"]',
-    ADDON_CLI_BUTTON: '[data-action="cli"]',
-    ADDON_CLI_REGION: '[data-purpose="cli"]',
 };

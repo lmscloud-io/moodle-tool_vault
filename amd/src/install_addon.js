@@ -27,7 +27,6 @@ import {get_string as getString} from 'core/str';
 import Notification from 'core/notification';
 
 let initialised = false;
-const CLICOMMAND = '/usr/bin/php admin/tool/vault/cli/addon_plugins.php';
 
 /**
  * Initialise listeners on the page
@@ -39,16 +38,7 @@ export const init = () => {
     initialised = true;
 
     document.querySelectorAll(SELECTORS.ADDON_PLUGIN_REGION).forEach(pluginRegionNode => {
-        pluginRegionNode.querySelectorAll(SELECTORS.ADDON_VERSION_RADIO).forEach(el => {
-            el.addEventListener('change', () => {
-                updateCliInstructions(pluginRegionNode, el);
-                updateCliInstructionsBulk();
-            });
-        });
-        const initialRadio = pluginRegionNode.querySelector(SELECTORS.ADDON_VERSION_RADIO + ':checked');
-        updateCliInstructions(pluginRegionNode, initialRadio);
 
-        const cliButton = pluginRegionNode.querySelector(SELECTORS.ADDON_CLI_BUTTON);
         const installButton = pluginRegionNode.dataset.writable ?
             pluginRegionNode.querySelector(SELECTORS.ADDON_INSTALL_BUTTON) : null;
 
@@ -61,73 +51,8 @@ export const init = () => {
             }
         });
 
-        cliButton?.addEventListener('click', e => {
-            e.preventDefault();
-            pluginRegionNode.dataset.cliexpanded = `${pluginRegionNode.dataset.cliexpanded}` === "1" ? "0" : "1";
-        });
     });
 
-    updateCliInstructionsBulk();
-};
-
-/**
- * Return value for the 'cli instructions'
- *
- * @param {Node} pluginRegionNode
- * @param {Node} el selected radio input
- */
-const updateCliInstructions = (pluginRegionNode, el) => {
-    const cli = pluginRegionNode.querySelector(SELECTORS.ADDON_CLI_REGION);
-    if (!cli) {
-        return;
-    }
-    if (!el) {
-        cli.innerHTML = '';
-        return;
-    }
-    const source = `${el.value}`;
-    const pluginname = pluginRegionNode.dataset.pluginname + el.dataset.exactversion;
-    let commandName = ' --name=' + pluginname;
-    if (pluginRegionNode.dataset.versionlocal) {
-        commandName += ' --overwrite';
-    }
-    if (source === '') {
-        cli.innerHTML = '';
-    } else if (source.match(/^backupkey\//)) {
-        cli.innerHTML = '<pre>' + CLICOMMAND +
-            ' --backupkey=' + source.substring(10) + commandName + '</pre>';
-    } else {
-        cli.innerHTML = '<pre>' + CLICOMMAND + commandName + '</pre>';
-    }
-};
-
-const updateCliInstructionsBulk = () => {
-    document.querySelectorAll(SELECTORS.ADDON_PLUGIN_REGION + '[data-isbulk="1"]').forEach(bulkRegion => {
-        const cli = bulkRegion.querySelector(SELECTORS.ADDON_CLI_REGION);
-        if (!cli) {
-            return;
-        }
-        const commands = {};
-        const pluginnames = bulkRegion.dataset.pluginnames.split(',');
-        for (let pluginname of pluginnames) {
-            const pluginRegion = getPluginRegion(pluginname);
-            const el = pluginRegion.querySelector(SELECTORS.ADDON_VERSION_RADIO + ':checked');
-            let k = 'moodleorg';
-            let prefix = CLICOMMAND;
-            if (!el || `${el?.value}` === '') {
-                continue;
-            } else if (el?.value.match(/^backupkey\//)) {
-                k = el.value.substring(10);
-                prefix += ' --backupkey=' + el.value.substring(10);
-            }
-            commands[k] = ((k in commands) ? `${commands[k]},` : `${prefix} --name=`) + pluginname + el.dataset.exactversion;
-        }
-        if (Object.keys(commands).length) {
-            cli.innerHTML = '<pre>' + Object.values(commands).join("\n") + '</pre>';
-        } else {
-            cli.innerHTML = '';
-        }
-    });
 };
 
 const getPluginRegion = (pluginname) =>
@@ -170,9 +95,7 @@ const openInstallAddonForm = (pluginnames) => {
     modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, event => {
         for (let pluginname of event.detail.installed) {
             const pluginRegionNode = getPluginRegion(pluginname);
-            pluginRegionNode.querySelector(SELECTORS.ADDON_CLI_BUTTON)?.remove();
             pluginRegionNode.querySelector(SELECTORS.ADDON_INSTALL_BUTTON)?.remove();
-            pluginRegionNode.querySelector(SELECTORS.ADDON_CLI_REGION)?.remove();
             pluginRegionNode.querySelectorAll(SELECTORS.ADDON_VERSION_RADIO).forEach(el => {
                 if (el.value !== sources[pluginname]) {
                     el.closest('label')?.classList.add('dimmed_text');
@@ -180,8 +103,6 @@ const openInstallAddonForm = (pluginnames) => {
                 el.remove();
             });
         }
-
-        updateCliInstructionsBulk();
 
         return Notification.alert(
             getString('addonplugins_installdialoguetitle', 'tool_vault'),
