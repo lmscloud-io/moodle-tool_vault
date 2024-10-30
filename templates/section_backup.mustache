@@ -41,6 +41,7 @@
         <input type="hidden" name="description" value="">
         <input type="hidden" name="bucket" value="">
         <input type="hidden" name="expiredays" value="">
+        <input type="hidden" name="backupplugincode" value="">
         <input type="submit" value="{{#str}}startbackup, tool_vault{{/str}}" class="btn btn-primary" {{^canstartbackup}}disabled{{/canstartbackup}}>
     </form>
     {{#whybackupdisabled}}

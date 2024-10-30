@@ -37,7 +37,7 @@ const SELECTORS = {
 
 const submitForm = (backupForm, modal) => {
     const popupBody = modal.getBody()[0];
-    for (let i of ['passphrase', 'description', 'bucket', 'expiredays']) {
+    for (let i of ['passphrase', 'description', 'bucket', 'expiredays', 'backupplugincode']) {
         const el1 = popupBody.querySelector(`[name="${i}"]`),
             el2 = backupForm.querySelector(`input[name="${i}"]`);
         if (el1 && el2) {

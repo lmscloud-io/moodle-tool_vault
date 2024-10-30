@@ -589,18 +589,22 @@ class plugins_restore extends check_base_restore {
         $r = [];
         if ($p = $this->problem_plugins()) {
             $r['hasproblems'] = true;
+            $r['otherheader'] = 'Upgrade options'; // TODO string.
             $r['problemplugins'] = $this->prepare_for_template($p, count($p) > 1);
         }
         if ($p = $this->extra_plugins(false)) {
             $r['hasextra'] = true;
+            $r['otherheader'] = '';
             $r['extraplugins'] = $this->prepare_for_template($p);
         }
         if ($p = $this->plugins_needing_upgrade(false)) {
             $r['hastobeupgraded'] = true;
+            $r['otherheader'] = '';
             $r['tobeupgraded'] = $this->prepare_for_template($p);
         }
         if ($p = $this->missing_plugins(false)) {
             $r['hasmissing'] = true;
+            $r['otherheader'] = 'Installation options'; // TODO string.
             $r['missingplugins'] = $this->prepare_for_template($p, count($p) > 1) +
                 ['hideversionlocal' => true];
         }
