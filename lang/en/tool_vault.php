@@ -61,8 +61,10 @@ $string['addonplugins_upgradereminder'] = 'Once you have finished adding code fo
 $string['addonplugins_versioninfobackup'] = 'Version {$a->version} from backup.';
 $string['addonplugins_versioninfobackupwithsupport'] = 'Version {$a->version} from backup for Moodle {$a->supportedmoodles}.';
 $string['addonplugins_versioninfomoodleorg'] = 'Version {$a->version} from plugins directory{$a->postfix} for Moodle {$a->supportedmoodles}.';
+$string['addonplugins_versionislower'] = 'This version is lower than the one in the backup!';
 $string['addonplugins_versionpostfixlatest'] = '(latest)';
 $string['addonplugins_versionpostfixsame'] = '(same as in backup)';
+$string['addonplugins_visitadmintoupgrade'] = 'Visit <a href="{$a}">Site administration</a> page to complete upgrade.';
 $string['addonplugins_willrequireupgrade'] = 'Will require upgrade';
 $string['addonplugins_willrequireupgrade_desc'] = "The following plugins have a higher version than in the backup. After the restore process is finished you will be prompted to run the Moodle upgrade process.";
 $string['addonplugins_withallplugins'] = 'With all of the above plugins:';

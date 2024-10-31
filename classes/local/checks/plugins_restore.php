@@ -102,6 +102,7 @@ class plugins_restore extends check_base_restore {
                     // Do not do anything if the parent is also missing, it will be reported under the missing parent.
                     try {
                         $info[2]['latest'] = plugincode::check_on_moodle_org($pluginname);
+                        $info[2]['latest']['islower'] = (float)($info[2]['latest']['version']) < (float)$v1;
                     } catch (\Throwable $e) {
                         $info[2]['latest'] = ['error' => $e->getMessage()];
                     }
@@ -109,6 +110,7 @@ class plugins_restore extends check_base_restore {
                     if ("{$latestversion}" !== "{$v1}") {
                         try {
                             $info[2]['exact'] = plugincode::check_on_moodle_org($pluginname . '@' . $v1);
+                            $info[2]['exact']['isvalid'] = true;
                         } catch (\Throwable $e) {
                             $info[2]['exact'] = ['error' => $e->getMessage()];
                         }
@@ -386,7 +388,9 @@ class plugins_restore extends check_base_restore {
             'supportedmoodles' => join(', ', $minfo['supportedmoodles']),
         ];
         $s = get_string('addonplugins_versioninfomoodleorg', 'tool_vault', $a);
-        if (!in_array($currentversion, $minfo['supportedmoodles'])) {
+        if (!empty($minfo['islower'])) {
+            $warning = get_string('addonplugins_versionislower', 'tool_vault');
+        } else if (!in_array($currentversion, $minfo['supportedmoodles'])) {
             $warning = get_string('addonplugins_currentmoodlenotsupported', 'tool_vault', $currentversion);
         }
         return $s . self::format_warning_for_version_description($warning, $ashtml);
@@ -512,14 +516,17 @@ class plugins_restore extends check_base_restore {
             'writable' => plugincode::can_write_to_plugin_dir($pluginname) && self::allow_vault_to_install(),
             'versions' => [],
             'showbuttons' => false,
+            'general' => '',
         ];
         if ($ismissing || $isproblem) {
-            $hasboth = !empty($info[2]['latest']) && !empty($info[2]['exact']);
-            if (!empty($info[2]['latest']) && empty($info[2]['latest']['error'])) {
+            $haslatest = !empty($info[2]['latest']) && empty($info[2]['latest']['error']);
+            $hasexact = !empty($info[2]['exact']) && empty($info[2]['exact']['error']);
+            $hasboth = $haslatest && $hasexact;
+            if ($haslatest) {
                 $rv['versions'][] = $this->prepare_version_option($pluginname, $info[2]['latest'],
                     $hasboth ? get_string('addonplugins_versionpostfixlatest', 'tool_vault') : '');
             }
-            if (!empty($info[2]['exact']) && empty($info[2]['exact']['error'])) {
+            if ($hasexact) {
                 $rv['versions'][] = $this->prepare_version_option($pluginname, $info[2]['exact'],
                     $hasboth ? get_string('addonplugins_versionpostfixsame', 'tool_vault') : '') +
                     ['exactversion' => '@' . $info[2]['exact']['version']];
@@ -528,7 +535,7 @@ class plugins_restore extends check_base_restore {
                 $rv['versions'][] = $this->prepare_codeincluded_version_option($pluginname, $info[0]);
             }
             if (empty($rv['versions'])) {
-                $rv['general'] = '<p>' . get_string('pluginnotavailableinmoodle', 'tool_vault') . '</p>';
+                $rv['general'] .= '<p>' . get_string('pluginnotavailableinmoodle', 'tool_vault') . '</p>';
             } else {
                 $rv['versions'][0]['ischecked'] = 1;
                 $rv['versions'][] = [

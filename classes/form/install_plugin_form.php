@@ -113,6 +113,10 @@ class install_plugin_form extends dynamic_form {
         $output = ob_get_contents();
         ob_end_clean();
 
+        if ($installed) {
+            $output .= "\n".get_string('addonplugins_visitadmintoupgrade', 'tool_vault', (new \moodle_url('/admin/'))->out())."\n";
+        }
+
         return ['installed' => $installed, 'output' => text_to_html($output)];
     }
 }
