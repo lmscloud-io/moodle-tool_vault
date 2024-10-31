@@ -256,8 +256,6 @@ Note that this will only exclude data in the plugin's own tables, settings, asso
 $string['settings_backupexcludetables'] = 'Exclude tables';
 $string['settings_backupexcludetables_desc'] = 'Vault will back up all tables that start with the prefix \'{$a->prefix}\' even if they are not listed in xmldb schemas of the core or installed plugins.<br>Here you can list extra tables that should not be backed up. Use an asterisk (\'*\') to exclude all extra tables.<br>You must include the table prefix when excluding tables.';
 $string['settings_backupplugincode'] = 'Backup code of add-on plugins';
-$string['settings_backupplugincode_allowedno'] = 'Allowed. Default - no';
-$string['settings_backupplugincode_allowedyes'] = 'Allowed. Default - yes';
 $string['settings_backupplugincode_help'] = "Include the code of the add-on plugins into the backup. This can help with installing missing or outdated plugins before the restore.<br>
 Important notes:
 <ul>
@@ -266,7 +264,6 @@ Important notes:
 <li>Modifications to Moodle core or core plugins will not be included in the backup.</li>
 </ul>
 ";
-$string['settings_backupplugincode_notallowed'] = 'Not allowed';
 $string['settings_clionly'] = 'Allow to perform site backup and restore from CLI only';
 $string['settings_clionly_desc'] = 'Checking this will hide the "Vault - Site migration" from the site administration and prevent access to backup and restore. ';
 $string['settings_desc'] = "Vault plugin settings where you can configure what to exclude during backup or preserve during restore.";
