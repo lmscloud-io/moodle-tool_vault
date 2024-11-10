@@ -122,7 +122,7 @@ class plugincode {
         if ($dir) {
             return $dir;
         }
-        [$ptype, $pname] = \core_component::normalize_component($pluginname);
+        list($ptype, $pname) = \core_component::normalize_component($pluginname);
         $path = \core_component::get_plugin_types()[$ptype] ?? ($CFG->dirroot .'/'. $ptype);
         return $path . '/' . $pname;
     }
@@ -162,7 +162,7 @@ class plugincode {
      * @throws \moodle_exception
      * @return array
      */
-    protected static function prepare_moodle_org_response(\curl $curl, ?string $response): array {
+    protected static function prepare_moodle_org_response(\curl $curl, $response): array {
         $curlerrno = $curl->get_errno();
         if (!empty($curlerrno)) {
             $error = get_string('err_response_curl', 'core_plugin') . ' ' .
@@ -249,7 +249,7 @@ class plugincode {
      * @return void
      */
     protected static function copy_plugin_files(string $sourcepath, string $pluginpath,
-            array $files, ?string $rootfolder = null): void {
+            array $files, $rootfolder = null) {
         global $CFG;
         $dirpermissions = file_exists($pluginpath) ? fileperms($pluginpath) : fileperms(dirname($pluginpath));
         $filepermissions = $dirpermissions & 0666;
@@ -302,7 +302,7 @@ class plugincode {
         // Extract zip into temp directory.
         $tmp = make_request_directory();
 
-        [$plugintype, $rootdir] = \core_component::normalize_component($pluginname);
+        list($plugintype, $rootdir) = \core_component::normalize_component($pluginname);
         $files = \core_plugin_manager::instance()->unzip_plugin_file($zipfile, $tmp, $rootdir);
 
         $rv = self::validate_and_install_addon_files($tmp, $files, $pluginname, $dryrun);
@@ -378,7 +378,7 @@ class plugincode {
      * @return bool whether plugin was installed (or can be installed in case of dryrun)
      */
     public static function install_addon_from_backup(plugins_restore $model, string $pluginname, bool $dryrun = false): bool {
-        [$tmp, $pseudodir, $pseudofiles] = self::extract_plugin_files_from_backup($model, $pluginname);
+        list($tmp, $pseudodir, $pseudofiles) = self::extract_plugin_files_from_backup($model, $pluginname);
 
         if (!$pseudofiles) {
             mtrace("ERROR. Code not found for plugin $pluginname");
@@ -430,8 +430,8 @@ class plugincode {
      * @param string $pluginname
      * @return string|null
      */
-    public static function create_plugin_zip_from_backup(plugins_restore $model, string $pluginname): ?string {
-        [$tmp, $plugindir, $files] = self::extract_plugin_files_from_backup($model, $pluginname);
+    public static function create_plugin_zip_from_backup(plugins_restore $model, string $pluginname) {
+        list($tmp, $plugindir, $files) = self::extract_plugin_files_from_backup($model, $pluginname);
         if (!$files) {
             return null;
         }

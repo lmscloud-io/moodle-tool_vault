@@ -29,15 +29,20 @@ Feature: Using tool vault
     And I press "Sign in"
     And I wait "2" seconds
     And the "src" attribute of "#getapikey_iframe" "css_element" should not contain "about:blank"
-    And I switch to "getapikey_iframe" class iframe
-    And I should see "Forgot your password?"
+    And the "src" attribute of "#getapikey_iframe" "css_element" should contain "/getapikey?siteid="
+    And the "src" attribute of "#getapikey_iframe" "css_element" should not contain "tab=signup"
+    And I switch to "getapikey_iframe" vault iframe
+    # Firefox version in behat is too old to show the contents of lmsvault.io.
+    #And I should see "Forgot your password?"
     And I switch to the main frame
     And I press "Create account"
     And I wait "2" seconds
     And the "src" attribute of "#getapikey_iframe" "css_element" should not contain "about:blank"
-    And I switch to "getapikey_iframe" class iframe
-    And I should not see "Forgot your password?"
-    And I should see "Confirm Password"
+    And the "src" attribute of "#getapikey_iframe" "css_element" should contain "/getapikey?siteid="
+    And the "src" attribute of "#getapikey_iframe" "css_element" should contain "tab=signup"
+    And I switch to "getapikey_iframe" vault iframe
+    #And I should not see "Forgot your password?"
+    #And I should see "Confirm Password"
     And I switch to the main frame
     And I press "I have an API key"
     And the "src" attribute of "#getapikey_iframe" "css_element" should contain "about:blank"

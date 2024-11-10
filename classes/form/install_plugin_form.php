@@ -31,7 +31,7 @@ class install_plugin_form extends dynamic_form {
     /**
      * Checks if current user has access to this form, otherwise throws exception
      */
-    protected function check_access_for_dynamic_submission(): void {
+    protected function check_access_for_dynamic_submission() {
         require_capability('moodle/site:config', $this->get_context_for_dynamic_submission());
     }
 
@@ -65,7 +65,7 @@ class install_plugin_form extends dynamic_form {
     /**
      * Load in existing data as form defaults
      */
-    public function set_data_for_dynamic_submission(): void {
+    public function set_data_for_dynamic_submission() {
         $this->set_data([
             'plugins' => $this->optional_param('plugins', '', PARAM_RAW),
         ]);

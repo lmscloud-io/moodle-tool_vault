@@ -49,7 +49,7 @@ abstract class operation_base implements logger {
      *
      * @return operation_model
      */
-    public function get_model(): ?operation_model {
+    public function get_model() {
         return $this->model;
     }
 

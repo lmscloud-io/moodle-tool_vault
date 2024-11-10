@@ -39,20 +39,20 @@ final class provider_test extends \advanced_testcase {
     /**
      * Test that the specified null_provider works as expected.
      */
-    public function test_null_provider(): void {
+    public function test_null_provider() {
         $classname = self::CLASSNAME;
         $reason = $classname::get_reason();
-        $this->assertIsString($reason);
+        $this->assertTrue((string)$reason === $reason);
 
         // Mdlcode-disable-next-line cannot-parse-string.
-        $this->assertIsString(get_string($reason, self::COMPONENT));
+        $this->assertNotEmpty(get_string($reason, self::COMPONENT));
         $this->assertDebuggingNotCalled();
     }
 
     /**
      * Test that the plugin is compliant.
      */
-    public function test_all_providers_compliant(): void {
+    public function test_all_providers_compliant() {
         $manager = new manager();
         $this->assertTrue($manager->component_is_compliant(self::COMPONENT));
     }
@@ -60,7 +60,7 @@ final class provider_test extends \advanced_testcase {
     /**
      * Test that get_metadata() returns valid string identifiers.
      */
-    public function test_link_external_location(): void {
+    public function test_link_external_location() {
         $collection = new collection(self::COMPONENT);
         $collection = provider::get_metadata($collection);
         $this->assertNotEmpty($collection);
@@ -70,13 +70,13 @@ final class provider_test extends \advanced_testcase {
         $this->assertInstanceOf(external_location::class, $item);
 
         // Mdlcode-disable-next-line cannot-parse-string.
-        $this->assertIsString(get_string($item->get_summary(), self::COMPONENT));
+        $this->assertNotEmpty(get_string($item->get_summary(), self::COMPONENT));
         $privacyfields = $item->get_privacy_fields();
         $this->assertNotEmpty($privacyfields);
         if (!empty($privacyfields)) {
             foreach ($privacyfields as $key => $field) {
                 // Mdlcode-disable-next-line cannot-parse-string.
-                $this->assertIsString(get_string($field, self::COMPONENT));
+                $this->assertNotEmpty(get_string($field, self::COMPONENT));
             }
         }
     }

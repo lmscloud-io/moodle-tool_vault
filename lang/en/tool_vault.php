@@ -302,6 +302,7 @@ $string['status_failedtostart'] = 'Failed to start';
 $string['status_finished'] = 'Completed';
 $string['status_inprogress'] = 'In progress';
 $string['status_scheduled'] = 'Scheduled';
+$string['statusinfo'] = 'Info';
 $string['tablealreadyexcluded'] = 'Table "{$a}" is already excluded, re-run this check to see updated status.';
 $string['therewasnoactivity'] = 'There was no activity for <b>{$a->elapsedtime}</b>. It is possible that the cron process was interrupted or timed out. The operation will be marked as failed after <b>{$a->locktimeout} of inactivity</b> and access to the site will be restored.';
 $string['timefinished'] = 'Completed on';

@@ -67,7 +67,7 @@ class cli_helper {
      * @param string $scriptfilename Name of php file containing the caller script (for printing help)
      * @param string|null $extrahelp Additional information to add to the help text after peramters and before example
      */
-    public function __construct(string $script, string $scriptfilename, ?string $extrahelp = null) {
+    public function __construct(string $script, string $scriptfilename, $extrahelp = null) {
         $this->script = $script;
         $this->scriptfilename = $scriptfilename;
         $this->extrahelp = $extrahelp;
@@ -199,7 +199,7 @@ class cli_helper {
     /**
      * Print help for export
      */
-    public function print_help(): void {
+    public function print_help() {
         $titles = [
             self::SCRIPT_BACKUP => 'Command line site backup',
             self::SCRIPT_LIST => 'Command line remote backup list',
@@ -230,7 +230,7 @@ class cli_helper {
      *
      * @return void
      */
-    public function validate_cli_options(): void {
+    public function validate_cli_options() {
         global $CFG;
 
         foreach ($this->options_definitions() as $key => $definition) {
@@ -255,7 +255,7 @@ class cli_helper {
      *
      * @param array $options
      */
-    protected function print_help_options(array $options): void {
+    protected function print_help_options(array $options) {
         $left = [];
         $right = [];
         foreach ($options as $key => $option) {
@@ -330,7 +330,7 @@ class cli_helper {
      *
      * @param string $text text to be written
      */
-    protected function cli_write($text): void {
+    protected function cli_write($text) {
         if (PHPUNIT_TEST) {
             echo $text;
         } else {
@@ -343,7 +343,7 @@ class cli_helper {
      *
      * @param string $text text to be written
      */
-    public function cli_writeln($text): void {
+    public function cli_writeln($text) {
         $this->cli_write($text . PHP_EOL);
     }
 
@@ -354,7 +354,7 @@ class cli_helper {
      * @param int $errorcode
      * @return void (does not return)
      */
-    protected function cli_error($text, $errorcode = 1): void {
+    protected function cli_error($text, $errorcode = 1) {
         $this->cli_problem($text);
         $this->die($errorcode);
     }
@@ -365,7 +365,7 @@ class cli_helper {
      * @param mixed $errorcode
      * @throws \moodle_exception
      */
-    protected function die($errorcode): void {
+    protected function die($errorcode) {
         if (!PHPUNIT_TEST) {
             die($errorcode);
         } else {
@@ -378,7 +378,7 @@ class cli_helper {
      * @param string $text
      * @return void
      */
-    protected function cli_problem($text): void {
+    protected function cli_problem($text) {
         if (PHPUNIT_TEST) {
             echo $text;
         } else {

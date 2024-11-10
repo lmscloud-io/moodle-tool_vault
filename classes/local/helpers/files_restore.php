@@ -204,7 +204,7 @@ class files_restore {
      *
      * @return array|null [full path on disk, local path in archive]
      */
-    public function get_next_file(): ?array {
+    public function get_next_file() {
         if ($this->is_dbdump_backup()) {
             throw new \coding_exception('Can not be called for the dbdump file type');
         }
@@ -222,7 +222,7 @@ class files_restore {
      *
      * @return string|null
      */
-    protected function get_next(): ?string {
+    protected function get_next() {
         if (!count($this->curentfileslist)) {
             return null;
         }
@@ -253,7 +253,7 @@ class files_restore {
      *
      * @return array|null [table name, [path to file with json dump]]
      */
-    public function get_next_table(): ?array {
+    public function get_next_table() {
         if (!$this->is_dbdump_backup()) {
             throw new \coding_exception('Can only be called for the dbdump file type');
         }
@@ -284,7 +284,7 @@ class files_restore {
      *
      * @return int|null
      */
-    protected function find_next_seq(): ?int {
+    protected function find_next_seq() {
         foreach ($this->backupfiles as $i => $backupfile) {
             if ($i > $this->currentseq && $backupfile->status !== constants::STATUS_FINISHED) {
                 return $i;
@@ -428,7 +428,7 @@ class files_restore {
      *
      * @return void
      */
-    protected function close_current_archive(): void {
+    protected function close_current_archive() {
         global $CFG;
         if ($this->dir && file_exists($this->dir) && is_dir($this->dir)) {
             tempfiles::remove_temp_dir($this->dir);
@@ -454,7 +454,7 @@ class files_restore {
      *
      * @return void
      */
-    public function finish(): void {
+    public function finish() {
         $this->close_current_archive();
     }
 }

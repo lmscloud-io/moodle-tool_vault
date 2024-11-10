@@ -21,40 +21,120 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-import * as Signon from './signon';
-import {SELECTORS} from './selectors';
+define([], function() {
 
-/**
- * Open form to enter API key
- *
- * @param {String} apikey
- * @param {Boolean} autoSubmit
- */
-const openApikeyForm = (apikey = '', autoSubmit = false) => {
-    Signon.closeLoginSignupModal();
-    const formContainer = document.querySelector(SELECTORS.LEGACY_FORM_CONTAINER);
-    formContainer.classList.remove('hidden');
+    var SELECTORS = {
+        APIKEY_FORM_CONTAINER: '#getapikey_formplaceholder',
+        APIKEY_IFRAME: '#getapikey_iframe',
+        SIGNIN_BUTTON: '#getapikey_signin',
+        SIGNUP_BUTTON: '#getapikey_signup',
+        ENTER_KEY_BUTTON: '#getapikey_enterapikey',
+        LEGACY_FORM_CONTAINER: '#getapikey_legacyform'
+    };
 
-    if (apikey && apikey !== '') {
-        formContainer.querySelector('input[name="apikey"]').value = apikey;
-        if (autoSubmit) {
-            formContainer.querySelector('input[name="submitbutton"]').click();
+    /**
+     * Open iframe with the remote login/signup form
+     *
+     * @param {Event} e
+     */
+    var openLoginSignupModal = function(e) {
+        document.querySelector(SELECTORS.APIKEY_FORM_CONTAINER).innerHTML = '';
+        var formContainer = document.querySelector(SELECTORS.LEGACY_FORM_CONTAINER);
+        if (formContainer) {
+            formContainer.classList.add('hidden');
         }
-    }
-};
 
-/**
- * Initialise listeners on the page
- */
-export const init = () => {
-    Signon.init((event) => {
-        if (event.data.action === 'apikey') {
-            openApikeyForm(event.data.apikey, true);
+        var signInButton = e.target;
+        var loginSignupIframe = document.querySelector(SELECTORS.APIKEY_IFRAME);
+        var url = (signInButton && loginSignupIframe) ? signInButton.dataset.target : null;
+
+        loginSignupIframe.src = url;
+        loginSignupIframe.style.display = 'block';
+    };
+
+    /**
+     * Close iframe with the remote login/signup form
+     */
+    var closeLoginSignupModal = function() {
+        var loginSignupIframe = document.querySelector(SELECTORS.APIKEY_IFRAME);
+        loginSignupIframe.style.display = 'none';
+        loginSignupIframe.src = 'about:blank';
+    };
+
+    var signoninit = function(onMessage) {
+        var signInButton = document.querySelector(SELECTORS.SIGNIN_BUTTON);
+        var signUpButton = document.querySelector(SELECTORS.SIGNUP_BUTTON);
+        var loginSignupIframe = document.querySelector(SELECTORS.APIKEY_IFRAME);
+        var url = (signInButton && loginSignupIframe) ? signInButton.dataset.target : null;
+
+        if (!url) {
+            return;
         }
-    });
+        var urlHost = url.match(/^(https?:\/\/[^/]+)(.*)$/)[1];
 
-    const enterApikeyButton = document.querySelector(SELECTORS.ENTER_KEY_BUTTON);
-    enterApikeyButton.addEventListener('click', () => {
-        openApikeyForm();
-    });
-};
+        signInButton.onclick = openLoginSignupModal;
+        if (signUpButton) {
+            signUpButton.onclick = openLoginSignupModal;
+        }
+
+        var enterApikeyButton = document.querySelector(SELECTORS.ENTER_KEY_BUTTON);
+        enterApikeyButton.addEventListener('click', function() {
+            closeLoginSignupModal();
+        });
+
+        window.addEventListener(
+            "message",
+            function(event) {
+                if (event.origin !== urlHost || !event.data || !(typeof event.data === 'object')) {
+                    return;
+                }
+                if (event.data.action === 'close') {
+                    closeLoginSignupModal();
+                } else {
+                    onMessage(event);
+                }
+            },
+            false);
+    };
+
+    /**
+     * Open form to enter API key
+     *
+     * @param {String} apikey
+     * @param {Boolean} autoSubmit
+     */
+    var openApikeyForm = function(apikey, autoSubmit) {
+        closeLoginSignupModal();
+        var formContainer = document.querySelector(SELECTORS.LEGACY_FORM_CONTAINER);
+        formContainer.classList.remove('hidden');
+
+        if (apikey && apikey !== '') {
+            formContainer.querySelector('input[name="apikey"]').value = apikey;
+            if (autoSubmit) {
+                formContainer.querySelector('input[name="submitbutton"]').click();
+            }
+        }
+    };
+
+    return {
+        // Public variables and functions.
+
+        /**
+         * Initialise the module.
+         *
+         * @method init
+         */
+        'init': function() {
+            signoninit(function(event) {
+                if (event.data.action === 'apikey') {
+                    openApikeyForm(event.data.apikey, true);
+                }
+            });
+
+            var enterApikeyButton = document.querySelector(SELECTORS.ENTER_KEY_BUTTON);
+            enterApikeyButton.addEventListener('click', function() {
+                openApikeyForm('', false);
+            });
+        }
+    };
+});

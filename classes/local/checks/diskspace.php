@@ -41,7 +41,7 @@ class diskspace extends check_base {
     /**
      * Evaluate check and store results in model details
      */
-    public function perform(): void {
+    public function perform() {
         global $DB;
         $record = $DB->get_record_sql('SELECT sum(filesize) AS sumfilesize, max(filesize) AS maxfilesize, count(1) AS countfiles
             FROM (SELECT distinct contenthash, filesize
@@ -68,7 +68,7 @@ class diskspace extends check_base {
         $this->tablesizes = array_intersect_key($structure->get_actual_tables_sizes(), $this->tablerowscnt);
         $dbtotalsize = array_sum($this->tablesizes);
         $dbmaxsize = max($this->tablesizes);
-        [$datarootsize, $maxdatarootfilesize, $datarootunreadable] = $this->get_dataroot_size();
+        list($datarootsize, $maxdatarootfilesize, $datarootunreadable) = $this->get_dataroot_size();
         $includecodesize = (!$this->parent && api::allow_backup_plugincode() >= 0 ) ||
             ($this->parent && !empty($this->parent->get_details()['backupplugincode']));
         $codesize = $includecodesize ? plugincode::get_total_addon_size() : null;

@@ -163,7 +163,7 @@ class dbtable {
      * @return array array that may contain keys:
      *        'extratables', 'extracolumns', 'missingcolumns', 'changedcolumns', 'missingindexes', 'extraindexes'
      */
-    public function compare_with_other_table(?dbtable $deftable, bool $autofix = true): array {
+    public function compare_with_other_table($deftable, bool $autofix = true): array {
         if (!$deftable) {
             return [constants::DIFF_EXTRATABLES => [$this->get_xmldb_table()]];
         }
@@ -312,7 +312,7 @@ class dbtable {
      * @param \xmldb_object[]|null $keysandindexes
      * @return void
      */
-    protected function replace_in_table(?array $fields = null, ?array $keysandindexes = null) {
+    protected function replace_in_table($fields = null, $keysandindexes = null) {
         if ($fields === null) {
             $fields = $this->get_xmldb_table()->getFields();
         }
@@ -356,7 +356,8 @@ class dbtable {
         if ($dbfields) {
             foreach ($dbfields as $dbfield) {
                 $deftable = $structure->find_table_definition($tablename);
-                $xmldbtable->addField(database_column_info::clone_from($dbfield)->to_xmldb_field($deftable));
+                $xmldbtable->addField(self::fix_field(
+                    database_column_info::clone_from($dbfield)->to_xmldb_field($deftable), $tablename));
             }
         }
         $table = new self($xmldbtable, '?');
@@ -366,6 +367,21 @@ class dbtable {
             $table->retrieve_keys_and_indexes_mysql();
         }
         return $table;
+    }
+
+    /**
+     * Moodle can complain at it's own tables. It was fixed in the later versions
+     *
+     * @param \xmldb_field $field
+     * @param mixed $tablename
+     * @return xmldb_field
+     */
+    protected static function fix_field(xmldb_field $field, $tablename) {
+        if (in_array($field->getType(), [XMLDB_TYPE_TEXT, XMLDB_TYPE_INTEGER]) &&
+                $field->getDefault() === '') {
+            $field->setDefault(null);
+        }
+        return $field;
     }
 
     /**
@@ -470,7 +486,7 @@ class dbtable {
      * @param dbtable|null $originaltable
      * @return array
      */
-    public function get_alter_sql(?dbtable $originaltable): array {
+    public function get_alter_sql($originaltable): array {
         global $DB;
         $generator = $DB->get_manager()->generator;
         if (!$originaltable) {
@@ -512,7 +528,7 @@ class dbtable {
      *
      * @return string
      */
-    protected function get_sequence(): ?string {
+    protected function get_sequence() {
         foreach ($this->get_xmldb_table()->getFields() as $field) {
             if ($field->getSequence()) {
                 return $field->getName();

@@ -76,7 +76,7 @@ class curl extends \curl {
      * @param string|null $ret
      * @return string
      */
-    protected function extract_headers(?string $ret): string {
+    protected function extract_headers($ret): string {
         $headersize = $this->get_info()['header_size'] ?? 0;
         $this->returnheaders = substr((string)$ret, 0, $headersize);
         return substr((string)$ret, $headersize);

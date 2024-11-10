@@ -35,11 +35,11 @@ class tempfiles {
      */
     public static function make_temp_dir(string $prefix = ''): string {
         global $CFG;
-        if (defined('PHPUNIT_TEST') && PHPUNIT_TEST && defined('PHPUNIT_BACKUPTEMPDIR')) {
+        if (defined('PHPUNIT_TEST') && PHPUNIT_TEST && defined('PHPUNIT_BACKUPTEMPDIR') && isset($CFG->backuptempdir)) {
             $oldvalue = $CFG->backuptempdir;
             $CFG->backuptempdir = PHPUNIT_BACKUPTEMPDIR;
         }
-        $backupdir = make_backup_temp_directory('tool_vault');
+        $backupdir = compat::make_backup_temp_directory('tool_vault');
         if (isset($oldvalue)) {
             $CFG->backuptempdir = $oldvalue;
         }
@@ -124,7 +124,7 @@ class tempfiles {
      *     could not be evaluated.
      */
     public static function get_free_space(int $minrequiredspace) {
-        $dir = make_backup_temp_directory('tool_vault');
+        $dir = compat::make_backup_temp_directory('tool_vault');
         if (function_exists('disk_free_space') && ($freespace = @disk_free_space($dir)) > 0) {
             return $freespace;
         }
@@ -189,7 +189,7 @@ class tempfiles {
      *
      * @return void
      */
-    public static function cleanup(): void {
+    public static function cleanup() {
         foreach (self::$createddirs as $dir => $unused) {
             if (file_exists($dir)) {
                 debugging('Removing abandonded temporary directory: ' . $dir, DEBUG_DEVELOPER);

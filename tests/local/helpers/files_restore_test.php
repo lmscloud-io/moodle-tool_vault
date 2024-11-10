@@ -53,7 +53,7 @@ final class files_restore_test extends \advanced_testcase {
      *
      * @return void
      */
-    public function tearDown(): void {
+    public function tearDown() {
         tempfiles::cleanup();
         parent::tearDown();
     }
@@ -111,7 +111,7 @@ final class files_restore_test extends \advanced_testcase {
     /**
      * Test helper for filedir
      */
-    public function test_filedir(): void {
+    public function test_filedir() {
         global $DB;
         $this->resetAfterTest();
         $siterestore = $this->create_site_restore();
@@ -144,7 +144,7 @@ final class files_restore_test extends \advanced_testcase {
     /**
      * Test helper for dataroot
      */
-    public function test_dataroot(): void {
+    public function test_dataroot() {
         $this->resetAfterTest();
         $siterestore = $this->create_site_restore();
 
@@ -215,7 +215,7 @@ final class files_restore_test extends \advanced_testcase {
     /**
      * Test helper for dbdump
      */
-    public function test_dbdump(): void {
+    public function test_dbdump() {
         $this->resetAfterTest();
 
         $filepathstructure = $this->prepare_db_structure();

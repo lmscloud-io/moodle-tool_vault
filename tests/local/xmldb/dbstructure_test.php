@@ -30,7 +30,7 @@ final class dbstructure_test extends \advanced_testcase {
     /**
      * Test for loading structure
      */
-    public function test_dbstructure(): void {
+    public function test_dbstructure() {
         $definitions = dbstructure::load();
         // Loop through all tables and compare definitions with actual.
         foreach ($definitions->get_tables_actual() as $tablename => $actualtable) {
@@ -46,7 +46,7 @@ final class dbstructure_test extends \advanced_testcase {
     /**
      * Test function retrieve_sequences()
      */
-    public function test_sequences(): void {
+    public function test_sequences() {
         $this->resetAfterTest();
 
         $definitions = dbstructure::load();

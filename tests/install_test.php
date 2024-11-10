@@ -30,7 +30,7 @@ final class install_test extends \advanced_testcase {
      *
      * @covers ::xmldb_tool_vault_install
      */
-    public function test_xmldb_tool_vault_install(): void {
+    public function test_xmldb_tool_vault_install() {
         $this->resetAfterTest();
 
         \tool_vault\local\checks\check_base::get_all_checks();

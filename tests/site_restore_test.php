@@ -51,7 +51,7 @@ final class site_restore_test extends \advanced_testcase {
      *
      * @return void
      */
-    public function tearDown(): void {
+    public function tearDown() {
         tempfiles::cleanup();
         parent::tearDown();
     }
@@ -90,7 +90,7 @@ final class site_restore_test extends \advanced_testcase {
         \curl::mock_response(json_encode(['downloadurl' => 'https://test.s3.amazonaws.com/']));
     }
 
-    public function test_restore_db(): void {
+    public function test_restore_db() {
         global $DB, $CFG;
         if (!PHPUNIT_LONGTEST) {
             $this->markTestSkipped('PHPUNIT_LONGTEST is not defined');
@@ -111,8 +111,8 @@ final class site_restore_test extends \advanced_testcase {
         $sitebackup->get_db_structure();
         $sitebackup->prepare();
         $sitebackup->export_db();
-        [$filepathstructure] = $sitebackup->get_files_backup(constants::FILENAME_DBSTRUCTURE)->uploadedfiles;
-        [$filepath] = $sitebackup->get_files_backup(constants::FILENAME_DBDUMP)->uploadedfiles;
+        list($filepathstructure) = $sitebackup->get_files_backup(constants::FILENAME_DBSTRUCTURE)->uploadedfiles;
+        list($filepath) = $sitebackup->get_files_backup(constants::FILENAME_DBDUMP)->uploadedfiles;
 
         // Add a second book instance.
         $book2 = $this->getDataGenerator()->create_module('book', ['course' => $course->id]);
@@ -146,7 +146,7 @@ final class site_restore_test extends \advanced_testcase {
         tempfiles::cleanup();
     }
 
-    public function test_restore_dataroot(): void {
+    public function test_restore_dataroot() {
         $this->resetAfterTest();
 
         // Make a directory under dataroot and store a file there.
@@ -158,7 +158,7 @@ final class site_restore_test extends \advanced_testcase {
         // Call export_dataroot() from site_backup.
         $sitebackup = $this->create_site_backup();
         $sitebackup->export_dataroot();
-        [$filepath] = $sitebackup->get_files_backup(constants::FILENAME_DATAROOT)->uploadedfiles;
+        list($filepath) = $sitebackup->get_files_backup(constants::FILENAME_DATAROOT)->uploadedfiles;
 
         // Remove file and folder.
         unlink($hellofilepath);
@@ -179,7 +179,7 @@ final class site_restore_test extends \advanced_testcase {
         tempfiles::cleanup();
     }
 
-    public function test_site_restore_filedir(): void {
+    public function test_site_restore_filedir() {
         global $CFG;
         $this->resetAfterTest();
 

@@ -15,7 +15,7 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template tool_vault/checks/plugins_restore_details_table
+    @template tool_vault/checks_plugins_restore_details_table
 
     Example context (json):
     {
@@ -72,7 +72,7 @@
             <td>{{versionlocal}}</td>
             {{/hideversionlocal}}
             <td>{{#versiondetails}}
-{{> tool_vault/checks/plugins_restore_details_versions}}
+{{> tool_vault/checks_plugins_restore_details_versions}}
             {{/versiondetails}}</td>
         </tr>
     {{/plugins}}

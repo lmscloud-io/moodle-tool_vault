@@ -34,13 +34,11 @@ class main extends base {
      */
     public function process() {
         parent::process();
-        if (!class_exists('\\core_form\\dynamic_form')) {
-            $form = new apikey_form_legacy(self::url());
-            if ($formdata = $form->get_data()) {
-                api::set_api_key($formdata->apikey);
-                $returnurl = $formdata->returnurl;
-                redirect($returnurl ?: self::url());
-            }
+        $form = new apikey_form_legacy(self::url());
+        if ($formdata = $form->get_data()) {
+            api::set_api_key($formdata->apikey);
+            $returnurl = $formdata->returnurl;
+            redirect($returnurl ?: self::url());
         }
     }
 

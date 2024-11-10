@@ -33,7 +33,7 @@ class diskspace_restore extends check_base_restore {
     /**
      * Evaluate check and store results in model details
      */
-    public function perform(): void {
+    public function perform() {
         /** @var dryrun_model $parent */
         $parent = $this->get_parent();
         $largestarchive = 0;

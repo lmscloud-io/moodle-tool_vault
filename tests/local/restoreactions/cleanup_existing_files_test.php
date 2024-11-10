@@ -51,12 +51,12 @@ final class cleanup_existing_files_test extends \advanced_testcase {
      *
      * @return void
      */
-    public function tearDown(): void {
+    public function tearDown() {
         tempfiles::cleanup();
         parent::tearDown();
     }
 
-    public function test_execute(): void {
+    public function test_execute() {
         global $CFG, $DB;
         $this->resetAfterTest();
 

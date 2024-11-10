@@ -104,12 +104,12 @@ abstract class tool_base extends operation_base {
     /**
      * Evaluate check and store results in model details
      */
-    abstract public function perform(): void;
+    abstract public function perform();
 
     /**
      * Evaluate check and store results in model details
      */
-    public function execute(): void {
+    public function execute() {
         $this->perform();
         $this->model->set_status(constants::STATUS_FINISHED)->save();
     }
@@ -120,7 +120,7 @@ abstract class tool_base extends operation_base {
      * @param int $id
      * @return static|null
      */
-    public static function load(int $id): ?self {
+    public static function load(int $id) {
         $model = tool_model::get_by_id($id);
         if (!$model) {
             return null;

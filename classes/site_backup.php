@@ -274,7 +274,7 @@ class site_backup extends operation_base {
      *
      * @return string|null
      */
-    public function get_backup_key(): ?string {
+    public function get_backup_key() {
         return $this->model->backupkey;
     }
 
@@ -303,7 +303,7 @@ class site_backup extends operation_base {
         /** @var diskspace $precheck */
         $precheck = $this->prechecks[diskspace::get_name()] ?? null;
         if ($precheck) {
-            [$rowscnt, $size] = $precheck->get_table_size($tablename);
+            list($rowscnt, $size) = $precheck->get_table_size($tablename);
             $chunkscnt = ceil($size / constants::DBFILE_SIZE);
             return (!$rowscnt || !$chunkscnt) ? 0 : (int)($rowscnt / $chunkscnt);
         } else {
@@ -333,7 +333,7 @@ class site_backup extends operation_base {
         $chunksize = $this->get_chunk_size($table->get_xmldb_table()->getName());
         $lastvalue = null;
         for ($cnt = 0; true; $cnt++) {
-            [$sql, $params] = plugindata::get_sql_for_plugins_data_in_table($table->get_xmldb_table()->getName(),
+            list ($sql, $params) = plugindata::get_sql_for_plugins_data_in_table($table->get_xmldb_table()->getName(),
                 siteinfo::get_excluded_plugins_backup(), true);
             if ($lastvalue !== null) {
                 $sql .= (strlen($sql) ? ' AND ' : '') . $sortby. ' > :lastvalue';
@@ -422,7 +422,7 @@ class site_backup extends operation_base {
     /**
      * Export code of the add-on plugins
      */
-    public function export_plugin_code(): void {
+    public function export_plugin_code() {
         global $CFG;
         if (empty($this->model->get_details()['backupplugincode'])) {
             return;

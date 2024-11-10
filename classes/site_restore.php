@@ -44,7 +44,7 @@ use tool_vault\local\xmldb\dbtable;
 class site_restore extends operation_base {
 
     /** @var restore_model */
-    protected $model;
+    public $model;
     /** @var check_base[] */
     protected $prechecks = null;
     /** @var dbstructure */
@@ -66,7 +66,7 @@ class site_restore extends operation_base {
      *
      * @return ?restore_model
      */
-    public static function get_last_restore(): ?restore_model {
+    public static function get_last_restore() {
         $records = restore_model::get_records();
         return $records ? reset($records) : null;
     }
@@ -193,7 +193,7 @@ class site_restore extends operation_base {
      *
      * @return dbstructure
      */
-    public function get_db_structure(): ?dbstructure {
+    public function get_db_structure() {
         return $this->dbstructure;
     }
 
@@ -250,7 +250,8 @@ class site_restore extends operation_base {
         }
         $plugins = siteinfo::get_excluded_plugins_restore();
         $backupuserid = $this->model->get_metadata()['userid'] ?? 2;
-        [$sql, $params, $fields] = plugindata::get_sql_for_plugins_data_in_table_to_preserve($tablename, $plugins, $backupuserid);
+        list($sql, $params, $fields) =
+            plugindata::get_sql_for_plugins_data_in_table_to_preserve($tablename, $plugins, $backupuserid);
         // TODO what if the process was aborted in the middle of this table's restore - this should better be saved in a file.
         return $DB->get_records_select($tablename, $sql, $params, 'id', $fields);
     }
@@ -271,7 +272,7 @@ class site_restore extends operation_base {
             return;
         }
         $plugins = siteinfo::get_excluded_plugins_restore();
-        [$sql, $params] = plugindata::get_sql_for_plugins_data_in_table($tablename, $plugins);
+        list($sql, $params) = plugindata::get_sql_for_plugins_data_in_table($tablename, $plugins);
         $DB->delete_records_select($tablename, $sql, $params);
         if (!empty($records)) {
             $DB->insert_records($tablename, $records);
@@ -285,7 +286,7 @@ class site_restore extends operation_base {
      * @param dbtable|null $originaltable
      * @return array
      */
-    protected function before_table_restore(dbtable $table, ?dbtable $originaltable): array {
+    protected function before_table_restore(dbtable $table, $originaltable): array {
         global $DB;
         $tablename = $table->get_xmldb_table()->getName();
 
@@ -406,7 +407,7 @@ class site_restore extends operation_base {
         };
 
         while (($tabledata = $helper->get_next_table()) !== null) {
-            [$tablename, $filesfortable] = $tabledata;
+            list($tablename, $filesfortable) = $tabledata;
             if (!array_key_exists($tablename, $tables)) {
                 // Must be skipped.
                 continue;
@@ -567,7 +568,7 @@ class site_restore extends operation_base {
 
         // Start extracting files.
         while (($nextfile = $helper->get_next_file()) !== null) {
-            [$path, $file] = $nextfile;
+            list ($path, $file) = $nextfile;
             $newpath = $CFG->dataroot.DIRECTORY_SEPARATOR.$file;
             if (is_dir($path) && !is_dir($newpath)) {
                 try {
@@ -605,7 +606,7 @@ class site_restore extends operation_base {
         $fs = get_file_storage();
         $helper = $this->get_files_restore(constants::FILENAME_FILEDIR);
         while (($nextfile = $helper->get_next_file()) !== null) {
-            [$filepath, $subpath] = $nextfile;
+            list($filepath, $subpath) = $nextfile;
             $file = basename($filepath);
             if ($subpath !== substr($file, 0, 2) . DIRECTORY_SEPARATOR . substr($file, 2, 2) . DIRECTORY_SEPARATOR . $file) {
                 // Integrity check.

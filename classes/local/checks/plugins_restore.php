@@ -38,7 +38,7 @@ class plugins_restore extends check_base_restore {
     /**
      * Evaluate check and store results in model details
      */
-    public function perform(): void {
+    public function perform() {
         global $CFG;
         /** @var dryrun_model $parent */
         $parent = $this->get_parent();
@@ -616,7 +616,7 @@ class plugins_restore extends check_base_restore {
         $r['upgradeafterrestore'] = (int)api::get_setting_checkbox('upgradeafterrestore');
         $r['settingsurl'] = (new moodle_url('/admin/settings.php', ['section' => 'tool_vault']))->out(false);
         $PAGE->requires->js_call_amd('tool_vault/install_addon', 'init');
-        return $renderer->render_from_template('tool_vault/checks/plugins_restore_details', $r);
+        return $renderer->render_from_template('tool_vault/checks_plugins_restore_details', $r);
     }
 
     /**
@@ -649,7 +649,7 @@ class plugins_restore extends check_base_restore {
      * @param string $pluginname
      * @return null|array array with keys 'version', 'name', 'path', 'pluginsupported', etc
      */
-    public function is_plugin_code_included(string $pluginname): ?array {
+    public function is_plugin_code_included(string $pluginname) {
         $info = $this->model->get_details()['list'][$pluginname] ?? null;
         if ($info && !empty($info[0]['codeincluded'])) {
             return $info[0];

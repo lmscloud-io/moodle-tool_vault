@@ -38,7 +38,7 @@ class apikey_form extends dynamic_form {
     /**
      * Checks if current user has access to this form, otherwise throws exception
      */
-    protected function check_access_for_dynamic_submission(): void {
+    protected function check_access_for_dynamic_submission() {
         require_capability('moodle/site:config', $this->get_context_for_dynamic_submission());
     }
 
@@ -55,7 +55,7 @@ class apikey_form extends dynamic_form {
     /**
      * Load in existing data as form defaults
      */
-    public function set_data_for_dynamic_submission(): void {
+    public function set_data_for_dynamic_submission() {
         $apikey = $this->optional_param('apikey', '', PARAM_RAW_TRIMMED);
         $this->set_data(['apikey' => $apikey]);
     }

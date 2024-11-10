@@ -39,7 +39,7 @@ use tool_vault\local\xmldb\dbtable;
  */
 class plugindata {
     /** @var string Prefix for generated param names */
-    private const GENERATE_PARAM_PREFIX = 'vaultparam';
+    const GENERATE_PARAM_PREFIX = 'vaultparam';
 
     /**
      * List of tables that contains plugin-related data that needs to be _deleted_
@@ -75,8 +75,9 @@ class plugindata {
      * @return string[]
      */
     protected static function tables_with_component_field(): array {
+        global $CFG;
         // We don't take into account exceptions for 'mod' plugin type because this type is never going to be supported.
-        return [
+        $tables = [
             'external_services',
             'external_functions',
             'event',
@@ -91,6 +92,10 @@ class plugindata {
             'capabilities',
             'files',
         ];
+        if ((int)($CFG->branch) < 39) {
+            $tables = array_diff($tables, ['event']); // Component field was added in 3.9.
+        }
+        return $tables;
     }
 
     /**
@@ -126,7 +131,7 @@ class plugindata {
      * @param string $plugin
      * @return array|null
      */
-    protected static function get_special_sql_for_table(string $tablename, string $plugin): ?array {
+    protected static function get_special_sql_for_table(string $tablename, string $plugin) {
         global $DB;
 
         if ($tablename === 'config_plugins') {
@@ -174,14 +179,14 @@ class plugindata {
         if ($plugins) {
             if (in_array($tablename, self::tables_with_component_field())) {
                 $p = self::generate_param_name();
-                [$s, $pp] = $DB->get_in_or_equal($plugins, SQL_PARAMS_NAMED, $p.'_', !$negated);
+                list($s, $pp) = $DB->get_in_or_equal($plugins, SQL_PARAMS_NAMED, $p.'_', !$negated);
                 $sqls[] = $negated ? "(component IS NULL OR component $s)" : "component $s";
                 $params += $pp;
             }
             foreach (self::tables_with_dependent_component_field() as $entry) {
                 if ($entry[0] === $tablename) {
                     $p = self::generate_param_name();
-                    [$s, $pp] = $DB->get_in_or_equal($plugins, SQL_PARAMS_NAMED, $p.'_');
+                    list($s, $pp) = $DB->get_in_or_equal($plugins, SQL_PARAMS_NAMED, $p.'_');
                     $sqls[] = "{$entry[1]} ".($negated ? ' NOT ' : '').
                         "IN (SELECT {$entry[3]} FROM {{$entry[2]}} WHERE component {$s})";
                     $params += $pp;
@@ -248,7 +253,7 @@ class plugindata {
                                                                          int $substituteuserid): array {
         global $DB;
         $fields = '*';
-        [$sql, $params] = self::get_sql_for_plugins_data_in_table($tablename, $plugins);
+        list($sql, $params) = self::get_sql_for_plugins_data_in_table($tablename, $plugins);
 
         if ($sql !== '1=0') {
             if (in_array($tablename, ['task_adhoc'])) {

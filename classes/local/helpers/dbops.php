@@ -35,7 +35,7 @@ class dbops {
      *
      * @return int|null
      */
-    public static function get_max_allowed_packet(): ?int {
+    public static function get_max_allowed_packet() {
         global $DB, $CFG;
         if (self::$maxallowedpacket === false) {
             if ($DB->get_dbfamily() === 'mysql') {
@@ -55,7 +55,7 @@ class dbops {
      *
      * @param int|false|null $newvalue
      */
-    public static function set_max_allowed_packet($newvalue): void {
+    public static function set_max_allowed_packet($newvalue) {
         if (defined('PHPUNIT_TEST') && PHPUNIT_TEST) {
             self::$maxallowedpacket = $newvalue;
         } else {
@@ -127,7 +127,7 @@ class dbops {
             return $maxendrow;
         }
 
-        [$sql, $params] = $DB->fix_sql_params(self::prepare_insert_sql($tablename, $fields, 0), []);
+        list($sql, $params) = $DB->fix_sql_params(self::prepare_insert_sql($tablename, $fields, 0), []);
         $baselen = strlen($sql);
         $len = $baselen + $packetsizes[$startrow];
         for ($irow = $startrow + 1; $irow < $maxendrow; $irow++) {

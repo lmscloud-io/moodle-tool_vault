@@ -80,6 +80,11 @@ class api {
      * @return string
      */
     public static function get_frontend_url() {
+        if (((defined('PHPUNIT_TEST') && PHPUNIT_TEST)
+                || defined('BEHAT_SITE_RUNNING') || defined('BEHAT_TEST'))
+            && (defined('TOOL_VAULT_TEST_FRONTEND_URL') && !empty(TOOL_VAULT_TEST_FRONTEND_URL))) {
+            return TOOL_VAULT_TEST_FRONTEND_URL;
+        }
         return self::get_config('frontendurl') ?: self::FRONTENDURL;
     }
 
@@ -125,7 +130,7 @@ class api {
      * @param string|null $apikey
      * @return void
      */
-    public static function set_api_key(?string $apikey) {
+    public static function set_api_key($apikey) {
         if ($apikey !== self::get_api_key()) {
             self::store_config('apikey', $apikey);
             self::store_config('cachedremotebackupstime', null);
@@ -149,7 +154,7 @@ class api {
      * @param string|null $value
      * @return void
      */
-    public static function store_config(string $name, ?string $value) {
+    public static function store_config(string $name, $value) {
         global $DB;
         if ($record = $DB->get_record('tool_vault_config', ['name' => $name])) {
             $DB->update_record('tool_vault_config', ['id' => $record->id, 'value' => $value]);
@@ -199,7 +204,7 @@ class api {
      * @throws api_exception
      */
     protected static function api_call(string $endpoint, string $method, array $params = [],
-                                    ?logger $logger = null, bool $authheader = true, ?string $apikey = null) {
+                                    $logger = null, bool $authheader = true, $apikey = null) {
         global $CFG;
         require_once($CFG->dirroot.'/lib/filelib.php');
 
@@ -265,7 +270,7 @@ class api {
      * @param string $url URL of the request (used in the error message)
      * @return api_exception
      */
-    protected static function prepare_api_exception(\curl $curl, ?string $response, string $url): api_exception {
+    protected static function prepare_api_exception(\curl $curl, $response, string $url): api_exception {
         $errno = $curl->get_errno();
         $error = $curl->error;
         $httpcode = (int)($curl->get_info()['http_code'] ?? 0);
@@ -299,7 +304,7 @@ class api {
      * @param string|null $response - S3 response (normally XML)
      * @return api_exception
      */
-    protected static function prepare_s3_exception(\curl $curl, ?string $response): api_exception {
+    protected static function prepare_s3_exception(\curl $curl, $response): api_exception {
         $errno = $curl->get_errno();
         $error = $curl->error;
         $info = $curl->get_info();
@@ -566,7 +571,7 @@ class api {
      * @param string|null $withstatus
      * @return remote_backup
      */
-    public static function get_remote_backup(string $backupkey, ?string $withstatus = null): remote_backup {
+    public static function get_remote_backup(string $backupkey, $withstatus = null): remote_backup {
         try {
             $result = self::api_call("backups/{$backupkey}", 'GET');
         } catch (api_exception $t) {
@@ -650,7 +655,7 @@ class api {
      * @param logger|null $logger
      * @return void
      */
-    public static function download_backup_file(operation_model $model, string $filepath, ?logger $logger = null) {
+    public static function download_backup_file(operation_model $model, string $filepath, $logger = null) {
         $backupkey = $model->backupkey;
         $restorekey = $model->get_details()['restorekey'] ?? '';
         $filename = basename($filepath);
@@ -711,7 +716,7 @@ class api {
      * @param string|null $passphrase
      * @return string
      */
-    public static function prepare_encryption_key(?string $passphrase): string {
+    public static function prepare_encryption_key($passphrase): string {
         return strlen($passphrase) ? base64_encode(hash('sha256', $passphrase, true)) : '';
     }
 
@@ -804,7 +809,7 @@ class api {
      * @param string|null $status
      * @return void
      */
-    public static function update_backup(string $backupkey, ?array $info = [], ?string $status = null) {
+    public static function update_backup(string $backupkey, $info = [], $status = null) {
         $params = ($status ? ['status' => $status] : []) + ($info ? ['info' => $info] : []);
         if (!$params) {
             return;
@@ -820,7 +825,7 @@ class api {
      * @param string|null $status
      * @return void
      */
-    public static function update_restore(string $restorekey, ?array $info = [], ?string $status = null) {
+    public static function update_restore(string $restorekey, $info = [], $status = null) {
         $params = ($status ? ['status' => $status] : []) + ($info ? ['info' => $info] : []);
         if (!$params) {
             return;
@@ -839,7 +844,7 @@ class api {
      * @param string|null $status
      * @return bool
      */
-    public static function update_restore_ignoring_errors(string $restorekey, ?array $info = [], ?string $status = null): bool {
+    public static function update_restore_ignoring_errors(string $restorekey, $info = [], $status = null): bool {
         // One of the reason for the failed backup - impossible to communicate with the API,
         // in which case this request will also fail.
         try {
@@ -857,7 +862,7 @@ class api {
      * @param \Throwable $t
      * @return void
      */
-    public static function report_error(\Throwable $t): void {
+    public static function report_error(\Throwable $t) {
         try {
             self::api_call("reporterror", 'POST', ['faileddetails' => operation_base::get_error_message_for_server($t)]);
         } catch (\Throwable $tapi) {

@@ -33,26 +33,17 @@
         <input type="button" id="getapikey_enterapikey" value="{{#str}} enterapikey, tool_vault {{/str}}" >
     </div>
     <div>
-        <iframe id="getapikey_iframe" src="about:blank" width="800" height="500" style="display:none">
+        <iframe id="getapikey_iframe" name="getapikey_iframe" src="about:blank" width="800" height="500" style="display:none">
         </iframe>
     </div>
     <div id="getapikey_formplaceholder"></div>
-    {{#islegacy}}
     <div id="getapikey_legacyform" class="pt-3 {{^showlegacyform}}hidden{{/showlegacyform}}">
         {{{legacyform}}}
     </div>
-    {{/islegacy}}
 </div>
 
 {{#js}}
-{{#islegacy}}
 require(['tool_vault/apikey_legacy'], function(apikey) {
     apikey.init();
 });
-{{/islegacy}}
-{{^islegacy}}
-require(['tool_vault/apikey'], function(apikey) {
-    apikey.init();
-});
-{{/islegacy}}
 {{/js}}

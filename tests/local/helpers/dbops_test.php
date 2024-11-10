@@ -28,7 +28,7 @@ use ReflectionClass;
  */
 final class dbops_test extends \advanced_testcase {
 
-    public function test_get_max_allowed_packet(): void {
+    public function test_get_max_allowed_packet() {
         global $DB;
 
         $packet = $this->call_static_method('get_max_allowed_packet', []);
@@ -77,11 +77,11 @@ EOF;
      * Test for method prepare_insert_sql
      * @uses dbops::prepare_insert_sql()
      */
-    public function test_prepare_insert_sql(): void {
+    public function test_prepare_insert_sql() {
         global $DB;
         $this->resetAfterTest(true);
 
-        [$tablename, $fields, $data] = $this->get_sample_data();
+        list($tablename, $fields, $data) = $this->get_sample_data();
 
         $sql = $this->call_static_method('prepare_insert_sql', [$tablename, $fields, 2]);
         $this->assertEquals('INSERT INTO {config} (id,name,value) VALUES (?,?,?),(?,?,?)', $sql);
@@ -109,9 +109,9 @@ EOF;
      * Test for method calculate_row_packet_sizes
      * @uses dbops::calculate_row_packet_sizes()
      */
-    public function test_calculate_row_packet_sizes(): void {
+    public function test_calculate_row_packet_sizes() {
         global $DB;
-        [$tablename, $fields, $data] = $this->get_sample_data();
+        list($tablename, $fields, $data) = $this->get_sample_data();
         $res = $this->call_static_method('calculate_row_packet_sizes', [count($fields), &$data]);
         if ($DB->get_dbfamily() === 'mysql') {
             $this->assertEquals([20, 124, 36], $res);
@@ -124,7 +124,7 @@ EOF;
      * Test for method prepare_next_chunk
      * @uses dbops::prepare_next_chunk()
      */
-    public function test_prepare_next_chunk(): void {
+    public function test_prepare_next_chunk() {
         global $CFG;
         $tablename = 'mytable';
         $fields = ['id', 'name', 'value'];

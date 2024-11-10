@@ -44,7 +44,7 @@ class database_column_info extends \database_column_info {
      * @param dbtable|null $deftable
      * @return \xmldb_field
      */
-    public function to_xmldb_field(?dbtable $deftable): \xmldb_field {
+    public function to_xmldb_field($deftable): \xmldb_field {
         global $DB;
 
         if ($DB->get_dbfamily() === 'mysql') {
@@ -142,7 +142,7 @@ class database_column_info extends \database_column_info {
      * @param dbtable|null $deftable
      * @return void
      */
-    protected function fix_field_properties(\xmldb_field $actualfield, ?dbtable $deftable) {
+    protected function fix_field_properties(\xmldb_field $actualfield, $deftable) {
         // Non-null char column should have either no default or a default that is not empty string.
         // Otherwise the parser complains on restore.
         if ($actualfield->getType() === XMLDB_TYPE_CHAR && $actualfield->getNotNull() &&

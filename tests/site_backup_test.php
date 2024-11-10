@@ -51,7 +51,7 @@ final class site_backup_test extends \advanced_testcase {
      *
      * @return void
      */
-    public function tearDown(): void {
+    public function tearDown() {
         tempfiles::cleanup();
         parent::tearDown();
     }
@@ -70,14 +70,14 @@ final class site_backup_test extends \advanced_testcase {
     /**
      * Testing get_all_tables()
      */
-    public function test_get_all_tables(): void {
+    public function test_get_all_tables() {
         $this->resetAfterTest();
         $tables = $this->create_site_backup()->get_db_structure()->get_tables_actual();
         $this->assertTrue(array_key_exists('tool_vault_config', $tables));
         $this->assertTrue(array_key_exists('config', $tables));
     }
 
-    public function test_export_table(): void {
+    public function test_export_table() {
         $this->resetAfterTest();
         $sitebackup = $this->create_site_backup();
         $tableobj = dbtable::create_from_actual_db('tool_vault_config', $sitebackup->get_db_structure());
@@ -108,7 +108,7 @@ final class site_backup_test extends \advanced_testcase {
         $curl->get('');
     }
 
-    public function test_export_table_with_reserved_words(): void {
+    public function test_export_table_with_reserved_words() {
         global $DB;
         $this->resetAfterTest();
 
@@ -142,7 +142,7 @@ final class site_backup_test extends \advanced_testcase {
         $dbman->drop_table($table);
     }
 
-    public function test_export_db(): void {
+    public function test_export_db() {
         if (!PHPUNIT_LONGTEST) {
             $this->markTestSkipped('PHPUNIT_LONGTEST is not defined');
         }
@@ -152,8 +152,8 @@ final class site_backup_test extends \advanced_testcase {
         $sitebackup = $this->create_site_backup();
         $sitebackup->prepare();
         $sitebackup->export_db();
-        [$filepathstructure] = $sitebackup->get_files_backup(constants::FILENAME_DBSTRUCTURE)->uploadedfiles;
-        [$filepath] = $sitebackup->get_files_backup(constants::FILENAME_DBDUMP)->uploadedfiles;
+        list($filepathstructure) = $sitebackup->get_files_backup(constants::FILENAME_DBSTRUCTURE)->uploadedfiles;
+        list($filepath) = $sitebackup->get_files_backup(constants::FILENAME_DBDUMP)->uploadedfiles;
         $this->assertGreaterThanOrEqual(100000, filesize($filepath));
 
         // Unpack and check contents.
@@ -200,7 +200,7 @@ final class site_backup_test extends \advanced_testcase {
         tempfiles::remove_temp_dir($dir);
     }
 
-    public function test_export_dataroot(): void {
+    public function test_export_dataroot() {
         $this->resetAfterTest();
 
         // Make a directory under dataroot and store a file there.
@@ -210,7 +210,7 @@ final class site_backup_test extends \advanced_testcase {
         // Call export_dataroot() from site_backup.
         $sitebackup = $this->create_site_backup();
         $sitebackup->export_dataroot();
-        [$filepath] = $sitebackup->get_files_backup(constants::FILENAME_DATAROOT)->uploadedfiles;
+        list($filepath) = $sitebackup->get_files_backup(constants::FILENAME_DATAROOT)->uploadedfiles;
         $this->assertTrue(file_exists($filepath));
 
         // Unpack and check contents.
@@ -225,7 +225,7 @@ final class site_backup_test extends \advanced_testcase {
         tempfiles::remove_temp_dir($dir);
     }
 
-    public function test_export_filedir(): void {
+    public function test_export_filedir() {
         $this->resetAfterTest();
 
         $sitebackup = $this->create_site_backup();

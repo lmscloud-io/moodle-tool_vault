@@ -169,7 +169,7 @@ class files_backup {
      * @param bool $isarchive this file is already an arhive and should be added without compression
      * @return self
      */
-    public function add_file(string $filepath, ?string $localname = null, bool $allownewzip = true,
+    public function add_file(string $filepath, $localname = null, bool $allownewzip = true,
                              bool $removesource = true, bool $isarchive = false): self {
         $localname = $localname ?? basename($filepath);
         if (is_dir($filepath)) {
@@ -271,7 +271,7 @@ class files_backup {
      *
      * @return string|null
      */
-    public function get_last_backedup_file(): ?string {
+    public function get_last_backedup_file() {
         if (!$this->backupfiles) {
             return null;
         }

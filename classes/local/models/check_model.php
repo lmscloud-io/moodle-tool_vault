@@ -33,7 +33,7 @@ class check_model extends operation_model {
      * @param \stdClass|null $record
      * @param string|null $type
      */
-    public function __construct(?\stdClass $record = null, ?string $type = null) {
+    public function __construct($record = null, $type = null) {
         if ($record && isset($record->type) && !self::validate_type($record->type)) {
             throw new \coding_exception('Type '.$record->type.' is invalid for a check');
         }
@@ -70,7 +70,7 @@ class check_model extends operation_model {
      * @param int $id
      * @return static|null
      */
-    public static function get_by_id(int $id): ?operation_model {
+    public static function get_by_id(int $id) {
         if (($model = parent::get_by_id($id)) && self::validate_type($model->type)) {
             return $model;
         }

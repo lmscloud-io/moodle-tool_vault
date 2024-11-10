@@ -34,7 +34,7 @@ final class api_test extends \advanced_testcase {
      *
      * @return void
      */
-    public function tearDown(): void {
+    public function tearDown() {
         tempfiles::cleanup();
         parent::tearDown();
     }
@@ -44,7 +44,7 @@ final class api_test extends \advanced_testcase {
      *
      * This is to be replaced by some actually usefule test.
      */
-    public function test_dummy(): void {
+    public function test_dummy() {
         $this->assertNotEmpty(\core_component::get_component_directory('tool_vault'));
     }
 }

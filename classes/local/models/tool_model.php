@@ -33,7 +33,7 @@ class tool_model extends operation_model {
      * @param \stdClass|null $record
      * @param string|null $type
      */
-    public function __construct(?\stdClass $record = null, ?string $type = null) {
+    public function __construct($record = null, $type = null) {
         if ($record && isset($record->type) && !self::validate_type($record->type)) {
             throw new \coding_exception('Type '.$record->type.' is invalid for a tool');
         }

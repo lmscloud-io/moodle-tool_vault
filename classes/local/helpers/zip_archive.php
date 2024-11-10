@@ -38,7 +38,7 @@ class zip_archive extends \zip_archive {
      * @param int $level level of compression: 0 - not compressed, 9 - maximum compression
      * @return void
      */
-    public function set_file_compression_level(string $localname, int $level): void {
+    public function set_file_compression_level(string $localname, int $level) {
         if ($level >= 9) {
             // Compression level 9 is default, we do not need to do anything.
             return;

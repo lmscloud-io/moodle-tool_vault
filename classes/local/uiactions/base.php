@@ -52,7 +52,7 @@ abstract class base {
      * @param moodle_page $page
      * @return void
      */
-    public function page_setup(moodle_page $page): void {
+    public function page_setup(moodle_page $page) {
         $parts = preg_split('|\\\\|', static::class);
         $subparts = preg_split('/_/', end($parts), 2);
         $section = $subparts[0];
@@ -105,7 +105,7 @@ abstract class base {
      *
      * @return string|null
      */
-    protected static function get_action(): ?string {
+    protected static function get_action() {
         $parts = preg_split('|\\\\|', static::class);
         $subparts = preg_split('/_/', end($parts), 2);
         return count($subparts) > 1 ? $subparts[1] : '';
@@ -133,7 +133,7 @@ abstract class base {
      *
      * @return moodle_url|null
      */
-    protected function get_return_url(): ?moodle_url {
+    protected function get_return_url() {
         $returnurl = optional_param('returnurl', null, PARAM_LOCALURL);
         return $returnurl ? new moodle_url($returnurl) : null;
     }
@@ -154,17 +154,14 @@ abstract class base {
                 'vaulturl' => api::get_frontend_url(),
                 'loginsrc' => $registerurl->out(false),
             ];
-            if (!class_exists('\\core_form\\dynamic_form')) {
-                $data['islegacy'] = 1;
-                $form = new apikey_form_legacy(main::url(), ['returnurl' => static::url()]);
-                if (!$form->get_data() && $form->is_submitted()) {
-                    $data['showlegacyform'] = 1;
-                }
-                ob_start();
-                $form->display();
-                $data['legacyform'] = ob_get_contents();
-                ob_end_clean();
+            $form = new apikey_form_legacy(main::url(), ['returnurl' => static::url()]);
+            if (!$form->get_data() && $form->is_submitted()) {
+                $data['showlegacyform'] = 1;
             }
+            ob_start();
+            $form->display();
+            $data['legacyform'] = ob_get_contents();
+            ob_end_clean();
             return $output->render_from_template('tool_vault/getapikey', $data);
         }
         return '';

@@ -62,7 +62,7 @@ class backup_file {
      * @param array $filerecord record of the file as received from API plus additional properties ('operationid', 'status')
      * @return static|null
      */
-    public static function create(array $filerecord): ?self {
+    public static function create(array $filerecord) {
         $filename = $filerecord['name'];
         if (pathinfo($filename, PATHINFO_EXTENSION) !== 'zip') {
             return null;
@@ -106,9 +106,9 @@ class backup_file {
                     [$this->data['operationid'], $this->data['filetype']]);
                 $this->data['seq'] = ($maxseq === null) ? 1 : ($maxseq + 1);
             }
-            $this->data['id'] = $DB->insert_record(self::TABLE, $this->data);
+            $this->data['id'] = $DB->insert_record(self::TABLE, (object)$this->data);
         } else {
-            $DB->update_record(self::TABLE, $this->data);
+            $DB->update_record(self::TABLE, (object)$this->data);
         }
         return $this;
     }

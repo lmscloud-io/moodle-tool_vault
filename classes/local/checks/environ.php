@@ -40,7 +40,7 @@ class environ extends check_base {
     /**
      * Evaluate check and store results in model details
      */
-    public function perform(): void {
+    public function perform() {
         $this->model->set_details([
             'max_execution_time' => ini_get("max_execution_time"),
         ])->save();

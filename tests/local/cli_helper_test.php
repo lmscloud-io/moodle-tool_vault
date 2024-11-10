@@ -53,7 +53,7 @@ final class cli_helper_test extends \advanced_testcase {
     /**
      * Test cli_helper for backup
      */
-    public function test_cli_helper_for_backup(): void {
+    public function test_cli_helper_for_backup() {
         $this->resetAfterTest();
         $clihelper = $this->construct_helper(cli_helper::SCRIPT_BACKUP, ['--apikey=phpunit']);
         ob_start();
@@ -68,7 +68,7 @@ final class cli_helper_test extends \advanced_testcase {
     /**
      * Test cli_helper for restore
      */
-    public function test_cli_helper_for_restore(): void {
+    public function test_cli_helper_for_restore() {
         $this->resetAfterTest();
         $clihelper = $this->construct_helper(cli_helper::SCRIPT_RESTORE, ['--apikey=phpunit', '--backupkey=abcdef']);
         ob_start();
@@ -83,7 +83,7 @@ final class cli_helper_test extends \advanced_testcase {
     /**
      * Test cli_helper for list
      */
-    public function test_cli_helper_for_list(): void {
+    public function test_cli_helper_for_list() {
         $this->resetAfterTest();
         $clihelper = $this->construct_helper(cli_helper::SCRIPT_LIST, ['--apikey=phpunit']);
         ob_start();
@@ -100,7 +100,7 @@ final class cli_helper_test extends \advanced_testcase {
      *
      * @return void
      */
-    public function test_print_table(): void {
+    public function test_print_table() {
         $result = (new cli_helper(cli_helper::SCRIPT_LIST, ''))->print_table(['a' => 'bb', 'cc' => 'd']);
         $this->assertEquals("a  bb\ncc d\n", $result);
     }

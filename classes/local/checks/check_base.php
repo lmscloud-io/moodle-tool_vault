@@ -68,7 +68,7 @@ abstract class check_base extends operation_base {
      * @param int $id
      * @return static|null
      */
-    public static function load(int $id): ?self {
+    public static function load(int $id) {
         $model = check_model::get_by_id($id);
         if (!$model) {
             return null;
@@ -181,7 +181,7 @@ abstract class check_base extends operation_base {
      * @param operation_model|null $parent
      * @return static
      */
-    public static function create_and_run(?operation_model $parent = null): self {
+    public static function create_and_run($parent = null): self {
         // TODO check - only to use from CLI.
         // TODO make sure there is nothing else scheduled.
         $model = new check_model((object)['status' => constants::STATUS_INPROGRESS, 'parentid' => $parent ? $parent->id : null],
@@ -202,12 +202,12 @@ abstract class check_base extends operation_base {
     /**
      * Evaluate check and store results in model details
      */
-    abstract public function perform(): void;
+    abstract public function perform();
 
     /**
      * Evaluate check and store results in model details
      */
-    public function execute(): void {
+    public function execute() {
         $this->perform();
         $this->model->set_status(constants::STATUS_FINISHED)->save();
     }
@@ -288,7 +288,7 @@ abstract class check_base extends operation_base {
      * @param array $extraparams
      * @return \moodle_url|null
      */
-    public function get_reschedule_url(array $extraparams = []): ?\moodle_url {
+    public function get_reschedule_url(array $extraparams = []) {
         if ($this->get_model()->parentid && !in_array(get_class($this), site_backup::backup_prechecks())) {
             return null;
         }
@@ -300,7 +300,7 @@ abstract class check_base extends operation_base {
      *
      * @return \moodle_url|null
      */
-    public function get_fullreport_url(): ?\moodle_url {
+    public function get_fullreport_url() {
         // This function is overridden for the check_base_restore class.
         return backup_checkreport::url(['id' => $this->get_model()->id]);
     }
@@ -310,7 +310,7 @@ abstract class check_base extends operation_base {
      *
      * @return operation_model|null
      */
-    public function get_parent(): ?operation_model {
+    public function get_parent() {
         return $this->parent;
     }
 

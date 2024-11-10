@@ -89,7 +89,7 @@ class log_capture {
      *
      * @param \tool_vault\local\models\operation_model $model
      */
-    public static function start_capturing(operation_model $model): void {
+    public static function start_capturing(operation_model $model) {
         if (self::is_current_output_buffer()) {
             // We cannot capture when we are already capturing.
             throw new \coding_exception('Logging is already in progress. Nested logging is not supported.');

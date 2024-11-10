@@ -44,7 +44,7 @@ class dbstatus extends check_base {
     /**
      * Evaluate check and store results in model details
      */
-    public function perform(): void {
+    public function perform() {
         $s = dbstructure::load();
         $result = [
             constants::DIFF_EXTRATABLES => [],
@@ -157,7 +157,7 @@ class dbstatus extends check_base {
      *
      * @return array|null
      */
-    protected function get_report(): ?array {
+    protected function get_report() {
         if ($this->get_model()->status !== constants::STATUS_FINISHED) {
             return null;
         }
@@ -176,7 +176,7 @@ class dbstatus extends check_base {
     /**
      * Evaluate check and store results in model details
      */
-    public function execute(): void {
+    public function execute() {
         parent::execute();
         if (!$this->success() && !$this->parent) {
             // This is a stand-alone backup precheck that failed, report to the server.
@@ -235,7 +235,7 @@ class dbstatus extends check_base {
      * @param dbtable|null $deftable
      * @return string
      */
-    protected function add_to_excluded_tables_link(string $tablename, ?dbtable $deftable = null): string {
+    protected function add_to_excluded_tables_link(string $tablename, $deftable = null): string {
         global $CFG;
         $a = $CFG->prefix . $tablename;
         if (siteinfo::is_table_excluded_from_backup($tablename, $deftable)) {

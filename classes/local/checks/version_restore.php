@@ -32,7 +32,7 @@ class version_restore extends check_base_restore {
     /**
      * Evaluate check and store results in model details
      */
-    public function perform(): void {
+    public function perform() {
         /** @var dryrun_model $parent */
         $parent = $this->get_parent();
         $this->model->set_details([
@@ -79,7 +79,7 @@ class version_restore extends check_base_restore {
      * @param string $torelease i.e. 4.2.8
      * @return string|null
      */
-    public static function get_required_core_intermediate_release(string $fromrelease, string $torelease): ?string {
+    public static function get_required_core_intermediate_release(string $fromrelease, string $torelease) {
         global $CFG;
         require_once($CFG->dirroot.'/lib/environmentlib.php');
 

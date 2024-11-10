@@ -17,7 +17,7 @@ Feature: Performing full site backup and restore with a pro account in Vault
     And I wait until "Automatically expire backup after" "field" exists
     And I set vault backup description field
     And I set vault backup storage field to "<storage>"
-    And I set the following fields in the "Start backup" "dialogue" to these values:
+    And I set the following fields in the vault "Start backup" "dialogue" to these values:
       | Passphrase                        |   |
       | Automatically expire backup after | 1 |
     And I click on "Start backup" "button" in the "Start backup" "dialogue"
@@ -26,7 +26,7 @@ Feature: Performing full site backup and restore with a pro account in Vault
     And I run the scheduled task "tool_vault\task\cron_task"
     And I reload the page
     And I should see "Backup finished"
-    And I log in as "admin"
+    And I am on homepage
     And I navigate to "Server > Vault - Site migration" in site administration
     And I click on "Site restore" "link" in the "region-main" "region"
     And I click on "Refresh" "link" in the "region-main" "region"
@@ -82,7 +82,7 @@ Feature: Performing full site backup and restore with a pro account in Vault
     And I wait until "Automatically expire backup after" "field" exists
     And I set vault backup description field
     And I set vault backup storage field to "<storage>"
-    And I set the following fields in the "Start backup" "dialogue" to these values:
+    And I set the following fields in the vault "Start backup" "dialogue" to these values:
       | Passphrase                        | hello |
       | Automatically expire backup after | 1     |
     And I click on "Start backup" "button" in the "Start backup" "dialogue"
@@ -91,12 +91,12 @@ Feature: Performing full site backup and restore with a pro account in Vault
     And I run the scheduled task "tool_vault\task\cron_task"
     And I reload the page
     And I should see "Backup finished"
-    And I log in as "admin"
+    And I am on homepage
     And I navigate to "Server > Vault - Site migration" in site administration
     And I click on "Site restore" "link" in the "region-main" "region"
     And I click on "Refresh" "link" in the "region-main" "region"
     And I click on "Run pre-check" "button" in the row of my vault backup
-    And I set the following fields in the "Run pre-check" "dialogue" to these values:
+    And I set the following fields in the vault "Run pre-check" "dialogue" to these values:
       | Passphrase | hello  |
     And I click on "Run pre-check" "button" in the "Run pre-check" "dialogue"
     And I run the scheduled task "tool_vault\task\cron_task"

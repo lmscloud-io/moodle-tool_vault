@@ -55,7 +55,7 @@ class cleanup_existing_files extends restore_action {
      */
     protected function save_current_files_list(int $restoreid) {
         global $DB;
-        [$sqlcomponent, $params] = $DB->get_in_or_equal(siteinfo::get_excluded_plugins_restore(), SQL_PARAMS_NAMED);
+        list($sqlcomponent, $params) = $DB->get_in_or_equal(siteinfo::get_excluded_plugins_restore(), SQL_PARAMS_NAMED);
         $sql = "insert into {tool_vault_table_files_data} (restoreid, contenthash)
             select distinct $restoreid AS restoreid, contenthash
             from {files} where contenthash not in (

@@ -36,7 +36,11 @@ class clear_caches extends restore_action {
      */
     public function execute(site_restore $logger, string $stage) {
         $logger->add_to_log('Purging caches...');
-        purge_caches();
+        if (function_exists('purge_caches')) {
+            purge_caches();
+        } else {
+            purge_all_caches();
+        }
         $logger->add_to_log('...done');
     }
 }

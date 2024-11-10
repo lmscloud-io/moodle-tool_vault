@@ -38,7 +38,7 @@ use tool_vault\constants;
  */
 final class operation_model_test extends \advanced_testcase {
 
-    public function test_get_active_processes(): void {
+    public function test_get_active_processes() {
         $this->resetAfterTest();
         $backup1 = operation_model::instance((object)['type' => 'backup', 'status' => constants::STATUS_SCHEDULED])->save();
         $all = operation_model::get_active_processes();

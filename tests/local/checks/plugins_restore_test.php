@@ -26,7 +26,7 @@ namespace tool_vault\local\checks;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class plugins_restore_test extends \advanced_testcase {
-    public function test_major_version_from_branch(): void {
+    public function test_major_version_from_branch() {
         $this->assertEquals('3.9', plugins_restore::major_version_from_branch(39));
         $this->assertEquals('3.9', plugins_restore::major_version_from_branch('39'));
         $this->assertEquals('3.11', plugins_restore::major_version_from_branch(311));

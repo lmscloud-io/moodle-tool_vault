@@ -45,7 +45,7 @@ class dryrun implements \templatable {
      * @param site_restore_dryrun $dryrun
      * @param remote_backup|null $remotebackup
      */
-    public function __construct(site_restore_dryrun $dryrun, ?remote_backup $remotebackup = null) {
+    public function __construct(site_restore_dryrun $dryrun, $remotebackup = null) {
         $this->dryrun = $dryrun;
         $this->remotebackup = $remotebackup;
     }

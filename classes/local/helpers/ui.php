@@ -146,7 +146,7 @@ class ui {
      * @param string|null $value
      * @return string
      */
-    public static function format_description(?string $value): string {
+    public static function format_description($value): string {
         return s($value ?? '');
     }
 }

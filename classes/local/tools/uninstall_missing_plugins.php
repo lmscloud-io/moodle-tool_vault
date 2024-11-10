@@ -32,7 +32,7 @@ class uninstall_missing_plugins extends tool_base {
      * Execute operation
      * @return void
      */
-    public function perform(): void {
+    public function perform() {
         \tool_vault\local\restoreactions\uninstall_missing_plugins::remove_missing_plugins($this);
     }
 

@@ -62,7 +62,7 @@ class backup_model extends operation_model {
      * @param string $backupkey
      * @return static|null
      */
-    public static function get_by_backup_key(string $backupkey): ?self {
+    public static function get_by_backup_key(string $backupkey) {
         /** @var backup_model[] $records */
         $records = self::get_records_select(
             "type = :type AND backupkey = :backupkey",
@@ -75,7 +75,7 @@ class backup_model extends operation_model {
      *
      * @return false|mixed
      */
-    public static function get_scheduled_backup(): ?backup_model {
+    public static function get_scheduled_backup() {
         /** @var backup_model[] $backups */
         $backups = self::get_records([constants::STATUS_SCHEDULED]);
         return $backups ? reset($backups) : null;
@@ -86,7 +86,7 @@ class backup_model extends operation_model {
      *
      * @return \stdClass|null
      */
-    public static function get_backup_in_progress(): ?backup_model {
+    public static function get_backup_in_progress() {
         /** @var backup_model[] $backups */
         $backups = self::get_records([constants::STATUS_INPROGRESS]);
         return $backups ? reset($backups) : null;
@@ -97,7 +97,7 @@ class backup_model extends operation_model {
      *
      * @return ?backup_model
      */
-    public static function get_last_backup(): ?backup_model {
+    public static function get_last_backup() {
         /** @var backup_model[] $backups */
         $backups = self::get_records(null, null, 0, 1);
         return $backups ? reset($backups) : null;

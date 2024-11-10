@@ -26,7 +26,7 @@ namespace tool_vault\local\helpers;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class tempfiles_test extends \advanced_testcase {
-    public function test_make_temp_directory(): void {
+    public function test_make_temp_directory() {
         $dir = tempfiles::make_temp_dir('test-');
         $this->assertTrue(file_exists($dir) && is_dir($dir));
         $this->assertTrue(tempfiles::dir_is_empty($dir));

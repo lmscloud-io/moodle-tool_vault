@@ -34,7 +34,7 @@ final class dbtable_test extends \advanced_testcase {
      *
      * @return void
      */
-    public function test_get_alter_sql(): void {
+    public function test_get_alter_sql() {
         $this->resetAfterTest();
 
         $structure = dbstructure::load();
@@ -48,7 +48,7 @@ final class dbtable_test extends \advanced_testcase {
      *
      * @return void
      */
-    public function test_get_alter_sql_xml(): void {
+    public function test_get_alter_sql_xml() {
         $this->resetAfterTest();
 
         $table = $this->fixture_config();
@@ -224,7 +224,7 @@ EOF;
     /**
      * Test for compare_with_other_table()
      */
-    public function test_compare_with_other_table(): void {
+    public function test_compare_with_other_table() {
         $this->resetAfterTest();
 
         $deftable = $this->fixture_config_log();

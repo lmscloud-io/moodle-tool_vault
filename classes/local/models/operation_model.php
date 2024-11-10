@@ -64,7 +64,7 @@ abstract class operation_model {
      *
      * @param \stdClass|null $record
      */
-    public function __construct(?\stdClass $record = null) {
+    public function __construct($record = null) {
         $record = $record ?? new \stdClass();
         foreach ($record as $key => $value) {
             if (!in_array($key, array_merge(self::$fields, ['id', 'timecreated', 'timemodified', 'parentid']))) {
@@ -228,7 +228,7 @@ abstract class operation_model {
      * @param \stdClass $record
      * @return static|null
      */
-    public static function instance(\stdClass $record): ?self {
+    public static function instance(\stdClass $record) {
         if (static::validate_type($record->type)) {
             return new static($record);
         }
@@ -249,7 +249,7 @@ abstract class operation_model {
      * @param int $id
      * @return static|null
      */
-    public static function get_by_id(int $id): ?self {
+    public static function get_by_id(int $id) {
         global $DB;
         $record = $DB->get_record(self::TABLE, ['id' => $id]);
         return $record && static::validate_type($record->type) ? new static($record) : null;
@@ -314,19 +314,15 @@ abstract class operation_model {
      * @param bool $usehtml
      * @return string
      */
-    public function format_log_line(?\stdClass $log, bool $usehtml = true): string {
+    public function format_log_line($log, bool $usehtml = true): string {
         if (!$log) {
             $class = 'tool_vault-log tool_vault-log-level-skipped';
             return $usehtml ? \html_writer::span('...', $class) : '...';
         }
         $class = 'tool_vault-log tool_vault-log-level-'.($log->loglevel ?: constants::LOGLEVEL_INFO);
-        if (get_string_manager()->string_exists('strftimedatetimeshortaccurate', 'core_langconfig')) {
-            $format = get_string('strftimedatetimeshortaccurate', 'core_langconfig');
-        } else {
-            $format = get_string('strftimedatetimeshort', 'core_langconfig');
-            if (!preg_match('|%H:%M:%S|', $format)) {
-                $format = preg_replace('|%H:%M|', '%H:%M:%S', $format);
-            }
+        $format = get_string('strftimedatetimeshort', 'core_langconfig');
+        if (!preg_match('|%H:%M:%S|', $format)) {
+            $format = preg_replace('|%H:%M|', '%H:%M:%S', $format);
         }
         if ($log->loglevel === constants::LOGLEVEL_UNKNOWN) {
             $message = $log->message;
@@ -424,7 +420,7 @@ abstract class operation_model {
      * @param int $limit
      * @return static[]
      */
-    public static function get_records(?array $statuses = null, ?string $sort = null, int $offset = 0, int $limit = 0): array {
+    public static function get_records($statuses = null, $sort = null, int $offset = 0, int $limit = 0): array {
         global $DB;
         $sort = $sort ?? 'timecreated DESC, id DESC';
         if (static::$defaulttype) {
@@ -438,7 +434,7 @@ abstract class operation_model {
             $params = [];
         }
         if ($statuses) {
-            [$sql2, $params2] = $DB->get_in_or_equal($statuses, SQL_PARAMS_NAMED);
+            list($sql2, $params2) = $DB->get_in_or_equal($statuses, SQL_PARAMS_NAMED);
             $sql .= ' AND status '.$sql2;
         }
         return static::get_records_select($sql, ($params2 ?? []) + $params, $sort, $offset, $limit);
@@ -473,7 +469,7 @@ abstract class operation_model {
      * @param string $accesskey
      * @return static|null
      */
-    public static function get_by_access_key(string $accesskey): ?self {
+    public static function get_by_access_key(string $accesskey) {
         global $DB;
         if (empty($accesskey)) {
             return null;
@@ -530,12 +526,12 @@ abstract class operation_model {
      * @param array $extra
      * @return ?operation_model
      */
-    public static function get_last_of(array $classes, array $extra = []): ?operation_model {
+    public static function get_last_of(array $classes, array $extra = []) {
         global $DB;
         $types = array_filter(array_map(function($class) {
             return is_subclass_of($class, operation_model::class) ? ($class::$defaulttype) : null;
         }, $classes));
-        [$sql, $params] = $DB->get_in_or_equal($types, SQL_PARAMS_NAMED);
+        list($sql, $params) = $DB->get_in_or_equal($types, SQL_PARAMS_NAMED);
         $sql = 'type '.$sql;
         if (!empty($extra['backupkey'])) {
             $sql .= ' AND backupkey = :backupkey';

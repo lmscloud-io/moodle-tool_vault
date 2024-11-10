@@ -188,7 +188,7 @@ class dbstructure {
      * @param string $tablename
      * @return dbtable|null
      */
-    public function find_table_definition(string $tablename): ?dbtable {
+    public function find_table_definition(string $tablename) {
         foreach ($this->get_tables_definitions() as $table) {
             if ($table->get_xmldb_table()->getName() === $tablename) {
                 return $table;
@@ -337,7 +337,7 @@ class dbstructure {
      * @param bool $showdefinitions
      * @return string
      */
-    public function output(?array $onlytables = null, bool $showdefinitions = false) {
+    public function output($onlytables = null, bool $showdefinitions = false) {
         $o = '<?xml version="1.0" encoding="UTF-8" ?>' . "\n";
         $o .= '<XMLDB ';
         $rel = '../../../..';

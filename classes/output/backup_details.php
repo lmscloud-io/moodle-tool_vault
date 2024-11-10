@@ -55,7 +55,7 @@ class backup_details implements \templatable {
      * @param bool $fulldetails
      * @param bool $isprogresspage
      */
-    public function __construct(?backup_model $backup, ?remote_backup $remotebackup = null,
+    public function __construct($backup, $remotebackup = null,
                                 bool $fulldetails = true, bool $isprogresspage = false) {
         $this->backup = $backup;
         $this->remotebackup = $remotebackup;
@@ -72,7 +72,7 @@ class backup_details implements \templatable {
      * @param \renderer_base $output
      * @return array
      */
-    public function export_for_template($output) {
+    public function export_for_template(\renderer_base $output) {
         global $CFG;
         $backupkey = $this->remotebackup->backupkey ?? $this->backup->backupkey ?? '';
         $status = $this->remotebackup->status ?? $this->backup->status ?? '';

@@ -50,8 +50,10 @@ class siteinfo {
                     'name' => $plugininfo ? $plugininfo->displayname : null,
                     'path' => $isaddon ? preg_replace('/^'.preg_quote("{$CFG->dirroot}/", '/').'/', "", $dir) : null,
                     'dependencies' => $isaddon ? $plugininfo->dependencies : null,
-                    'pluginsupported' => $isaddon ? $plugininfo->pluginsupported : null,
-                    'pluginincompatible' => $isaddon ? $plugininfo->pluginincompatible : null,
+                    'pluginsupported' => $isaddon && property_exists($plugininfo, 'pluginsupported') ?
+                        $plugininfo->pluginsupported : null,
+                    'pluginincompatible' => $isaddon && property_exists($plugininfo, 'pluginincompatible') ?
+                        $plugininfo->pluginincompatible : null,
                 ]);
             }
         }
@@ -117,7 +119,7 @@ class siteinfo {
      * @return bool
      */
     public static function plugin_has_subplugins(string $plugin): bool {
-        [$type, $name] = core_component::normalize_component($plugin);
+        list($type, $name) = core_component::normalize_component($plugin);
         $subplugintypes = core_component::get_plugin_types_with_subplugins();
         if (isset($subplugintypes[$type])) {
             $base = core_component::get_plugin_directory($type, $name);
@@ -253,7 +255,7 @@ class siteinfo {
      * @param dbtable|null $deftable
      * @return bool
      */
-    public static function is_table_excluded_from_backup(string $tablename, ?dbtable $deftable): bool {
+    public static function is_table_excluded_from_backup(string $tablename, $deftable): bool {
         global $CFG;
         if (!$deftable) {
             // This is a table that is not present in the install.xml files of core or any plugins.
@@ -278,7 +280,7 @@ class siteinfo {
      * @param string $tablename table name without the mdl_ prefix
      * @return void
      */
-    public static function add_table_to_excluded_from_backup(string $tablename): void {
+    public static function add_table_to_excluded_from_backup(string $tablename) {
         global $CFG;
         $tablename = trim(strtolower($tablename));
         $tables = api::get_setting_array('backupexcludetables');
@@ -295,7 +297,7 @@ class siteinfo {
      * @param dbtable|null $deftable
      * @return bool
      */
-    public static function is_table_preserved_in_restore(string $tablename, ?dbtable $deftable): bool {
+    public static function is_table_preserved_in_restore(string $tablename, $deftable): bool {
         global $CFG;
         if (!$deftable) {
             // This is a table that is not present in the install.xml files of core or any plugins.

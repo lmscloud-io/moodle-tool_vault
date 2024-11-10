@@ -50,7 +50,7 @@ class configoverride extends check_base {
     /**
      * Evaluate check and store results in model details
      */
-    public function perform(): void {
+    public function perform() {
         global $CFG;
         list($included, $notincluded) = $this->get_config_overrides_core();
         list($pincluded, $pnotincluded) = $this->get_config_overrides_plugins();
@@ -98,7 +98,7 @@ class configoverride extends check_base {
      * @param string|null $plugin
      * @return bool
      */
-    protected function setting_in_admin_tree(string $key, ?string $plugin = null): bool {
+    protected function setting_in_admin_tree(string $key, $plugin = null): bool {
         global $CFG, $DB;
         // TODO actually check admin tree, not database.
         if ($plugin) {
@@ -188,7 +188,7 @@ class configoverride extends check_base {
      *
      * @return array|null
      */
-    protected function get_report(): ?array {
+    protected function get_report() {
         if ($this->get_model()->status !== constants::STATUS_FINISHED) {
             return null;
         }
@@ -204,7 +204,7 @@ class configoverride extends check_base {
      * @param bool $included
      * @return array
      */
-    protected function format_setting_value_for_details(string $name, ?string $plugin, $value, bool $included): array {
+    protected function format_setting_value_for_details(string $name, $plugin, $value, bool $included): array {
         if (!$included) {
             $value = '<em>' . get_string('configoverrides_valueredacted', 'tool_vault') . '</em>';
         } else {

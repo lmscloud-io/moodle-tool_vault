@@ -79,6 +79,45 @@ class behat_tool_vault extends behat_base {
     }
 
     /**
+     * Generic field setter.
+     *
+     * Internal API method, a generic *I set "VALUE" to "FIELD" field*
+     * could be created based on it.
+     *
+     * @param string $fieldlocator The pointer to the field, it will depend on the field type.
+     * @param string $value the value to set
+     * @param string $containerselectortype The type of selector where we look in
+     * @param string $containerelement Element we look in
+     */
+    protected function set_field_value_in_container($fieldlocator, $value, $containerselectortype, $containerelement) {
+        $node = $this->get_node_in_container('field', $fieldlocator, $containerselectortype, $containerelement);
+        $field = behat_field_manager::get_form_field($node, $this->getSession());
+        $field->set_value($value);
+    }
+
+    /**
+     * Fills a form with field/value data.
+     *
+     * @Given /^I set the following fields in the vault "(?P<e>(?:[^"]|\\")*)" "(?P<t>[^"]*)" to these values:$/
+     * @param string $containerelement Element we look in
+     * @param string $containerselectortype The type of selector where we look in
+     * @param \Behat\Gherkin\Node\TableNode $data
+     */
+    public function i_set_the_following_fields_in_vault_container_to_these_values(
+            $containerelement, $containerselectortype, \Behat\Gherkin\Node\TableNode $data) {
+
+        // Expand all fields in case we have.
+        $this->execute('behat_forms::i_expand_all_fieldsets');
+
+        $datahash = $data->getRowsHash();
+
+        // The action depends on the field type.
+        foreach ($datahash as $locator => $value) {
+            $this->set_field_value_in_container($locator, $value, $containerselectortype, $containerelement);
+        }
+    }
+
+    /**
      * Generate a random backup name and set it in the form
      *
      * @Given /^I set vault backup description field$/
@@ -87,12 +126,12 @@ class behat_tool_vault extends behat_base {
         global $CFG;
         $backupname = random_string(15) . ' (' . $CFG->branch . ')';
         set_config('behat_backup_name', $backupname, 'tool_vault');
-        $this->execute('behat_forms::i_set_the_field_in_container_to', [
+        $this->set_field_value_in_container(
             get_string('backupdescription', 'tool_vault'),
-            get_string('startbackup', 'tool_vault'),
-            "dialogue",
             $backupname,
-        ]);
+            "dialogue",
+            get_string('startbackup', 'tool_vault')
+        );
     }
 
     /**
@@ -108,12 +147,7 @@ class behat_tool_vault extends behat_base {
             // This will also pass if the storage selector is not displayed at all.
             return;
         }
-        $this->execute('behat_forms::i_set_the_field_in_container_to', [
-            get_string('startbackup_bucket', 'tool_vault'),
-            get_string('startbackup', 'tool_vault'),
-            "dialogue",
-            $storage,
-        ]);
+        $this->execute('behat_forms::i_set_the_field_to', ['bucket_startbackup', $storage]);
     }
 
     /**
@@ -131,5 +165,28 @@ class behat_tool_vault extends behat_base {
             $backupname,
             "table_row",
         ]);
+    }
+
+    /**
+     * Switches to the specified iframe.
+     *
+     * @Given /^I switch to "(?P<iframe_name_string>(?:[^"]|\\")*)" vault iframe$/
+     * @param string $name The name of the iframe
+     */
+    public function switch_to_iframe_vault($name) {
+        global $CFG;
+        // We spin to give time to the iframe to be loaded.
+        // Using extended timeout as we don't know about which
+        // kind of iframe will be loaded.
+        $timeout = !empty($CFG->behat_increasetimeout) ? 10 * $CFG->behat_increasetimeout : 10;
+        $this->spin(
+            function($context) use ($name){
+                $context->getSession()->switchToIFrame($name);
+
+                // If no exception we are done.
+                return true;
+            },
+            $timeout
+        );
     }
 }

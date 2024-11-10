@@ -32,7 +32,7 @@ abstract class check_base_restore extends check_base {
      *
      * @return \moodle_url|null
      */
-    public function get_fullreport_url(): ?\moodle_url {
+    public function get_fullreport_url() {
         return restore_checkreport::url(['id' => $this->get_model()->id]);
     }
 
@@ -56,7 +56,7 @@ abstract class check_base_restore extends check_base {
      * @param string|null $text
      * @return string
      */
-    protected static function badge_error(?string $text = null): string {
+    protected static function badge_error($text = null): string {
         return self::badge('badge-danger', $text ?? get_string('error', 'moodle'));
     }
 
@@ -66,7 +66,7 @@ abstract class check_base_restore extends check_base {
      * @param string|null $text
      * @return string
      */
-    protected static function badge_warning(?string $text = null): string {
+    protected static function badge_warning($text = null): string {
         return self::badge('badge-warning', $text ?? get_string('warning', 'moodle'));
     }
 
@@ -76,8 +76,8 @@ abstract class check_base_restore extends check_base {
      * @param string|null $text
      * @return string
      */
-    protected static function badge_info(?string $text = null): string {
-        return self::badge('badge-info', $text ?? get_string('statusinfo', 'moodle'));
+    protected static function badge_info($text = null): string {
+        return self::badge('badge-info', $text ?? get_string('statusinfo', 'tool_vault'));
     }
 
     /**
@@ -87,7 +87,7 @@ abstract class check_base_restore extends check_base {
      * @param int $maxage if >0, max number of seconds since the operation finished
      * @return check_base_restore|null
      */
-    public static function get_last_check_for_parent(array $parentselect, int $maxage = 0): ?self {
+    public static function get_last_check_for_parent(array $parentselect, int $maxage = 0) {
         $parent = \tool_vault\local\models\operation_model::get_last_of(
             [\tool_vault\local\models\restore_model::class, \tool_vault\local\models\dryrun_model::class],
             $parentselect);
