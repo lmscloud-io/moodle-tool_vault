@@ -43,21 +43,12 @@
     </div>
     <div class="row">
         <div class="col-md-2 col-lg-1">
-            {{#allowrestore}}
-                <img src="{{pixbaseurl}}/clouddown.svg" width="48" height="48" alt="">
-            {{/allowrestore}}
-            {{^allowrestore}}
-                <img src="{{pixbaseurl}}/clouddownoff.svg" width="48" height="48" alt="">
-            {{/allowrestore}}
+            <img src="{{pixbaseurl}}/clouddownoff.svg" width="48" height="48" alt="">
         </div>
         <div class="col-md-10 col-lg-11">
             <p>
-                <a href="{{mainurl}}?section=restore">{{#str}} siterestore, tool_vault {{/str}}</a><br>
-                {{#str}} siterestore_desc, tool_vault {{/str}}
-                {{^allowrestore}}
-                <br>
-                {{#str}} siterestore_notallowed_desc, tool_vault {{/str}}
-                {{/allowrestore}}
+                <b><span class="dimmed_text">{{#str}} siterestore, tool_vault {{/str}}</span></b><br>
+                <span class="dimmed_text">{{#str}} backuponlyversion, tool_vault {{/str}}</span>
             </p>
         </div>
     </div>

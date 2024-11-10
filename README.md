@@ -2,6 +2,8 @@
 
 Vault allows you to make a **full backup of the site**, push it to the cloud and then **restore** on any Moodle site.
 
+Note that this version can ONLY BACKUP. Restore is only possible in the later Moodle versions.
+
 See also https://lmsvault.io/
 
 ### Features:
@@ -45,41 +47,6 @@ See also https://lmsvault.io/
   API key) and schedule a backup.
 - Backup will be performed during the next cron run. Every step is logged and you can monitor the process
   on the backup page.
-
-### Protecting your backup site from accidental restores
-
-The ability to restore is disabled by default when `tool_vault` is installed. Restores are not
-possible if you did not register an account, did not enter an API key, or your API key does not allow restores.
-
-In order to completely prevent restores to the site, add the following lines to your `config.php`:
-
-```php
-$CFG->forced_plugin_settings = $CFG->forced_plugin_settings ?? [];
-$CFG->forced_plugin_settings['tool_vault'] = ['allowrestore' => 0];
-```
-
-## Site restore with Vault
-
-- Login as site administrator and navigate to **Site administration > Server > Vault - Site migration**
-- Go to the "Settings" section and check **enable restores** on this site.
-- Enter your **API key** that you received during registration when you performed the backup.
-- In the **"Site restore"** section you will see the list of all backups that are available for you to restore.
-  This list is cached and you can refresh it at any moment to look for new backups.
-- **Choose the backup** you want to restore, execute pre-checks for it to make sure that you have enough
-  disk space and if you need to adjust the restore settings.
-- **Schedule the restore**. You will be provided with a link to the restore progress page that can be accessed
-  without authentication. Remember that during restore everything is erased from the database and
-  nobody will be able to login.
-- Remember to check **the restore log** since it may not be possible to send a notification to the person who
-  initiated restore after the restore process has finished because the site configuration will be overridden
-  with the config of the backed up site.
-- **After restore** has completed, login with the username and password of a user from the backed up site
-  (remember that the users table in the database was replaced).
-- If your site version is higher than the version of the restored site or you have plugins that were not
-  present on the restored site, you will be prompted to run the **upgrade process**.
-- If the backed up site had **plugins** that are not present on the restored site, all database tables, settings,
-  and files of these plugins will be restored and Moodle will report them as **"Missing from disk"**. You will
-  need to install these plugins code yourself.
 
 ## Backup and restore of site configuration
 

@@ -19,7 +19,6 @@ namespace tool_vault;
 use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\models\backup_dryrun_model;
 use tool_vault\local\models\backup_model;
-use tool_vault\local\models\restore_model;
 use tool_vault\local\operations\operation_base;
 
 /**
@@ -53,9 +52,6 @@ class site_backup_dryrun extends site_backup {
 
         if (backup_model::get_records([constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
             throw new \moodle_exception('error_anotherbackupisinprogress', 'tool_vault');
-        }
-        if (restore_model::get_records([constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
-            throw new \moodle_exception('error_anotherrestoreisinprogress', 'tool_vault');
         }
 
         $model = new backup_dryrun_model((object)[]);

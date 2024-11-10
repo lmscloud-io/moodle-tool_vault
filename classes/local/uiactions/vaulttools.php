@@ -16,14 +16,7 @@
 
 namespace tool_vault\local\uiactions;
 
-use coding_exception;
-use tool_vault\api;
-use tool_vault\local\models\backup_model;
-use tool_vault\local\models\operation_model;
-use tool_vault\local\models\restore_model;
 use tool_vault\local\tools\tool_base;
-use tool_vault\local\tools\uninstall_missing_plugins;
-use tool_vault\output\last_operation;
 
 /**
  * Class tools
@@ -67,7 +60,6 @@ class vaulttools extends base {
 
         /** @var tool_base[] $tools */
         $tools = [
-            uninstall_missing_plugins::class,
         ];
 
         $result = ['tools' => []];
@@ -82,6 +74,7 @@ class vaulttools extends base {
                 'actionlabel' => $toolclass::get_action_button_label(),
             ];
         }
+        $result['hastools'] = !empty($tools);
 
         return $result;
     }

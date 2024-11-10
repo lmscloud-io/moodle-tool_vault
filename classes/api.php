@@ -139,15 +139,6 @@ class api {
     }
 
     /**
-     * Are restores allowed on this site
-     *
-     * @return bool
-     */
-    public static function are_restores_allowed(): bool {
-        return self::get_setting_checkbox('allowrestore');
-    }
-
-    /**
      * Store a value in the special plugin config (not included in backups)
      *
      * @param string $name
@@ -174,7 +165,7 @@ class api {
     }
 
     /**
-     * Are backup/restores available from CLI only
+     * Are backups available from CLI only
      *
      * @return bool
      */
@@ -525,35 +516,35 @@ class api {
         return true;
     }
 
-    /**
-     * Get a list of all remote backups for this api key
-     *
-     * @param bool $usecache
-     * @return remote_backup[]
-     * @throws api_exception
-     */
-    public static function get_remote_backups(bool $usecache = true): array {
-        $conf = $usecache ? self::get_config('cachedremotebackups') : null;
-        if ($conf !== null) {
-            $records = json_decode($conf, true);
-        } else {
-            $apiresult = self::api_call('backups', 'GET', []);
-            self::store_config('cachedremotebackupstime', time());
-            $records = $apiresult['backups'];
-            self::store_config('cachedremotebackups', json_encode($apiresult['backups']));
-        }
-        $backups = [];
-        foreach ($records as $record) {
-            $backup = new remote_backup($record);
-            if ($backup->status === constants::STATUS_FINISHED) {
-                $backups[$backup->backupkey] = $backup;
-            }
-        }
-        uasort($backups, function($a, $b) {
-            return - $a->timecreated + $b->timecreated;
-        });
-        return $backups;
-    }
+    // /**
+    //  * Get a list of all remote backups for this api key
+    //  *
+    //  * @param bool $usecache
+    //  * @return remote_backup[]
+    //  * @throws api_exception
+    //  */
+    // public static function get_remote_backups(bool $usecache = true): array {
+    //     $conf = $usecache ? self::get_config('cachedremotebackups') : null;
+    //     if ($conf !== null) {
+    //         $records = json_decode($conf, true);
+    //     } else {
+    //         $apiresult = self::api_call('backups', 'GET', []);
+    //         self::store_config('cachedremotebackupstime', time());
+    //         $records = $apiresult['backups'];
+    //         self::store_config('cachedremotebackups', json_encode($apiresult['backups']));
+    //     }
+    //     $backups = [];
+    //     foreach ($records as $record) {
+    //         $backup = new remote_backup($record);
+    //         if ($backup->status === constants::STATUS_FINISHED) {
+    //             $backups[$backup->backupkey] = $backup;
+    //         }
+    //     }
+    //     uasort($backups, function($a, $b) {
+    //         return - $a->timecreated + $b->timecreated;
+    //     });
+    //     return $backups;
+    // }
 
     /**
      * Last time we fetched remote backups
@@ -648,69 +639,6 @@ class api {
     }
 
     /**
-     * Download backup file
-     *
-     * @param operation_model $model
-     * @param string $filepath
-     * @param logger|null $logger
-     * @return void
-     */
-    public static function download_backup_file(operation_model $model, string $filepath, $logger = null) {
-        $backupkey = $model->backupkey;
-        $restorekey = $model->get_details()['restorekey'] ?? '';
-        $filename = basename($filepath);
-        if ($logger) {
-            $logger->add_to_log("Downloading file $filename ...");
-        }
-        $result = self::api_call("restores/$restorekey/download/$filename", 'get', [], $logger);
-        $s3url = $result['downloadurl'] ?? null;
-        $encrypted = $result['encrypted'] ?? false;
-
-        // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
-        if ($encrypted && !preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
-            throw new \moodle_exception('error_invaliddownloadlink', 'tool_vault', '',
-                (object)['filename' => $filename, 'url' => $s3url]);
-        }
-
-        $encryptionkey = $encrypted ? ($model->get_details()['encryptionkey'] ?? '') : '';
-        $options = [
-            'CURLOPT_TIMEOUT' => constants::REQUEST_S3_TIMEOUT,
-            'CURLOPT_HTTPHEADER' => array_merge(self::prepare_s3_headers($encryptionkey),
-                $result['downloadheaders'] ?? []),
-            'CURLOPT_RETURNTRANSFER' => 1,
-            'CURLOPT_HTTPAUTH' => CURLAUTH_NONE,
-        ];
-
-        for ($i = 0; $i < constants::REQUEST_S3_RETRIES; $i++) {
-            $curl = new curl();
-            $file = fopen($filepath, 'w');
-            $curl->download_one($s3url, [], $options + ['file' => $file]);
-            fclose($file);
-
-            if ($curl->errno || (($curl->get_info()['http_code'] ?? 0) != 200)) {
-                $s3exception = self::prepare_s3_exception($curl, filesize($filepath) < 10000 ? file_get_contents($filepath) : '');
-                if ($logger) {
-                    $logger->add_to_log("Error downloading file $filename (attempt ".($i + 1)."/".
-                        constants::REQUEST_S3_RETRIES."): ".$s3exception->getMessage(), constants::LOGLEVEL_WARNING);
-                }
-                unlink($filepath);
-                if ($i == constants::REQUEST_S3_RETRIES - 1) {
-                    throw $s3exception;
-                }
-                if ($logger) {
-                    $logger->add_to_log("Retrying");
-                }
-            } else {
-                break;
-            }
-        }
-
-        if ($logger) {
-            $logger->add_to_log('...done');
-        }
-    }
-
-    /**
      * Prepare encryption key from the passphrase
      *
      * @param string|null $passphrase
@@ -786,22 +714,6 @@ class api {
     }
 
     /**
-     * Request restore key
-     *
-     * @param array $info
-     * @return string
-     * @throws \moodle_exception
-     */
-    public static function request_new_restore_key(array $info): string {
-        $info += self::extra_details();
-        $res = self::api_call('restores', 'PUT', $info);
-        if (empty($res['restorekey'])) {
-            throw new \moodle_exception('error_serverreturnednodata', 'tool_vault');
-        }
-        return $res['restorekey'];
-    }
-
-    /**
      * Update backup status and/or add info
      *
      * @param string $backupkey
@@ -815,45 +727,6 @@ class api {
             return;
         }
         self::api_call("backups/{$backupkey}", 'PATCH', $params);
-    }
-
-    /**
-     * Update restore status and/or add info
-     *
-     * @param string $restorekey
-     * @param array|null $info
-     * @param string|null $status
-     * @return void
-     */
-    public static function update_restore(string $restorekey, $info = [], $status = null) {
-        $params = ($status ? ['status' => $status] : []) + ($info ? ['info' => $info] : []);
-        if (!$params) {
-            return;
-        }
-        self::api_call("restores/{$restorekey}", 'PATCH', $params);
-    }
-
-    /**
-     * Updates restore on the server but never throws any errors
-     *
-     * This function is often called in the end of the restore process and the failure to update remote restore
-     * should not raise an exception and fail the local restore.
-     *
-     * @param string $restorekey
-     * @param array|null $info
-     * @param string|null $status
-     * @return bool
-     */
-    public static function update_restore_ignoring_errors(string $restorekey, $info = [], $status = null): bool {
-        // One of the reason for the failed backup - impossible to communicate with the API,
-        // in which case this request will also fail.
-        try {
-            self::update_restore($restorekey, $info, $status);
-        } catch (\Throwable $tapi) {
-            // If for some reason we could not mark remote restore as finished.
-            return false;
-        }
-        return true;
     }
 
     /**

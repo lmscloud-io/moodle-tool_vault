@@ -43,9 +43,7 @@ final class operation_model_test extends \advanced_testcase {
         $backup1 = operation_model::instance((object)['type' => 'backup', 'status' => constants::STATUS_SCHEDULED])->save();
         $all = operation_model::get_active_processes();
         $backups = backup_model::get_active_processes();
-        $restores = restore_model::get_active_processes();
         $this->assertEquals(1, count($all));
         $this->assertEquals(1, count($backups));
-        $this->assertEquals(0, count($restores));
     }
 }

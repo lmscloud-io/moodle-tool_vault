@@ -9,8 +9,6 @@ Feature: Using tool vault
     And I navigate to "Server > Vault - Site migration" in site administration
     And I click on "Site backup" "link" in the "region-main" "region"
     And I follow "Vault - Site migration"
-    And I click on "Site restore" "link" in the "region-main" "region"
-    And I follow "Vault - Site migration"
     And I click on "Settings" "link" in the "region-main" "region"
     And I navigate to "Server > Vault - Site migration" in site administration
     And I click on "History" "link" in the "region-main" "region"

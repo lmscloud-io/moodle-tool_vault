@@ -19,7 +19,6 @@ namespace tool_vault\local\operations;
 use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\checks\backup_precheck_failed;
-use tool_vault\local\checks\restore_precheck_failed;
 use tool_vault\local\helpers\log_capture;
 use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\logger;
@@ -75,7 +74,7 @@ abstract class operation_base implements logger {
             }
         }
         $message .= "\n\nPHP ".PHP_VERSION." / Moodle {$CFG->release} / DB ".$DB->get_dbfamily()."\n";
-        if ($t instanceof backup_precheck_failed || $t instanceof restore_precheck_failed) {
+        if ($t instanceof backup_precheck_failed) {
             $message .= "\n" . $t->extra_info();
         }
         $message .= "\n" . $t->getTraceAsString();

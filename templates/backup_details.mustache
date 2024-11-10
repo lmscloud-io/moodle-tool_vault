@@ -98,18 +98,6 @@
     {{> tool_vault/last_operation }}
 {{/lastdryrun}}
 
-{{#restorenotallowedreason}}
-    <div class="mt-2">
-        {{> core/notification_error}}
-    </div>
-{{/restorenotallowedreason}}
-
-<div>
-    {{#showactions}}
-        {{> tool_vault/remote_backup_buttons}}
-    {{/showactions}}
-</div>
-
 {{#isprogresspage}}
     {{#timefinished}}
         <p><a href="{{siteurl}}">{{#str}} returntothesite, tool_vault {{/str}}</a></p>

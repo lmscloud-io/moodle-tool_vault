@@ -16,11 +16,6 @@
 
 namespace tool_vault\local\helpers;
 
-use core_component;
-use core_reportbuilder\local\helpers\database;
-use tool_vault\api;
-use tool_vault\local\xmldb\dbtable;
-
 /**
  * Helper class for excluding plugin data from various tables
  *

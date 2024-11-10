@@ -33,8 +33,6 @@ define([
 
     var SELECTORS = {
         START_BACKUP: 'form[data-action="startbackup"]',
-        START_DRYRUN: 'form[data-action="startdryrun"]',
-        START_RESTORE: 'form[data-action="startrestore"]',
     };
 
     /**
@@ -169,68 +167,6 @@ define([
         });
     };
 
-    var initStartDryRun = function(backupkey) {
-        var dryrunForm = document.querySelector(SELECTORS.START_DRYRUN + '[data-backupkey="' + backupkey + '"]');
-        if (!dryrunForm) {
-            return;
-        }
-        dryrunForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            createModalFactoryCompat({
-                type: ModalFactory.types.SAVE_CANCEL,
-                title: Str.get_string('startdryrun', 'tool_vault'),
-                body: Templates.render('tool_vault/start_restore_popup',
-                    {dryrun: 1, encrypted: parseInt(dryrunForm.getAttribute('data-encrypted'))}),
-                buttons: {save: Str.get_string('startdryrun', 'tool_vault')},
-                removeOnClose: true
-            })
-                .then(function(modal) {
-                    modal.show();
-
-                    modal.getRoot().on(ModalEvents.save, function() {
-                        return submitForm(dryrunForm, modal);
-                    });
-                    modal.getRoot().on(ModalEvents.cancel, function() {
-                        return modal.hide();
-                    });
-
-                    return modal;
-                })
-                .catch(Notification.exception);
-        });
-    };
-
-    var initStartRestore = function(backupkey) {
-        var restoreForm = document.querySelector(SELECTORS.START_RESTORE + '[data-backupkey="' + backupkey + '"]');
-        if (!restoreForm) {
-            return;
-        }
-        restoreForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            createModalFactoryCompat({
-                type: ModalFactory.types.SAVE_CANCEL,
-                title: Str.get_string('startrestore', 'tool_vault'),
-                body: Templates.render('tool_vault/start_restore_popup',
-                    {dryrun: 0, encrypted: parseInt(restoreForm.getAttribute('data-encrypted'))}),
-                buttons: {save: Str.get_string('startrestore', 'tool_vault')},
-                removeOnClose: true
-            })
-                .then(function(modal) {
-                    modal.show();
-
-                    modal.getRoot().on(ModalEvents.save, function() {
-                        return submitForm(restoreForm, modal);
-                    });
-                    modal.getRoot().on(ModalEvents.cancel, function() {
-                        return modal.hide();
-                    });
-
-                    return modal;
-                })
-                .catch(Notification.exception);
-        });
-    };
-
     var initCollapseExpandBackupLogs = function() {
         var logslong = document.querySelector('[data-vault-purpose="logslong"]');
         var logsshort = document.querySelector('[data-vault-purpose="logsshort"]');
@@ -251,8 +187,6 @@ define([
 
     return {
         'initStartBackup': initStartBackup,
-        'initStartDryRun': initStartDryRun,
-        'initStartRestore': initStartRestore,
         'initCollapseExpandBackupLogs': initCollapseExpandBackupLogs
     };
 });

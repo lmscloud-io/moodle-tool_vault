@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Backup or restore progress
+ * Backup progress
  *
  * @package     tool_vault
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
@@ -79,18 +79,6 @@ if ($operation instanceof \tool_vault\local\models\backup_model) {
     } else {
         $data = (new \tool_vault\output\backup_details($operation, null, true, true))->export_for_template($renderer);
         echo $renderer->render_from_template('tool_vault/backup_details', $data);
-    }
-} else if ($operation instanceof \tool_vault\local\models\restore_model) {
-    $url = \tool_vault\local\uiactions\restore_details::url(['id' => $operation->id]);
-    if ($isoldoperation) {
-        echo '<p>' . get_string('restorefinished', 'tool_vault', (string)$url) . '</p>';
-    } else {
-        $data = (new \tool_vault\output\restore_details($operation))->export_for_template($renderer);
-        $data['isprogresspage'] = 1;
-        if ($data['errormessage']) {
-            $data['errordetailsurl'] = $url->out(false);
-        }
-        echo $renderer->render_from_template('tool_vault/restore_details', $data);
     }
 } else {
     echo get_string('error_accesskeyisnotvalid', 'tool_vault');

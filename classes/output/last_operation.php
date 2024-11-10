@@ -21,10 +21,7 @@ use stdClass;
 use tool_vault\constants;
 use tool_vault\local\helpers\ui;
 use tool_vault\local\models\backup_model;
-use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\operation_model;
-use tool_vault\local\models\restore_model;
-use tool_vault\site_restore_dryrun;
 
 /**
  * Last operation
@@ -74,49 +71,6 @@ class last_operation implements \templatable {
             } else {
                 $this->detailsurl = \tool_vault\local\uiactions\backup_details::url(['id' => $operation->id]);
             }
-
-        } else if ($operation instanceof restore_model) {
-            $this->title = $operation->get_title();
-            $this->text = $operation->get_subtitle();
-            if ($operation->status === constants::STATUS_SCHEDULED) {
-                $this->title = get_string('lastop_restorescheduled_header', 'tool_vault');
-                $this->text = get_string('lastop_restorescheduled_text', 'tool_vault');
-            } else if ($operation->status === constants::STATUS_INPROGRESS) {
-                $this->title = get_string('lastop_restoreinprogress_header', 'tool_vault');
-                $this->text = get_string('lastop_restoreinprogress_text', 'tool_vault');
-            } else if ($operation->status === constants::STATUS_FINISHED) {
-                $this->title = get_string('lastop_restorefinished_header', 'tool_vault');
-                $this->text = get_string('lastop_restorefinished_text', 'tool_vault',
-                    (object)['backupkey' => $this->operation->backupkey,
-                    'started' => ui::format_time($this->operation->timecreated),
-                    'finished' => ui::format_time($this->operation->get_finished_time())]);
-            } else {
-                $this->title = get_string('lastop_restorefailed_header', 'tool_vault');
-                $this->text = get_string('lastop_restorefailed_text', 'tool_vault', ui::format_time($this->operation->timecreated));
-            }
-            if ($operation->status === constants::STATUS_INPROGRESS || $operation->status === constants::STATUS_SCHEDULED) {
-                $this->detailsurl = new \moodle_url('/admin/tool/vault/progress.php', ['accesskey' => $operation->accesskey]);
-            } else {
-                $this->detailsurl = \tool_vault\local\uiactions\restore_details::url(['id' => $operation->id]);
-            }
-
-        } else if ($operation instanceof dryrun_model) {
-            if ($operation->status === constants::STATUS_SCHEDULED) {
-                $this->title = get_string('lastop_restoreprecheckscheduled_header', 'tool_vault');
-                $this->text = get_string('lastop_restoreprecheckscheduled_text', 'tool_vault');
-            } else if ($operation->status === constants::STATUS_INPROGRESS) {
-                $this->title = get_string('lastop_restoreprecheckinprogress_header', 'tool_vault');
-                $this->text = get_string('lastop_restoreprecheckinprogress_text', 'tool_vault');
-            } else if ($operation->status === constants::STATUS_FINISHED) {
-                $this->title = get_string('lastop_restoreprecheckfinished_header', 'tool_vault');
-                $this->text = get_string('lastop_restoreprecheckfinished_text', 'tool_vault',
-                    (object)['finished' => ui::format_time($operation->get_finished_time()), 'backupkey' => $operation->backupkey]);
-            } else {
-                $this->title = get_string('lastop_restoreprecheckfailed_header', 'tool_vault');
-                $this->text = get_string('lastop_restoreprecheckfailed_text', 'tool_vault',
-                    ui::format_time($operation->get_finished_time()));
-            }
-            $this->detailsurl = \tool_vault\local\uiactions\restore_details::url(['id' => $operation->id]);
         }
     }
 

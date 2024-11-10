@@ -301,7 +301,6 @@ abstract class check_base extends operation_base {
      * @return \moodle_url|null
      */
     public function get_fullreport_url() {
-        // This function is overridden for the check_base_restore class.
         return backup_checkreport::url(['id' => $this->get_model()->id]);
     }
 

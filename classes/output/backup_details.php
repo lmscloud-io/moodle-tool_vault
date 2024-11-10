@@ -16,19 +16,10 @@
 
 namespace tool_vault\output;
 
-use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\helpers\ui;
 use tool_vault\local\models\backup_model;
-use tool_vault\local\models\dryrun_model;
-use tool_vault\local\models\operation_model;
 use tool_vault\local\models\remote_backup;
-use tool_vault\local\models\restore_model;
-use tool_vault\local\uiactions\restore;
-use tool_vault\local\uiactions\restore_dryrun;
-use tool_vault\local\uiactions\restore_remotedetails;
-use tool_vault\local\uiactions\restore_restore;
-use tool_vault\site_restore_dryrun;
 
 /**
  * Backup details
@@ -51,7 +42,7 @@ class backup_details implements \templatable {
      * Constructor
      *
      * @param backup_model|null $backup
-     * @param remote_backup|null $remotebackup
+     * @param remote_backup|null $remotebackup ALWAYS NULL
      * @param bool $fulldetails
      * @param bool $isprogresspage
      */
@@ -118,41 +109,6 @@ class backup_details implements \templatable {
                     'haslogsshort' => $this->backup->has_logs_shortneded(),
                 ];
             }
-        }
-        if ($this->remotebackup) {
-            // If there is information in the remote backup AND in the local backup, the remote one overrides.
-            // All remote backups have status 'finished' and are available for restore.
-            $rv['backupdetailsurl'] = restore_remotedetails::url(['backupkey' => $backupkey])->out(false);
-            $rv['totalsize'] = $this->remotebackup->get_total_size();
-            $rv['totalsizestr'] = display_size($this->remotebackup->get_total_size());
-            $rv['samesite'] = $this->remotebackup->is_same_site();
-            if (api::is_cli_only()) {
-                $error = get_string('error_usecli', 'tool_vault');
-            } else if (!api::are_restores_allowed()) {
-                $error = get_string('error_restoresnotallowed', 'tool_vault');
-            } else {
-                $rv['restoreallowed'] = true;
-            }
-            if ($this->fulldetails) {
-                $lastoperation = operation_model::get_last_of([restore_model::class, dryrun_model::class],
-                    ['backupkey' => $backupkey]);
-                if ($lastoperation) {
-                    $rv['lastdryrun'] = (new last_operation($lastoperation))->export_for_template($output);
-                }
-            }
-            $rv['showactions'] = true;
-            $rv['dryrunurl'] = restore_dryrun::url(['backupkey' => $backupkey])->out(false);
-            $rv['restoreurl'] = restore_restore::url(['backupkey' => $backupkey])->out(false);
-        } else if ($this->fulldetails && !$this->isprogresspage && $this->backup->status === constants::STATUS_FINISHED) {
-            $error = get_string('error_backupnotavailable', 'tool_vault', $backupkey);
-            // TODO explanation why:
-            // - expired
-            // - was deleted
-            // - performed in a different account
-            // - API key in use does not allow restores.
-        }
-        if (isset($error)) {
-            $rv['restorenotallowedreason'] = (new \core\output\notification($error, null, false))->export_for_template($output);
         }
         return $rv;
     }

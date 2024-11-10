@@ -47,7 +47,7 @@ class backup_details extends base {
         $id = optional_param('id', null, PARAM_INT);
 
         if ($id && ($backup = backup_model::get_by_id($id))) {
-            $remotebackup = api::get_remote_backups()[$backup->backupkey] ?? null;
+            $remotebackup = null;
             $data = (new \tool_vault\output\backup_details($backup, $remotebackup))->export_for_template($output);
             return $output->render_from_template('tool_vault/backup_details', $data);
         }

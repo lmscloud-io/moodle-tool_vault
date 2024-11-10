@@ -64,44 +64,4 @@ final class cli_helper_test extends \advanced_testcase {
 
         $clihelper->validate_cli_options();
     }
-
-    /**
-     * Test cli_helper for restore
-     */
-    public function test_cli_helper_for_restore() {
-        $this->resetAfterTest();
-        $clihelper = $this->construct_helper(cli_helper::SCRIPT_RESTORE, ['--apikey=phpunit', '--backupkey=abcdef']);
-        ob_start();
-        $clihelper->print_help();
-        $contents = ob_get_contents();
-        $this->assertNotEmpty($contents);
-        ob_end_clean();
-
-        $clihelper->validate_cli_options();
-    }
-
-    /**
-     * Test cli_helper for list
-     */
-    public function test_cli_helper_for_list() {
-        $this->resetAfterTest();
-        $clihelper = $this->construct_helper(cli_helper::SCRIPT_LIST, ['--apikey=phpunit']);
-        ob_start();
-        $clihelper->print_help();
-        $contents = ob_get_contents();
-        $this->assertNotEmpty($contents);
-        ob_end_clean();
-
-        $clihelper->validate_cli_options();
-    }
-
-    /**
-     * Testing print_table() function
-     *
-     * @return void
-     */
-    public function test_print_table() {
-        $result = (new cli_helper(cli_helper::SCRIPT_LIST, ''))->print_table(['a' => 'bb', 'cc' => 'd']);
-        $this->assertEquals("a  bb\ncc d\n", $result);
-    }
 }

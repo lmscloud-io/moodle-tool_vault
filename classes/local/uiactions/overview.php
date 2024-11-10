@@ -17,9 +17,7 @@
 namespace tool_vault\local\uiactions;
 
 use tool_vault\local\models\backup_model;
-use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\operation_model;
-use tool_vault\local\models\restore_model;
 use tool_vault\output\check_display;
 use tool_vault\output\last_operation;
 
@@ -43,7 +41,7 @@ class overview extends base {
     public function display(\renderer_base $output) {
         $rv = '';
 
-        $lastoperation = operation_model::get_last_of([backup_model::class, restore_model::class, dryrun_model::class]);
+        $lastoperation = operation_model::get_last_of([backup_model::class]);
         if ($lastoperation && $lastoperation->show_as_last_operation()) {
             $data = (new last_operation($lastoperation))->export_for_template($output);
             $rv .= $output->render_from_template('tool_vault/last_operation', $data);

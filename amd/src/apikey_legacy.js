@@ -14,7 +14,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Allows to enter API key (without using dynamic forms)
+ * Allows to enter API key
  *
  * @module     tool_vault/apikey_legacy
  * @copyright  2023 Marina Glancy

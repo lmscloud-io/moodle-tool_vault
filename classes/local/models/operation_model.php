@@ -441,22 +441,22 @@ abstract class operation_model {
     }
 
     /**
-     * Get backups and restores that are scheduled or in progress
+     * Get backups that are scheduled or in progress
      *
      * @param bool $includestuck include records that appear to be stuck (no modifications for LOCK_TIMEOUT seconds)
      * @return operation_model[]
      */
     public static function get_active_processes(bool $includestuck = true): array {
         if (static::class === self::class) {
-            $records = static::get_records_select("(status = :s1 OR status = :s2) AND (type = :t1 OR type = :t2)",
-                ['s1' => constants::STATUS_SCHEDULED, 's2' => constants::STATUS_INPROGRESS, 't1' => 'backup', 't2' => 'restore'],
+            $records = static::get_records_select("(status = :s1 OR status = :s2) AND (type = :t1)",
+                ['s1' => constants::STATUS_SCHEDULED, 's2' => constants::STATUS_INPROGRESS, 't1' => 'backup'],
                 'id');
         } else {
             $records = static::get_records([constants::STATUS_SCHEDULED, constants::STATUS_INPROGRESS], 'id');
         }
         if ($records && !$includestuck) {
             $records = array_filter($records, function (operation_model $record) {
-                return ($record instanceof backup_model || $record instanceof restore_model) &&
+                return ($record instanceof backup_model) &&
                     !$record->is_stuck();
             });
         }
@@ -478,8 +478,6 @@ abstract class operation_model {
         if ($record) {
             if ($record->type === 'backup') {
                 return new backup_model($record);
-            } else if ($record->type === 'restore') {
-                return new restore_model($record);
             }
         }
         return null;

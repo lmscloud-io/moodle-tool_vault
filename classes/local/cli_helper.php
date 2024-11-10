@@ -45,11 +45,7 @@ class cli_helper {
     const OUTPUTWIDTH = 120;
 
     /** @var string */
-    const SCRIPT_RESTORE = 'restore';
-    /** @var string */
     const SCRIPT_BACKUP = 'backup';
-    /** @var string */
-    const SCRIPT_LIST = 'list';
 
     /** @var string script name, one of the SCRIPT* constants above */
     protected $script;
@@ -102,20 +98,6 @@ class cli_helper {
                 'alias' => 'h',
             ],
         ];
-        if ($this->script === self::SCRIPT_RESTORE) {
-            $options += [
-                'backupkey' => [
-                    'hasvalue' => 'BACKUPKEY',
-                    'description' => 'Backup key',
-                    'default' => null,
-                    'validation' => function ($backupkey) {
-                        if (!$backupkey && $this->script === self::SCRIPT_RESTORE) {
-                            $this->cli_error('Argument --backupkey is required');
-                        }
-                    },
-                ],
-            ];
-        }
         $options += [
             'apikey' => [
                 'hasvalue' => 'APIKEY',
@@ -148,12 +130,8 @@ class cli_helper {
             ];
         }
 
-        if ($this->script === self::SCRIPT_BACKUP || $this->script === self::SCRIPT_RESTORE) {
-            if ($this->script === self::SCRIPT_BACKUP) {
-                $dryrundescription = 'Check only, do not backup';
-            } else if ($this->script === self::SCRIPT_RESTORE) {
-                $dryrundescription = 'Check only, do not restore';
-            }
+        if ($this->script === self::SCRIPT_BACKUP) {
+            $dryrundescription = 'Check only, do not backup';
             $options += [
                 'passphrase' => [
                     'description' => 'Passphrase to use for encryption',
@@ -164,8 +142,6 @@ class cli_helper {
                     'hasvalue' => false,
                 ],
             ];
-        }
-        if ($this->script === self::SCRIPT_BACKUP) {
             $options += [
                 'storage' => [
                     'description' => 'Storage for the backup (if supported in your subscription)',
@@ -184,15 +160,6 @@ class cli_helper {
                 ],
             ];
         }
-        if ($this->script === self::SCRIPT_RESTORE) {
-            $options += [
-                'allow-restore' => [
-                    'description' =>
-                        'Allow restores using CLI script even when they are disabled in the Vault settings or config.php',
-                    'hasvalue' => false,
-                ],
-            ];
-        }
         return $options;
     }
 
@@ -202,8 +169,6 @@ class cli_helper {
     public function print_help() {
         $titles = [
             self::SCRIPT_BACKUP => 'Command line site backup',
-            self::SCRIPT_LIST => 'Command line remote backup list',
-            self::SCRIPT_RESTORE => 'Command line site restore',
         ];
         $this->cli_writeln($titles[$this->script]);
         $this->cli_writeln('');
@@ -218,9 +183,6 @@ class cli_helper {
         $this->cli_writeln('Example:');
         $needswwwuser = true;
         $params = '';
-        if ($this->script === self::SCRIPT_RESTORE) {
-            $params = ' --backupkey=BACKUPKEY';
-        }
         $this->cli_writeln('$ ' . ($needswwwuser ? 'sudo -u www-data ' : '') .
             '/usr/bin/php admin/tool/vault/cli/'.$this->scriptfilename.$params);
     }
@@ -244,9 +206,6 @@ class cli_helper {
         $CFG->forced_plugin_settings += ['tool_vault' => []];
         if ($this->get_cli_option('apikey')) {
             $CFG->forced_plugin_settings['tool_vault']['apikey'] = $this->get_cli_option('apikey');
-        }
-        if ($this->get_cli_option('allow-restore')) {
-            $CFG->forced_plugin_settings['tool_vault']['allowrestore'] = 1;
         }
     }
 

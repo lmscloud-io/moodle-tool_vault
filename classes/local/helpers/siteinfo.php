@@ -194,20 +194,6 @@ class siteinfo {
     }
 
     /**
-     * Should the dataroot subfolder/file be skipped during restore
-     *
-     * @param string $path relative path under $CFG->dataroot
-     * @return bool
-     */
-    public static function is_dataroot_path_skipped_restore(string $path): bool {
-        if (self::is_dataroot_path_skipped_always($path)) {
-            return true;
-        }
-        $paths = api::get_setting_array('restorepreservedataroot');
-        return in_array($path, $paths);
-    }
-
-    /**
      * Examples of the dataroot path (for the admin settings)
      *
      * @return string[]
@@ -234,16 +220,6 @@ class siteinfo {
      */
     public static function get_excluded_plugins_backup(): array {
         $plugins = api::get_setting_array('backupexcludeplugins');
-        $plugins[] = 'tool_vault';
-        return array_unique($plugins);
-    }
-
-    /**
-     * List of plugins that should be excluded during restore
-     * @return array
-     */
-    public static function get_excluded_plugins_restore(): array {
-        $plugins = api::get_setting_array('restorepreserveplugins');
         $plugins[] = 'tool_vault';
         return array_unique($plugins);
     }
@@ -288,31 +264,5 @@ class siteinfo {
             $tables[] = $CFG->prefix . $tablename;
         }
         set_config('backupexcludetables', implode(', ', $tables), 'tool_vault');
-    }
-
-    /**
-     * Is given table excluded from restore
-     *
-     * @param string $tablename
-     * @param dbtable|null $deftable
-     * @return bool
-     */
-    public static function is_table_preserved_in_restore(string $tablename, $deftable): bool {
-        global $CFG;
-        if (!$deftable) {
-            // This is a table that is not present in the install.xml files of core or any plugins.
-            // Exclude this table if it's name is in the 'backupexcludetables' setting.
-            $tables = api::get_setting_array('restorepreservetables');
-            // TODO this setting does not exist!
-            if (in_array($CFG->prefix . $tablename, $tables)) {
-                return true;
-            }
-        } else {
-            // This table has a definition. Check if it belongs to an excluded plugin.
-            if (in_array($deftable->get_component(), self::get_excluded_plugins_restore())) {
-                return true;
-            }
-        }
-        return false;
     }
 }

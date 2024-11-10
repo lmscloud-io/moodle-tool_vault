@@ -23,12 +23,9 @@ use tool_vault\local\models\backup_model;
 use tool_vault\local\models\check_model;
 use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\operation_model;
-use tool_vault\local\models\restore_model;
 use tool_vault\local\models\tool_model;
 use tool_vault\local\tools\tool_base;
 use tool_vault\site_backup;
-use tool_vault\site_restore;
-use tool_vault\site_restore_dryrun;
 
 /**
  * Cron for tool_vault
@@ -55,8 +52,6 @@ class cron_task extends \core\task\scheduled_task {
     /** @var string */
     const Q_SCHEDULED_BACKUPS = 'Q_SCHEDULED_BACKUPS';
     /** @var string */
-    const Q_SCHEDULED_RESTORES = 'Q_SCHEDULED_RESTORES';
-    /** @var string */
     const Q_SCHEDULED_OTHER = 'Q_SCHEDULED_OTHER';
 
     /**
@@ -71,13 +66,12 @@ class cron_task extends \core\task\scheduled_task {
             self::Q_INPROGRESS => [],
             self::Q_INPROGRESS_STUCK => [],
             self::Q_SCHEDULED_BACKUPS => [],
-            self::Q_SCHEDULED_RESTORES => [],
             self::Q_SCHEDULED_OTHER => [],
         ];
         $now = time();
         foreach ($records as $record) {
             if ($record->status === constants::STATUS_INPROGRESS) {
-                if ($record instanceof backup_model || $record instanceof restore_model) {
+                if ($record instanceof backup_model) {
                     $res[self::Q_INPROGRESS][] = $record;
                 }
                 if ($record->is_stuck()) {
@@ -86,8 +80,6 @@ class cron_task extends \core\task\scheduled_task {
             } else {
                 if ($record instanceof backup_model) {
                     $res[self::Q_SCHEDULED_BACKUPS][] = $record;
-                } else if ($record instanceof restore_model) {
-                    $res[self::Q_SCHEDULED_RESTORES][] = $record;
                 } else {
                     $res[self::Q_SCHEDULED_OTHER][] = $record;
                 }
@@ -106,13 +98,6 @@ class cron_task extends \core\task\scheduled_task {
 
         // Check if any operation is stuck - there was no activity for the last constants::LOCK_TIMEOUT seconds.
         foreach ($queue[self::Q_INPROGRESS_STUCK] as $record) {
-            if ($record instanceof backup_model || $record instanceof restore_model) {
-                // We found a backup or restore that is stuck. Attempt to resume it.
-                $this->resume_operation($record);
-                // Nothing else will run in this cron job.
-                return;
-            }
-
             if ($record instanceof check_model && $record->parentid && ($parent = operation_model::get_by_id($record->parentid))) {
                 if ($parent->status !== constants::STATUS_INPROGRESS) {
                     // Something strange, the parent operation finished but this check is stuck in progress,
@@ -140,20 +125,15 @@ class cron_task extends \core\task\scheduled_task {
             $queue = $this->get_queue();
         }
 
-        // If there are no backups or restores in progress - start first scheduled backup (there should not be more than one).
+        // If there are no backups in progress - start first scheduled backup (there should not be more than one).
         if ($queue[self::Q_SCHEDULED_BACKUPS] && empty($queue[self::Q_INPROGRESS])) {
             $this->start_operation(reset($queue[self::Q_SCHEDULED_BACKUPS]));
             $queue = $this->get_queue();
         }
-
-        // If there are no backups or restores in progress - start first scheduled restore (there should not be more than one).
-        if ($queue[self::Q_SCHEDULED_RESTORES] && empty($queue[self::Q_INPROGRESS])) {
-            $this->start_operation(reset($queue[self::Q_SCHEDULED_RESTORES]));
-        }
     }
 
     /**
-     * Resume stuck backup or restore
+     * Resume stuck backup
      *
      * @param operation_model $model
      * @return void
@@ -161,10 +141,6 @@ class cron_task extends \core\task\scheduled_task {
     protected function resume_operation(operation_model $model) {
         // TODO implement resume.
         $postfix = '';
-        if ($model instanceof restore_model) {
-            $postfix = "\nIf the database restore did not finish, your site may be in an inconsistent state and will not work.".
-            ' You will need to re-install Moodle and repeat the restore process.';
-        }
         $model->add_log('There was no activity for over ' . (constants::LOCK_TIMEOUT / 60) .
             ' minutes. It is possible that the cron process was interrupted or timed out. '.
             'Operation is marked as failed, access to the site is now allowed.' . $postfix, constants::LOGLEVEL_ERROR);
@@ -172,7 +148,7 @@ class cron_task extends \core\task\scheduled_task {
     }
 
     /**
-     * Execute a check, backup or restore
+     * Execute a check or a backup
      *
      * @param operation_model $model
      * @return void
@@ -180,10 +156,6 @@ class cron_task extends \core\task\scheduled_task {
     protected function start_operation(operation_model $model) {
         if ($model instanceof backup_model) {
             $operation = new site_backup($model);
-        } else if ($model instanceof restore_model) {
-            $operation = new site_restore($model);
-        } else if ($model instanceof dryrun_model) {
-            $operation = new site_restore_dryrun($model);
         } else if ($model instanceof check_model) {
             try {
                 $operation = check_base::load($model->id); // TODO expose instance.

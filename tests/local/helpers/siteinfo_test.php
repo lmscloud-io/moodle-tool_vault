@@ -66,12 +66,4 @@ final class siteinfo_test extends \advanced_testcase {
         set_config('backupexcludedataroot', 'hellothere', 'tool_vault');
         $this->assertTrue(siteinfo::is_dataroot_path_skipped_backup('hellothere'));
     }
-
-    public function test_is_dataroot_path_skipped_restore() {
-        $this->resetAfterTest();
-        $this->assertTrue(siteinfo::is_dataroot_path_skipped_restore('sessions'));
-        $this->assertFalse(siteinfo::is_dataroot_path_skipped_restore('hellothere'));
-        set_config('restorepreservedataroot', 'hellothere', 'tool_vault');
-        $this->assertTrue(siteinfo::is_dataroot_path_skipped_restore('hellothere'));
-    }
 }

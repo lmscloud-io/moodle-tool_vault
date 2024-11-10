@@ -63,7 +63,6 @@ class main extends base {
         $rv = $output->render_from_template('tool_vault/main', [
             'pixbaseurl' => $CFG->wwwroot . '/admin/tool/vault/pix',
             'mainurl' => $CFG->wwwroot . '/admin/tool/vault/index.php',
-            'allowrestore' => api::are_restores_allowed() && !api::is_cli_only(),
             'settingsurl' => (new moodle_url('/admin/settings.php', ['section' => 'tool_vault']))->out(false),
             'registrationform' => $this->registration_form($output),
             'isregistered' => api::is_registered(),

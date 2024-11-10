@@ -127,7 +127,4 @@ class constants {
     const S3_MULTIPART_UPLOAD_THRESHOLD = 4 * 1024 * 1024 * 1024;
     /** @var int Part size when large file needs to be split. Set to 1Gb */
     const S3_MULTIPART_UPLOAD_PARTSIZE = 1 * 1024 * 1024 * 1024;
-
-    /** @var int maximum age for the restore pre-check (used by add-on plugins script) */
-    const RESTORE_PRECHECK_MAXAGE = 7 * DAYSECS;
 }

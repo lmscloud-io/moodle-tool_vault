@@ -79,7 +79,6 @@ class backup extends base {
             $result['backups'][] = (new \tool_vault\output\backup_details($backup, null, false))->export_for_template($output);
         }
         $result['haspastbackups'] = !empty($result['backups']);
-        $result['restoreallowed'] = api::are_restores_allowed() && !api::is_cli_only();
         return $result;
     }
 

@@ -28,7 +28,6 @@ use tool_vault\local\helpers\plugindata;
 use tool_vault\local\helpers\siteinfo;
 use tool_vault\local\helpers\tempfiles;
 use tool_vault\local\models\backup_model;
-use tool_vault\local\models\restore_model;
 use tool_vault\local\operations\operation_base;
 use tool_vault\local\xmldb\dbstructure;
 use tool_vault\local\xmldb\dbtable;
@@ -72,9 +71,6 @@ class site_backup extends operation_base {
         }
         if (backup_model::get_records([constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
             throw new \moodle_exception('error_anotherbackupisinprogress', 'tool_vault');
-        }
-        if (restore_model::get_records([constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
-            throw new \moodle_exception('error_anotherrestoreisinprogress', 'tool_vault');
         }
 
         $model = new backup_model((object)[]);

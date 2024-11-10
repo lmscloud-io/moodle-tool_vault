@@ -16,14 +16,10 @@
 
 namespace tool_vault\local\uiactions;
 
-use tool_vault\api;
 use tool_vault\local\models\backup_model;
-use tool_vault\local\models\operation_model;
-use tool_vault\local\models\restore_model;
-use tool_vault\output\last_operation;
 
 /**
- * Backup/restore logs
+ * Backup logs
  *
  * @package     tool_vault
  * @copyright   2022 Marina Glancy <marina.glancy@gmail.com>
@@ -57,13 +53,6 @@ class logs extends base {
             $result['backups'][] = (new \tool_vault\output\backup_details($backup, null, false))->export_for_template($output);
         }
         $result['haspastbackups'] = !empty($result['backups']);
-
-        $restores = restore_model::get_records(null, null, 0, 20);
-        $result['restores'] = [];
-        foreach ($restores as $restore) {
-            $result['restores'][] = (new \tool_vault\output\restore_details($restore))->export_for_template($output);
-        }
-        $result['haspastrestores'] = !empty($result['restores']);
 
         return $result;
     }
