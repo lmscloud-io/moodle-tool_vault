@@ -52,7 +52,7 @@
     value="{{#expiredays}}{{.}}{{/expiredays}}" {{^canchangeexpiration}}disabled{{/canchangeexpiration}} style="width: 50px;">
 {{#str}} startbackup_expiredays_suffix, tool_vault {{/str}}
 </p>
-<input type="hidden" name="backupplugincode" value="1" {{#backupplugincode}}checked{{/backupplugincode}} id="backupplugincode_startbackup">
+<input type="hidden" name="backupplugincode" {{#backupplugincode}}value="1"{{/backupplugincode}} id="backupplugincode_startbackup">
 {{#limit}}
 <p>{{#str}} startbackup_limit_desc, tool_vault, {{limit}} {{/str}}</p>
 {{/limit}}
