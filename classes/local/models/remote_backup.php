@@ -26,6 +26,7 @@ use tool_vault\constants;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @property-read int $timecreated
  * @property-read string $backupkey
+ * @property-read int $timemodified
  * @property-read int $timefinished
  * @property-read string $status
  * @property-read array $info
