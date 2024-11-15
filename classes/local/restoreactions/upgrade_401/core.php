@@ -45,6 +45,7 @@
  */
 
 use tool_vault\local\restoreactions\upgrade_401\helpers\adminpresets_helper;
+use tool_vault\local\restoreactions\upgrade_401\helpers\general_helper;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -247,7 +248,7 @@ function tool_vault_401_core_upgrade($oldversion) {
             unset_all_config_for_plugin('picasa');
 
             // Remove orphaned files.
-            upgrade_delete_orphaned_file_records();
+            general_helper::upgrade_delete_orphaned_file_records();
         }
 
         upgrade_main_savepoint(true, 2021091700.03);
@@ -500,7 +501,7 @@ function tool_vault_401_core_upgrade($oldversion) {
             unset_all_config_for_plugin('boxnet');
 
             // Remove orphaned files.
-            upgrade_delete_orphaned_file_records();
+            general_helper::upgrade_delete_orphaned_file_records();
         }
 
         upgrade_main_savepoint(true, 2021102900.02);
@@ -1846,7 +1847,7 @@ privatefiles,moodle|/user/files.php';
 
     if ($oldversion < 2022031100.01) {
         $reportsusermenuitem = 'reports,core_reportbuilder|/reportbuilder/index.php';
-        upgrade_add_item_to_usermenu($reportsusermenuitem);
+        general_helper::upgrade_add_item_to_usermenu($reportsusermenuitem);
         // Main savepoint reached.
         upgrade_main_savepoint(true, 2022031100.01);
     }
@@ -1938,8 +1939,7 @@ privatefiles,moodle|/user/files.php';
 
     if ($oldversion < 2022052500.00) {
         // Start an adhoc task to fix the file timestamps of restored files.
-        $task = new core\task\fix_file_timestamps_task();
-        \core\task\manager::queue_adhoc_task($task);
+        general_helper::queue_adhoc_task(\core\task\fix_file_timestamps_task::class);
 
         // Main savepoint reached.
         upgrade_main_savepoint(true, 2022052500.00);

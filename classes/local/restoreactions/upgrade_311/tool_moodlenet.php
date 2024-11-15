@@ -25,6 +25,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use tool_vault\local\restoreactions\upgrade_311\helpers\general_helper;
+
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -144,8 +146,7 @@ function tool_vault_311_xmldb_tool_moodlenet_upgrade(int $oldversion) {
 
             // Use an adhoc task to send a notification to admin stating that the user data related to the linked
             // MoodleNet profiles has been removed.
-            $notificationtask = new tool_moodlenet\task\send_mnet_profiles_data_removed_notification();
-            core\task\manager::queue_adhoc_task($notificationtask);
+            general_helper::queue_adhoc_task(tool_moodlenet\task\send_mnet_profiles_data_removed_notification::class);
         }
 
         upgrade_plugin_savepoint(true, 2021051701, 'tool', 'moodlenet');

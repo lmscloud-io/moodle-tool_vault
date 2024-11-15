@@ -26,6 +26,8 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use tool_vault\local\restoreactions\upgrade_401\helpers\general_helper;
+
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -51,9 +53,7 @@ function tool_vault_401_xmldb_assignfeedback_editpdf_upgrade($oldversion) {
                     'submissionid' => $record->submissionid,
                     'submissionattempt' => $record->submissionattempt,
                 ];
-                $task = new assignfeedback_editpdf\task\convert_submission;
-                $task->set_custom_data($data);
-                \core\task\manager::queue_adhoc_task($task, true);
+                general_helper::queue_adhoc_task(assignfeedback_editpdf\task\convert_submission::class, true, $data);
             }
             $rs->close();
 
@@ -70,8 +70,7 @@ function tool_vault_401_xmldb_assignfeedback_editpdf_upgrade($oldversion) {
         $DB->delete_records('file_conversion');
 
         // Schedule an adhoc task to fix existing stale conversions.
-        $task = new \assignfeedback_editpdf\task\bump_submission_for_stale_conversions();
-        \core\task\manager::queue_adhoc_task($task);
+        general_helper::queue_adhoc_task(\assignfeedback_editpdf\task\bump_submission_for_stale_conversions::class);
 
         upgrade_plugin_savepoint(true, 2022082200, 'assignfeedback', 'editpdf');
     }
@@ -80,8 +79,7 @@ function tool_vault_401_xmldb_assignfeedback_editpdf_upgrade($oldversion) {
     // Put any upgrade step following this.
 
     if ($oldversion < 2022112801) {
-        $task = new \assignfeedback_editpdf\task\remove_orphaned_editpdf_files();
-        \core\task\manager::queue_adhoc_task($task);
+        general_helper::queue_adhoc_task(\assignfeedback_editpdf\task\remove_orphaned_editpdf_files::class);
 
         upgrade_plugin_savepoint(true, 2022112801, 'assignfeedback', 'editpdf');
     }

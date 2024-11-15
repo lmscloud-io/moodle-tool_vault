@@ -28,6 +28,8 @@
  * @author    Fred Dixon  (ffdixon [at] blindsidenetworks [dt] com)
  */
 
+use tool_vault\local\restoreactions\upgrade_401\helpers\general_helper;
+
 /**
  * Performs data migrations and updates on upgrade.
  *
@@ -431,8 +433,7 @@ function tool_vault_401_xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
             // Use an adhoc task to send a notification to inform the admin that the BigBlueButton activity module
             // has been disabled and they are required to confirm their acceptance of the data processing agreement
             // prior to re-enabling it.
-            $notificationtask = new mod_bigbluebuttonbn\task\send_bigbluebutton_module_disabled_notification();
-            core\task\manager::queue_adhoc_task($notificationtask);
+            general_helper::queue_adhoc_task(mod_bigbluebuttonbn\task\send_bigbluebutton_module_disabled_notification::class);
         }
 
         // Bigbluebuttonbn savepoint reached.
@@ -591,8 +592,7 @@ function tool_vault_401_bbb_schedule_upgrade_per_meeting($importedrecordings = f
         ['createorimport' => $importedrecordings ? 'Import' : 'Create']
     );
     foreach ($meetingids as $mid) {
-        $createdrecordingtask = new \mod_bigbluebuttonbn\task\upgrade_recordings_task();
-        $createdrecordingtask->set_custom_data((object) ['meetingid' => $mid, 'isimported' => $importedrecordings]);
-        \core\task\manager::queue_adhoc_task($createdrecordingtask);
+        general_helper::queue_adhoc_task(mod_bigbluebuttonbn\task\upgrade_recordings_task::class, false,
+            (object) ['meetingid' => $mid, 'isimported' => $importedrecordings]);
     }
 }

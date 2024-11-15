@@ -2,6 +2,12 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## Unreleased
+
+### Fixed
+- Fixed built-in upgrade from 3.11 to 4.5 (exception about undefined function
+  `upgrade_delete_orphaned_file_records()`)
+
 ## [2.7] - 2024-10-18
 
 ### Added

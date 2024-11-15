@@ -43,6 +43,9 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use tool_vault\local\restoreactions\upgrade_311\helpers\general_helper;
+use tool_vault\local\restoreactions\upgrade_311\helpers\profilefield_helper;
+
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -53,8 +56,6 @@ defined('MOODLE_INTERNAL') || die();
  */
 function tool_vault_311_core_upgrade($oldversion) {
     global $CFG, $DB;
-
-    require_once($CFG->libdir.'/db/upgradelib.php'); // Core Upgrade-related functions.
 
     $dbman = $DB->get_manager(); // Loads ddl manager and xmldb classes.
 
@@ -821,20 +822,19 @@ function tool_vault_311_core_upgrade($oldversion) {
     }
 
     if ($oldversion < 2021042100.01) {
-        require_once($CFG->dirroot . '/user/profile/field/social/upgradelib.php');
         $table = new xmldb_table('user');
         $tablecolumns = ['icq', 'skype', 'aim', 'yahoo', 'msn', 'url'];
 
         foreach ($tablecolumns as $column) {
             $field = new xmldb_field($column);
             if ($dbman->field_exists($table, $field)) {
-                user_profile_social_moveto_profilefield($column);
+                profilefield_helper::user_profile_social_moveto_profilefield($column);
                 $dbman->drop_field($table, $field);
             }
         }
 
         // Update all module availability if it relies on the old user fields.
-        user_profile_social_update_module_availability();
+        profilefield_helper::user_profile_social_update_module_availability();
 
         // Remove field mapping for oauth2.
         $DB->delete_records('oauth2_user_field_mapping', array('internalfield' => 'url'));
@@ -844,10 +844,9 @@ function tool_vault_311_core_upgrade($oldversion) {
     }
 
     if ($oldversion < 2021042100.02) {
-        require_once($CFG->libdir . '/db/upgradelib.php');
 
         // Check if this site has executed the problematic upgrade steps.
-        $needsfixing = upgrade_calendar_site_status(false);
+        $needsfixing = general_helper::upgrade_calendar_site_status(false);
 
         // Only queue the task if this site has been affected by the problematic upgrade step.
         if ($needsfixing) {

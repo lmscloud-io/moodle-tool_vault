@@ -25,6 +25,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use tool_vault\local\restoreactions\upgrade_401\helpers\general_helper;
+
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -54,8 +56,7 @@ function tool_vault_401_xmldb_tool_moodlenet_upgrade(int $oldversion) {
             set_config('activitychooseractivefooter', 'tool_moodlenet');
 
             // Use an adhoc task to send a notification to admin stating MoodleNet is automatically enabled after upgrade.
-            $notificationtask = new tool_moodlenet\task\send_enable_notification();
-            core\task\manager::queue_adhoc_task($notificationtask);
+            general_helper::queue_adhoc_task(tool_moodlenet\task\send_enable_notification::class);
         }
 
         upgrade_plugin_savepoint(true, 2022021600, 'tool', 'moodlenet');
