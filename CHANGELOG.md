@@ -11,6 +11,9 @@ All notable changes to the tool_vault plugin will be documented in this file.
   are not readable
 - When function `free_disk_space()` is not available, use a fallback to check if
   there is enough space in the temp directory for backup or restore.
+### Added
+- Allow to backup and restore char fields longer than 1333 symbols, even though
+  Moodle does not normally allow them.
 
 ## [2.7] - 2024-10-18
 

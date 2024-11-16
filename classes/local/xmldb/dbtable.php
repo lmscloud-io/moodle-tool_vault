@@ -46,6 +46,7 @@ class dbtable {
      */
     public function __construct(xmldb_table $table, string $component) {
         $this->xmldbtable = $table;
+        xmldb_field_wrapper::replace_table_fields($table);
         $this->component = $component;
     }
 
@@ -67,6 +68,7 @@ class dbtable {
      */
     public function get_field_sql(xmldb_table $table, xmldb_field $field) {
         global $DB;
+        $field = xmldb_field_wrapper::create_field($field);
         if ($error = $field->validateDefinition($table)) {
             // TODO do something here, otherwise getFieldSQL throws an exception.
             \debugging($error, DEBUG_DEVELOPER);

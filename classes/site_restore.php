@@ -555,7 +555,7 @@ class site_restore extends operation_base {
                     if (!file_exists($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
                         continue;
                     } else if (is_dir($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
-                        $this->add_to_log("Failed to remove existing dataroot directory" .
+                        $this->add_to_log("Failed to remove existing dataroot directory '$file'" .
                             ($cnt ? ", $cnt files in the directory were removed" : ''), constants::LOGLEVEL_WARNING);
                     } else {
                         $this->add_to_log('Failed to remove existing dataroot file', constants::LOGLEVEL_WARNING);
