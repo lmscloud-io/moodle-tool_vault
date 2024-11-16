@@ -49,7 +49,6 @@ class diskspace extends check_base {
         $totalsize = $record->sumfilesize;
         $maxfilesize = $record->maxfilesize;
         $countfiles = $record->countfiles;
-        $freespace = tempfiles::get_free_space();
         $structure = dbstructure::load();
         foreach ($structure->get_tables_actual() as $tablename => $table) {
             $deftable = $structure->find_table_definition($tablename);
@@ -74,7 +73,8 @@ class diskspace extends check_base {
         // constants::UPLOAD_SIZE of files prepared and then add the largest file/table. After that we archive
         // them and in the worst case the archive is the same size as the original.
         $requiredspace = (constants::UPLOAD_SIZE + max($maxfilesize, $dbmaxsize, $maxdatarootfilesize)) * 2;
-        $enoughspace = $requiredspace < $freespace;
+        $freespace = tempfiles::get_free_space($requiredspace);
+        $enoughspace = $freespace === true || $requiredspace < $freespace;
 
         // Save results.
         $this->model->set_details([
@@ -195,8 +195,9 @@ class diskspace extends check_base {
                 display_size($details['datarootsize']).'</li>'.
             '<li>' . get_string('diskspacebackup_maxdatarootfilesize', 'tool_vault') . ': ' .
                 display_size($details['maxdatarootfilesize'] ?? 0).'</li>'.
-            '<li>' . get_string('diskspacebackup_freespace', 'tool_vault') . ': ' .
-                display_size($details['freespace']).'</li>'.
+            ($details['freespace'] !== true ?
+                ('<li>' . get_string('diskspacebackup_freespace', 'tool_vault') . ': ' .
+                display_size($details['freespace']).'</li>') : '').
             '</ul>';
     }
 

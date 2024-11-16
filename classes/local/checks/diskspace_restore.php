@@ -50,9 +50,9 @@ class diskspace_restore extends check_base_restore {
 
         $mintmpspace = $largestarchive + $sizes[constants::FILENAME_DBSTRUCTURE] + $origsizes[constants::FILENAME_DBSTRUCTURE];
 
-        $freespace = tempfiles::get_free_space();
+        $freespace = tempfiles::get_free_space($mintmpspace);
 
-        $enoughspace = $freespace > $mintmpspace;
+        $enoughspace = $freespace === true || $freespace > $mintmpspace;
 
         $this->model->set_details([
             'freespace' => $freespace,
@@ -82,7 +82,8 @@ class diskspace_restore extends check_base_restore {
     protected function is_warning(): bool {
         $details = $this->model->get_details();
         return $this->success() &&
-            (($details['datarootsize'] ?? 0) + ($details['filedirsize'] ?? 0) +
+            ($details['freespace'] !== true &&
+                ($details['datarootsize'] ?? 0) + ($details['filedirsize'] ?? 0) +
                 ($details['mintmpspace'] ?? 0) > $details['freespace']);
     }
 
@@ -112,8 +113,9 @@ class diskspace_restore extends check_base_restore {
         return
             $this->display_status_message($this->get_status_message(), $this->is_warning()).
             '<ul>'.
-            '<li>'.get_string('diskspacebackup_freespace', 'tool_vault') . ': '.
-                display_size($details['freespace']).'</li>'.
+            ($details['freespace'] !== true ?
+            ('<li>'.get_string('diskspacebackup_freespace', 'tool_vault') . ': '.
+                display_size($details['freespace']).'</li>') : '').
             '<li>'.get_string('diskspacerestore_mintmpspace', 'tool_vault') . ': '.
                 display_size($details['mintmpspace'] ?? 0).'</li>'.
             '<li>'.get_string('diskspacebackup_datarootsize', 'tool_vault') . ': '.

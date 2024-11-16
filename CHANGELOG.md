@@ -9,6 +9,8 @@ All notable changes to the tool_vault plugin will be documented in this file.
   `upgrade_delete_orphaned_file_records()`)
 - Better error message during disk space pre-check if any paths inside dataroot
   are not readable
+- When function `free_disk_space()` is not available, use a fallback to check if
+  there is enough space in the temp directory for backup or restore.
 
 ## [2.7] - 2024-10-18
 

@@ -119,11 +119,51 @@ class tempfiles {
     /**
      * Get free space in the temp dir
      *
-     * @return bool|float
+     * @param int $minrequiredspace check that there is at least this amount of space
+     * @return bool|float number of bytes available or 'true' if there is enough space but the exact number
+     *     could not be evaluated.
      */
-    public static function get_free_space() {
+    public static function get_free_space(int $minrequiredspace) {
         $dir = make_backup_temp_directory('tool_vault');
-        return disk_free_space($dir);
+        if (function_exists('disk_free_space') && ($freespace = @disk_free_space($dir)) > 0) {
+            return $freespace;
+        }
+
+        return self::get_free_space_fallback($dir, $minrequiredspace);
+    }
+
+    /**
+     * When function disk_free_space() is not available, try to place a big file in the temp directory.
+     *
+     * @param string $dir
+     * @param int $minrequiredspace check that there is at least this amount of space
+     * @return bool|int number of bytes available or 'true' if there is enough space but the exact number
+     *     could not be evaluated.
+     */
+    public static function get_free_space_fallback(string $dir, int $minrequiredspace) {
+        $tempfile = $dir . DIRECTORY_SEPARATOR . 'temp';
+        $fh = null;
+        $size = 0;
+        try {
+            $fh = fopen($tempfile, 'w');
+
+            while ($size < $minrequiredspace) {
+                $chunk = min($minrequiredspace - $size + 1, 1024 * 100);
+                fwrite($fh, str_repeat('a', $chunk));
+                $size += $chunk;
+            }
+            // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+        } catch (\Exception $e) {
+            // Exception means that we cold not write more data into the file and we ran out of space.
+            // It probably looks like this:
+            // fwrite(): Write of 16384 bytes failed with errno=28 No space left on device.
+        }
+
+        if ($fh) {
+            fclose($fh);
+        }
+        @unlink($tempfile);
+        return $size > $minrequiredspace ? true : $size;
     }
 
     /**

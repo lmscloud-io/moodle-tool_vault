@@ -35,4 +35,15 @@ final class tempfiles_test extends \advanced_testcase {
         tempfiles::remove_temp_dir($dir);
         $this->assertFalse(file_exists($dir));
     }
+
+    public function test_get_free_space_fallback(): void {
+        $dir = make_backup_temp_directory('mytest');
+        $space = disk_free_space($dir);
+        $mb = 1024 * 1024;
+        if ($space < $mb) {
+            $this->markTestSkipped('There is less than 1Mb of free disk space, skipping the test');
+        }
+        $this->assertTrue(tempfiles::get_free_space_fallback($dir, 10));
+        $this->assertTrue(tempfiles::get_free_space_fallback($dir, $mb));
+    }
 }
