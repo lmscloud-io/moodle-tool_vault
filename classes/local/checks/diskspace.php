@@ -67,7 +67,7 @@ class diskspace extends check_base {
         $this->tablesizes = array_intersect_key($structure->get_actual_tables_sizes(), $this->tablerowscnt);
         $dbtotalsize = array_sum($this->tablesizes);
         $dbmaxsize = max($this->tablesizes);
-        [$datarootsize, $maxdatarootfilesize] = $this->get_dataroot_size();
+        [$datarootsize, $maxdatarootfilesize, $datarootunreadable] = $this->get_dataroot_size();
 
         // This is a rough estimate!
         // There should be enough space to archive the largest file. In the worst case we already have almost
@@ -87,6 +87,7 @@ class diskspace extends check_base {
             'dbmaxsize' => $dbmaxsize,
             'datarootsize' => $datarootsize,
             'maxdatarootfilesize' => $maxdatarootfilesize,
+            'datarootunreadable' => $datarootunreadable,
             'enoughspace' => $enoughspace,
         ])->save();
     }
@@ -101,18 +102,30 @@ class diskspace extends check_base {
         $handle = opendir($CFG->dataroot);
         $size = 0;
         $maxfile = 0;
+        $unreadable = [];
         while (($file = readdir($handle)) !== false) {
             if (!siteinfo::is_dataroot_path_skipped_backup($file) && $file !== '.' && $file !== '..') {
                 $filepath = $CFG->dataroot . DIRECTORY_SEPARATOR . $file;
-                if (is_dir($filepath)) {
-                    $it = new \RecursiveDirectoryIterator($filepath, \RecursiveDirectoryIterator::SKIP_DOTS);
-                    $allfiles = new \RecursiveIteratorIterator($it, \RecursiveIteratorIterator::LEAVES_ONLY);
-                    foreach ($allfiles as $f) {
-                        $thissize = $f->getSize();
-                        $size += $thissize;
-                        $maxfile = max($maxfile, $thissize);
+                if (!is_readable($filepath)) {
+                    $unreadable[] = $file;
+                } else if (is_dir($filepath)) {
+                    try {
+                        $it = new \RecursiveDirectoryIterator($filepath, \RecursiveDirectoryIterator::SKIP_DOTS);
+                        $allfiles = new \RecursiveIteratorIterator($it, \RecursiveIteratorIterator::LEAVES_ONLY);
+                        foreach ($allfiles as $f) {
+                            if (is_readable($f->getRealpath())) {
+                                $thissize = $f->getSize();
+                                $size += $thissize;
+                                $maxfile = max($maxfile, $thissize);
+                            } else {
+                                $unreadable[] = $file;
+                                break;
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        $unreadable[] = $file;
                     }
-                } else if (is_file($filepath) && is_readable($filepath)) {
+                } else if (is_file($filepath)) {
                     $thissize = filesize($filepath);
                     $size += $thissize;
                     $maxfile = max($maxfile, $thissize);
@@ -120,7 +133,7 @@ class diskspace extends check_base {
             }
         }
         closedir($handle);
-        return [$size, $maxfile];
+        return [$size, $maxfile, $unreadable];
     }
 
     /**
@@ -130,6 +143,7 @@ class diskspace extends check_base {
      */
     public function success(): bool {
         return $this->model->status === constants::STATUS_FINISHED
+            && empty($this->model->get_details()['datarootunreadable'])
             && $this->model->get_details()['enoughspace'];
     }
 
@@ -139,9 +153,17 @@ class diskspace extends check_base {
      * @return string
      */
     public function get_status_message(): string {
-        return $this->success() ?
-            get_string('diskspacebackup_success', 'tool_vault') :
-            get_string('diskspacebackup_fail', 'tool_vault');
+        if ($this->success()) {
+            return get_string('diskspacebackup_success', 'tool_vault');
+        } else if (!empty($this->model->get_details()['datarootunreadable'])) {
+            $a = (object)[
+                'paths' => join(', ', $this->model->get_details()['datarootunreadable']),
+                'settingsurl' => (new \moodle_url('/admin/settings.php', ['section' => 'tool_vault']))->out(),
+            ];
+            return get_string('diskspacebackup_fail_datarootunreadable', 'tool_vault', $a);
+        } else {
+            return get_string('diskspacebackup_fail', 'tool_vault');
+        }
     }
 
     /**

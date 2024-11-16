@@ -96,17 +96,22 @@ class tempfiles {
             return (int)unlink($dir);
         }
         $cnt = 0;
-        $it = new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS);
-        $files = new \RecursiveIteratorIterator($it,
-            \RecursiveIteratorIterator::CHILD_FIRST);
-        foreach ($files as $file) {
-            if ($file->isDir()) {
-                rmdir($file->getRealPath());
-            } else {
-                $cnt += (int)unlink($file->getRealPath());
+        try {
+            $it = new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS);
+            $files = new \RecursiveIteratorIterator($it,
+                \RecursiveIteratorIterator::CHILD_FIRST);
+            foreach ($files as $file) {
+                if ($file->isDir()) {
+                    rmdir($file->getRealPath());
+                } else {
+                    $cnt += (int)unlink($file->getRealPath());
+                }
             }
+            rmdir($dir);
+            // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+        } catch (\Exception $e) {
+            // Some subpaths were not readable.
         }
-        rmdir($dir);
         unset(self::$createddirs[$dir]);
         return $cnt;
     }

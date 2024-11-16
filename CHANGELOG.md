@@ -7,6 +7,8 @@ All notable changes to the tool_vault plugin will be documented in this file.
 ### Fixed
 - Fixed built-in upgrade from 3.11 to 4.5 (exception about undefined function
   `upgrade_delete_orphaned_file_records()`)
+- Better error message during disk space pre-check if any paths inside dataroot
+  are not readable
 
 ## [2.7] - 2024-10-18
 

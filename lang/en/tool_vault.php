@@ -91,6 +91,7 @@ $string['diskspacebackup_dbmaxsize'] = 'The largest DB table size (approx)';
 $string['diskspacebackup_dbrecords'] = 'Total number of rows in DB tables';
 $string['diskspacebackup_dbtotalsize'] = 'Required space for database';
 $string['diskspacebackup_fail'] = 'There is not enough disk space to perform the site backup';
+$string['diskspacebackup_fail_datarootunreadable'] = 'Can not read path(s) <b>{$a->paths}</b> in the dataroot. Either fix file permissions on the server or exclude these paths from the backup in the vault <a href="{$a->settingsurl}">settings</a>';
 $string['diskspacebackup_freespace'] = 'Free space in temp dir';
 $string['diskspacebackup_maxdatarootfilesize'] = 'The largest file in dataroot';
 $string['diskspacebackup_maxfilesize'] = 'The largest file in file storage';
