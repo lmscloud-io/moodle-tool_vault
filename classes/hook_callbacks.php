@@ -47,6 +47,7 @@ class hook_callbacks {
             if (!$url->compare(new \moodle_url('/admin/tool/vault/progress.php'), URL_MATCH_BASE)) {
                 $PAGE->set_context(\context_system::instance());
                 $PAGE->set_url(new \moodle_url('/'));
+                header('X-Tool-Vault: true');
                 print_maintenance_message();
             }
         }

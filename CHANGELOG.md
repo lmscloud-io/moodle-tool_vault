@@ -14,6 +14,8 @@ All notable changes to the tool_vault plugin will be documented in this file.
 ### Added
 - Allow to backup and restore char fields longer than 1333 symbols, even though
   Moodle does not normally allow them.
+- Additional header 'X-Tool-Vault: true' when vault puts the site in maintenance
+  mode during backup or restore.
 
 ## [2.7] - 2024-10-18
 
