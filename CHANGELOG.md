@@ -2,6 +2,11 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## [2.9] - 2024-11-17
+
+### Fixed
+- Correction to the additional header 'X-Tool-Vault: true'
+
 ## [2.8] - 2024-11-17
 
 ### Fixed
