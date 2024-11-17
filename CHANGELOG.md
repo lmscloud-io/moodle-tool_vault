@@ -2,7 +2,7 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-## Unreleased
+## [2.8] - 2024-11-17
 
 ### Fixed
 - Fixed built-in upgrade from 3.11 to 4.5 (exception about undefined function
