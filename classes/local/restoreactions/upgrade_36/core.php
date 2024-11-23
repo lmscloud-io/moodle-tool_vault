@@ -19,6 +19,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use tool_vault\local\restoreactions\upgrade_36\helpers\general_helper;
+
 /**
  * Main upgrade tasks to be executed on Moodle version bump
  *
@@ -85,9 +87,6 @@ function tool_vault_36_core_upgrade($oldversion) {
     if ($oldversion < 2016082200.00) {
         // An upgrade step to remove any duplicate stamps, within the same context, in the question_categories table, and to
         // add a unique index to (contextid, stamp) to avoid future stamp duplication. See MDL-54864.
-
-        // Extend the execution time limit of the script to 2 hours.
-        upgrade_set_timeout(7200);
 
         // This SQL fetches the id of those records which have duplicate stamps within the same context.
         // This doesn't return the original record within the context, from which the duplicate stamps were likely created.
@@ -497,7 +496,7 @@ function tool_vault_36_core_upgrade($oldversion) {
         // Delete "orphaned" block positions. Note, the query does not use indexes (because there are none),
         // if it runs too long during upgrade you can comment this line - it will leave orphaned records
         // in the database but they won't bother you.
-        upgrade_block_positions();
+        general_helper::upgrade_block_positions();
 
         // Main savepoint reached.
         upgrade_main_savepoint(true, 2017020901.00);
@@ -1304,7 +1303,7 @@ function tool_vault_36_core_upgrade($oldversion) {
         if (empty($CFG->linkcoursesectionsupgradescriptwasrun)) {
             // Check if the site is using a boost-based theme.
             // If value of 'linkcoursesections' is set to the old default value, change it to the new default.
-            if (upgrade_theme_is_from_family('boost', $CFG->theme)) {
+            if (general_helper::upgrade_theme_is_from_family('boost', $CFG->theme)) {
                 set_config('linkcoursesections', 1);
             }
             set_config('linkcoursesectionsupgradescriptwasrun', 1);
@@ -1904,7 +1903,7 @@ function tool_vault_36_core_upgrade($oldversion) {
 
     if ($oldversion < 2018022800.01) {
         // Fix old block configurations that use the deprecated (and now removed) object class.
-        upgrade_fix_block_instance_configuration();
+        general_helper::upgrade_fix_block_instance_configuration();
 
         // Main savepoint reached.
         upgrade_main_savepoint(true, 2018022800.01);
@@ -2816,7 +2815,7 @@ function tool_vault_36_core_upgrade($oldversion) {
     }
 
     if ($oldversion < 2018120301.02) {
-        upgrade_delete_orphaned_file_records();
+        general_helper::upgrade_delete_orphaned_file_records();
         upgrade_main_savepoint(true, 2018120301.02);
     }
 
@@ -3048,7 +3047,8 @@ function tool_vault_36_core_upgrade($oldversion) {
         $hubconfig = get_config('hub');
 
         if (!empty($hubconfig)) {
-            foreach (upgrade_convert_hub_config_site_param_names($hubconfig, 'https://moodle.net') as $name => $value) {
+            foreach (general_helper::upgrade_convert_hub_config_site_param_names($hubconfig, 'https://moodle.net')
+                        as $name => $value) {
                 set_config($name, $value, 'hub');
             }
         }
