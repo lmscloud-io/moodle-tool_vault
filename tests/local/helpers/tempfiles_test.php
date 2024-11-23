@@ -37,7 +37,7 @@ final class tempfiles_test extends \advanced_testcase {
     }
 
     public function test_get_free_space_fallback(): void {
-        $dir = make_backup_temp_directory('mytest');
+        $dir = compat::make_backup_temp_directory('mytest');
         $space = disk_free_space($dir);
         $mb = 1024 * 1024;
         if ($space < $mb) {

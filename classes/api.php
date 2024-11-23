@@ -516,36 +516,6 @@ class api {
         return true;
     }
 
-    // /**
-    //  * Get a list of all remote backups for this api key
-    //  *
-    //  * @param bool $usecache
-    //  * @return remote_backup[]
-    //  * @throws api_exception
-    //  */
-    // public static function get_remote_backups(bool $usecache = true): array {
-    //     $conf = $usecache ? self::get_config('cachedremotebackups') : null;
-    //     if ($conf !== null) {
-    //         $records = json_decode($conf, true);
-    //     } else {
-    //         $apiresult = self::api_call('backups', 'GET', []);
-    //         self::store_config('cachedremotebackupstime', time());
-    //         $records = $apiresult['backups'];
-    //         self::store_config('cachedremotebackups', json_encode($apiresult['backups']));
-    //     }
-    //     $backups = [];
-    //     foreach ($records as $record) {
-    //         $backup = new remote_backup($record);
-    //         if ($backup->status === constants::STATUS_FINISHED) {
-    //             $backups[$backup->backupkey] = $backup;
-    //         }
-    //     }
-    //     uasort($backups, function($a, $b) {
-    //         return - $a->timecreated + $b->timecreated;
-    //     });
-    //     return $backups;
-    // }
-
     /**
      * Last time we fetched remote backups
      *
