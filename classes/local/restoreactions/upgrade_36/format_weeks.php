@@ -27,6 +27,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use tool_vault\local\restoreactions\upgrade_36\helpers\format_helper;
+
 /**
  * Upgrade script for format_weeks
  *
@@ -36,13 +38,10 @@ defined('MOODLE_INTERNAL') || die();
 function tool_vault_36_xmldb_format_weeks_upgrade($oldversion) {
     global $CFG, $DB;
 
-    require_once($CFG->dirroot . '/course/format/weeks/lib.php');
-    require_once($CFG->dirroot . '/course/format/weeks/db/upgradelib.php');
-
     if ($oldversion < 2017020200) {
 
         // Remove 'numsections' option and hide or delete orphaned sections.
-        format_weeks_upgrade_remove_numsections();
+        format_helper::format_weeks_upgrade_remove_numsections();
 
         upgrade_plugin_savepoint(true, 2017020200, 'format', 'weeks');
     }

@@ -20,6 +20,7 @@ use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\checks\version_restore;
 use tool_vault\local\restoreactions\upgrade_311\upgrade_311;
+use tool_vault\local\restoreactions\upgrade_36\upgrade_36;
 use tool_vault\local\restoreactions\upgrade_401\upgrade_401;
 use tool_vault\local\restoreactions\upgrade_402\upgrade_402;
 use tool_vault\site_restore;
@@ -57,6 +58,13 @@ class upgrade extends restore_action {
 
         // Upgrade to intermediate release.
         $intermediaterelease = version_restore::get_required_core_intermediate_release($CFG->release, $coderelease);
+
+        if ($intermediaterelease && version_compare(normalize_version($CFG->release), '3.6', '<')) {
+            $siteupgraded = true;
+            $logger->add_to_log('Upgrading Moodle from '.$CFG->release.' to 3.6...');
+            upgrade_36::upgrade($logger);
+            $logger->add_to_log('...done');
+        }
 
         if ($intermediaterelease && version_compare(normalize_version($CFG->release), '3.11.8', '<')) {
             $siteupgraded = true;

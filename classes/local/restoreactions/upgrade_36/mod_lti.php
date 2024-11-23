@@ -129,7 +129,7 @@ function tool_vault_36_xmldb_lti_upgrade($oldversion) {
 
             if (!$acceptgrades) {
                 // Required when doing CLI upgrade.
-                require_once($CFG->libdir . '/gradelib.php');
+                require_once($CFG->libdir . '/gradelib.php'); // TODO not ideal.
                 grade_update('mod/lti', $lti->course, 'mod', 'lti', $lti->id, 0, null, array('deleted' => 1));
             }
 

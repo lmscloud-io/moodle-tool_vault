@@ -47,8 +47,6 @@ function tool_vault_36_xmldb_chat_upgrade($oldversion) {
         $field = new xmldb_field('system');
         if ($dbman->field_exists($table, $field)) {
             $field->set_attributes(XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'groupid');
-            // Extend the execution time limit of the script to 2 hours.
-            upgrade_set_timeout(7200);
             // Rename it to 'issystem'.
             $dbman->rename_field($table, $field, 'issystem');
         }
@@ -58,8 +56,6 @@ function tool_vault_36_xmldb_chat_upgrade($oldversion) {
         $field = new xmldb_field('system');
         if ($dbman->field_exists($table, $field)) {
             $field->set_attributes(XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'groupid');
-            // Extend the execution time limit of the script to 5 minutes.
-            upgrade_set_timeout(300);
             // Rename it to 'issystem'.
             $dbman->rename_field($table, $field, 'issystem');
         }

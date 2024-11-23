@@ -66,8 +66,8 @@ class auth_helper {
                         ]);
                         echo $OUTPUT->notification($message, \core\output\notification::NOTIFY_ERROR);
 
-                        upgrade_log(UPGRADE_LOG_NOTICE, 'auth_'.$plugin, 'Setting values mismatch detected',
-                            'SETTING: '.$name. ' LEGACY: '.$legacy[$name].' CURRENT: '.$value);
+                        // upgrade_log(UPGRADE_LOG_NOTICE, 'auth_'.$plugin, 'Setting values mismatch detected',
+                        //     'SETTING: '.$name. ' LEGACY: '.$legacy[$name].' CURRENT: '.$value);
                     }
                 }
 
@@ -120,7 +120,7 @@ class auth_helper {
 
         if (file_exists($settingspath)) {
             $settings = new admin_settingpage($section, 'Emulated settings page for auth_'.$plugin, 'moodle/site:config');
-            include($settingspath);
+            include($settingspath); // TODO not ideal.
 
             if ($settings) {
                 admin_apply_default_settings($settings, false);

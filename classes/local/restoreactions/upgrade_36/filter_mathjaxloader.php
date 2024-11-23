@@ -27,6 +27,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use tool_vault\local\restoreactions\upgrade_36\helpers\filter_helper;
+
 /**
  * @param int $oldversion the version we are upgrading from
  * @return bool result
@@ -68,7 +70,7 @@ function tool_vault_36_xmldb_filter_mathjaxloader_upgrade($oldversion) {
     if ($oldversion < 2017040300) {
 
         $httpsurl = get_config('filter_mathjaxloader', 'httpsurl');
-        $newcdnurl = filter_mathjaxloader_upgrade_cdn_cloudflare($httpsurl, false);
+        $newcdnurl = filter_helper::filter_mathjaxloader_upgrade_cdn_cloudflare($httpsurl, false);
 
         set_config('httpsurl', $newcdnurl, 'filter_mathjaxloader');
 
@@ -148,7 +150,8 @@ MathJax.Hub.Config({
 
         $mathjaxconfig = get_config('filter_mathjaxloader', 'mathjaxconfig');
 
-        if (empty($mathjaxconfig) || filter_mathjaxloader_upgrade_mathjaxconfig_equal($mathjaxconfig, $previousdefault)) {
+        if (empty($mathjaxconfig) ||
+                filter_helper::filter_mathjaxloader_upgrade_mathjaxconfig_equal($mathjaxconfig, $previousdefault)) {
             set_config('mathjaxconfig', $newdefault, 'filter_mathjaxloader');
         }
 
@@ -176,7 +179,8 @@ MathJax.Hub.Config({
 
         $mathjaxconfig = get_config('filter_mathjaxloader', 'mathjaxconfig');
 
-        if (empty($mathjaxconfig) || filter_mathjaxloader_upgrade_mathjaxconfig_equal($mathjaxconfig, $previousdefault)) {
+        if (empty($mathjaxconfig) ||
+                filter_helper::filter_mathjaxloader_upgrade_mathjaxconfig_equal($mathjaxconfig, $previousdefault)) {
             set_config('mathjaxconfig', $newdefault, 'filter_mathjaxloader');
         }
 

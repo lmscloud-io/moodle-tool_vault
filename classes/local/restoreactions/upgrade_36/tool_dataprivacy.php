@@ -16,6 +16,7 @@
 
 // phpcs:ignoreFile
 // Mdlcode-disable incorrect-package-name.
+// Mdlcode-disable unknown-db-tablename.
 
 /**
  * tool_dataprivacy plugin upgrade code

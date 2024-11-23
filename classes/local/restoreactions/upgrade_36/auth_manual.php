@@ -27,6 +27,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use tool_vault\local\restoreactions\upgrade_36\helpers\auth_helper;
+
 /**
  * Function to upgrade auth_manual.
  * @param int $oldversion the version we are upgrading from
@@ -40,8 +42,8 @@ function tool_vault_36_xmldb_auth_manual_upgrade($oldversion) {
 
     if ($oldversion < 2017020700) {
         // Convert info in config plugins from auth/manual to auth_manual.
-        upgrade_fix_config_auth_plugin_names('manual');
-        upgrade_fix_config_auth_plugin_defaults('manual');
+        auth_helper::upgrade_fix_config_auth_plugin_names('manual');
+        auth_helper::upgrade_fix_config_auth_plugin_defaults('manual');
         upgrade_plugin_savepoint(true, 2017020700, 'auth', 'manual');
     }
 

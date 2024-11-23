@@ -27,8 +27,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-use tool_usertours\manager;
-
 /**
  * Upgrade the user tours plugin.
  *
@@ -52,7 +50,7 @@ function tool_vault_36_xmldb_tool_usertours_upgrade($oldversion) {
 
     if ($oldversion < 2018113002) {
         // Update the tours shipped with Moodle.
-        manager::update_shipped_tours();
+        // Step removed in Vault, tours will be updated later.
 
         upgrade_plugin_savepoint(true, 2018113002, 'tool', 'usertours');
     }
@@ -62,7 +60,7 @@ function tool_vault_36_xmldb_tool_usertours_upgrade($oldversion) {
 
     if ($oldversion < 2018120301) {
         // Update the tours shipped with Moodle.
-        manager::update_shipped_tours();
+        // Step removed in Vault, tours will be updated later.
 
         upgrade_plugin_savepoint(true, 2018120301, 'tool', 'usertours');
     }
