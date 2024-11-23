@@ -80,7 +80,7 @@ class upgrade_36 {
             if (file_exists(__DIR__ ."/". $plugin .".php")) {
                 require_once(__DIR__ ."/". $plugin .".php");
                 $pluginshort = preg_replace("/^mod_/", "", $plugin);
-                $funcname = "tool_vault_39_xmldb_{$pluginshort}_upgrade";
+                $funcname = "tool_vault_36_xmldb_{$pluginshort}_upgrade";
                 try {
                     $funcname($allcurversions[$plugin]);
                 } catch (\Throwable $t) {
