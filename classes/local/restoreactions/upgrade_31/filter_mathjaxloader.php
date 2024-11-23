@@ -33,8 +33,6 @@ function tool_vault_31_xmldb_filter_mathjaxloader_upgrade($oldversion) {
 
     $dbman = $DB->get_manager();
 
-    require_once($CFG->dirroot . '/filter/mathjaxloader/db/upgradelib.php');
-
     if ($oldversion < 2014081100) {
 
         $sslcdnurl = get_config('filter_mathjaxloader', 'httpsurl');

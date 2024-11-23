@@ -316,7 +316,13 @@ class site_restore extends operation_base {
         }
         $plugins = siteinfo::get_excluded_plugins_restore();
         [$sql, $params] = plugindata::get_sql_for_plugins_data_in_table($tablename, $plugins);
-        $DB->delete_records_select($tablename, $sql, $params);
+        try {
+            $DB->delete_records_select($tablename, $sql, $params);
+        } catch (\moodle_exception $e) {
+            // For example, table 'event' has component field in the newer versions of moodle but did not have it before.
+            $this->add_to_log("Table $tablename was skipped when restoring plugin data", constants::LOGLEVEL_WARNING);
+            return;
+        }
         if (!empty($records)) {
             $DB->insert_records($tablename, $records);
         }
