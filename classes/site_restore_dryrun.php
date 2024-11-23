@@ -101,7 +101,7 @@ class site_restore_dryrun extends operation_base {
      */
     public static function execute_prechecks(files_restore $restorehelper, operation_base $logger): array {
         /** @var restore_base_model $model */
-        $model = $logger->model;
+        $model = $logger->get_model();
 
         $backupmetadata = api::get_remote_backup($model->backupkey, constants::STATUS_FINISHED);
 
