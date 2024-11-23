@@ -13,7 +13,10 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-//
+
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
 // This file is part of BasicLTI4Moodle
 //
 // BasicLTI4Moodle is an IMS BasicLTI (Basic Learning Tools for Interoperability)

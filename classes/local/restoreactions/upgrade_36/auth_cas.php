@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
 /**
  * CAS authentication plugin upgrade code
  *
@@ -23,6 +26,8 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
+
+use tool_vault\local\restoreactions\upgrade_36\helpers\auth_helper;
 
 /**
  * Function to upgrade auth_cas.
@@ -37,8 +42,8 @@ function tool_vault_36_xmldb_auth_cas_upgrade($oldversion) {
 
     if ($oldversion < 2017020700) {
         // Convert info in config plugins from auth/cas to auth_cas.
-        upgrade_fix_config_auth_plugin_names('cas');
-        upgrade_fix_config_auth_plugin_defaults('cas');
+        auth_helper::upgrade_fix_config_auth_plugin_names('cas');
+        auth_helper::upgrade_fix_config_auth_plugin_defaults('cas');
         upgrade_plugin_savepoint(true, 2017020700, 'auth', 'cas');
     }
 
