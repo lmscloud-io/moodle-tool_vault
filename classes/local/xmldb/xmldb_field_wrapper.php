@@ -73,7 +73,7 @@ class xmldb_field_wrapper extends xmldb_field {
      * @param xmldb_table|null $xmldbtable optional when object is table
      * @return string null if ok, error message if problem found
      */
-    public function validateDefinition(?xmldb_table $xmldbtable = null) {
+    public function validateDefinition($xmldbtable = null) {
         $origlength = $this->getLength();
         if ($this->getType() == XMLDB_TYPE_CHAR && $origlength > self::CHAR_MAX_LENGTH) {
             $this->setLength(self::CHAR_MAX_LENGTH);
