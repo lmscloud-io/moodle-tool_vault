@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace tool_vault\local\restoreactions\upgrade_36\helpers;
+namespace tool_vault\local\restoreactions\upgrade_31\helpers;
 
 /**
  * Class filter_helper
@@ -33,36 +33,36 @@ class filter_helper {
      * @return string The new url.
      */
     public static function filter_mathjaxloader_upgrade_cdn_cloudflare($mathjaxurl, $httponly = false) {
-        return \tool_vault\local\restoreactions\upgrade_31\helpers\filter_helper::
-            filter_mathjaxloader_upgrade_cdn_cloudflare($mathjaxurl, $httponly);
-    }
+        $newcdnurl = $mathjaxurl;
+        $cdnroot = 'https://cdn.mathjax.org/mathjax/';
+        if ($httponly) {
+            $cdnroot = 'http://cdn.mathjax.org/mathjax/';
+        }
+        $usingcdn = strpos($mathjaxurl, $cdnroot) === 0;
+        if ($usingcdn) {
+            $majorversion = substr($mathjaxurl, strlen($cdnroot), 3);
+            $latestversion = '2.7.0';
+            if ($majorversion == '2.6') {
+                $latestversion = '2.6.1';
+            } else if ($majorversion == '2.5') {
+                $latestversion = '2.5.3';
+            }
 
-    /**
-     * Compares two values of the 'mathjaxconfig' config option.
-     *
-     * This is used during the upgrade to see if the two text values of the 'mathjaxconfig' config option should be
-     * considered equal of different. The strings are normalized so that EOL characters and whitespace is not significant.
-     *
-     * @param string $val1 value
-     * @param string $val2 value
-     * @return bool true if the texts should be considered equals, false otherwise
-     */
-    public static function filter_mathjaxloader_upgrade_mathjaxconfig_equal($val1, $val2) {
+            $offset = strpos($mathjaxurl, '/', strlen($cdnroot));
+            if ($offset === false) {
+                return $newcdnurl;
+            }
 
-        $val1lines = preg_split("/[\r\n]/", $val1);
-        $val2lines = preg_split("/[\r\n]/", $val2);
+            $endofurl = substr($mathjaxurl, $offset + 1);
 
-        $val1lines = array_map('trim', $val1lines);
-        $val2lines = array_map('trim', $val2lines);
+            $newcdnbase = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/';
+            if ($httponly) {
+                $newcdnbase = 'http://cdnjs.cloudflare.com/ajax/libs/mathjax/';
+            }
 
-        $val1lines = array_filter($val1lines, function($value) {
-            return $value !== '';
-        });
+            $newcdnurl = $newcdnbase . $latestversion . '/' . $endofurl;
+        }
 
-        $val2lines = array_filter($val2lines, function($value) {
-            return $value !== '';
-        });
-
-        return (implode(' ', $val1lines) === implode(' ', $val2lines));
+        return $newcdnurl;
     }
 }

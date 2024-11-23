@@ -36,8 +36,6 @@ use tool_vault\local\restoreactions\upgrade_36\helpers\filter_helper;
 function tool_vault_36_xmldb_filter_mathjaxloader_upgrade($oldversion) {
     global $CFG;
 
-    require_once($CFG->dirroot . '/filter/mathjaxloader/db/upgradelib.php');
-
     if ($oldversion < 2016080200) {
         // We are consolodating the two settings for http and https url into only the https
         // setting. Since it is preferably to always load the secure resource.
