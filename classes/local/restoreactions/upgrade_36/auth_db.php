@@ -43,7 +43,7 @@ function tool_vault_36_xmldb_auth_db_upgrade($oldversion) {
     if ($oldversion < 2017032800) {
         // Convert info in config plugins from auth/db to auth_db
         auth_helper::upgrade_fix_config_auth_plugin_names('db');
-        upgrade_fix_config_auth_plugin_defaults('db');
+        auth_helper::upgrade_fix_config_auth_plugin_defaults('db');
         upgrade_plugin_savepoint(true, 2017032800, 'auth', 'db');
     }
 

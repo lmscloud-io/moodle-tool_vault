@@ -27,6 +27,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use tool_vault\local\restoreactions\upgrade_36\helpers\mod_assign;
+
 /**
  * upgrade this assignment instance - this function could be skipped but it will be needed later
  * @param int $oldversion The old version of the assign module
@@ -156,8 +158,7 @@ function tool_vault_36_xmldb_assign_upgrade($oldversion) {
     }
 
     if ($oldversion < 2017061205) {
-        require_once($CFG->dirroot.'/mod/assign/upgradelib.php');
-        $brokenassigns = get_assignments_with_rescaled_null_grades();
+        $brokenassigns = mod_assign::get_assignments_with_rescaled_null_grades();
 
         // Set config value.
         foreach ($brokenassigns as $assign) {
