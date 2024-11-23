@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\operations;
 
+use coding_exception;
 use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\checks\backup_precheck_failed;
@@ -41,7 +42,9 @@ abstract class operation_base implements logger {
      * @param array $params
      * @return operation_base
      */
-    abstract public static function schedule(array $params = []);
+    public static function schedule(array $params = []) {
+        throw new coding_exception('Must be overridden');
+    }
 
     /**
      * Returns the operation model (has properties id, status, etc)
@@ -55,10 +58,10 @@ abstract class operation_base implements logger {
     /**
      * Returns the error message to store on server
      *
-     * @param \Throwable $t
+     * @param \Throwable|\Exception $t
      * @return string
      */
-    public static function get_error_message_for_server(\Throwable $t) {
+    public static function get_error_message_for_server($t) {
         global $CFG, $DB;
         $message = $t->getMessage();
         if ($t instanceof \moodle_exception) {
@@ -151,6 +154,10 @@ abstract class operation_base implements logger {
             $this->execute();
             $rv = true;
         } catch (\Throwable $t) {
+            $this->mark_as_failed($t);
+            tempfiles::cleanup();
+        } catch (\Exception $t) {
+            // Compatibility with PHP < 7.0.
             $this->mark_as_failed($t);
             tempfiles::cleanup();
         }

@@ -38,7 +38,9 @@ class tool_model extends operation_model {
             throw new \coding_exception('Type '.$record->type.' is invalid for a tool');
         }
         if ($type) {
-            $record = $record ?? new \stdClass();
+            if (!$record) {
+                $record = new \stdClass();
+            }
             $record->type = self::$defaulttypeprefix . $type;
         }
         parent::__construct($record);

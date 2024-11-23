@@ -41,18 +41,19 @@ class error_with_backtrace implements \templatable {
      */
     public static function create_from_model(operation_model $model) {
         $s = new self();
-        $s->error = ($model->get_details()['error'] ?? null);
-        $s->backtrace = $model->get_details()['errorbacktrace'] ?? null;
+        $details = $model->get_details() + ['error' => null, 'errorbacktrace' => null];
+        $s->error = $details['error'];
+        $s->backtrace = $details['errorbacktrace'];
         return $s;
     }
 
     /**
      * Create from exception
      *
-     * @param \Throwable $t
+     * @param \Throwable|\Exception $t
      * @return static
      */
-    public static function create_from_exception(\Throwable $t) {
+    public static function create_from_exception($t) {
         $e = new self();
         $e->error = $t->getMessage();
         $e->backtrace = $t->getTraceAsString();

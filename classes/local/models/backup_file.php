@@ -88,7 +88,7 @@ class backup_file {
      * @return mixed|null
      */
     public function __get($name) {
-        return $this->data[$name] ?? null;
+        return isset($this->data[$name]) ? $this->data[$name] : null;
     }
 
     /**
@@ -130,7 +130,7 @@ class backup_file {
      * @return mixed|null
      */
     public function get_detail($key) {
-        return $this->get_details()[$key] ?? null;
+        return isset($this->get_details()[$key]) ? $this->get_details()[$key] : null;
     }
 
     /**

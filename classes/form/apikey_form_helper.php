@@ -45,7 +45,7 @@ class apikey_form_helper {
      * @param array $errors
      */
     public static function validation($data, array &$errors) {
-        if (!strlen($data['apikey'] ?? '')) {
+        if (isset($data['apikey']) && !strlen($data['apikey'])) {
             $errors['apikey'] = get_string('required');
         } else if (strlen($data['apikey']) < 15) {
             $errors['apikey'] = get_string('error_apikeytooshort', 'tool_vault');

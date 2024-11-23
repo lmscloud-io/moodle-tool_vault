@@ -132,7 +132,7 @@ class plugin_validator extends \core\update\validator {
      * @return string
      */
     public function get_component() {
-        $component = $this->get_versionphp_info()['component'] ?? null;
+        $component = isset($this->get_versionphp_info()['component']) ? $this->get_versionphp_info()['component'] : null;
         if ($component === null) {
             // Something was not parsed.
             $fullpath = $this->extractdir.'/'.$this->rootdir.'/version.php';
@@ -148,6 +148,7 @@ class plugin_validator extends \core\update\validator {
      * @return string
      */
     public function get_version() {
-        return $this->get_versionphp_info()['version'] ?? '';
+        $vinfo = $this->get_versionphp_info() + ['version' => ''];
+        return $vinfo['version'];
     }
 }

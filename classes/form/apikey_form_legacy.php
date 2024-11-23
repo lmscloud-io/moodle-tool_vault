@@ -33,7 +33,7 @@ class apikey_form_legacy extends \moodleform {
      */
     protected function definition() {
         $mform = $this->_form;
-        $returnurl = $this->_customdata['returnurl'] ?? '';
+        $returnurl = isset($this->_customdata['returnurl']) ? $this->_customdata['returnurl'] : '';
         $mform->addElement("hidden", "returnurl", $returnurl);
         $mform->setType('returnurl', PARAM_URL);
         apikey_form_helper::definition($mform);

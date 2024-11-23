@@ -166,7 +166,7 @@ class dbstructure {
      */
     protected function load_definitions_from_backup_xml($filepath) {
         global $CFG;
-        $oldxmldb = $CFG->xmldbdisablecommentchecking ?? null;
+        $oldxmldb = isset($CFG->xmldbdisablecommentchecking) ? $CFG->xmldbdisablecommentchecking : null;
         $CFG->xmldbdisablecommentchecking = 1;
         $xmlarr = xmlize(file_get_contents($filepath));
         if (isset($xmlarr['XMLDB']['#']['TABLES']['0']['#']['TABLE'])) {
@@ -175,7 +175,8 @@ class dbstructure {
                 // Mdlcode-disable-next-line cannot-parse-db-tablename.
                 $table = new xmldb_table($name);
                 $table->arr2xmldb_table($xmltable);
-                $this->backuptables[$name] = new dbtable($table, trim($xmltable['@']['COMPONENT'] ?? ''));
+                $this->backuptables[$name] = new dbtable($table,
+                    trim(isset($xmltable['@']['COMPONENT']) ? $xmltable['@']['COMPONENT'] : ''));
             }
         }
         set_config('xmldbdisablecommentchecking', $oldxmldb);
@@ -282,6 +283,9 @@ class dbstructure {
             }
         } catch (\Throwable $e) {
             $oldval = null;
+        } catch (\Exception $e) {
+            // Compatibility with PHP < 7.0.
+            $oldval = null;
         }
         $rs = $DB->get_recordset_sql("SHOW TABLE STATUS LIKE ?", [$prefix.'%']);
 
@@ -383,7 +387,7 @@ class dbstructure {
                 WHERE table_schema = ? AND table_name like ?",
                 [$CFG->dbname, $CFG->prefix . '%']);
             foreach ($this->get_tables_actual() as $tablename => $table) {
-                $sizes[$tablename] = $records[$CFG->prefix . $tablename] ?? 0;
+                $sizes[$tablename] = isset($records[$CFG->prefix . $tablename]) ? $records[$CFG->prefix . $tablename] : 0;
             }
         }
         return $sizes;

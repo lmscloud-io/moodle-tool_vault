@@ -38,7 +38,8 @@ class compat {
             return make_backup_temp_directory($directory, $exceptiononerror);
         }
 
-        $backupdir = defined('PHPUNIT_BACKUPTEMPDIR') ? PHPUNIT_BACKUPTEMPDIR : ($CFG->backuptempdir ?? null);
+        $backupdir = defined('PHPUNIT_BACKUPTEMPDIR') ? PHPUNIT_BACKUPTEMPDIR :
+            (isset($CFG->backuptempdir) ? $CFG->backuptempdir : null);
         if (!empty($backupdir) && $backupdir !== "$CFG->tempdir/backup") {
             check_dir_exists($backupdir, true, true);
             protect_directory($backupdir);

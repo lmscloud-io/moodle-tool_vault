@@ -94,6 +94,16 @@ class dbops {
                     $logger->add_to_log(shorten_text($t->getTraceAsString(), 1000, true), constants::LOGLEVEL_VERBOSE);
                 }
                 self::insert_records_one_by_one($tablename, $fields, $data, $startrow, $endrow, $logger);
+            } catch (\Exception $t) {
+                // Compatibility with PHP < 7.0.
+                $logger->add_to_log("- failed to insert chunk of records into table $tablename: ".
+                    $t->getMessage(), constants::LOGLEVEL_WARNING);
+                if ($t instanceof \dml_exception) {
+                    $logger->add_to_log(shorten_text($t->debuginfo, 1000, true), constants::LOGLEVEL_VERBOSE);
+                } else if ($t instanceof \Exception) {
+                    $logger->add_to_log(shorten_text($t->getTraceAsString(), 1000, true), constants::LOGLEVEL_VERBOSE);
+                }
+                self::insert_records_one_by_one($tablename, $fields, $data, $startrow, $endrow, $logger);
             }
             $startrow = $endrow;
         }
@@ -239,7 +249,7 @@ class dbops {
      * @return void
      */
     protected static function insert_records_one_by_one($tablename, array $fields, array &$rows, $startrow,
-            int $endrow, logger $logger) {
+            $endrow, logger $logger) {
         global $DB;
         for ($i = $startrow; $i < $endrow; $i++) {
             $row = $rows[$i];
@@ -248,6 +258,10 @@ class dbops {
                 // Mdlcode-disable-next-line cannot-parse-db-tablename.
                 $DB->insert_record_raw($tablename, $entry, false, true, true);
             } catch (\Throwable $t) {
+                $logger->add_to_log("- failed to insert record with id {$entry['id']} into table $tablename: ".
+                    $t->getMessage(), constants::LOGLEVEL_WARNING);
+            } catch (\Exception $t) {
+                // Compatibility with PHP < 7.0.
                 $logger->add_to_log("- failed to insert record with id {$entry['id']} into table $tablename: ".
                     $t->getMessage(), constants::LOGLEVEL_WARNING);
             }

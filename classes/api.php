@@ -60,7 +60,7 @@ class api {
     public static function get_setting_array($name) {
         global $DB, $CFG;
         $values = preg_split('/[\\s,]+/',
-            trim(strtolower(get_config('tool_vault', $name) ?? '')), -1, PREG_SPLIT_NO_EMPTY);
+            trim(strtolower(get_config('tool_vault', $name) ?: '')), -1, PREG_SPLIT_NO_EMPTY);
         return array_values(array_unique($values));
     }
 
@@ -179,7 +179,8 @@ class api {
      * @return int -1 never allow; 0 or 1 - display checkbox in backup form not checked/checked by default
      */
     public static function allow_backup_plugincode() {
-        return (int)(get_config('tool_vault', 'backupplugincode') ?? -1);
+        $v = get_config('tool_vault', 'backupplugincode');
+        return (int)(isset($v) ? $v : -1);
     }
 
     /**
@@ -201,7 +202,7 @@ class api {
 
         $headers = [];
         if ($authheader) {
-            $headers[] = 'X-Api-Key: ' . ($apikey ?? self::get_api_key());
+            $headers[] = 'X-Api-Key: ' . ($apikey ?: self::get_api_key());
             $headers[] = 'X-Vault-Siteid: ' . self::get_site_id();
             $headers[] = 'X-Vault-Siteurl: ' . $CFG->wwwroot;
         }
@@ -230,10 +231,10 @@ class api {
         }
 
         for ($i = 0; $i < constants::REQUEST_API_RETRIES; $i++) {
-            $curl = new \curl();
+            $curl = new \tool_vault\local\helpers\curl();
             $curl->setHeader($headers);
             $rv = $curl->$method($url, $params, $options);
-            $httpcode = (int)($curl->get_info()['http_code'] ?? 0);
+            $httpcode = (int)(isset($curl->get_info()['http_code']) ? $curl->get_info()['http_code'] : 0);
             if ($curl->errno || $httpcode != 200) {
                 $apiexception = self::prepare_api_exception($curl, $rv, strtoupper($method) . ' ' . $url);
                 if ($httpcode || $i == constants::REQUEST_API_RETRIES - 1) {
@@ -264,7 +265,7 @@ class api {
     protected static function prepare_api_exception(\curl $curl, $response, $url) {
         $errno = $curl->get_errno();
         $error = $curl->error;
-        $httpcode = (int)($curl->get_info()['http_code'] ?? 0);
+        $httpcode = (int)(isset($curl->get_info()['http_code']) ? $curl->get_info()['http_code'] : 0);
         if ($httpcode) {
             // This is an error returned by the server.
             $errormessage = ($httpcode == 401) ?
@@ -299,15 +300,15 @@ class api {
         $errno = $curl->get_errno();
         $error = $curl->error;
         $info = $curl->get_info();
-        $httpcode = (int)($info['http_code'] ?? 0);
+        $httpcode = (int)(isset($info['http_code']) ? $info['http_code'] : 0);
         if ($httpcode) {
             // This is an error returned by the server.
             $errormessage = "AWS S3 error ({$httpcode})";
 
             if (strlen($response) && substr($response, 0, 6) === '<?xml ') {
                 $xmlarr = xmlize($response);
-                $s3errorcode = $xmlarr['Error']['#']['Code'][0]['#'] ?? null;
-                $s3errormessage = $xmlarr['Error']['#']['Message'][0]['#'] ?? null;
+                $s3errorcode = isset($xmlarr['Error']['#']['Code'][0]['#']) ? $xmlarr['Error']['#']['Code'][0]['#'] : null;
+                $s3errormessage = isset($xmlarr['Error']['#']['Message'][0]['#']) ? $xmlarr['Error']['#']['Message'][0]['#'] : null;
                 if ($s3errorcode || $s3errormessage) {
                     $errormessage .= ': ' . $s3errorcode . ' - ' . $s3errormessage;
                 }
@@ -422,7 +423,8 @@ class api {
         }
 
         $xmlarr = xmlize($res);
-        $uploadid = $xmlarr['InitiateMultipartUploadResult']['#']['UploadId'][0]['#'] ?? null;
+        $uploadid = isset($xmlarr['InitiateMultipartUploadResult']['#']['UploadId'][0]['#']) ?
+            $xmlarr['InitiateMultipartUploadResult']['#']['UploadId'][0]['#'] : null;
 
         if (!$uploadid) {
             throw new api_exception(get_string('error_failedmultipartupload', 'tool_vault', $res));
@@ -444,7 +446,8 @@ class api {
         $contenttype = 'application/zip';
         $uploadid = null;
 
-        $encryptionkey = $sitebackup->get_model()->get_details()['encryptionkey'] ?? '';
+        $details = $sitebackup->get_model()->get_details() + ['encryptionkey' => ''];
+        $encryptionkey = $details['encryptionkey'];
         $encryptionheaders = self::prepare_s3_headers($encryptionkey);
 
         // For large files, we need to request a multipart upload.
@@ -455,7 +458,7 @@ class api {
             // Get pre-signed URL to initiate multipart upload.
             $result = self::api_call("backups/$backupkey/upload/$filename", 'post',
                 ['contenttype' => $contenttype, 'multipart' => ['parts' => $parts]], $sitebackup);
-            $s3url = $result['multiplarturl'] ?? null;
+            $s3url = isset($result['multiplarturl']) ? $result['multiplarturl'] : null;
 
             // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
             if ($encryptionkey && !preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
@@ -463,7 +466,7 @@ class api {
             }
 
             // Get the list of the upload urls.
-            $uploadheaders = array_merge($encryptionheaders, $result['uploadheaders'] ?? []);
+            $uploadheaders = array_merge($encryptionheaders, isset($result['uploadheaders']) ? $result['uploadheaders'] : []);
             $uploadid = self::initiate_multipart_upload($sitebackup, $s3url, $uploadheaders);
             $result = self::api_call("backups/$backupkey/upload/$filename", 'post',
                 ['contenttype' => $contenttype, 'multipart' => ['parts' => $parts, 'uploadid' => $uploadid]], $sitebackup);
@@ -475,7 +478,7 @@ class api {
         }
 
         $etags = [];
-        $uploadheaders = array_merge($encryptionheaders, $result['uploadheaders'] ?? []);
+        $uploadheaders = array_merge($encryptionheaders, isset($result['uploadheaders']) ? $result['uploadheaders'] : []);
         foreach ($s3urls as $partno => $s3url) {
             // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
             if ($encryptionkey && !preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
@@ -522,7 +525,7 @@ class api {
      * @return int
      */
     public static function get_remote_backups_time() {
-        return self::get_config('cachedremotebackupstime') ?? 0;
+        return self::get_config('cachedremotebackupstime') ?: 0;
     }
 
     /**
@@ -576,8 +579,9 @@ class api {
     public static function validate_backup($backupkey, $passphrase) {
         $result = self::api_call("backups/$backupkey/validate", 'get',
             ['vaultversion' => get_config('tool_vault', 'version')]);
-        $s3url = $result['downloadurl'] ?? null;
-        $encrypted = $result['encrypted'] ?? false;
+        $result += ['downloadurl' => null, 'encrypted' => false, 'downloadheaders' => []];
+        $s3url = $result['downloadurl'];
+        $encrypted = $result['encrypted'];
 
         if (!$encrypted) {
             // No need to validate the passphrase.
@@ -593,13 +597,13 @@ class api {
         $options = [
             'CURLOPT_TIMEOUT' => constants::REQUEST_API_TIMEOUT, // Smaller timeout here.
             'CURLOPT_HTTPHEADER' => array_merge(self::prepare_s3_headers($encryptionkey),
-                $result['downloadheaders'] ?? []),
+                $result['downloadheaders']),
             'CURLOPT_HTTPAUTH' => CURLAUTH_NONE,
         ];
         $curl = new curl();
         // Perform a 'head' request to the pre-signed S3 url to check if the encryption key is correct.
         $res = $curl->head($s3url, $options);
-        $httpcode = $curl->get_info()['http_code'] ?? 0;
+        $httpcode = $curl->get_info()['http_code'] ?: 0;
         if ($httpcode == 403) {
             throw new api_exception(get_string('error_passphrasewrong', 'tool_vault'));
         }
@@ -711,6 +715,9 @@ class api {
         } catch (\Throwable $tapi) {
             // Ignore connection or other server errors.
             return;
+        } catch (\Exception $tapi) {
+            // Compatibility with PHP < 7.0.
+            return;
         }
     }
 
@@ -731,6 +738,12 @@ class api {
         } catch (\Throwable $t) {
             // If the error happened because tool_vault is not installed yet and the DB table does not exist - ignore it.
             // Otherwise show debugging message.
+            if (get_config('tool_vault', 'version')) {
+                debugging($t->getMessage(), DEBUG_DEVELOPER);
+            }
+            return false;
+        } catch (\Exception $t) {
+            // Compatibility with PHP < 7.0.
             if (get_config('tool_vault', 'version')) {
                 debugging($t->getMessage(), DEBUG_DEVELOPER);
             }

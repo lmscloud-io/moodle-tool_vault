@@ -171,13 +171,13 @@ class files_backup {
      */
     public function add_file($filepath, $localname = null, $allownewzip = true,
                              $removesource = true, $isarchive = false) {
-        $localname = $localname ?? basename($filepath);
+        $localname = isset($localname) ? $localname : basename($filepath);
         if (is_dir($filepath)) {
             $this->add_folder($filepath, $localname, $removesource);
             return $this;
         }
         $this->ziparchive->add_file_from_pathname($localname, $filepath);
-        $defaultlevel = (int)(get_config('tool_vault', 'backupcompressionlevel') ?? 9);
+        $defaultlevel = (int)(get_config('tool_vault', 'backupcompressionlevel') ?: 9);
         $this->ziparchive->set_file_compression_level($localname, $isarchive ? 0 : $defaultlevel);
         if ($removesource) {
             $this->filestoremove[] = $filepath;
@@ -235,7 +235,7 @@ class files_backup {
             throw new \coding_exception('This function can only be used for the DB backup');
         }
         $this->add_file($filepath, null, false);
-        $uploadedtables = $this->currentbackupfile->get_detail('tables') ?? [];
+        $uploadedtables = $this->currentbackupfile->get_detail('tables') ?: [];
         if (!in_array($tablename, $uploadedtables)) {
             $this->currentbackupfile->update_detail('tables', array_merge($uploadedtables, [$tablename]));
         }

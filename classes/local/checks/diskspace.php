@@ -205,7 +205,7 @@ class diskspace extends check_base {
                     display_size($details['codesize']) . '</li>' :
                 '').
             '<li>' . get_string('diskspacebackup_maxdatarootfilesize', 'tool_vault') . ': ' .
-                display_size($details['maxdatarootfilesize'] ?? 0).'</li>'.
+                display_size(isset($details['maxdatarootfilesize']) ? $details['maxdatarootfilesize'] : 0).'</li>'.
             ($details['freespace'] !== true ?
                 ('<li>' . get_string('diskspacebackup_freespace', 'tool_vault') . ': ' .
                 display_size($details['freespace']).'</li>') : '').
@@ -247,8 +247,8 @@ class diskspace extends check_base {
      */
     public function get_table_size($tablename) {
         return [
-            $this->tablerowscnt[$tablename] ?? 0,
-            $this->tablesizes[$tablename] ?? 0,
+            isset($this->tablerowscnt[$tablename]) ? $this->tablerowscnt[$tablename] : 0,
+            isset($this->tablesizes[$tablename]) ? $this->tablesizes[$tablename] : 0,
         ];
     }
 }

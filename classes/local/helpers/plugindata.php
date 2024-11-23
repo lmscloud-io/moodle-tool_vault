@@ -245,7 +245,7 @@ class plugindata {
      * @return array
      */
     public static function get_sql_for_plugins_data_in_table_to_preserve($tablename, array $plugins,
-                                                                         int $substituteuserid) {
+                                                                         $substituteuserid) {
         global $DB;
         $fields = '*';
         list($sql, $params) = self::get_sql_for_plugins_data_in_table($tablename, $plugins);

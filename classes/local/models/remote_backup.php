@@ -52,7 +52,7 @@ class remote_backup {
      * @return mixed|null
      */
     public function __get($name) {
-        return $this->data[$name] ?? null;
+        return isset($this->data[$name]) ? $this->data[$name] : null;
     }
 
     /**
@@ -70,7 +70,7 @@ class remote_backup {
      * @return string
      */
     public function get_description() {
-        return $this->info['description'] ?? '';
+        return isset($this->info['description']) ? $this->info['description'] : '';
     }
 
     /**
@@ -79,7 +79,7 @@ class remote_backup {
      * @return bool
      */
     public function get_encrypted() {
-        return $this->info['encrypted'] ?? false;
+        return !empty($this->info['encrypted']);
     }
 
     /**
@@ -89,7 +89,7 @@ class remote_backup {
      */
     public function get_finished_time() {
         if (!in_array($this->status, [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
-            return $this->info['timefinished'] ?? $this->timemodified;
+            return isset($this->info['timefinished']) ? $this->info['timefinished'] : $this->timemodified;
         }
         return 0;
     }
@@ -100,7 +100,7 @@ class remote_backup {
      * @return bool
      */
     public function is_same_site() {
-        return $this->info['samesite'] ?? false;
+        return !empty($this->info['samesite']);
     }
 
     /**
@@ -109,6 +109,6 @@ class remote_backup {
      * @return int
      */
     public function get_total_size() {
-        return $this->info['totalsize'] ?? 0;
+        return isset($this->info['totalsize']) ? $this->info['totalsize'] : 0;
     }
 }

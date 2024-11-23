@@ -67,7 +67,8 @@ if (!$operation->safe_start_and_execute((int)getmypid())) {
 }
 
 cli_writeln("");
-if ($precheckonly && ($precheckresults = $operation->get_model()->get_details()['precheckresults'] ?? null)) {
+$details = $operation->get_model()->get_details() + ['precheckresults' => []];
+if ($precheckonly && ($precheckresults = $details['precheckresults'])) {
     (new start_backup_popup($precheckresults))->display_in_cli($clihelper);
 } else {
     cli_writeln("Backup key: ".$operation->get_backup_key());

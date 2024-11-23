@@ -71,7 +71,7 @@ class cli_helper {
         $longoptions = [];
         $shortmapping = [];
         foreach ($optionsdefinitions as $key => $option) {
-            $longoptions[$key] = $option['default'] ?? null;
+            $longoptions[$key] = isset($option['default']) ? $option['default'] : null;
             if (!empty($option['alias'])) {
                 $shortmapping[$option['alias']] = $key;
             }
@@ -196,13 +196,13 @@ class cli_helper {
         global $CFG;
 
         foreach ($this->options_definitions() as $key => $definition) {
-            if ($validator = ($definition['validation'] ?? null)) {
+            if ($validator = (isset($definition['validation']) ? $definition['validation'] : null)) {
                 $validator($this->get_cli_option($key));
             }
         }
 
         // Add config overrides to the $CFG.
-        $CFG->forced_plugin_settings = $CFG->forced_plugin_settings ?? [];
+        $CFG->forced_plugin_settings = isset($CFG->forced_plugin_settings) ? $CFG->forced_plugin_settings : [];
         $CFG->forced_plugin_settings += ['tool_vault' => []];
         if ($this->get_cli_option('apikey')) {
             $CFG->forced_plugin_settings['tool_vault']['apikey'] = $this->get_cli_option('apikey');
@@ -281,7 +281,7 @@ class cli_helper {
      * @return mixed|null
      */
     public function get_cli_option($key) {
-        return $this->clioptions[$key] ?? null;
+        return isset($this->clioptions[$key]) ? $this->clioptions[$key] : null;
     }
 
     /**
@@ -315,7 +315,7 @@ class cli_helper {
      */
     protected function cli_error($text, $errorcode = 1) {
         $this->cli_problem($text);
-        $this->die($errorcode);
+        $this->clidie($errorcode);
     }
 
     /**
@@ -324,7 +324,7 @@ class cli_helper {
      * @param mixed $errorcode
      * @throws \moodle_exception
      */
-    protected function die($errorcode) {
+    protected function clidie($errorcode) {
         if (!PHPUNIT_TEST) {
             die($errorcode);
         } else {

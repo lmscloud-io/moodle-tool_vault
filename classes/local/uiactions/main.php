@@ -66,7 +66,7 @@ class main extends base {
             'settingsurl' => (new moodle_url('/admin/settings.php', ['section' => 'tool_vault']))->out(false),
             'registrationform' => $this->registration_form($output),
             'isregistered' => api::is_registered(),
-            'registrationinfo' => $registrationinfo ?? null,
+            'registrationinfo' => isset($registrationinfo) ? $registrationinfo : null,
         ]);
 
         return $rv;

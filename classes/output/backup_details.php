@@ -47,7 +47,7 @@ class backup_details implements \templatable {
      * @param bool $isprogresspage
      */
     public function __construct($backup, $remotebackup = null,
-                                bool $fulldetails = true, $isprogresspage = false) {
+                                $fulldetails = true, $isprogresspage = false) {
         $this->backup = $backup;
         $this->remotebackup = $remotebackup;
         if (!$backup && !$remotebackup) {
@@ -65,14 +65,17 @@ class backup_details implements \templatable {
      */
     public function export_for_template(\renderer_base $output) {
         global $CFG;
-        $backupkey = $this->remotebackup->backupkey ?? $this->backup->backupkey ?? '';
-        $status = $this->remotebackup->status ?? $this->backup->status ?? '';
+        $backupkey = isset($this->remotebackup->backupkey) ? $this->remotebackup->backupkey :
+            (isset($this->backup->backupkey) ? $this->backup->backupkey : '');
+        $status = isset($this->remotebackup->status) ? $this->remotebackup->status :
+            (isset($this->backup->status) ? $this->backup->status : '');
         $encrypted = $this->remotebackup ? $this->remotebackup->get_encrypted() : $this->backup->get_encrypted();
-        $timestarted = $this->remotebackup->timecreated ?? $this->backup->timecreated ?? 0;
+        $timestarted = isset($this->remotebackup->timecreated) ? $this->remotebackup->timecreated :
+            (isset($this->backup->timecreated) ? $this->backup->timecreated : 0);
         $timefinished = $this->remotebackup ? $this->remotebackup->get_finished_time() : $this->backup->get_finished_time();
         $description = $this->remotebackup ? $this->remotebackup->get_description() : $this->backup->get_description();
         $totalsizestr = $this->remotebackup ? display_size($this->remotebackup->get_total_size()) :
-            ($this->backup->get_details()['totalsize'] ?? '');
+            (isset($this->backup->get_details()['totalsize']) ? $this->backup->get_details()['totalsize'] : '');
         $rv = [
             'backupkey' => $backupkey,
             'statusstr' => ui::format_status($status),

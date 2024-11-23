@@ -147,6 +147,6 @@ class ui {
      * @return string
      */
     public static function format_description($value) {
-        return s($value ?? '');
+        return s(isset($value) ? $value : '');
     }
 }

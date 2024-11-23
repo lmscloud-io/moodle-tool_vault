@@ -76,7 +76,7 @@ class dbstatus extends check_base {
         foreach ($actualtables as $tablename => $table) {
             $errors = $table->validate_definition();
             if ($errors) {
-                $deftable = $deftables[$tablename] ?? null;
+                $deftable = isset($deftables[$tablename]) ? $deftables[$tablename] : null;
                 $result[constants::DIFF_INVALIDTABLES][$tablename] = [$deftable, $table, $errors];
             }
         }

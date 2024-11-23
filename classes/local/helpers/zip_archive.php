@@ -43,7 +43,7 @@ class zip_archive extends \zip_archive {
             // Compression level 9 is default, we do not need to do anything.
             return;
         }
-        if (!$this->za) {
+        if (!$this->za || !method_exists($this->za, 'setCompressionName')) {
             return;
         }
         if ($level <= 0) {

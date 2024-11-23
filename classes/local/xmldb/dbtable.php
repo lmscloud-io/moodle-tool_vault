@@ -471,7 +471,8 @@ class dbtable {
             }
         }
 
-        if ($primarykey = $structure->retrieve_primary_keys_postgres()[$tableparam] ?? null) {
+        if (!empty($structure->retrieve_primary_keys_postgres()[$tableparam])) {
+            $primarykey = $structure->retrieve_primary_keys_postgres()[$tableparam];
             try {
                 $table->addKey(new xmldb_key($primarykey->keyname, XMLDB_KEY_PRIMARY, [$primarykey->columnname]));
             } catch (\Exception $e) {
@@ -502,10 +503,12 @@ class dbtable {
             // Table only has extra fields and/or indexes - return queries to add fields/indexes.
             // TODO dropping extra indexes should be a straightforward operation too.
             $res = [];
-            foreach ($diff[constants::DIFF_EXTRACOLUMNS] ?? [] as $field) {
+            $extracols = isset($diff[constants::DIFF_EXTRACOLUMNS]) ? $diff[constants::DIFF_EXTRACOLUMNS] : [];
+            foreach ($extracols as $field) {
                 $res = array_merge($res, $generator->getAddFieldSQL($this->get_xmldb_table(), $field));
             }
-            foreach ($diff[constants::DIFF_EXTRAINDEXES] ?? [] as $obj) {
+            $extraindx = isset($diff[constants::DIFF_EXTRAINDEXES]) ? $diff[constants::DIFF_EXTRAINDEXES] : [];
+            foreach ($extraindx as $obj) {
                 if ($obj instanceof xmldb_key) {
                     $res = array_merge($res, $generator->getAddKeySQL($this->get_xmldb_table(), $obj));
                 } else if ($obj instanceof xmldb_index) {

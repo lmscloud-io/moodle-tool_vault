@@ -106,7 +106,7 @@ class last_operation implements \templatable {
     public function export_for_template(renderer_base $output) {
         $rv = [
             'class' => $this->is_success() ? 'success' : ($this->is_error() ? 'danger' : 'info'),
-            'title' => $this->title ?? get_class($this->operation),
+            'title' => isset($this->title) ? $this->title : get_class($this->operation),
             'text' => $this->text,
             'detailsurl' => $this->detailsurl ? ($this->detailsurl->out(false)) : '',
         ];

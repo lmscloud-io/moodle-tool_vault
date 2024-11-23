@@ -58,7 +58,7 @@ class site_backup_dryrun extends site_backup {
         $model->set_status(constants::STATUS_SCHEDULED)->set_details([
             'usercreated' => $USER->id,
             'fullname' => $USER ? fullname($USER) : '',
-            'email' => $USER->email ?? '',
+            'email' => !empty($USER->email) ? $USER->email : '',
             'precheckonly' => true,
         ])->save();
         $model->add_log("Backup pre-check scheduled");

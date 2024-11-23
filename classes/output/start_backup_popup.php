@@ -52,7 +52,7 @@ class start_backup_popup implements \templatable {
     public function export_for_template(\renderer_base $output) {
         global $CFG, $USER;
 
-        $result = $this->precheckresults;
+        $result = $this->precheckresults + ['limit' => 0, 'expiredays' => 0];
 
         $description = get_string('defaultbackupdescription', 'tool_vault',
             (object)[
@@ -71,16 +71,17 @@ class start_backup_popup implements \templatable {
                     'isdefault' => !empty($bucket['isdefault']),
                 ];
                 $default = (empty($bucket['isdefault']) && !empty($default)) ? $default : $bucket;
-                $hasext = $hasext || (($bucket['type'] ?? '') === 'ext');
+                $type = empty($bucket['type']) ? '' : $bucket['type'];
+                $hasext = $hasext || ($type === 'ext');
             }
             $data['withencryption'] = !empty($default['encryption']);
             $data['showbucketselect'] = (count($data['buckets']) > 1) || $hasext;
         }
 
-        $data['expiredays'] = (int)($result['expiredays'] ?? 0);
+        $data['expiredays'] = (int)($result['expiredays']);
         $data['canchangeexpiration'] = !empty($result['canchangeexpiration']);
 
-        $limit = (int)($result['limit'] ?? 0);
+        $limit = (int)($result['limit']);
         if ($limit) {
             $data['limit'] = display_size($limit);
         }
@@ -99,26 +100,26 @@ class start_backup_popup implements \templatable {
      * @return void
      */
     public function display_in_cli(cli_helper $clihelper) {
-        $precheckresults = $this->precheckresults;
+        $precheckresults = $this->precheckresults + ['expiredays' => 0, 'buckets' => [], 'limit' => 0];
 
-        $expiredays = (int)($precheckresults['expiredays'] ?? 0);
+        $expiredays = (int)($precheckresults['expiredays']);
         if (empty($precheckresults['canchangeexpiration'])) {
             $clihelper->cli_writeln('Default backup expiration time: ' .
                 ($expiredays ? "After $expiredays days" : 'Never'));
             $clihelper->cli_writeln('You can not change the expiration time, option --expiredays will be ignored.');
         }
-        if ($limit = (int)($precheckresults['limit'] ?? 0)) {
+        if ($limit = (int)($precheckresults['limit'])) {
             $clihelper->cli_writeln(get_string('startbackup_limit_desc', 'tool_vault', display_size($limit)));
         }
 
-        $buckets = $precheckresults['buckets'] ?? [];
+        $buckets = $precheckresults['buckets'];
         $cntwithenc = 0;
         foreach ($buckets as $bucket) {
             $cntwithenc += empty($bucket['encryption']) ? 0 : 1;
         }
         $hasdifferentenc = count($buckets) != $cntwithenc && $cntwithenc;
 
-        if (count($buckets) > 1 || (count($buckets) == 1 && ($buckets[0]['type'] ?? '') == 'ext')) {
+        if (count($buckets) > 1 || (count($buckets) == 1 && isset($buckets[0]['type']) && $buckets[0]['type'] == 'ext')) {
             $clihelper->cli_writeln('Available backup storage (--storage option):');
             $tabledata = [];
             foreach ($buckets as $bucket) {

@@ -78,6 +78,9 @@ abstract class check_base extends operation_base {
             return $instance;
         } catch (\Throwable $t) {
             return null;
+        } catch (\Exception $t) {
+            // Compatibility with PHP < 7.0.
+            return null;
         }
     }
 
@@ -194,6 +197,9 @@ abstract class check_base extends operation_base {
             $obj->execute();
         } catch (\Throwable $t) {
             $obj->mark_as_failed($t);
+        } catch (\Exception $t) {
+            // Compatibility with PHP < 7.0.
+            $obj->mark_as_failed($t);
         }
 
         return $obj;
@@ -249,7 +255,9 @@ abstract class check_base extends operation_base {
      *
      * @return string
      */
-    abstract public static function get_display_name();
+    public static function get_display_name() {
+        return '';
+    }
 
     /**
      * Pre-check is successful (backup/restore can be performed)
@@ -325,10 +333,10 @@ abstract class check_base extends operation_base {
     /**
      * Mark pre-check as failed
      *
-     * @param \Throwable $t
+     * @param \Throwable|\Exception $t
      * @return void
      */
-    public function mark_as_failed(\Throwable $t) {
+    public function mark_as_failed($t) {
         parent::mark_as_failed($t);
         if (!$this->parent) {
             // This is a stand-alone backup precheck that failed, report to the server.

@@ -74,17 +74,18 @@ class site_backup extends operation_base {
         }
 
         $model = new backup_model((object)[]);
-        $encryptionkey = api::prepare_encryption_key($params['passphrase'] ?? '');
+        $params += ['passphrase' => '', 'description' => '', 'bucket' => '', 'expiredays' => '', 'backupplugincode' => 0];
+        $encryptionkey = api::prepare_encryption_key($params['passphrase']);
         $model->set_status(constants::STATUS_SCHEDULED)->set_details([
             'usercreated' => $USER->id,
-            'description' => substr($params['description'] ?? '', 0, constants::DESCRIPTION_MAX_LENGTH),
-            'bucket' => $params['bucket'] ?? '',
-            'expiredays' => $params['expiredays'] ?? '',
+            'description' => substr($params['description'], 0, constants::DESCRIPTION_MAX_LENGTH),
+            'bucket' => $params['bucket'],
+            'expiredays' => $params['expiredays'],
             'encryptionkey' => $encryptionkey,
             'encrypted' => (bool)strlen($encryptionkey),
-            'backupplugincode' => (int)(bool)($params['backupplugincode'] ?? 0),
+            'backupplugincode' => (int)(bool)($params['backupplugincode']),
             'fullname' => $USER ? fullname($USER) : '',
-            'email' => $USER->email ?? '',
+            'email' => isset($USER->email) ? $USER->email : '',
         ])->save();
         $model->add_log("Backup scheduled");
         return new static($model);
@@ -97,7 +98,7 @@ class site_backup extends operation_base {
      */
     protected function get_metadata() {
         global $CFG, $USER, $DB;
-        $precheck = $this->prechecks[diskspace::get_name()] ?? null;
+        $precheck = isset($this->prechecks[diskspace::get_name()]) ? $this->prechecks[diskspace::get_name()] : null;
         $excludedplugins = siteinfo::get_excluded_plugins_backup();
         $pluginlist = array_diff_key(siteinfo::get_plugins_list_full(), array_fill_keys($excludedplugins, true));
         if (!empty($this->model->get_details()['backupplugincode'])) {
@@ -116,7 +117,7 @@ class site_backup extends operation_base {
             'branch' => $CFG->branch,
             'release' => $CFG->release,
             'tool_vault_version' => get_config('tool_vault', 'version'),
-            'email' => $USER->email ?? '',
+            'email' => !empty($USER->email) ? $USER->email : '',
             'name' => $USER ? fullname($USER) : '',
             'userid' => ($USER && $USER->id) ? $USER->id : (get_admin()->id),
             'dbtotalsize' => $precheck ? $precheck->get_model()->get_details()['dbtotalsize'] : 0,
@@ -136,12 +137,13 @@ class site_backup extends operation_base {
         $this->model->set_pid_for_logging($pid);
         $model = $this->model;
 
+        $details = $model->get_details() + ['description' => '', 'bucket' => '', 'expiredays' => 0, 'backupplugincode' => 0];
         $params = [
-            'description' => $model->get_details()['description'] ?? '',
+            'description' => $details['description'],
             'encrypted' => !empty($model->get_details()['encrypted']),
-            'bucket' => $model->get_details()['bucket'] ?? '',
-            'expiredays' => (int)($model->get_details()['expiredays'] ?? 0),
-            'backupplugincode' => (int)($model->get_details()['backupplugincode'] ?? 0),
+            'bucket' => $details['bucket'],
+            'expiredays' => (int)($details['expiredays']),
+            'backupplugincode' => (int)($details['backupplugincode']),
         ];
         $backupkey = api::request_new_backup_key($params);
         $model
@@ -183,6 +185,9 @@ class site_backup extends operation_base {
         } catch (\Throwable $tapi) {
             // One of the reason for the failed backup - impossible to communicate with the API,
             // in which case this request will also fail.
+            $this->add_to_log('Could not mark remote backup as failed: '.$tapi->getMessage(), constants::LOGLEVEL_WARNING);
+        } catch (\Exception $tapi) {
+            // Compatibility with PHP < 7.0.
             $this->add_to_log('Could not mark remote backup as failed: '.$tapi->getMessage(), constants::LOGLEVEL_WARNING);
         }
     }
@@ -297,7 +302,7 @@ class site_backup extends operation_base {
      */
     protected function get_chunk_size($tablename) {
         /** @var diskspace $precheck */
-        $precheck = $this->prechecks[diskspace::get_name()] ?? null;
+        $precheck = isset($this->prechecks[diskspace::get_name()]) ? $this->prechecks[diskspace::get_name()] : null;
         if ($precheck) {
             list($rowscnt, $size) = $precheck->get_table_size($tablename);
             $chunkscnt = ceil($size / constants::DBFILE_SIZE);
@@ -373,7 +378,7 @@ class site_backup extends operation_base {
         global $CFG;
 
         $structure = $this->get_db_structure();
-        $confprecheck = $this->prechecks[configoverride::get_name()] ?? null;
+        $confprecheck = isset($this->prechecks[configoverride::get_name()]) ? $this->prechecks[configoverride::get_name()] : null;
         $confs = $confprecheck ? $confprecheck->get_config_overrides_for_backup() : [];
 
         $this->get_files_backup(constants::FILENAME_DBSTRUCTURE)

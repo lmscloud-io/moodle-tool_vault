@@ -121,7 +121,7 @@ class backup_model extends operation_model {
      * @return string
      */
     public function get_description() {
-        return $this->get_details()['description'] ?? '';
+        return isset($this->get_details()['description']) ? $this->get_details()['description'] : '';
     }
 
     /**
@@ -130,7 +130,7 @@ class backup_model extends operation_model {
      * @return bool
      */
     public function get_encrypted() {
-        return $this->get_details()['encrypted'] ?? false;
+        return isset($this->get_details()['encrypted']) ? $this->get_details()['encrypted'] : false;
     }
 
     /**
@@ -139,7 +139,7 @@ class backup_model extends operation_model {
      * @return string
      */
     public function get_performedby() {
-        $performedby = $this->get_details()['fullname'] ?? '';
+        $performedby = isset($this->get_details()['fullname']) ? $this->get_details()['fullname'] : '';
         if (!empty($this->get_details()['email'])) {
             $performedby .= " <{$this->get_details()['email']}>";
         }

@@ -77,7 +77,7 @@ class curl extends \curl {
      * @return string
      */
     protected function extract_headers($ret) {
-        $headersize = $this->get_info()['header_size'] ?? 0;
+        $headersize = isset($this->get_info()['header_size']) ? $this->get_info()['header_size'] : 0;
         $this->returnheaders = substr((string)$ret, 0, $headersize);
         return substr((string)$ret, $headersize);
     }
@@ -111,7 +111,8 @@ class curl extends \curl {
      * @return bool
      */
     public function request_failed() {
-        return $this->errno || (($this->get_info()['http_code'] ?? 0) != 200);
+        $info = $this->get_info() + ['http_code' => 0];
+        return $this->errno || ($info['http_code'] != 200);
     }
 
     /**
@@ -130,5 +131,70 @@ class curl extends \curl {
         } else {
             return parent::download_one($url, $params, $options);
         }
+    }
+
+    /**
+     * HTTP PUT method
+     *
+     * @param string $url
+     * @param array $params
+     * @param array $options
+     * @return ?string
+     */
+    public function put($url, $params = [], $options = []) {
+        $file = '';
+        $fp = false;
+        if (isset($params['file'])) {
+            $file = $params['file'];
+            if (is_file($file)) {
+                $fp   = fopen($file, 'r');
+                $size = filesize($file);
+                $options['CURLOPT_PUT']        = 1;
+                $options['CURLOPT_INFILESIZE'] = $size;
+                $options['CURLOPT_INFILE']     = $fp;
+            } else {
+                return null;
+            }
+            if (!isset($this->options['CURLOPT_USERPWD'])) {
+                $this->setopt(array('CURLOPT_USERPWD' => 'anonymous: noreply@moodle.org'));
+            }
+        } else {
+            $options['CURLOPT_CUSTOMREQUEST'] = 'PUT';
+            $options['CURLOPT_POSTFIELDS'] = $params;
+        }
+
+        $ret = $this->request($url, $options);
+        if ($fp !== false) {
+            fclose($fp);
+        }
+        return $ret;
+    }
+
+    /**
+     * HTTP PATCH method
+     *
+     * @param string $url
+     * @param array|string $params
+     * @param array $options
+     * @return string
+     */
+    public function patch($url, $params = '', $options = array()) {
+        $options['CURLOPT_CUSTOMREQUEST'] = 'PATCH';
+        if (is_array($params)) {
+            $_tmp_file_post_params = array();
+            foreach ($params as $key => $value) {
+                if ($value instanceof stored_file) {
+                    $value->add_to_curl_request($this, $key);
+                } else {
+                    $_tmp_file_post_params[$key] = $value;
+                }
+            }
+            $options['CURLOPT_POSTFIELDS'] = $_tmp_file_post_params;
+            unset($_tmp_file_post_params);
+        } else {
+            // The variable $params is the raw post data.
+            $options['CURLOPT_POSTFIELDS'] = $params;
+        }
+        return $this->request($url, $options);
     }
 }

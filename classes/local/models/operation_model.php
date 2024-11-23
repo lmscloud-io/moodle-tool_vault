@@ -65,7 +65,7 @@ abstract class operation_model {
      * @param \stdClass|null $record
      */
     public function __construct($record = null) {
-        $record = $record ?? new \stdClass();
+        $record = isset($record) ? $record : new \stdClass();
         foreach ($record as $key => $value) {
             if (!in_array($key, array_merge(self::$fields, ['id', 'timecreated', 'timemodified', 'parentid']))) {
                 throw new \coding_exception('Unknown field '.$key);
@@ -84,10 +84,10 @@ abstract class operation_model {
     /**
      * Set error
      *
-     * @param \Throwable $t
+     * @param \Throwable|\Exception $t
      * @return $this
      */
-    public function set_error(\Throwable $t) {
+    public function set_error($t) {
         $details = $this->get_details();
         $details['error'] = $t->getMessage();
         $details['errorbacktrace'] = $t->getTraceAsString();
@@ -154,7 +154,7 @@ abstract class operation_model {
      * @return bool
      */
     public function has_error() {
-        return ($this->get_details()['error'] ?? null) !== null;
+        return isset($this->get_details()['error']);
     }
 
     /**
@@ -199,7 +199,7 @@ abstract class operation_model {
      * @return mixed|null
      */
     public function __get($name) {
-        return $this->data[$name] ?? null;
+        return isset($this->data[$name]) ? $this->data[$name] : null;
     }
 
     /**
@@ -299,9 +299,9 @@ abstract class operation_model {
      * @return operation_model[]
      */
     protected static function get_records_select($sql, array $params = [],
-                     string $sort = 'timecreated DESC', $offset = 0, $limit = 0) {
+                     $sort = 'timecreated DESC', $offset = 0, $limit = 0) {
         global $DB;
-        $records = $DB->get_records_select(self::TABLE, $sql, $params ?? [], $sort, '*', $offset, $limit);
+        $records = $DB->get_records_select(self::TABLE, $sql, $params, $sort, '*', $offset, $limit);
         return array_filter(array_map(function($b) {
             return static::instance($b);
         }, $records));
@@ -422,7 +422,7 @@ abstract class operation_model {
      */
     public static function get_records($statuses = null, $sort = null, $offset = 0, $limit = 0) {
         global $DB;
-        $sort = $sort ?? 'timecreated DESC, id DESC';
+        $sort = isset($sort) ? $sort : 'timecreated DESC, id DESC';
         if (static::$defaulttype) {
             $sql = 'type = :type';
             $params = ['type' => static::$defaulttype];
@@ -437,7 +437,7 @@ abstract class operation_model {
             list($sql2, $params2) = $DB->get_in_or_equal($statuses, SQL_PARAMS_NAMED);
             $sql .= ' AND status '.$sql2;
         }
-        return static::get_records_select($sql, ($params2 ?? []) + $params, $sort, $offset, $limit);
+        return static::get_records_select($sql, (isset($params2) ? $params2 : []) + $params, $sort, $offset, $limit);
     }
 
     /**

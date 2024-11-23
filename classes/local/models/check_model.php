@@ -38,7 +38,7 @@ class check_model extends operation_model {
             throw new \coding_exception('Type '.$record->type.' is invalid for a check');
         }
         if ($type) {
-            $record = $record ?? new \stdClass();
+            $record = isset($record) ? $record : new \stdClass();
             $record->type = self::$defaulttypeprefix . $type;
         }
         parent::__construct($record);

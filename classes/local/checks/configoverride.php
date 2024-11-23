@@ -226,18 +226,20 @@ class configoverride extends check_base {
         if (($report = $this->get_report()) === null) {
             return $data;
         }
-        foreach (($report['config_php_settings_included'] ?? []) as $key => $value) {
+        $report += ['config_php_settings_included' => [], 'forced_plugin_settings_included' => [],
+            'config_php_settings_notincluded' => [], 'forced_plugin_settings_notincluded' => []];
+        foreach (($report['config_php_settings_included']) as $key => $value) {
             $data['includedsettings'][] = $this->format_setting_value_for_details($key, null, $value, true);
         }
-        foreach (($report['forced_plugin_settings_included'] ?? []) as $plugin => $settings) {
+        foreach (($report['forced_plugin_settings_included']) as $plugin => $settings) {
             foreach ($settings as $key => $value) {
                 $data['includedsettings'][] = $this->format_setting_value_for_details($key, $plugin, $value, true);
             }
         }
-        foreach (($report['config_php_settings_notincluded'] ?? []) as $key => $value) {
+        foreach (($report['config_php_settings_notincluded']) as $key => $value) {
             $data['notincludedsettings'][] = $this->format_setting_value_for_details($key, null, $value, false);
         }
-        foreach (($report['forced_plugin_settings_notincluded'] ?? []) as $plugin => $settings) {
+        foreach (($report['forced_plugin_settings_notincluded']) as $plugin => $settings) {
             foreach ($settings as $key => $value) {
                 $data['notincludedsettings'][] = $this->format_setting_value_for_details($key, $plugin, $value, false);
             }
@@ -287,10 +289,11 @@ class configoverride extends check_base {
     public function get_config_overrides_for_backup() {
         $rv = [];
         if ($report = $this->get_report()) {
-            foreach (($report['config_php_settings_included'] ?? []) as $key => $value) {
+            $report += ['config_php_settings_included' => [], 'forced_plugin_settings_included' => []];
+            foreach (($report['config_php_settings_included']) as $key => $value) {
                 $rv[] = ['name' => $key, 'value' => (string)$value, 'plugin' => null];
             }
-            foreach (($report['forced_plugin_settings_included'] ?? []) as $plugin => $settings) {
+            foreach (($report['forced_plugin_settings_included']) as $plugin => $settings) {
                 foreach ($settings as $key => $value) {
                     $rv[] = ['name' => $key, 'value' => (string)$value, 'plugin' => $plugin];
                 }

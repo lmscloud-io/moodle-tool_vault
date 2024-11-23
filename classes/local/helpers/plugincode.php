@@ -121,7 +121,8 @@ class plugincode {
             return $dir;
         }
         list($ptype, $pname) = \core_component::normalize_component($pluginname);
-        $path = \core_component::get_plugin_types()[$ptype] ?? ($CFG->dirroot .'/'. $ptype);
+        $path = isset(\core_component::get_plugin_types()[$ptype]) ?
+            \core_component::get_plugin_types()[$ptype] : ($CFG->dirroot .'/'. $ptype);
         return $path . '/' . $pname;
     }
 
@@ -179,7 +180,7 @@ class plugincode {
             throw new \moodle_exception(get_string('addonplugins_connectionerror', 'tool_vault'));
         }
 
-        return $response ?? [];
+        return isset($response) ? $response : [];
     }
 
     /**
@@ -253,7 +254,7 @@ class plugincode {
         $filepermissions = $dirpermissions & 0666;
         // First try to remove evreything from the target dir.
         remove_dir($pluginpath, true);
-        $rootfolder = $rootfolder ?? basename($pluginpath);
+        $rootfolder = isset($rootfolder) ? $rootfolder : basename($pluginpath);
 
         // Copy files one by one and create subdirectories when needed.
         foreach ($files as $file => $status) {
