@@ -42,26 +42,7 @@ class general_helper {
      *
      */
     public static function upgrade_delete_orphaned_file_records() {
-        global $DB;
-
-        $sql = "SELECT f.id, f.contextid, f.component, f.filearea, f.itemid, fr.id AS referencefileid
-                FROM {files} f
-                JOIN {files_reference} fr ON f.referencefileid = fr.id
-            LEFT JOIN {repository_instances} ri ON fr.repositoryid = ri.id
-                WHERE ri.id IS NULL";
-
-        $deletedfiles = $DB->get_recordset_sql($sql);
-
-        $deletedfileids = [];
-
-        $fs = get_file_storage();
-        foreach ($deletedfiles as $deletedfile) {
-            $fs->delete_area_files($deletedfile->contextid, $deletedfile->component, $deletedfile->filearea, $deletedfile->itemid);
-            $deletedfileids[] = $deletedfile->referencefileid;
-        }
-        $deletedfiles->close();
-
-        $DB->delete_records_list('files_reference', 'id', $deletedfileids);
+        \tool_vault\local\restoreactions\upgrade_311\helpers\general_helper::upgrade_delete_orphaned_file_records();
     }
 
     /**
