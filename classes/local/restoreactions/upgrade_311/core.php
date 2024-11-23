@@ -91,7 +91,7 @@ function tool_vault_311_core_upgrade($oldversion) {
     }
 
     if ($oldversion < 2018120301.02) {
-        upgrade_delete_orphaned_file_records();
+        general_helper::upgrade_delete_orphaned_file_records();
         upgrade_main_savepoint(true, 2018120301.02);
     }
 
@@ -1014,8 +1014,7 @@ function tool_vault_311_core_upgrade($oldversion) {
         }
 
         // Add default backpacks.
-        require_once($CFG->dirroot . '/badges/upgradelib.php'); // Core install and upgrade related functions only for badges.
-        badges_install_default_backpacks();
+        general_helper::badges_install_default_backpacks();
 
         // Main savepoint reached.
         upgrade_main_savepoint(true, 2019050600.00);
@@ -1205,7 +1204,7 @@ function tool_vault_311_core_upgrade($oldversion) {
     }
 
     if ($oldversion < 2019092700.01) {
-        upgrade_rename_prediction_actions_useful_incorrectly_flagged();
+        general_helper::upgrade_rename_prediction_actions_useful_incorrectly_flagged();
         upgrade_main_savepoint(true, 2019092700.01);
     }
 
@@ -1219,7 +1218,8 @@ function tool_vault_311_core_upgrade($oldversion) {
         $hubconfig = get_config('hub');
 
         if (!empty($hubconfig)) {
-            foreach (upgrade_convert_hub_config_site_param_names($hubconfig, 'https://moodle.net') as $name => $value) {
+            foreach (general_helper::upgrade_convert_hub_config_site_param_names($hubconfig, 'https://moodle.net')
+                        as $name => $value) {
                 set_config($name, $value, 'hub');
             }
         }
@@ -1407,7 +1407,7 @@ function tool_vault_311_core_upgrade($oldversion) {
 
     if ($oldversion < 2019103000.13) {
 
-        upgrade_analytics_fix_contextids_defaults();
+        general_helper::upgrade_analytics_fix_contextids_defaults();
 
         // Main savepoint reached.
         upgrade_main_savepoint(true, 2019103000.13);
@@ -1757,7 +1757,7 @@ function tool_vault_311_core_upgrade($oldversion) {
         }
 
         // Upgrade the core license details.
-        upgrade_core_licenses();
+        general_helper::upgrade_core_licenses();
 
         // Main savepoint reached.
         upgrade_main_savepoint(true, 2020052200.01);
