@@ -50,7 +50,7 @@ class check_model extends operation_model {
      * @param string $type
      * @return bool
      */
-    public static function validate_type(string $type) {
+    public static function validate_type($type) {
         return substr($type, 0, strlen(self::$defaulttypeprefix)) === self::$defaulttypeprefix;
     }
 
@@ -60,7 +60,7 @@ class check_model extends operation_model {
      * @param string $type
      * @return array
      */
-    public static function get_checks_by_type(string $type): array {
+    public static function get_checks_by_type($type) {
         return static::get_records_select('type=:type', ['type' => self::$defaulttypeprefix.$type]);
     }
 
@@ -70,7 +70,7 @@ class check_model extends operation_model {
      * @param int $id
      * @return static|null
      */
-    public static function get_by_id(int $id) {
+    public static function get_by_id($id) {
         if (($model = parent::get_by_id($id)) && self::validate_type($model->type)) {
             return $model;
         }
@@ -82,7 +82,7 @@ class check_model extends operation_model {
      *
      * @return string
      */
-    public function get_check_name(): string {
+    public function get_check_name() {
         return substr($this->type, strlen(self::$defaulttypeprefix));
     }
 
@@ -92,7 +92,7 @@ class check_model extends operation_model {
      * @param int $operationid
      * @return static[]
      */
-    public static function get_all_checks_for_operation(int $operationid): array {
+    public static function get_all_checks_for_operation($operationid) {
         return self::get_records_select('parentid = ? AND type LIKE ?', [$operationid, 'check:%'], 'id');
     }
 }

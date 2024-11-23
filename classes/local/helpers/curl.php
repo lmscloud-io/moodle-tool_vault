@@ -55,7 +55,7 @@ class curl extends \curl {
      * @param array $options
      * @return mixed
      */
-    public function put_file_part(string $url, string $file, int $offset, int $size, array $options = []) {
+    public function put_file_part($url, $file, $offset, $size, array $options = []) {
         $fp = fopen($file, 'r');
         fseek($fp, $offset);
         $options['CURLOPT_PUT'] = 1;
@@ -76,7 +76,7 @@ class curl extends \curl {
      * @param string|null $ret
      * @return string
      */
-    protected function extract_headers($ret): string {
+    protected function extract_headers($ret) {
         $headersize = $this->get_info()['header_size'] ?? 0;
         $this->returnheaders = substr((string)$ret, 0, $headersize);
         return substr((string)$ret, $headersize);
@@ -87,7 +87,7 @@ class curl extends \curl {
      *
      * @return string
      */
-    public function get_response_headers(): string {
+    public function get_response_headers() {
         return $this->returnheaders;
     }
 
@@ -110,7 +110,7 @@ class curl extends \curl {
      *
      * @return bool
      */
-    public function request_failed(): bool {
+    public function request_failed() {
         return $this->errno || (($this->get_info()['http_code'] ?? 0) != 200);
     }
 

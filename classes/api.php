@@ -42,7 +42,7 @@ class api {
      * @param string $name
      * @return string|null
      */
-    public static function get_config(string $name) {
+    public static function get_config($name) {
         global $DB, $CFG;
         if (isset($CFG->forced_plugin_settings['tool_vault'][$name])) {
             return $CFG->forced_plugin_settings['tool_vault'][$name];
@@ -57,7 +57,7 @@ class api {
      * @param string $name
      * @return string[]
      */
-    public static function get_setting_array(string $name): array {
+    public static function get_setting_array($name) {
         global $DB, $CFG;
         $values = preg_split('/[\\s,]+/',
             trim(strtolower(get_config('tool_vault', $name) ?? '')), -1, PREG_SPLIT_NO_EMPTY);
@@ -70,7 +70,7 @@ class api {
      * @param string $name
      * @return bool
      */
-    public static function get_setting_checkbox(string $name): bool {
+    public static function get_setting_checkbox($name) {
         global $DB, $CFG;
         return (bool)get_config('tool_vault', $name);
     }
@@ -115,7 +115,7 @@ class api {
      *
      * @return string
      */
-    public static function get_site_id(): string {
+    public static function get_site_id() {
         $siteid = self::get_config('siteid');
         if (!$siteid) {
             $siteid = random_string(32);
@@ -145,7 +145,7 @@ class api {
      * @param string|null $value
      * @return void
      */
-    public static function store_config(string $name, $value) {
+    public static function store_config($name, $value) {
         global $DB;
         if ($record = $DB->get_record('tool_vault_config', ['name' => $name])) {
             $DB->update_record('tool_vault_config', ['id' => $record->id, 'value' => $value]);
@@ -159,7 +159,7 @@ class api {
      *
      * @return bool
      */
-    public static function is_registered(): bool {
+    public static function is_registered() {
         $apikey = self::get_api_key();
         return !empty($apikey);
     }
@@ -169,7 +169,7 @@ class api {
      *
      * @return bool
      */
-    public static function is_cli_only(): bool {
+    public static function is_cli_only() {
         return self::get_setting_checkbox('clionly');
     }
 
@@ -178,7 +178,7 @@ class api {
      *
      * @return int -1 never allow; 0 or 1 - display checkbox in backup form not checked/checked by default
      */
-    public static function allow_backup_plugincode(): int {
+    public static function allow_backup_plugincode() {
         return (int)(get_config('tool_vault', 'backupplugincode') ?? -1);
     }
 
@@ -194,8 +194,8 @@ class api {
      * @return mixed
      * @throws api_exception
      */
-    protected static function api_call(string $endpoint, string $method, array $params = [],
-                                    $logger = null, bool $authheader = true, $apikey = null) {
+    protected static function api_call($endpoint, $method, array $params = [],
+                                    $logger = null, $authheader = true, $apikey = null) {
         global $CFG;
         require_once($CFG->dirroot.'/lib/filelib.php');
 
@@ -261,7 +261,7 @@ class api {
      * @param string $url URL of the request (used in the error message)
      * @return api_exception
      */
-    protected static function prepare_api_exception(\curl $curl, $response, string $url): api_exception {
+    protected static function prepare_api_exception(\curl $curl, $response, $url) {
         $errno = $curl->get_errno();
         $error = $curl->error;
         $httpcode = (int)($curl->get_info()['http_code'] ?? 0);
@@ -295,7 +295,7 @@ class api {
      * @param string|null $response - S3 response (normally XML)
      * @return api_exception
      */
-    protected static function prepare_s3_exception(\curl $curl, $response): api_exception {
+    protected static function prepare_s3_exception(\curl $curl, $response) {
         $errno = $curl->get_errno();
         $error = $curl->error;
         $info = $curl->get_info();
@@ -332,11 +332,11 @@ class api {
      * @return string
      */
     protected static function upload_file_to_presigned_url(site_backup $sitebackup,
-            string $s3url,
+            $s3url,
             array $uploadheaders,
-            string $filepath,
-            int $filesize,
-            int $partno): string {
+            $filepath,
+            $filesize,
+            $partno) {
         $filename = basename($filepath);
         $parts = $filesize >= constants::S3_MULTIPART_UPLOAD_THRESHOLD ?
             ceil($filesize / constants::S3_MULTIPART_UPLOAD_PARTSIZE) : 1;
@@ -397,7 +397,7 @@ class api {
      * @throws \tool_vault\local\exceptions\api_exception
      * @return string uploadid
      */
-    protected static function initiate_multipart_upload(site_backup $sitebackup, string $s3url, array $uploadheaders): string {
+    protected static function initiate_multipart_upload(site_backup $sitebackup, $s3url, array $uploadheaders) {
         $options = [
             'CURLOPT_HTTPHEADER' => $uploadheaders,
             'CURLOPT_HTTPAUTH' => CURLAUTH_NONE,
@@ -438,7 +438,7 @@ class api {
      * @param string $filepath
      * @param backup_file $backupfile
      */
-    public static function upload_backup_file(site_backup $sitebackup, string $filepath, backup_file $backupfile) {
+    public static function upload_backup_file(site_backup $sitebackup, $filepath, backup_file $backupfile) {
         $filename = basename($filepath);
         $backupkey = $sitebackup->get_backup_key();
         $contenttype = 'application/zip';
@@ -501,7 +501,7 @@ class api {
      * @param string $apikey
      * @return bool
      */
-    public static function validate_api_key(string $apikey): bool {
+    public static function validate_api_key($apikey) {
         if ($apikey === 'phpunit' && defined('PHPUNIT_TEST') && PHPUNIT_TEST) {
             return true;
         }
@@ -521,7 +521,7 @@ class api {
      *
      * @return int
      */
-    public static function get_remote_backups_time(): int {
+    public static function get_remote_backups_time() {
         return self::get_config('cachedremotebackupstime') ?? 0;
     }
 
@@ -532,7 +532,7 @@ class api {
      * @param string|null $withstatus
      * @return remote_backup
      */
-    public static function get_remote_backup(string $backupkey, $withstatus = null): remote_backup {
+    public static function get_remote_backup($backupkey, $withstatus = null) {
         try {
             $result = self::api_call("backups/{$backupkey}", 'GET');
         } catch (api_exception $t) {
@@ -562,7 +562,7 @@ class api {
      * @param int $timestamp
      * @return string
      */
-    public static function format_date_for_logs(int $timestamp) {
+    public static function format_date_for_logs($timestamp) {
         return "[".userdate($timestamp, get_string('strftimedatetimeshort', 'core_langconfig'))."]";
     }
 
@@ -573,7 +573,7 @@ class api {
      * @param string $passphrase
      * @throws api_exception
      */
-    public static function validate_backup(string $backupkey, string $passphrase) {
+    public static function validate_backup($backupkey, $passphrase) {
         $result = self::api_call("backups/$backupkey/validate", 'get',
             ['vaultversion' => get_config('tool_vault', 'version')]);
         $s3url = $result['downloadurl'] ?? null;
@@ -614,7 +614,7 @@ class api {
      * @param string|null $passphrase
      * @return string
      */
-    public static function prepare_encryption_key($passphrase): string {
+    public static function prepare_encryption_key($passphrase) {
         return strlen($passphrase) ? base64_encode(hash('sha256', $passphrase, true)) : '';
     }
 
@@ -624,7 +624,7 @@ class api {
      * @param string $key encryption key generated as base64_encode(hash('sha256', $passphrase, true))
      * @return array
      */
-    protected static function prepare_s3_headers(string $key): array {
+    protected static function prepare_s3_headers($key) {
         if (!strlen($key)) {
             return [];
         }
@@ -653,7 +653,7 @@ class api {
      *
      * @return array
      */
-    protected static function extra_details(): array {
+    protected static function extra_details() {
         global $CFG, $DB;
         return [
             'vaultversion' => get_config('tool_vault', 'version'),
@@ -674,7 +674,7 @@ class api {
      * @return string
      * @throws \moodle_exception
      */
-    public static function request_new_backup_key(array $info): string {
+    public static function request_new_backup_key(array $info) {
         $info += self::extra_details();
         $res = self::api_call('backups', 'PUT', $info);
         if (empty($res['backupkey'])) {
@@ -691,7 +691,7 @@ class api {
      * @param string|null $status
      * @return void
      */
-    public static function update_backup(string $backupkey, $info = [], $status = null) {
+    public static function update_backup($backupkey, $info = [], $status = null) {
         $params = ($status ? ['status' => $status] : []) + ($info ? ['info' => $info] : []);
         if (!$params) {
             return;
@@ -719,7 +719,7 @@ class api {
      *
      * @return bool
      */
-    public static function is_maintenance_mode(): bool {
+    public static function is_maintenance_mode() {
         try {
             $records = operation_model::get_active_processes(false);
             if ($records) {

@@ -33,7 +33,7 @@ class backup_details extends base {
      *
      * @return string
      */
-    public static function get_display_name(): string {
+    public static function get_display_name() {
         return get_string('backupdetails', 'tool_vault');
     }
 

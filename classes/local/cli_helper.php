@@ -63,7 +63,7 @@ class cli_helper {
      * @param string $scriptfilename Name of php file containing the caller script (for printing help)
      * @param string|null $extrahelp Additional information to add to the help text after peramters and before example
      */
-    public function __construct(string $script, string $scriptfilename, $extrahelp = null) {
+    public function __construct($script, $scriptfilename, $extrahelp = null) {
         $this->script = $script;
         $this->scriptfilename = $scriptfilename;
         $this->extrahelp = $extrahelp;
@@ -88,7 +88,7 @@ class cli_helper {
      *
      * @return array
      */
-    public function options_definitions(): array {
+    public function options_definitions() {
         global $CFG;
         $options = [
             'help' => [
@@ -239,7 +239,7 @@ class cli_helper {
      * @param int $indent
      * @return string
      */
-    protected function convert_to_table(array $column1, array $column2, int $indent = 0): string {
+    protected function convert_to_table(array $column1, array $column2, $indent = 0) {
         $maxlengthleft = 0;
         $left = [];
         $column1 = array_values($column1);
@@ -280,7 +280,7 @@ class cli_helper {
      * @param string $key
      * @return mixed|null
      */
-    public function get_cli_option(string $key) {
+    public function get_cli_option($key) {
         return $this->clioptions[$key] ?? null;
     }
 

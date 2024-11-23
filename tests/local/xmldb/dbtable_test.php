@@ -65,7 +65,7 @@ final class dbtable_test extends \advanced_testcase {
      * @param string $xml
      * @return dbtable
      */
-    protected function table_from_xml(string $xml): dbtable {
+    protected function table_from_xml($xml) {
         global $CFG;
 
         $xml = "<XMLDB>$xml</XMLDB>";
@@ -88,7 +88,7 @@ final class dbtable_test extends \advanced_testcase {
      *
      * @return dbtable
      */
-    protected function fixture_config(): dbtable {
+    protected function fixture_config() {
         $s = <<<EOF
     <TABLE NAME="config">
       <FIELDS>
@@ -110,7 +110,7 @@ EOF;
      *
      * @return dbtable
      */
-    protected function fixture_config_log(): dbtable {
+    protected function fixture_config_log() {
         $s = <<<EOF
     <TABLE NAME="config_log">
       <FIELDS>
@@ -139,7 +139,7 @@ EOF;
      *
      * @return dbtable
      */
-    protected function fixture_config_log_wrong_order(): dbtable {
+    protected function fixture_config_log_wrong_order() {
         $s = <<<EOF
     <TABLE NAME="config_log">
       <FIELDS>
@@ -168,7 +168,7 @@ EOF;
      *
      * @return dbtable
      */
-    protected function fixture_config_log_modified_fields(): dbtable {
+    protected function fixture_config_log_modified_fields() {
         $s = <<<EOF
     <TABLE NAME="config_log">
       <FIELDS>
@@ -197,7 +197,7 @@ EOF;
      *
      * @return dbtable
      */
-    protected function fixture_config_log_modified_indexes(): dbtable {
+    protected function fixture_config_log_modified_indexes() {
         $s = <<<EOF
     <TABLE NAME="config_log">
       <FIELDS>

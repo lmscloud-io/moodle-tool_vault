@@ -45,14 +45,14 @@ abstract class tool_base extends operation_base {
      *
      * @return string
      */
-    abstract public static function get_display_name(): string;
+    abstract public static function get_display_name();
 
     /**
      * Tool description (for the listing page)
      *
      * @return string
      */
-    public static function get_description(): string {
+    public static function get_description() {
         return '';
     }
 
@@ -61,7 +61,7 @@ abstract class tool_base extends operation_base {
      *
      * @return string
      */
-    public static function get_action_button_label(): string {
+    public static function get_action_button_label() {
         return get_string('toschedule', 'tool_vault');
     }
 
@@ -71,7 +71,7 @@ abstract class tool_base extends operation_base {
      * @param array $params
      * @return operation_base
      */
-    public static function schedule(array $params = []): operation_base {
+    public static function schedule(array $params = []) {
         $type = $params['type'];
         $model = new tool_model((object)['status' => constants::STATUS_SCHEDULED], $type);
         $obj = self::instance($model);
@@ -86,7 +86,7 @@ abstract class tool_base extends operation_base {
      * @return static
      * @throws \coding_exception
      */
-    protected static function instance(tool_model $model): self {
+    protected static function instance(tool_model $model) {
         $toolname = $model->get_tool_name();
         if (clean_param($toolname, PARAM_ALPHANUMEXT) !== $toolname || !strlen($toolname)) {
             throw new \coding_exception('Tool name is not valid');
@@ -120,7 +120,7 @@ abstract class tool_base extends operation_base {
      * @param int $id
      * @return static|null
      */
-    public static function load(int $id) {
+    public static function load($id) {
         $model = tool_model::get_by_id($id);
         if (!$model) {
             return null;
@@ -138,7 +138,7 @@ abstract class tool_base extends operation_base {
      *
      * @return bool
      */
-    public function is_in_progress(): bool {
+    public function is_in_progress() {
         return ($this->model->status === constants::STATUS_SCHEDULED || $this->model->status === constants::STATUS_INPROGRESS);
     }
 }

@@ -40,7 +40,7 @@ class check_display implements \templatable {
      * @param check_base $check
      * @param bool $detailed
      */
-    public function __construct(check_base $check, bool $detailed = false) {
+    public function __construct(check_base $check, $detailed = false) {
         $this->check = $check;
         $this->detailed = $detailed;
     }

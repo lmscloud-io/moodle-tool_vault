@@ -45,7 +45,7 @@ final class dbops_test extends \advanced_testcase {
      *
      * @return array
      */
-    protected function get_sample_data(): array {
+    protected function get_sample_data() {
         $json = <<<EOF
 [
     ["id","name","value"],
@@ -66,7 +66,7 @@ EOF;
      * @param array $args
      * @return mixed
      */
-    protected function call_static_method(string $method, array $args = []) {
+    protected function call_static_method($method, array $args = []) {
         $class = new ReflectionClass(dbops::class);
         $method = $class->getMethod($method);
         $method->setAccessible(true);

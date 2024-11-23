@@ -54,7 +54,7 @@ class plugincode {
      *
      * @return int
      */
-    public static function get_addon_plugins_count(): int {
+    public static function get_addon_plugins_count() {
         $excludedplugins = siteinfo::get_excluded_plugins_backup();
         $pluginlistfull = siteinfo::get_plugins_list_full();
         $pluginlist = array_diff_key($pluginlistfull, array_fill_keys($excludedplugins, true));
@@ -76,7 +76,7 @@ class plugincode {
      * @param string $path
      * @return int
      */
-    public static function get_directory_size(string $path): int {
+    public static function get_directory_size($path) {
         $bytestotal = 0;
         $path = realpath($path);
         if ($path !== false && $path != '' && file_exists($path)) {
@@ -98,7 +98,7 @@ class plugincode {
      *
      * @return int
      */
-    public static function get_total_addon_size(): int {
+    public static function get_total_addon_size() {
         global $CFG;
         $paths = self::get_addon_directories_list();
         $total = 0;
@@ -114,7 +114,7 @@ class plugincode {
      * @param string $pluginname
      * @return string
      */
-    public static function guess_plugin_path(string $pluginname): string {
+    public static function guess_plugin_path($pluginname) {
         global $CFG;
         $dir = \core_component::get_component_directory($pluginname);
         if ($dir) {
@@ -131,7 +131,7 @@ class plugincode {
      * @param string $pluginname
      * @return array|string|null
      */
-    public static function guess_plugin_path_relative(string $pluginname): string {
+    public static function guess_plugin_path_relative($pluginname) {
         global $CFG;
         $dir = self::guess_plugin_path($pluginname);
         return preg_replace('/^'.preg_quote("{$CFG->dirroot}/", '/').'/', "", $dir);
@@ -143,7 +143,7 @@ class plugincode {
      * @param string $pluginname
      * @return bool
      */
-    public static function can_write_to_plugin_dir(string $pluginname): bool {
+    public static function can_write_to_plugin_dir($pluginname) {
         $dir = self::guess_plugin_path($pluginname);
         if (file_exists($dir)) {
             return (bool)\core_plugin_manager::instance()->is_directory_removable($dir);
@@ -160,7 +160,7 @@ class plugincode {
      * @throws \moodle_exception
      * @return array
      */
-    protected static function prepare_moodle_org_response(\curl $curl, $response): array {
+    protected static function prepare_moodle_org_response(\curl $curl, $response) {
         $curlerrno = $curl->get_errno();
         if (!empty($curlerrno)) {
             $error = get_string('err_response_curl', 'core_plugin') . ' ' .
@@ -189,7 +189,7 @@ class plugincode {
      * @throws \moodle_exception
      * @return array
      */
-    public static function check_on_moodle_org(string $pluginname): array {
+    public static function check_on_moodle_org($pluginname) {
         global $CFG;
         require_once($CFG->libdir.'/filelib.php');
 
@@ -222,7 +222,7 @@ class plugincode {
      * @throws \moodle_exception
      * @return string
      */
-    protected static function find_root_folder(array &$filelist): string {
+    protected static function find_root_folder(array &$filelist) {
         $found = null;
         foreach ($filelist as $file => $unused) {
             $parts = explode('/', $file);
@@ -246,7 +246,7 @@ class plugincode {
      * @param string|null $rootfolder rootfolder to strip from the filenames in $files
      * @return void
      */
-    protected static function copy_plugin_files(string $sourcepath, string $pluginpath,
+    protected static function copy_plugin_files($sourcepath, $pluginpath,
             array $files, $rootfolder = null) {
         global $CFG;
         $dirpermissions = file_exists($pluginpath) ? fileperms($pluginpath) : fileperms(dirname($pluginpath));

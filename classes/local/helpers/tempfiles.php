@@ -33,7 +33,7 @@ class tempfiles {
      * @param string $prefix
      * @return string
      */
-    public static function make_temp_dir(string $prefix = ''): string {
+    public static function make_temp_dir($prefix = '') {
         global $CFG;
         if (defined('PHPUNIT_TEST') && PHPUNIT_TEST && defined('PHPUNIT_BACKUPTEMPDIR') && isset($CFG->backuptempdir)) {
             $oldvalue = $CFG->backuptempdir;
@@ -55,7 +55,7 @@ class tempfiles {
      * @param string $prefix
      * @return string
      */
-    protected static function make_unique_writable_directory(string $basedir, string $prefix = ''): string {
+    protected static function make_unique_writable_directory($basedir, $prefix = '') {
         if (!is_dir($basedir) || !is_writable($basedir)) {
             // The basedir is not writable. We will not be able to create the child directory.
             throw new \invalid_dataroot_permissions($basedir . ' is not writable. Unable to create a unique directory within it.');
@@ -88,7 +88,7 @@ class tempfiles {
      * @param string $dir
      * @return int count of removed files
      */
-    public static function remove_temp_dir(string $dir): int {
+    public static function remove_temp_dir($dir) {
         if (!file_exists($dir)) {
             return 0;
         }
@@ -123,7 +123,7 @@ class tempfiles {
      * @return bool|float number of bytes available or 'true' if there is enough space but the exact number
      *     could not be evaluated.
      */
-    public static function get_free_space(int $minrequiredspace) {
+    public static function get_free_space($minrequiredspace) {
         $dir = compat::make_backup_temp_directory('tool_vault');
         if (function_exists('disk_free_space') && ($freespace = @disk_free_space($dir)) > 0) {
             return $freespace;
@@ -140,7 +140,7 @@ class tempfiles {
      * @return bool|int number of bytes available or 'true' if there is enough space but the exact number
      *     could not be evaluated.
      */
-    public static function get_free_space_fallback(string $dir, int $minrequiredspace) {
+    public static function get_free_space_fallback($dir, $minrequiredspace) {
         $tempfile = $dir . DIRECTORY_SEPARATOR . 'temp';
         $fh = null;
         $size = 0;
@@ -172,7 +172,7 @@ class tempfiles {
      * @param string $dir
      * @return bool
      */
-    public static function dir_is_empty(string $dir): bool {
+    public static function dir_is_empty($dir) {
         $handle = opendir($dir);
         while (false !== ($entry = readdir($handle))) {
             if ($entry != "." && $entry != "..") {

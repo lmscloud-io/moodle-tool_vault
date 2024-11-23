@@ -47,7 +47,7 @@ class backup_details implements \templatable {
      * @param bool $isprogresspage
      */
     public function __construct($backup, $remotebackup = null,
-                                bool $fulldetails = true, bool $isprogresspage = false) {
+                                bool $fulldetails = true, $isprogresspage = false) {
         $this->backup = $backup;
         $this->remotebackup = $remotebackup;
         if (!$backup && !$remotebackup) {

@@ -62,7 +62,7 @@ class site_backup extends operation_base {
      * @param array $params
      * @return operation_base
      */
-    public static function schedule(array $params = []): operation_base {
+    public static function schedule(array $params = []) {
         global $USER;
         if (!(defined('CLI_SCRIPT') && CLI_SCRIPT)
                 && $records = backup_model::get_records([constants::STATUS_SCHEDULED])) {
@@ -129,7 +129,7 @@ class site_backup extends operation_base {
      *
      * @param int $pid
      */
-    public function start(int $pid) {
+    public function start($pid) {
         if (!api::is_registered()) {
             throw new \moodle_exception('error_apikeynotvalid', 'tool_vault');
         }
@@ -158,7 +158,7 @@ class site_backup extends operation_base {
      * @param string $filetype
      * @return files_backup
      */
-    public function get_files_backup(string $filetype): files_backup {
+    public function get_files_backup($filetype) {
         if (!array_key_exists($filetype, $this->filesbackups)) {
             $this->filesbackups[$filetype] = new files_backup($this, $filetype);
         }
@@ -171,7 +171,7 @@ class site_backup extends operation_base {
      * @param \Throwable $t
      * @return void
      */
-    public function mark_as_failed(\Throwable $t) {
+    public function mark_as_failed($t) {
         parent::mark_as_failed($t);
         $this->model->set_details(['encryptionkey' => ''])->save();
         if (!$this->model->backupkey) {
@@ -192,7 +192,7 @@ class site_backup extends operation_base {
      *
      * @return string[]
      */
-    public static function backup_prechecks(): array {
+    public static function backup_prechecks() {
         return [
             dbstatus::class,
             diskspace::class,
@@ -282,7 +282,7 @@ class site_backup extends operation_base {
      *
      * @return dbstructure
      */
-    public function get_db_structure(): dbstructure {
+    public function get_db_structure() {
         if ($this->dbstructure === null) {
             $this->dbstructure = dbstructure::load();
         }
@@ -295,7 +295,7 @@ class site_backup extends operation_base {
      * @param string $tablename
      * @return int
      */
-    protected function get_chunk_size(string $tablename) {
+    protected function get_chunk_size($tablename) {
         /** @var diskspace $precheck */
         $precheck = $this->prechecks[diskspace::get_name()] ?? null;
         if ($precheck) {
@@ -313,7 +313,7 @@ class site_backup extends operation_base {
      * @param dbtable $table
      * @param string $dir path to temp directory to store files before they are added to archive
      */
-    public function export_table_data(dbtable $table, string $dir) {
+    public function export_table_data(dbtable $table, $dir) {
         global $DB;
         $dbgen = $DB->get_manager()->generator;
 
@@ -478,7 +478,7 @@ class site_backup extends operation_base {
      * @param string $tempdir
      * @return bool
      */
-    protected function export_one_file(\stored_file $file, string $tempdir): bool {
+    protected function export_one_file(\stored_file $file, $tempdir) {
         global $CFG;
         $chash = $file->get_contenthash();
         $filename = substr($chash, 0, 2) .

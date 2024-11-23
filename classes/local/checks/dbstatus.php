@@ -88,7 +88,7 @@ class dbstatus extends check_base {
      *
      * @return string
      */
-    public function get_status_message(): string {
+    public function get_status_message() {
         if ($report = $this->get_report()) {
             $status = $this->get_status($report);
             switch ($status) {
@@ -112,7 +112,7 @@ class dbstatus extends check_base {
      * @param array $result
      * @return int
      */
-    protected function get_status(array $result): int {
+    protected function get_status(array $result) {
         $result = $this->get_report();
         if (!empty($result[constants::DIFF_INVALIDTABLES])) {
             $status = self::STATUS_INVALID;
@@ -169,7 +169,7 @@ class dbstatus extends check_base {
      *
      * @return bool
      */
-    public function success(): bool {
+    public function success() {
         return ($report = $this->get_report()) && $this->get_status($report) !== self::STATUS_INVALID;
     }
 
@@ -189,7 +189,7 @@ class dbstatus extends check_base {
      *
      * @return string
      */
-    public function summary(): string {
+    public function summary() {
         $report = $this->get_report();
         if ($report) {
             return
@@ -213,7 +213,7 @@ class dbstatus extends check_base {
      *
      * @return string
      */
-    public function failure_details(): string {
+    public function failure_details() {
         $report = $this->get_report();
         return $report ? print_r($report[constants::DIFF_INVALIDTABLES], true) : ''; // phpcs:ignore
     }
@@ -223,7 +223,7 @@ class dbstatus extends check_base {
      *
      * @return bool
      */
-    public function has_details(): bool {
+    public function has_details() {
         $report = $this->get_report();
         return ($report !== null && array_filter($report));
     }
@@ -235,7 +235,7 @@ class dbstatus extends check_base {
      * @param dbtable|null $deftable
      * @return string
      */
-    protected function add_to_excluded_tables_link(string $tablename, $deftable = null): string {
+    protected function add_to_excluded_tables_link($tablename, $deftable = null) {
         global $CFG;
         $a = $CFG->prefix . $tablename;
         if (siteinfo::is_table_excluded_from_backup($tablename, $deftable)) {
@@ -251,7 +251,7 @@ class dbstatus extends check_base {
      *
      * @return array
      */
-    protected function get_template_data(): array {
+    protected function get_template_data() {
         global $OUTPUT;
         $report = $this->get_report();
         $tables = [];
@@ -300,7 +300,7 @@ class dbstatus extends check_base {
      *
      * @return string
      */
-    public function detailed_report(): string {
+    public function detailed_report() {
         global $OUTPUT;
         $report = $this->get_report();
         if ($report !== null) {
@@ -316,7 +316,7 @@ class dbstatus extends check_base {
      *
      * @return string
      */
-    public static function get_display_name(): string {
+    public static function get_display_name() {
         return get_string('dbmodifications', 'tool_vault');
     }
 }

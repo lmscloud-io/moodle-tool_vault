@@ -62,7 +62,7 @@ class backup_model extends operation_model {
      * @param string $backupkey
      * @return static|null
      */
-    public static function get_by_backup_key(string $backupkey) {
+    public static function get_by_backup_key($backupkey) {
         /** @var backup_model[] $records */
         $records = self::get_records_select(
             "type = :type AND backupkey = :backupkey",
@@ -108,7 +108,7 @@ class backup_model extends operation_model {
      *
      * @return operation_model
      */
-    public function save(): operation_model {
+    public function save() {
         if (!$this->accesskey) {
             $this->generate_access_key();
         }
@@ -120,7 +120,7 @@ class backup_model extends operation_model {
      *
      * @return string
      */
-    public function get_description(): string {
+    public function get_description() {
         return $this->get_details()['description'] ?? '';
     }
 
@@ -129,7 +129,7 @@ class backup_model extends operation_model {
      *
      * @return bool
      */
-    public function get_encrypted(): bool {
+    public function get_encrypted() {
         return $this->get_details()['encrypted'] ?? false;
     }
 
@@ -138,7 +138,7 @@ class backup_model extends operation_model {
      *
      * @return string
      */
-    public function get_performedby(): string {
+    public function get_performedby() {
         $performedby = $this->get_details()['fullname'] ?? '';
         if (!empty($this->get_details()['email'])) {
             $performedby .= " <{$this->get_details()['email']}>";

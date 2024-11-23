@@ -52,7 +52,7 @@ abstract class check_base extends operation_base {
      *
      * @return self[]
      */
-    public static function get_all_checks(): array {
+    public static function get_all_checks() {
         $checks = [];
         /** @var check_base[] $precheckclasses */
         $precheckclasses = site_backup::backup_prechecks();
@@ -68,7 +68,7 @@ abstract class check_base extends operation_base {
      * @param int $id
      * @return static|null
      */
-    public static function load(int $id) {
+    public static function load($id) {
         $model = check_model::get_by_id($id);
         if (!$model) {
             return null;
@@ -88,7 +88,7 @@ abstract class check_base extends operation_base {
      * @return static
      * @throws \coding_exception
      */
-    protected static function instance(check_model $model): self {
+    protected static function instance(check_model $model) {
         $checkname = $model->get_check_name();
         if (clean_param($checkname, PARAM_ALPHANUMEXT) !== $checkname || !strlen($checkname)) {
             throw new \coding_exception('Check name is not valid');
@@ -109,7 +109,7 @@ abstract class check_base extends operation_base {
      * @param int $operationid
      * @return self[]
      */
-    public static function get_all_checks_for_operation(int $operationid): array {
+    public static function get_all_checks_for_operation($operationid) {
         $checks = check_model::get_all_checks_for_operation($operationid);
         $res = [];
         foreach ($checks as $check) {
@@ -133,7 +133,7 @@ abstract class check_base extends operation_base {
      *
      * @return check_model
      */
-    public function get_model(): operation_model {
+    public function get_model() {
         return $this->model;
     }
 
@@ -142,7 +142,7 @@ abstract class check_base extends operation_base {
      *
      * @return static
      */
-    public static function get_last_check(): self {
+    public static function get_last_check() {
         $records = check_model::get_checks_by_type(static::get_name());
         if (!$records) {
             return self::schedule(['type' => static::get_name()]);
@@ -157,7 +157,7 @@ abstract class check_base extends operation_base {
      *
      * @return bool
      */
-    public function is_in_progress(): bool {
+    public function is_in_progress() {
         return ($this->model->status === constants::STATUS_SCHEDULED || $this->model->status === constants::STATUS_INPROGRESS);
     }
 
@@ -167,7 +167,7 @@ abstract class check_base extends operation_base {
      * @param array $params
      * @return static
      */
-    public static function schedule(array $params = []): operation_base {
+    public static function schedule(array $params = []) {
         $type = $params['type'];
         $model = new check_model((object)['status' => constants::STATUS_SCHEDULED], $type);
         $obj = self::instance($model);
@@ -181,7 +181,7 @@ abstract class check_base extends operation_base {
      * @param operation_model|null $parent
      * @return static
      */
-    public static function create_and_run($parent = null): self {
+    public static function create_and_run($parent = null) {
         // TODO check - only to use from CLI.
         // TODO make sure there is nothing else scheduled.
         $model = new check_model((object)['status' => constants::STATUS_INPROGRESS, 'parentid' => $parent ? $parent->id : null],
@@ -217,7 +217,7 @@ abstract class check_base extends operation_base {
      *
      * @return string
      */
-    abstract public function summary(): string;
+    abstract public function summary();
 
     /**
      * Details about the failure that will be added to the exception message
@@ -226,7 +226,7 @@ abstract class check_base extends operation_base {
      *
      * @return string
      */
-    public function failure_details(): string {
+    public function failure_details() {
         return '';
     }
 
@@ -235,35 +235,35 @@ abstract class check_base extends operation_base {
      *
      * @return bool
      */
-    abstract public function has_details(): bool;
+    abstract public function has_details();
 
     /**
      * Get detailed report of the past check
      *
      * @return string
      */
-    abstract public function detailed_report(): string;
+    abstract public function detailed_report();
 
     /**
      * Display name of this check
      *
      * @return string
      */
-    abstract public static function get_display_name(): string;
+    abstract public static function get_display_name();
 
     /**
      * Pre-check is successful (backup/restore can be performed)
      *
      * @return bool
      */
-    abstract public function success(): bool;
+    abstract public function success();
 
     /**
      * Pre-check is successful but there is a warning
      *
      * @return bool
      */
-    public function warning(): bool {
+    public function warning() {
         return false;
     }
 
@@ -274,7 +274,7 @@ abstract class check_base extends operation_base {
      * @param bool $iswarning
      * @return string
      */
-    protected function display_status_message(string $status, bool $iswarning = false): string {
+    protected function display_status_message($status, $iswarning = false) {
         global $OUTPUT;
         return $OUTPUT->notification($status,
             !$this->success() ? 'error' :
@@ -318,7 +318,7 @@ abstract class check_base extends operation_base {
      *
      * @return string
      */
-    public function get_status_message(): string {
+    public function get_status_message() {
         return $this->success() ? get_string('success', 'moodle') : get_string('status_failed', 'tool_vault');
     }
 

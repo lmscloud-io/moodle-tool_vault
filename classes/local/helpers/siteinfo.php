@@ -34,7 +34,7 @@ class siteinfo {
      * @param bool $withnames
      * @return array
      */
-    public static function get_plugins_list_full(bool $withnames = false): array {
+    public static function get_plugins_list_full($withnames = false) {
         global $CFG;
         $list = [];
         foreach (core_component::get_plugin_types() as $type => $unused1) {
@@ -66,7 +66,7 @@ class siteinfo {
      * @param string $plugin
      * @return \core\plugininfo\base
      */
-    protected static function get_plugin_info(string $plugin): \core\plugininfo\base {
+    protected static function get_plugin_info($plugin) {
         $pluginman = \core_plugin_manager::instance();
         $plugin = $pluginman->get_plugin_info($plugin);
         $plugin->load_disk_version();
@@ -96,7 +96,7 @@ class siteinfo {
      * @param string $plugin
      * @return bool
      */
-    public static function plugin_has_xmldb_uninstall_function(string $plugin): bool {
+    public static function plugin_has_xmldb_uninstall_function($plugin) {
         // Custom plugin uninstall.
         if ($plugindirectory = core_component::get_component_directory($plugin)) {
             $uninstalllib = $plugindirectory . '/db/uninstall.php';
@@ -118,7 +118,7 @@ class siteinfo {
      * @param string $plugin
      * @return bool
      */
-    public static function plugin_has_subplugins(string $plugin): bool {
+    public static function plugin_has_subplugins($plugin) {
         list($type, $name) = core_component::normalize_component($plugin);
         $subplugintypes = core_component::get_plugin_types_with_subplugins();
         if (isset($subplugintypes[$type])) {
@@ -149,7 +149,7 @@ class siteinfo {
      *
      * @return string[]
      */
-    public static function common_excluded_dataroot_paths(): array {
+    public static function common_excluded_dataroot_paths() {
         return [
             'cache',
             'localcache',
@@ -166,7 +166,7 @@ class siteinfo {
      * @param string $path
      * @return bool
      */
-    protected static function is_dataroot_path_skipped_always(string $path): bool {
+    protected static function is_dataroot_path_skipped_always($path) {
         return in_array($path, self::common_excluded_dataroot_paths()) ||
             in_array($path, [
                 'filedir', // Files are retrieved separately.
@@ -185,7 +185,7 @@ class siteinfo {
      * @param string $path relative path under $CFG->dataroot
      * @return bool
      */
-    public static function is_dataroot_path_skipped_backup(string $path): bool {
+    public static function is_dataroot_path_skipped_backup($path) {
         if (self::is_dataroot_path_skipped_always($path)) {
             return true;
         }
@@ -198,7 +198,7 @@ class siteinfo {
      *
      * @return string[]
      */
-    public static function skipped_dataroot_path_examples(): array {
+    public static function skipped_dataroot_path_examples() {
         global $CFG;
         $result = [];
         $handle = opendir($CFG->dataroot);
@@ -218,7 +218,7 @@ class siteinfo {
      *
      * @return array
      */
-    public static function get_excluded_plugins_backup(): array {
+    public static function get_excluded_plugins_backup() {
         $plugins = api::get_setting_array('backupexcludeplugins');
         $plugins[] = 'tool_vault';
         return array_unique($plugins);
@@ -231,7 +231,7 @@ class siteinfo {
      * @param dbtable|null $deftable
      * @return bool
      */
-    public static function is_table_excluded_from_backup(string $tablename, $deftable): bool {
+    public static function is_table_excluded_from_backup($tablename, $deftable) {
         global $CFG;
         if (!$deftable) {
             // This is a table that is not present in the install.xml files of core or any plugins.
@@ -256,7 +256,7 @@ class siteinfo {
      * @param string $tablename table name without the mdl_ prefix
      * @return void
      */
-    public static function add_table_to_excluded_from_backup(string $tablename) {
+    public static function add_table_to_excluded_from_backup($tablename) {
         global $CFG;
         $tablename = trim(strtolower($tablename));
         $tables = api::get_setting_array('backupexcludetables');

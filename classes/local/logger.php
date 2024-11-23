@@ -34,5 +34,5 @@ interface logger {
      * @param string $loglevel
      * @return void
      */
-    public function add_to_log(string $message, string $loglevel = constants::LOGLEVEL_INFO);
+    public function add_to_log($message, $loglevel = constants::LOGLEVEL_INFO);
 }

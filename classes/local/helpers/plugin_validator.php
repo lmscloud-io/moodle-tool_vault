@@ -36,7 +36,7 @@ class plugin_validator extends \core\update\validator {
      * @param array $assertions
      * @return \tool_vault\local\helpers\plugin_validator
      */
-    public static function validate(string $zipcontentpath, array $zipcontentfiles, array $assertions = []): self {
+    public static function validate($zipcontentpath, array $zipcontentfiles, array $assertions = []) {
         $validator = new static($zipcontentpath, $zipcontentfiles);
 
         foreach ($assertions as $key => $value) {
@@ -66,7 +66,7 @@ class plugin_validator extends \core\update\validator {
      * @param array|string|null $addinfo
      * @return string
      */
-    protected function get_full_error_message(string $msgcode, $addinfo): string {
+    protected function get_full_error_message($msgcode, $addinfo) {
         // Some common errors with better explanations than in the parent class.
         if ($msgcode === 'pathwritable') {
             $pluginpath = plugincode::guess_plugin_path($this->get_component());
@@ -131,7 +131,7 @@ class plugin_validator extends \core\update\validator {
      *
      * @return string
      */
-    public function get_component(): string {
+    public function get_component() {
         $component = $this->get_versionphp_info()['component'] ?? null;
         if ($component === null) {
             // Something was not parsed.
@@ -147,7 +147,7 @@ class plugin_validator extends \core\update\validator {
      *
      * @return string
      */
-    public function get_version(): string {
+    public function get_version() {
         return $this->get_versionphp_info()['version'] ?? '';
     }
 }

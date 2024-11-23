@@ -33,7 +33,7 @@ class environ extends check_base {
      *
      * @return string
      */
-    public static function get_display_name(): string {
+    public static function get_display_name() {
         return get_string('environbackup', 'tool_vault');
     }
 
@@ -51,7 +51,7 @@ class environ extends check_base {
      *
      * @return bool
      */
-    public function success(): bool {
+    public function success() {
         $maxexectime = $this->model->get_details()['max_execution_time'];
         return $this->model->status === constants::STATUS_FINISHED
             && (!$maxexectime || $maxexectime >= constants::MIN_REQUIRED_EXEC_TIME);
@@ -62,7 +62,7 @@ class environ extends check_base {
      *
      * @return bool
      */
-    public function warning(): bool {
+    public function warning() {
         return $this->success() && !empty($this->model->get_details()['max_execution_time']);
     }
 
@@ -71,7 +71,7 @@ class environ extends check_base {
      *
      * @return string
      */
-    public function get_status_message(): string {
+    public function get_status_message() {
         if ($this->warning()) {
             return get_string('environ_success_warning', 'tool_vault',
                     ['value' => $this->formatted_max_execution_time(), 'url' => api::get_frontend_url().'/faq']);
@@ -87,7 +87,7 @@ class environ extends check_base {
      *
      * @return string
      */
-    protected function formatted_max_execution_time(): string {
+    protected function formatted_max_execution_time() {
         $maxexectime = $this->model->get_details()['max_execution_time'];
         if (!$maxexectime) {
             return get_string('unlimited', 'moodle');
@@ -101,7 +101,7 @@ class environ extends check_base {
      *
      * @return string
      */
-    public function summary(): string {
+    public function summary() {
         if ($this->model->status !== constants::STATUS_FINISHED) {
             return '';
         }
@@ -122,7 +122,7 @@ class environ extends check_base {
      *
      * @return string
      */
-    public function detailed_report(): string {
+    public function detailed_report() {
         return '';
     }
 
@@ -131,7 +131,7 @@ class environ extends check_base {
      *
      * @return bool
      */
-    public function has_details(): bool {
+    public function has_details() {
         return false;
     }
 }

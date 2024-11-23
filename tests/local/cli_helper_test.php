@@ -36,7 +36,7 @@ final class cli_helper_test extends \advanced_testcase {
      * @param array $mockargv
      * @return cli_helper
      */
-    protected function construct_helper(string $script, array $mockargv = []) {
+    protected function construct_helper($script, array $mockargv = []) {
         if (array_key_exists('argv', $_SERVER)) {
             $oldservervars = $_SERVER['argv'];
         }

@@ -40,7 +40,7 @@ class site_backup_mock extends \tool_vault\site_backup {
      * @param string $filetype
      * @return files_backup_mock
      */
-    public function get_files_backup(string $filetype): \tool_vault\local\helpers\files_backup {
+    public function get_files_backup($filetype) {
         if (!array_key_exists($filetype, $this->filesbackups)) {
             $this->filesbackups[$filetype] = new files_backup_mock($this, $filetype);
         }

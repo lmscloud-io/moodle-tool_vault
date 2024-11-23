@@ -87,7 +87,7 @@ class backup_file {
      * @param string $name
      * @return mixed|null
      */
-    public function __get(string $name) {
+    public function __get($name) {
         return $this->data[$name] ?? null;
     }
 
@@ -96,7 +96,7 @@ class backup_file {
      *
      * @return $this
      */
-    public function save(): self {
+    public function save() {
         global $DB;
         $this->data['timemodified'] = time();
         if (empty($this->data['id'])) {
@@ -118,7 +118,7 @@ class backup_file {
      *
      * @return array
      */
-    public function get_details(): array {
+    public function get_details() {
         $details = json_decode($this->details, true);
         return is_array($details) ? $details : [];
     }
@@ -129,7 +129,7 @@ class backup_file {
      * @param string $key
      * @return mixed|null
      */
-    public function get_detail(string $key) {
+    public function get_detail($key) {
         return $this->get_details()[$key] ?? null;
     }
 
@@ -139,7 +139,7 @@ class backup_file {
      * @param string $status
      * @return self
      */
-    public function set_status(string $status): self {
+    public function set_status($status) {
         $this->data['status'] = $status;
         return $this;
     }
@@ -150,7 +150,7 @@ class backup_file {
      * @param int $filesize
      * @return self
      */
-    public function set_filesize(int $filesize): self {
+    public function set_filesize($filesize) {
         $this->data['filesize'] = $filesize;
         return $this;
     }
@@ -161,7 +161,7 @@ class backup_file {
      * @param int $origsize
      * @return self
      */
-    public function set_origsize(int $origsize): self {
+    public function set_origsize($origsize) {
         $this->data['origsize'] = $origsize;
         return $this;
     }
@@ -171,7 +171,7 @@ class backup_file {
      *
      * @return string
      */
-    public function get_file_name(): string {
+    public function get_file_name() {
         $postfix = $this->seq ? "-{$this->seq}" : "";
         return $this->filetype . $postfix . '.zip';
     }
@@ -183,7 +183,7 @@ class backup_file {
      * @param array|string|int $value
      * @return void
      */
-    public function update_detail(string $key, $value) {
+    public function update_detail($key, $value) {
         $details = $this->get_details();
         $details[$key] = $value;
         $this->data['details'] = json_encode($details);

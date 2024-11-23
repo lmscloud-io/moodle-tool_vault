@@ -50,7 +50,7 @@ class files_backup {
      * @param site_backup $sitebackup
      * @param string $filetype
      */
-    public function __construct(site_backup $sitebackup, string $filetype) {
+    public function __construct(site_backup $sitebackup, $filetype) {
         global $DB;
         $this->sitebackup = $sitebackup;
         $this->filetype = $filetype;
@@ -68,7 +68,7 @@ class files_backup {
      *
      * @return bool
      */
-    protected function is_db_backup(): bool {
+    protected function is_db_backup() {
         return $this->filetype === constants::FILENAME_DBDUMP;
     }
 
@@ -105,7 +105,7 @@ class files_backup {
      *
      * @return string
      */
-    public function get_archive_file_path(): string {
+    public function get_archive_file_path() {
         if (empty($this->zipdir)) {
             throw new \coding_exception('There is no current archive');
         }
@@ -117,7 +117,7 @@ class files_backup {
      *
      * @param bool $startnew start new archive
      */
-    public function finish(bool $startnew = false) {
+    public function finish($startnew = false) {
         if ($this->ziparchive) {
             $this->ziparchive->close();
             $this->ziparchive = null;
@@ -151,7 +151,7 @@ class files_backup {
      *
      * @return int
      */
-    public function get_uploaded_size(): int {
+    public function get_uploaded_size() {
         $totalsize = 0;
         foreach ($this->backupfiles as $backupfile) {
             $totalsize += $backupfile->filesize;
@@ -169,8 +169,8 @@ class files_backup {
      * @param bool $isarchive this file is already an arhive and should be added without compression
      * @return self
      */
-    public function add_file(string $filepath, $localname = null, bool $allownewzip = true,
-                             bool $removesource = true, bool $isarchive = false): self {
+    public function add_file($filepath, $localname = null, $allownewzip = true,
+                             $removesource = true, $isarchive = false) {
         $localname = $localname ?? basename($filepath);
         if (is_dir($filepath)) {
             $this->add_folder($filepath, $localname, $removesource);
@@ -198,7 +198,7 @@ class files_backup {
      * @param bool $removesource
      * @return void
      */
-    protected function add_folder(string $filepath, string $localname, bool $removesource = true) {
+    protected function add_folder($filepath, $localname, $removesource = true) {
         $handle = opendir($filepath);
         while (($file = readdir($handle)) !== false) {
             if ($file !== '.' && $file !== '..') {
@@ -216,7 +216,7 @@ class files_backup {
      * @param string $content
      * @return self
      */
-    public function add_file_from_string(string $localname, string $content): self {
+    public function add_file_from_string($localname, $content) {
         $this->ziparchive->add_file_from_string($localname, $content);
         $this->currentbackupfile->set_origsize($this->currentbackupfile->origsize + strlen($content));
         $this->currentbackupfile->update_detail('lastfile', $localname);
@@ -230,7 +230,7 @@ class files_backup {
      * @param string $filepath
      * @return self
      */
-    public function add_table_file(string $tablename, string $filepath): self {
+    public function add_table_file($tablename, $filepath) {
         if (!$this->is_db_backup()) {
             throw new \coding_exception('This function can only be used for the DB backup');
         }
@@ -247,7 +247,7 @@ class files_backup {
      *
      * @return self
      */
-    public function finish_table(): self {
+    public function finish_table() {
         if (!$this->is_db_backup()) {
             throw new \coding_exception('This function can only be used for the DB backup');
         }

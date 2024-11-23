@@ -87,7 +87,7 @@ abstract class operation_model {
      * @param \Throwable $t
      * @return $this
      */
-    public function set_error(\Throwable $t): self {
+    public function set_error(\Throwable $t) {
         $details = $this->get_details();
         $details['error'] = $t->getMessage();
         $details['errorbacktrace'] = $t->getTraceAsString();
@@ -101,7 +101,7 @@ abstract class operation_model {
      * @param string $status
      * @return $this
      */
-    public function set_status(string $status): self {
+    public function set_status($status) {
         $this->data['status'] = $status;
         return $this;
     }
@@ -112,7 +112,7 @@ abstract class operation_model {
      * @param string $backupkey
      * @return $this
      */
-    public function set_backupkey(string $backupkey): self {
+    public function set_backupkey($backupkey) {
         $this->data['backupkey'] = $backupkey;
         return $this;
     }
@@ -122,7 +122,7 @@ abstract class operation_model {
      *
      * @return $this
      */
-    public function save(): self {
+    public function save() {
         global $DB;
         $this->data['timemodified'] = time();
         if (empty($this->data['id'])) {
@@ -139,7 +139,7 @@ abstract class operation_model {
      *
      * @return array
      */
-    public function get_details(): array {
+    public function get_details() {
         if (isset($this->data['details'])) {
             $details = json_decode($this->data['details'], true);
             return is_array($details) ? $details : [];
@@ -153,7 +153,7 @@ abstract class operation_model {
      *
      * @return bool
      */
-    public function has_error(): bool {
+    public function has_error() {
         return ($this->get_details()['error'] ?? null) !== null;
     }
 
@@ -162,7 +162,7 @@ abstract class operation_model {
      *
      * @return array
      */
-    public function get_remote_details(): array {
+    public function get_remote_details() {
         if (isset($this->data['remotedetails'])) {
             return json_decode($this->data['remotedetails'], true);
         } else {
@@ -176,7 +176,7 @@ abstract class operation_model {
      * @param array $details
      * @return $this
      */
-    public function set_details(array $details): self {
+    public function set_details(array $details) {
         $this->data['details'] = json_encode($details + $this->get_details());
         return $this;
     }
@@ -187,7 +187,7 @@ abstract class operation_model {
      * @param array $details
      * @return $this
      */
-    public function set_remote_details(array $details): self {
+    public function set_remote_details(array $details) {
         $this->data['remotedetails'] = json_encode($details + $this->get_remote_details());
         return $this;
     }
@@ -198,7 +198,7 @@ abstract class operation_model {
      * @param string $name
      * @return mixed|null
      */
-    public function __get(string $name) {
+    public function __get($name) {
         return $this->data[$name] ?? null;
     }
 
@@ -207,7 +207,7 @@ abstract class operation_model {
      *
      * @return $this
      */
-    public function generate_access_key(): self {
+    public function generate_access_key() {
         $this->data['accesskey'] = random_string(32);
         return $this;
     }
@@ -218,7 +218,7 @@ abstract class operation_model {
      * @param string $type
      * @return bool
      */
-    public static function validate_type(string $type) {
+    public static function validate_type($type) {
         return static::$defaulttype && $type === static::$defaulttype;
     }
 
@@ -249,7 +249,7 @@ abstract class operation_model {
      * @param int $id
      * @return static|null
      */
-    public static function get_by_id(int $id) {
+    public static function get_by_id($id) {
         global $DB;
         $record = $DB->get_record(self::TABLE, ['id' => $id]);
         return $record && static::validate_type($record->type) ? new static($record) : null;
@@ -261,7 +261,7 @@ abstract class operation_model {
      * @param int $pid
      * @return void
      */
-    public function set_pid_for_logging(int $pid) {
+    public function set_pid_for_logging($pid) {
         $this->pid = $pid;
     }
 
@@ -272,7 +272,7 @@ abstract class operation_model {
      * @param string $loglevel
      * @return \stdClass
      */
-    public function add_log(string $message, string $loglevel = constants::LOGLEVEL_INFO): \stdClass {
+    public function add_log($message, $loglevel = constants::LOGLEVEL_INFO) {
         global $DB;
         if (!$this->id) {
             throw new \coding_exception('Can not add logs, save the record first');
@@ -298,8 +298,8 @@ abstract class operation_model {
      * @param int $limit
      * @return operation_model[]
      */
-    protected static function get_records_select(string $sql, array $params = [],
-                     string $sort = 'timecreated DESC', int $offset = 0, int $limit = 0): array {
+    protected static function get_records_select($sql, array $params = [],
+                     string $sort = 'timecreated DESC', $offset = 0, $limit = 0) {
         global $DB;
         $records = $DB->get_records_select(self::TABLE, $sql, $params ?? [], $sort, '*', $offset, $limit);
         return array_filter(array_map(function($b) {
@@ -314,7 +314,7 @@ abstract class operation_model {
      * @param bool $usehtml
      * @return string
      */
-    public function format_log_line($log, bool $usehtml = true): string {
+    public function format_log_line($log, $usehtml = true) {
         if (!$log) {
             $class = 'tool_vault-log tool_vault-log-level-skipped';
             return $usehtml ? \html_writer::span('...', $class) : '...';
@@ -342,7 +342,7 @@ abstract class operation_model {
      * @param string $message
      * @return bool
      */
-    public function is_vault_output(string $message): bool {
+    public function is_vault_output($message) {
         return preg_match('/^\\[([^\\]]*)\\] \\[(\\w+)\\] \\[pid (\\d+)\\] /', $message, $matches)
             // TODO maybe also check time format and level?
             && (int)$matches[3] == $this->pid;
@@ -356,7 +356,7 @@ abstract class operation_model {
      *
      * @return array
      */
-    protected function get_logs_as_array(): array {
+    protected function get_logs_as_array() {
         global $DB;
         if ($this->logs === null) {
             $this->logs = array_values($DB->get_records(self::LOGTABLE, ['operationid' => $this->id], 'timecreated, id'));
@@ -369,7 +369,7 @@ abstract class operation_model {
      *
      * @return string
      */
-    public function get_logs_shortened(): string {
+    public function get_logs_shortened() {
         $logs = $this->get_logs_as_array();
         if (count($logs) >= 5) {
             // Display first two logs and last two logs.
@@ -389,7 +389,7 @@ abstract class operation_model {
      *
      * @return string
      */
-    public function get_logs(): string {
+    public function get_logs() {
         return join("\n", array_map([$this, 'format_log_line'], $this->get_logs_as_array()));
     }
 
@@ -398,7 +398,7 @@ abstract class operation_model {
      *
      * @return bool
      */
-    public function has_logs_shortneded(): bool {
+    public function has_logs_shortneded() {
         return count($this->get_logs_as_array()) > 5;
     }
 
@@ -407,7 +407,7 @@ abstract class operation_model {
      *
      * @return bool
      */
-    public function has_logs(): bool {
+    public function has_logs() {
         return count($this->get_logs_as_array()) > 0;
     }
 
@@ -420,7 +420,7 @@ abstract class operation_model {
      * @param int $limit
      * @return static[]
      */
-    public static function get_records($statuses = null, $sort = null, int $offset = 0, int $limit = 0): array {
+    public static function get_records($statuses = null, $sort = null, $offset = 0, $limit = 0) {
         global $DB;
         $sort = $sort ?? 'timecreated DESC, id DESC';
         if (static::$defaulttype) {
@@ -446,7 +446,7 @@ abstract class operation_model {
      * @param bool $includestuck include records that appear to be stuck (no modifications for LOCK_TIMEOUT seconds)
      * @return operation_model[]
      */
-    public static function get_active_processes(bool $includestuck = true): array {
+    public static function get_active_processes($includestuck = true) {
         if (static::class === self::class) {
             $records = static::get_records_select("(status = :s1 OR status = :s2) AND (type = :t1)",
                 ['s1' => constants::STATUS_SCHEDULED, 's2' => constants::STATUS_INPROGRESS, 't1' => 'backup'],
@@ -469,7 +469,7 @@ abstract class operation_model {
      * @param string $accesskey
      * @return static|null
      */
-    public static function get_by_access_key(string $accesskey) {
+    public static function get_by_access_key($accesskey) {
         global $DB;
         if (empty($accesskey)) {
             return null;
@@ -488,7 +488,7 @@ abstract class operation_model {
      *
      * @return int
      */
-    public function get_last_modified(): int {
+    public function get_last_modified() {
         global $DB;
         $sql = 'SELECT MAX(timecreated) FROM {'.self::LOGTABLE.'} WHERE operationid = ?';
         return max($this->timecreated, $this->timemodified,
@@ -500,7 +500,7 @@ abstract class operation_model {
      *
      * @return bool
      */
-    public function is_stuck(): bool {
+    public function is_stuck() {
         return $this->status == constants::STATUS_INPROGRESS &&
             $this->get_last_modified() < time() - constants::LOCK_TIMEOUT;
     }
@@ -510,7 +510,7 @@ abstract class operation_model {
      *
      * @return bool
      */
-    public function show_as_last_operation(): bool {
+    public function show_as_last_operation() {
         if (in_array($this->status, [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
             return true;
         }
@@ -544,7 +544,7 @@ abstract class operation_model {
      *
      * @return int
      */
-    public function get_finished_time(): int {
+    public function get_finished_time() {
         if (!in_array($this->status, [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
             return $this->timemodified;
         }

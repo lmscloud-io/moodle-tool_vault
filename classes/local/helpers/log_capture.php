@@ -116,7 +116,7 @@ class log_capture {
      *
      * @return  bool
      */
-    protected static function is_capturing(): bool {
+    protected static function is_capturing() {
         $buffers = ob_get_status(true);
         foreach ($buffers as $ob) {
             if (self::class.'::add_line' == $ob['name']) {
@@ -172,7 +172,7 @@ class log_capture {
      * @param string $log
      * @return string
      */
-    public static function add_line(string $log): string {
+    public static function add_line($log) {
         if (self::is_current_output_buffer()) {
             if (self::$model && !self::$model->is_vault_output($log)) {
                 // Add to the log unless it is already vault output (which means it is already in the db).
@@ -199,7 +199,7 @@ class log_capture {
      *
      * @return  bool
      */
-    protected static function is_current_output_buffer(): bool {
+    protected static function is_current_output_buffer() {
         if ($ob = ob_get_status()) {
             return self::class.'::add_line' == $ob['name'];
         }

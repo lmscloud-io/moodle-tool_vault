@@ -59,7 +59,7 @@ function tool_vault_after_config() {
  * @param array $args
  * @return string
  */
-function tool_vault_output_fragment_start_backup($args): string {
+function tool_vault_output_fragment_start_backup($args) {
     global $OUTPUT, $CFG, $USER;
 
     $context = context_system::instance();

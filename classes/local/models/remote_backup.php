@@ -51,7 +51,7 @@ class remote_backup {
      * @param string $name
      * @return mixed|null
      */
-    public function __get(string $name) {
+    public function __get($name) {
         return $this->data[$name] ?? null;
     }
 
@@ -60,7 +60,7 @@ class remote_backup {
      *
      * @return \stdClass
      */
-    public function to_object(): \stdClass {
+    public function to_object() {
         return (object)$this->data;
     }
 
@@ -69,7 +69,7 @@ class remote_backup {
      *
      * @return string
      */
-    public function get_description(): string {
+    public function get_description() {
         return $this->info['description'] ?? '';
     }
 
@@ -78,7 +78,7 @@ class remote_backup {
      *
      * @return bool
      */
-    public function get_encrypted(): bool {
+    public function get_encrypted() {
         return $this->info['encrypted'] ?? false;
     }
 
@@ -87,7 +87,7 @@ class remote_backup {
      *
      * @return int
      */
-    public function get_finished_time(): int {
+    public function get_finished_time() {
         if (!in_array($this->status, [constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
             return $this->info['timefinished'] ?? $this->timemodified;
         }
@@ -99,7 +99,7 @@ class remote_backup {
      *
      * @return bool
      */
-    public function is_same_site(): bool {
+    public function is_same_site() {
         return $this->info['samesite'] ?? false;
     }
 
@@ -108,7 +108,7 @@ class remote_backup {
      *
      * @return int
      */
-    public function get_total_size(): int {
+    public function get_total_size() {
         return $this->info['totalsize'] ?? 0;
     }
 }

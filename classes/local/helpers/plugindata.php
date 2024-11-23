@@ -50,7 +50,7 @@ class plugindata {
      *
      * @return array
      */
-    public static function get_tables_with_possible_plugin_data(): array {
+    public static function get_tables_with_possible_plugin_data() {
         return array_unique(array_merge(
             self::tables_with_component_field(),
             array_map(function($r) {
@@ -69,7 +69,7 @@ class plugindata {
      *
      * @return string[]
      */
-    protected static function tables_with_component_field(): array {
+    protected static function tables_with_component_field() {
         global $CFG;
         // We don't take into account exceptions for 'mod' plugin type because this type is never going to be supported.
         $tables = [
@@ -98,7 +98,7 @@ class plugindata {
      *
      * @return array[]
      */
-    protected static function tables_with_dependent_component_field(): array {
+    protected static function tables_with_dependent_component_field() {
         // We don't take into account exceptions for 'mod' plugin type because this type is never going to be supported.
         return [
             ['messageinbound_datakeys', 'handler', 'messageinbound_handlers', 'id'],
@@ -114,7 +114,7 @@ class plugindata {
      *
      * @return string
      */
-    public static function generate_param_name(): string {
+    public static function generate_param_name() {
         static $paramcount = 0;
         return static::GENERATE_PARAM_PREFIX . ($paramcount++);
     }
@@ -126,7 +126,7 @@ class plugindata {
      * @param string $plugin
      * @return array|null
      */
-    protected static function get_special_sql_for_table(string $tablename, string $plugin) {
+    protected static function get_special_sql_for_table($tablename, $plugin) {
         global $DB;
 
         if ($tablename === 'config_plugins') {
@@ -166,7 +166,7 @@ class plugindata {
      * @param bool $negated - if true selects data NOT related to given plugins
      * @return array [$sql, $params]
      */
-    public static function get_sql_for_plugins_data_in_table(string $tablename, array $plugins, bool $negated = false): array {
+    public static function get_sql_for_plugins_data_in_table($tablename, array $plugins, $negated = false) {
         global $DB;
         $params = [];
         $sqls = [];
@@ -218,7 +218,7 @@ class plugindata {
      *
      * @return array
      */
-    public static function get_tables_with_possible_plugin_data_to_preserve(): array {
+    public static function get_tables_with_possible_plugin_data_to_preserve() {
         return array_diff(
             self::get_tables_with_possible_plugin_data(),
             // Exclude the tables that link to the data from the backed up site (users, roles).
@@ -244,8 +244,8 @@ class plugindata {
      * @param int $substituteuserid
      * @return array
      */
-    public static function get_sql_for_plugins_data_in_table_to_preserve(string $tablename, array $plugins,
-                                                                         int $substituteuserid): array {
+    public static function get_sql_for_plugins_data_in_table_to_preserve($tablename, array $plugins,
+                                                                         int $substituteuserid) {
         global $DB;
         $fields = '*';
         list($sql, $params) = self::get_sql_for_plugins_data_in_table($tablename, $plugins);

@@ -79,7 +79,7 @@ class last_operation implements \templatable {
      *
      * @return bool
      */
-    protected function is_success(): bool {
+    protected function is_success() {
         return !$this->isfailed && $this->operation->status === constants::STATUS_FINISHED;
     }
 
@@ -88,7 +88,7 @@ class last_operation implements \templatable {
      *
      * @return bool
      */
-    protected function is_error(): bool {
+    protected function is_error() {
         return $this->isfailed ||
             $this->operation->status === constants::STATUS_FAILED ||
             $this->operation->status === constants::STATUS_FAILEDTOSTART;

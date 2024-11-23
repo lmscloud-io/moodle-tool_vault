@@ -39,7 +39,7 @@ class error_with_backtrace implements \templatable {
      * @param operation_model $model
      * @return static
      */
-    public static function create_from_model(operation_model $model): self {
+    public static function create_from_model(operation_model $model) {
         $s = new self();
         $s->error = ($model->get_details()['error'] ?? null);
         $s->backtrace = $model->get_details()['errorbacktrace'] ?? null;
@@ -52,7 +52,7 @@ class error_with_backtrace implements \templatable {
      * @param \Throwable $t
      * @return static
      */
-    public static function create_from_exception(\Throwable $t): self {
+    public static function create_from_exception(\Throwable $t) {
         $e = new self();
         $e->error = $t->getMessage();
         $e->backtrace = $t->getTraceAsString();

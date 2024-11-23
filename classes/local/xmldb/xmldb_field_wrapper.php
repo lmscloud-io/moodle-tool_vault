@@ -36,7 +36,7 @@ class xmldb_field_wrapper extends xmldb_field {
      * @param \xmldb_field $field
      * @return self
      */
-    public static function create_field(xmldb_field $field): self {
+    public static function create_field(xmldb_field $field) {
         if ($field instanceof self) {
             return $field;
         }

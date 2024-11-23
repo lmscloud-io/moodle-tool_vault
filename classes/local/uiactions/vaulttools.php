@@ -32,7 +32,7 @@ class vaulttools extends base {
      *
      * @return string
      */
-    public static function get_display_name(): string {
+    public static function get_display_name() {
         return get_string('tools', 'tool_vault');
     }
 
@@ -55,7 +55,7 @@ class vaulttools extends base {
      * @param \renderer_base $output
      * @return array
      */
-    public function export_for_template($output): array {
+    public function export_for_template($output) {
         global $CFG, $USER;
 
         /** @var tool_base[] $tools */

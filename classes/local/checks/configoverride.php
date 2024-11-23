@@ -98,7 +98,7 @@ class configoverride extends check_base {
      * @param string|null $plugin
      * @return bool
      */
-    protected function setting_in_admin_tree(string $key, $plugin = null): bool {
+    protected function setting_in_admin_tree($key, $plugin = null) {
         global $CFG, $DB;
         // TODO actually check admin tree, not database.
         if ($plugin) {
@@ -157,7 +157,7 @@ class configoverride extends check_base {
      *
      * @return bool
      */
-    public function success(): bool {
+    public function success() {
         return true;
     }
 
@@ -166,7 +166,7 @@ class configoverride extends check_base {
      *
      * @return string
      */
-    public function summary(): string {
+    public function summary() {
         if (($details = $this->get_report()) === null) {
             return '';
         }
@@ -204,7 +204,7 @@ class configoverride extends check_base {
      * @param bool $included
      * @return array
      */
-    protected function format_setting_value_for_details(string $name, $plugin, $value, bool $included): array {
+    protected function format_setting_value_for_details($name, $plugin, $value, $included) {
         if (!$included) {
             $value = '<em>' . get_string('configoverrides_valueredacted', 'tool_vault') . '</em>';
         } else {
@@ -218,7 +218,7 @@ class configoverride extends check_base {
      *
      * @return array
      */
-    protected function get_template_data(): array {
+    protected function get_template_data() {
         $data = [
             'includedsettings' => [],
             'notincludedsettings' => [],
@@ -252,7 +252,7 @@ class configoverride extends check_base {
      *
      * @return bool
      */
-    public function has_details(): bool {
+    public function has_details() {
         $report = $this->get_report();
         return ($report !== null && array_filter($report));
     }
@@ -262,7 +262,7 @@ class configoverride extends check_base {
      *
      * @return string
      */
-    public function detailed_report(): string {
+    public function detailed_report() {
         global $OUTPUT;
         $report = $this->get_report();
         return $report !== null ?
@@ -275,7 +275,7 @@ class configoverride extends check_base {
      *
      * @return string
      */
-    public static function get_display_name(): string {
+    public static function get_display_name() {
         return get_string('configoverrides', 'tool_vault');
     }
 
@@ -284,7 +284,7 @@ class configoverride extends check_base {
      *
      * @return array
      */
-    public function get_config_overrides_for_backup(): array {
+    public function get_config_overrides_for_backup() {
         $rv = [];
         if ($report = $this->get_report()) {
             foreach (($report['config_php_settings_included'] ?? []) as $key => $value) {

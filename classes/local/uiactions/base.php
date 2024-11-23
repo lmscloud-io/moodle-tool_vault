@@ -36,7 +36,7 @@ abstract class base {
      *
      * @return static
      */
-    public static function get_handler(): self {
+    public static function get_handler() {
         $section = optional_param('section', '', PARAM_ALPHANUMEXT) ?: 'main';
         $section = class_exists('tool_vault\local\uiactions\\' . $section) ? $section : 'main';
 
@@ -75,7 +75,7 @@ abstract class base {
      *
      * @return string
      */
-    public static function get_display_name(): string {
+    public static function get_display_name() {
         // TODO make abstract .
         $parts = preg_split('|\\\\|', static::class);
         return end($parts);
@@ -144,7 +144,7 @@ abstract class base {
      * @param \renderer_base $output
      * @return string
      */
-    protected function registration_form(\renderer_base $output): string {
+    protected function registration_form(\renderer_base $output) {
         global $CFG;
 
         if (!api::is_registered()) {

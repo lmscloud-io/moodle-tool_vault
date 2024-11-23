@@ -50,7 +50,7 @@ class tool_model extends operation_model {
      * @param string $type
      * @return bool
      */
-    public static function validate_type(string $type) {
+    public static function validate_type($type) {
         return substr($type, 0, strlen(self::$defaulttypeprefix)) === self::$defaulttypeprefix;
     }
 
@@ -59,7 +59,7 @@ class tool_model extends operation_model {
      *
      * @return string
      */
-    public function get_tool_name(): string {
+    public function get_tool_name() {
         return substr($this->type, strlen(self::$defaulttypeprefix));
     }
 }

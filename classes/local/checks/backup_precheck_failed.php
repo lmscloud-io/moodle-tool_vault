@@ -51,7 +51,7 @@ class backup_precheck_failed extends \moodle_exception {
      *
      * @return string
      */
-    public function extra_info(): string {
+    public function extra_info() {
         return $this->extrainfo;
     }
 }

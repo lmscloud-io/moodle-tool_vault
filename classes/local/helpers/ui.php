@@ -32,7 +32,7 @@ class ui {
      * @param array $params
      * @return \moodle_url
      */
-    public static function baseurl(array $params = []): \moodle_url {
+    public static function baseurl(array $params = []) {
         if (!empty($params['section']) && $params['section'] === 'main') {
             unset($params['section']);
         }
@@ -45,7 +45,7 @@ class ui {
      * @param array $params
      * @return \moodle_url
      */
-    public static function progressurl(array $params = []): \moodle_url {
+    public static function progressurl(array $params = []) {
         return new \moodle_url('/admin/tool/vault/progress.php', ['accesskey' => $params['accesskey']]);
     }
 
@@ -55,7 +55,7 @@ class ui {
      * @param int $time
      * @return string
      */
-    public static function format_time(int $time): string {
+    public static function format_time($time) {
         return $time ? userdate($time, get_string('strftimedatetimeshort', 'langconfig')) : '';
     }
 
@@ -65,7 +65,7 @@ class ui {
      * @param int $time
      * @return string
      */
-    public static function format_time_cli(int $time): string {
+    public static function format_time_cli($time) {
         return $time ? userdate($time, '%Y-%m-%d %H:%M', 99, false, false) : '';
     }
 
@@ -77,7 +77,7 @@ class ui {
      *    false: display the interval as days/hours/min only
      * @return string
      */
-    public static function format_duration(int $value, bool $asseconds = true): string {
+    public static function format_duration($value, $asseconds = true) {
         if ($value <= MINSECS) {
             return get_string('numseconds', 'moodle', $value);
         }
@@ -113,7 +113,7 @@ class ui {
      * @param string $status
      * @return string
      */
-    public static function format_status(string $status): string {
+    public static function format_status($status) {
         if ($status === constants::STATUS_FAILED) {
             return get_string('status_failed', 'tool_vault');
         } else if ($status === constants::STATUS_FAILEDTOSTART) {
@@ -136,7 +136,7 @@ class ui {
      * @param int $value
      * @return string
      */
-    public static function format_encrypted(int $value): string {
+    public static function format_encrypted($value) {
         return $value ? get_string('yes') : get_string('no');
     }
 
@@ -146,7 +146,7 @@ class ui {
      * @param string|null $value
      * @return string
      */
-    public static function format_description($value): string {
+    public static function format_description($value) {
         return s($value ?? '');
     }
 }

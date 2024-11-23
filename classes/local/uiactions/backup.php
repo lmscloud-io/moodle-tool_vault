@@ -36,7 +36,7 @@ class backup extends base {
      *
      * @return string
      */
-    public static function get_display_name(): string {
+    public static function get_display_name() {
         return get_string('sitebackup', 'tool_vault');
     }
 
@@ -46,7 +46,7 @@ class backup extends base {
      * @param \renderer_base $output
      * @return array
      */
-    public function export_for_template($output): array {
+    public function export_for_template($output) {
         global $CFG, $USER;
         $whybackupdisabled = null;
         $activeprocesses = operation_model::get_active_processes(true);

@@ -72,7 +72,7 @@ class dbops {
      * @param logger $logger
      * @return void
      */
-    public static function insert_records(string $tablename, array $fields, array &$data, logger $logger) {
+    public static function insert_records($tablename, array $fields, array &$data, logger $logger) {
         global $DB;
 
         if (empty($data)) {
@@ -108,7 +108,7 @@ class dbops {
      * @param int $startrow
      * @return int index of the row after the last row in the chunk
      */
-    protected static function prepare_next_chunk(string $tablename, array $fields, array &$packetsizes, int $startrow): int {
+    protected static function prepare_next_chunk($tablename, array $fields, array &$packetsizes, $startrow) {
         global $DB;
         $maxendrow = count($packetsizes);
 
@@ -146,7 +146,7 @@ class dbops {
      * @param array $data
      * @return int[] size in bytes of each row in $data if it was added to the SQL query
      */
-    protected static function calculate_row_packet_sizes(int $noffields, array &$data): array {
+    protected static function calculate_row_packet_sizes($noffields, array &$data) {
         global $DB;
         $nofrows = count($data);
         if (!self::get_max_allowed_packet()) {
@@ -175,7 +175,7 @@ class dbops {
      * @param int $nofrows
      * @return string
      */
-    protected static function prepare_value_sql(int $noffields, int $nofrows): string {
+    protected static function prepare_value_sql($noffields, $nofrows) {
         if (!$nofrows) {
             return '';
         }
@@ -191,7 +191,7 @@ class dbops {
      * @param int $nofrows
      * @return string
      */
-    protected static function prepare_insert_sql(string $tablename, array $fields, int $nofrows): string {
+    protected static function prepare_insert_sql($tablename, array $fields, $nofrows) {
         global $DB;
         $dbgen = $DB->get_manager()->generator;
         $fieldssql = '(' . implode(',', array_map(function ($f) use ($dbgen) {
@@ -211,7 +211,7 @@ class dbops {
      * @param int $endrow
      * @return void
      */
-    protected static function insert_chunk(string $tablename, array $fields, array &$rows, int $startrow, int $endrow) {
+    protected static function insert_chunk($tablename, array $fields, array &$rows, $startrow, $endrow) {
         global $DB;
 
         $sql = self::prepare_insert_sql($tablename, $fields, $endrow - $startrow);
@@ -238,7 +238,7 @@ class dbops {
      * @param logger $logger
      * @return void
      */
-    protected static function insert_records_one_by_one(string $tablename, array $fields, array &$rows, int $startrow,
+    protected static function insert_records_one_by_one($tablename, array $fields, array &$rows, $startrow,
             int $endrow, logger $logger) {
         global $DB;
         for ($i = $startrow; $i < $endrow; $i++) {

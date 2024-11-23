@@ -148,7 +148,7 @@ class diskspace extends check_base {
      *
      * @return bool
      */
-    public function success(): bool {
+    public function success() {
         return $this->model->status === constants::STATUS_FINISHED
             && empty($this->model->get_details()['datarootunreadable'])
             && $this->model->get_details()['enoughspace'];
@@ -159,7 +159,7 @@ class diskspace extends check_base {
      *
      * @return string
      */
-    public function get_status_message(): string {
+    public function get_status_message() {
         if ($this->success()) {
             return get_string('diskspacebackup_success', 'tool_vault');
         } else if (!empty($this->model->get_details()['datarootunreadable'])) {
@@ -178,7 +178,7 @@ class diskspace extends check_base {
      *
      * @return string
      */
-    public function summary(): string {
+    public function summary() {
         if ($this->model->status !== constants::STATUS_FINISHED) {
             return '';
         }
@@ -217,7 +217,7 @@ class diskspace extends check_base {
      *
      * @return bool
      */
-    public function has_details(): bool {
+    public function has_details() {
         return false;
     }
 
@@ -226,7 +226,7 @@ class diskspace extends check_base {
      *
      * @return string
      */
-    public function detailed_report(): string {
+    public function detailed_report() {
         return '';
     }
 
@@ -235,7 +235,7 @@ class diskspace extends check_base {
      *
      * @return string
      */
-    public static function get_display_name(): string {
+    public static function get_display_name() {
         return get_string('diskspacebackup', 'tool_vault');
     }
 
@@ -245,7 +245,7 @@ class diskspace extends check_base {
      * @param string $tablename
      * @return array
      */
-    public function get_table_size(string $tablename) {
+    public function get_table_size($tablename) {
         return [
             $this->tablerowscnt[$tablename] ?? 0,
             $this->tablesizes[$tablename] ?? 0,

@@ -83,7 +83,7 @@ class dbstructure {
      *
      * @return static
      */
-    public static function load(): self {
+    public static function load() {
         $s = new self();
         $s->load_definitions();
         $s->load_actual_tables();
@@ -96,7 +96,7 @@ class dbstructure {
      * @param string $filepath path to __structure__.xml
      * @return static
      */
-    public static function load_from_backup(string $filepath): self {
+    public static function load_from_backup($filepath) {
         $s = new self();
         $s->load_definitions();
         $s->load_actual_tables();
@@ -164,7 +164,7 @@ class dbstructure {
      * @param string $filepath
      * @return void
      */
-    protected function load_definitions_from_backup_xml(string $filepath) {
+    protected function load_definitions_from_backup_xml($filepath) {
         global $CFG;
         $oldxmldb = $CFG->xmldbdisablecommentchecking ?? null;
         $CFG->xmldbdisablecommentchecking = 1;
@@ -188,7 +188,7 @@ class dbstructure {
      * @param string $tablename
      * @return dbtable|null
      */
-    public function find_table_definition(string $tablename) {
+    public function find_table_definition($tablename) {
         foreach ($this->get_tables_definitions() as $table) {
             if ($table->get_xmldb_table()->getName() === $tablename) {
                 return $table;
@@ -337,7 +337,7 @@ class dbstructure {
      * @param bool $showdefinitions
      * @return string
      */
-    public function output($onlytables = null, bool $showdefinitions = false) {
+    public function output($onlytables = null, $showdefinitions = false) {
         $o = '<?xml version="1.0" encoding="UTF-8" ?>' . "\n";
         $o .= '<XMLDB ';
         $rel = '../../../..';
@@ -366,7 +366,7 @@ class dbstructure {
      *
      * @return array
      */
-    public function get_actual_tables_sizes(): array {
+    public function get_actual_tables_sizes() {
         global $CFG, $DB;
         $sizes = [];
         if ($DB->get_dbfamily() === 'postgres') {

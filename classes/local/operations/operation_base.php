@@ -41,7 +41,7 @@ abstract class operation_base implements logger {
      * @param array $params
      * @return operation_base
      */
-    abstract public static function schedule(array $params = []): self;
+    abstract public static function schedule(array $params = []);
 
     /**
      * Returns the operation model (has properties id, status, etc)
@@ -58,7 +58,7 @@ abstract class operation_base implements logger {
      * @param \Throwable $t
      * @return string
      */
-    public static function get_error_message_for_server(\Throwable $t): string {
+    public static function get_error_message_for_server(\Throwable $t) {
         global $CFG, $DB;
         $message = $t->getMessage();
         if ($t instanceof \moodle_exception) {
@@ -87,7 +87,7 @@ abstract class operation_base implements logger {
      * @param \Throwable $t
      * @return void
      */
-    public function mark_as_failed(\Throwable $t) {
+    public function mark_as_failed($t) {
         if ($this->model->status === constants::STATUS_INPROGRESS) {
             $this->model->set_status(constants::STATUS_FAILED);
         } else {
@@ -102,7 +102,7 @@ abstract class operation_base implements logger {
      *
      * @param int $pid
      */
-    public function start(int $pid) {
+    public function start($pid) {
         $this->model->set_pid_for_logging($pid);
         $this->model
             ->set_status(constants::STATUS_INPROGRESS)
@@ -123,7 +123,7 @@ abstract class operation_base implements logger {
      * @param string $loglevel
      * @return void
      */
-    public function add_to_log(string $message, string $loglevel = constants::LOGLEVEL_INFO) {
+    public function add_to_log($message, $loglevel = constants::LOGLEVEL_INFO) {
         if ($loglevel == constants::LOGLEVEL_VERBOSE && !api::get_config('debug')) {
             return;
         }
@@ -142,7 +142,7 @@ abstract class operation_base implements logger {
      * @param int $pid process id for logging
      * @return bool
      */
-    public function safe_start_and_execute(int $pid): bool {
+    public function safe_start_and_execute($pid) {
         \core_shutdown_manager::register_function([$this, 'on_shutdown']);
         $rv = false;
         log_capture::start_capturing($this->model);

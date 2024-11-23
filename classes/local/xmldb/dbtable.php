@@ -44,7 +44,7 @@ class dbtable {
      * @param xmldb_table $table
      * @param string $component
      */
-    public function __construct(xmldb_table $table, string $component) {
+    public function __construct(xmldb_table $table, $component) {
         $this->xmldbtable = $table;
         xmldb_field_wrapper::replace_table_fields($table);
         $this->component = $component;
@@ -55,7 +55,7 @@ class dbtable {
      *
      * @return \xmldb_table
      */
-    public function get_xmldb_table(): xmldb_table {
+    public function get_xmldb_table() {
         return $this->xmldbtable;
     }
 
@@ -163,7 +163,7 @@ class dbtable {
      * @return array array that may contain keys:
      *        'extratables', 'extracolumns', 'missingcolumns', 'changedcolumns', 'missingindexes', 'extraindexes'
      */
-    public function compare_with_other_table($deftable, bool $autofix = true): array {
+    public function compare_with_other_table($deftable, $autofix = true) {
         if (!$deftable) {
             return [constants::DIFF_EXTRATABLES => [$this->get_xmldb_table()]];
         }
@@ -180,7 +180,7 @@ class dbtable {
      * @param bool $autofix
      * @return array
      */
-    protected function align_fields_with_defintion(dbtable $deftable, bool $autofix): array {
+    protected function align_fields_with_defintion(dbtable $deftable, $autofix) {
         $actualfields = $this->get_xmldb_table()->getFields();
         $deffields = $deftable->get_xmldb_table()->getFields();
         $newfields = [];
@@ -220,7 +220,7 @@ class dbtable {
      * @param bool $autofix
      * @return array
      */
-    public function align_keys_and_indexes_with_definition(dbtable $deftable, bool $autofix): array {
+    public function align_keys_and_indexes_with_definition(dbtable $deftable, $autofix) {
         $defobjs = array_merge($deftable->get_xmldb_table()->getKeys(), $deftable->get_xmldb_table()->getIndexes());
         $actualobjs = array_merge($this->get_xmldb_table()->getKeys(), $this->get_xmldb_table()->getIndexes());
         $matchingobjs = [];
@@ -276,7 +276,7 @@ class dbtable {
      * @param \xmldb_object $o2
      * @return bool true if matches, false if not
      */
-    protected function compare_key_or_index(\xmldb_object $o1, \xmldb_object $o2): bool {
+    protected function compare_key_or_index(\xmldb_object $o1, \xmldb_object $o2) {
         if (!in_array(get_class($o1), [xmldb_index::class, xmldb_key::class]) ||
             !in_array(get_class($o2), [xmldb_index::class, xmldb_key::class])) {
             throw new \coding_exception('Each argument must be either xmldb_index or xmldb_key');
@@ -348,7 +348,7 @@ class dbtable {
      * @param dbstructure $structure
      * @return static
      */
-    public static function create_from_actual_db(string $tablename, dbstructure $structure): self {
+    public static function create_from_actual_db($tablename, dbstructure $structure) {
         global $DB;
         $xmldbtable = new xmldb_table($tablename);
         // Get fields info from ADODb.
@@ -486,7 +486,7 @@ class dbtable {
      * @param dbtable|null $originaltable
      * @return array
      */
-    public function get_alter_sql($originaltable): array {
+    public function get_alter_sql($originaltable) {
         global $DB;
         $generator = $DB->get_manager()->generator;
         if (!$originaltable) {
@@ -545,7 +545,7 @@ class dbtable {
      * @param int $nextvalue
      * @return array|string[]
      */
-    public function get_fix_sequence_sql(int $nextvalue): array {
+    public function get_fix_sequence_sql($nextvalue) {
         global $DB, $CFG;
         if (!$field = $this->get_sequence()) {
             return [];
@@ -569,7 +569,7 @@ class dbtable {
      *
      * @return array
      */
-    public function validate_definition(): array {
+    public function validate_definition() {
         $result = [];
         $error = $this->get_xmldb_table()->validateDefinition();
         if ($error !== null) {
@@ -607,7 +607,7 @@ class dbtable {
      *
      * @return void
      */
-    public function get_component(): string {
+    public function get_component() {
         return $this->component;
     }
 }

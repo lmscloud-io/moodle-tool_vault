@@ -47,7 +47,7 @@ class site_backup_dryrun extends site_backup {
      * @param array $params
      * @return operation_base
      */
-    public static function schedule(array $params = []): operation_base {
+    public static function schedule(array $params = []) {
         global $USER;
 
         if (backup_model::get_records([constants::STATUS_INPROGRESS, constants::STATUS_SCHEDULED])) {
@@ -70,7 +70,7 @@ class site_backup_dryrun extends site_backup {
      *
      * @param int $pid
      */
-    public function start(int $pid) {
+    public function start($pid) {
         if (!api::is_registered()) {
             throw new \moodle_exception('error_apikeynotvalid', 'tool_vault');
         }

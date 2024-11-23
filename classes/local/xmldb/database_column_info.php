@@ -31,7 +31,7 @@ class database_column_info extends \database_column_info {
      * @param  \database_column_info $obj
      * @return database_column_info
      */
-    public static function clone_from(\database_column_info $obj): self {
+    public static function clone_from(\database_column_info $obj) {
         return new static((object)$obj->data);
     }
 
@@ -44,7 +44,7 @@ class database_column_info extends \database_column_info {
      * @param dbtable|null $deftable
      * @return \xmldb_field
      */
-    public function to_xmldb_field($deftable): \xmldb_field {
+    public function to_xmldb_field($deftable) {
         global $DB;
 
         if ($DB->get_dbfamily() === 'mysql') {

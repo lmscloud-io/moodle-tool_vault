@@ -40,7 +40,7 @@ class files_backup_mock extends \tool_vault\local\helpers\files_backup {
      * @param bool $startnew
      * @return void
      */
-    public function finish(bool $startnew = false) {
+    public function finish($startnew = false) {
         $zipfilepath = $this->get_archive_file_path();
         $this->ziparchive->close();
         $newfilepath = make_request_directory().DIRECTORY_SEPARATOR.basename($zipfilepath);
