@@ -29,18 +29,6 @@ use xmldb_table;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class xmldb_field_wrapper extends xmldb_field {
-    /**
-     * Creates an instance from the xmldb_field
-     *
-     * @param \xmldb_field $field
-     */
-    protected function __construct(xmldb_field $field) {
-        // Set all properties of this object to properties of $f.
-        $classvars = get_class_vars(get_class($field));
-        foreach ($classvars as $name => $value) {
-            $this->$name = $field->$name;
-        }
-    }
 
     /**
      * Creates an instance (does nothing if $field is already instance of this class)
@@ -49,7 +37,16 @@ class xmldb_field_wrapper extends xmldb_field {
      * @return self
      */
     public static function create_field(xmldb_field $field): self {
-        return ($field instanceof self) ? $field : new static($field);
+        if ($field instanceof self) {
+            return $field;
+        }
+        $f = new static($field->getName());
+        // Set all properties of this object to properties of $f.
+        $classvars = get_class_vars(get_class($field));
+        foreach ($classvars as $name => $value) {
+            $f->$name = $field->$name;
+        }
+        return $f;
     }
 
     /**
