@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
 /**
  * TeX filter upgrade code.
  *
@@ -56,7 +59,7 @@ function tool_vault_27_xmldb_filter_tex_upgrade($oldversion) {
         // Move tex settings to config_pluins and delete entries from the config table.
         foreach ($settings as $setting) {
             $existingkey = 'filter_tex_'.$setting;
-            if (array_key_exists($existingkey, $CFG)) {
+            if (isset($CFG->$existingkey)) {
                 set_config($setting, $CFG->{$existingkey}, 'filter_tex');
                 unset_config($existingkey);
             }

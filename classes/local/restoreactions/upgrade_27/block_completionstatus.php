@@ -37,13 +37,16 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
 /**
  * Handles upgrading instances of this block.
  *
  * @param int $oldversion
  * @param object $block
  */
-function tool_vault_27_xmldb_block_completionstatus_upgrade($oldversion, $block) {
+function tool_vault_27_xmldb_block_completionstatus_upgrade($oldversion) {
     global $DB;
 
     // Moodle v2.4.0 release upgrade line

@@ -14,13 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+// Mdlcode-disable missing-package-name.
+
+use tool_vault\local\restoreactions\upgrade_27\helpers\portfolio_helper;
+
 /**
  * @param int $oldversion the version we are upgrading from
  * @return bool result
  */
 function tool_vault_27_xmldb_portfolio_picasa_upgrade($oldversion) {
     global $CFG, $DB;
-    require_once(__DIR__.'/upgradelib.php');
 
     $dbman = $DB->get_manager();
 
@@ -31,11 +35,7 @@ function tool_vault_27_xmldb_portfolio_picasa_upgrade($oldversion) {
     }
 
     if ($oldversion < 2012053001) {
-        $existing = $DB->get_record('portfolio_instance', array('plugin' => 'picasa'), '*', IGNORE_MISSING);
-
-        if ($existing) {
-            portfolio_picasa_admin_upgrade_notification();
-        }
+        // Upgrade script removed in Vault, it was only sending admin notification.
 
         upgrade_plugin_savepoint(true, 2012053001, 'portfolio', 'picasa');
     }

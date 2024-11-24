@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -14,6 +13,9 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
 
 /**
  * This file keeps track of upgrades to

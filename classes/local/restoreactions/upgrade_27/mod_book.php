@@ -13,6 +13,10 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
 /**
  * Book module upgrade code
  *
@@ -22,6 +26,8 @@
  */
 
 defined('MOODLE_INTERNAL') || die;
+
+use tool_vault\local\restoreactions\upgrade_27\helpers\mod_book_helper;
 
 /**
  * Book module upgrade task
@@ -110,8 +116,6 @@ function tool_vault_27_xmldb_book_upgrade($oldversion) {
     }
 
     if ($oldversion < 2012090404) {
-        require_once("$CFG->dirroot/mod/book/db/upgradelib.php");
-
         $sqlfrom = "FROM {book} b
                     JOIN {modules} m ON m.name = 'book'
                     JOIN {course_modules} cm ON (cm.module = m.id AND cm.instance = b.id)";
@@ -120,17 +124,13 @@ function tool_vault_27_xmldb_book_upgrade($oldversion) {
 
         if ($rs = $DB->get_recordset_sql("SELECT b.id, b.course, cm.id AS cmid $sqlfrom ORDER BY b.course, b.id")) {
 
-            $pbar = new progress_bar('migratebookfiles', 500, true);
-
             $i = 0;
             foreach ($rs as $book) {
                 $i++;
-                upgrade_set_timeout(360); // set up timeout, may also abort execution
-                $pbar->update($i, $count, "Migrating book files - $i/$count.");
 
                 $context = context_module::instance($book->cmid);
 
-                mod_book_migrate_moddata_dir_to_legacy($book, $context, '/');
+                mod_book_helper::mod_book_migrate_moddata_dir_to_legacy($book, $context, '/');
 
                 // remove dirs if empty
                 @rmdir("$CFG->dataroot/$book->course/$CFG->moddata/book/$book->id/");
@@ -167,9 +167,7 @@ function tool_vault_27_xmldb_book_upgrade($oldversion) {
     }
 
     if ($oldversion < 2012090407) {
-        require_once("$CFG->dirroot/mod/book/db/upgradelib.php");
-
-        mod_book_migrate_all_areas();
+        mod_book_helper::mod_book_migrate_all_areas();
 
         upgrade_mod_savepoint(true, 2012090407, 'book');
     }

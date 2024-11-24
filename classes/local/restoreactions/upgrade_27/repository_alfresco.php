@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
 /**
  * Upgrade.
  *
@@ -36,19 +39,7 @@ function tool_vault_27_xmldb_repository_alfresco_upgrade($oldversion) {
     $dbman = $DB->get_manager();
 
     if ($oldversion < 2014020301) {
-        require_once($CFG->dirroot . '/repository/lib.php');
-        require_once($CFG->dirroot . '/repository/alfresco/db/upgradelib.php');
-
-        $params = array();
-        $params['context'] = array();
-        $params['onlyvisible'] = false;
-        $params['type'] = 'alfresco';
-        $instances = repository::get_instances($params);
-
-        // Notify the admin about the migration process if they are using the repo.
-        if (!empty($instances)) {
-            repository_alfresco_admin_security_key_notice();
-        }
+        // Upgrade script removed in Vault, it was only sending admin notification.
 
         upgrade_plugin_savepoint(true, 2014020301, 'repository', 'alfresco');
     }

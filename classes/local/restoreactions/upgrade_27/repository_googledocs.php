@@ -14,13 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+// Mdlcode-disable missing-package-name.
+
+use tool_vault\local\restoreactions\upgrade_27\helpers\portfolio_helper;
+
 /**
  * @param int $oldversion the version we are upgrading from
  * @return bool result
  */
 function tool_vault_27_xmldb_repository_googledocs_upgrade($oldversion) {
     global $CFG, $DB;
-    require_once(__DIR__.'/upgradelib.php');
 
     $dbman = $DB->get_manager();
 
@@ -37,7 +41,7 @@ function tool_vault_27_xmldb_repository_googledocs_upgrade($oldversion) {
         if ($existing) {
             $googledocsplugin = new repository_type('googledocs', array(), true);
             $googledocsplugin->delete();
-            repository_googledocs_admin_upgrade_notification();
+            // Vault: Removed upgrade script sending notifications to admin.
         }
 
         upgrade_plugin_savepoint(true, 2012053000, 'repository', 'googledocs');
