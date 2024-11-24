@@ -36,7 +36,8 @@ class upgrade_401 {
      */
     public static function upgrade(site_restore $logger) {
         self::upgrade_core($logger);
-        self::upgrade_plugins($logger);
+        \tool_vault\local\restoreactions\upgrade::upgrade_plugins_to_intermediate_release(
+            $logger, __DIR__, self::plugin_versions(), '401');
         set_config('upgraderunning', 0);
     }
 
@@ -61,36 +62,6 @@ class upgrade_401 {
         set_config('version', 2022112802.00);
         set_config('release', '4.1.2');
         set_config('branch', '401');
-    }
-
-    /**
-     * Upgrade all standard plugins to 4.1.2
-     *
-     * @param site_restore $logger
-     * @return void
-     */
-    protected static function upgrade_plugins(site_restore $logger) {
-        global $DB;
-        $allcurversions = $DB->get_records_menu('config_plugins', ['name' => 'version'], '', 'plugin, value');
-        foreach (self::plugin_versions() as $plugin => $version) {
-            if (empty($allcurversions[$plugin])) {
-                // Standard plugin {$plugin} not found. It will be installed during the full upgrade.
-                continue;
-            }
-            if (file_exists(__DIR__ ."/". $plugin .".php") && \core_component::get_component_directory($plugin)) {
-                require_once(__DIR__ ."/". $plugin .".php");
-                $pluginshort = preg_replace("/^mod_/", "", $plugin);
-                $funcname = "tool_vault_401_xmldb_{$pluginshort}_upgrade";
-                try {
-                    $funcname($allcurversions[$plugin]);
-                } catch (\Throwable $t) {
-                    $logger->add_to_log("Exception executing upgrade script for plugin {$plugin}: ".
-                        $t->getMessage(), constants::LOGLEVEL_WARNING);
-                    api::report_error($t);
-                }
-            }
-            set_config('version', $version, $plugin);
-        }
     }
 
     /**

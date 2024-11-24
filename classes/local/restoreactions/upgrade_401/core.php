@@ -17,6 +17,7 @@
 // phpcs:ignoreFile
 // Mdlcode-disable unknown-db-tablename.
 // Mdlcode-disable incorrect-package-name.
+// Mdlcode-disable unknown-db-tablename.
 
 /**
  * This file keeps track of upgrades to Moodle.
