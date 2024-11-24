@@ -16,9 +16,11 @@
 
 namespace tool_vault\local\restoreactions;
 
+use core_component;
 use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\checks\version_restore;
+use tool_vault\local\restoreactions\upgrade_31\upgrade_31;
 use tool_vault\local\restoreactions\upgrade_311\upgrade_311;
 use tool_vault\local\restoreactions\upgrade_36\upgrade_36;
 use tool_vault\local\restoreactions\upgrade_401\upgrade_401;
@@ -58,6 +60,13 @@ class upgrade extends restore_action {
 
         // Upgrade to intermediate release.
         $intermediaterelease = version_restore::get_required_core_intermediate_release($CFG->release, $coderelease);
+
+        if ($intermediaterelease && version_compare(normalize_version($CFG->release), '3.1', '<')) {
+            $siteupgraded = true;
+            $logger->add_to_log('Upgrading Moodle from '.$CFG->release.' to 3.1...');
+            upgrade_31::upgrade($logger);
+            $logger->add_to_log('...done');
+        }
 
         if ($intermediaterelease && version_compare(normalize_version($CFG->release), '3.6', '<')) {
             $siteupgraded = true;
@@ -185,5 +194,43 @@ class upgrade extends restore_action {
         $reflection = new \ReflectionProperty(\cache_factory::class, 'instance');
         $reflection->setAccessible(true);
         $reflection->setValue(null, null);
+    }
+
+    /**
+     * Helper method used by the intermediate upgrades
+     *
+     * @param \tool_vault\site_restore $logger
+     * @param string $dir
+     * @param array $versions
+     * @param string $funcnameprefix
+     * @return void
+     */
+    public static function upgrade_plugins_to_intermediate_release(
+                site_restore $logger, string $dir, array $versions, string $funcnameprefix): void {
+        global $DB;
+        $allcurversions = $DB->get_records_menu('config_plugins', ['name' => 'version'], '', 'plugin, value');
+        foreach ($versions as $plugin => $version) {
+            if (empty($allcurversions[$plugin])) {
+                // Standard plugin {$plugin} not found. It will be installed during the full upgrade.
+                continue;
+            }
+            if (!core_component::get_component_directory($plugin)) {
+                // Plugin code no longer exists, no point upgrading it.
+                continue;
+            }
+            if (file_exists($dir ."/". $plugin .".php")) {
+                require_once($dir ."/". $plugin .".php");
+                $pluginshort = preg_replace("/^mod_/", "", $plugin);
+                $funcname = "tool_vault_{$funcnameprefix}_xmldb_{$pluginshort}_upgrade";
+                try {
+                    $funcname($allcurversions[$plugin]);
+                } catch (\Throwable $t) {
+                    $logger->add_to_log("Exception executing upgrade script for plugin {$plugin}: ".
+                        $t->getMessage(), constants::LOGLEVEL_WARNING);
+                    api::report_error($t);
+                }
+            }
+            set_config('version', $version, $plugin);
+        }
     }
 }

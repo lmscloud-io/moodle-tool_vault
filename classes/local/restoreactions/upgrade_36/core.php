@@ -16,6 +16,7 @@
 
 // phpcs:ignoreFile
 // Mdlcode-disable missing-package-name.
+// Mdlcode-disable unknown-db-tablename.
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -98,17 +99,11 @@ function tool_vault_36_core_upgrade($oldversion) {
                         JOIN {question_categories} qc
                             ON qc.contextid = minid.contextid AND qc.stamp = minid.stamp AND qc.id > minid.minid";
 
-        // Get the total record count - used for the progress bar.
-        $countduplicatessql = "SELECT count(qc.id) $fromclause";
-        $total = $DB->count_records_sql($countduplicatessql);
-
         // Get the records themselves.
         $getduplicatessql = "SELECT qc.id $fromclause ORDER BY minid";
         $rs = $DB->get_recordset_sql($getduplicatessql);
 
         // For each duplicate, update the stamp to a new random value.
-        $i = 0;
-        $pbar = new progress_bar('updatequestioncategorystamp', 500, true);
         foreach ($rs as $record) {
             // Generate a new, unique stamp and update the record.
             do {
@@ -116,10 +111,6 @@ function tool_vault_36_core_upgrade($oldversion) {
             } while (isset($usedstamps[$newstamp]));
             $usedstamps[$newstamp] = 1;
             $DB->set_field('question_categories', 'stamp', $newstamp, array('id' => $record->id));
-
-            // Update progress.
-            $i++;
-            $pbar->update($i, $total, "Updating duplicate question category stamp - $i/$total.");
         }
         $rs->close();
         unset($usedstamps);
@@ -1871,15 +1862,10 @@ function tool_vault_36_core_upgrade($oldversion) {
         $topcategory->parent = 0;
         $topcategory->sortorder = 0;
 
-        // Get the total record count - used for the progress bar.
-        $total = $DB->count_records_sql("SELECT COUNT(DISTINCT contextid) FROM {question_categories} WHERE parent = 0");
-
         // Get the records themselves - a list of contextids.
         $rs = $DB->get_recordset_sql("SELECT DISTINCT contextid FROM {question_categories} WHERE parent = 0");
 
         // For each context, create a single top-level category.
-        $i = 0;
-        $pbar = new progress_bar('createtopquestioncategories', 500, true);
         foreach ($rs as $contextid => $notused) {
             $topcategory->contextid = $contextid;
             $topcategory->stamp = make_unique_id_code();
@@ -1889,10 +1875,6 @@ function tool_vault_36_core_upgrade($oldversion) {
             $DB->set_field_select('question_categories', 'parent', $topcategoryid,
                     'contextid = ? AND id <> ? AND parent = 0',
                     array($contextid, $topcategoryid));
-
-            // Update progress.
-            $i++;
-            $pbar->update($i, $total, "Creating top-level question categories - $i/$total.");
         }
 
         $rs->close();
