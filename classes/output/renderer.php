@@ -24,4 +24,11 @@ namespace tool_vault\output;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class renderer extends \plugin_renderer_base {
+    public function render_from_template($templatename, $context) {
+        if (method_exists('\plugin_renderer_base', 'render_from_template')) {
+            return parent::render_from_template($templatename, $context);
+        } else {
+            return print_r($context, true); // TODO.
+        }
+    }
 }

@@ -232,7 +232,14 @@ abstract class operation_model {
         if (static::validate_type($record->type)) {
             return new static($record);
         }
-        $classes = \core_component::get_component_classes_in_namespace('tool_vault', 'local\models');
+        $classes = array_fill_keys([
+            backup_dryrun_model::class,
+            backup_file::class,
+            backup_model::class,
+            check_model::class,
+            remote_backup::class,
+            tool_model::class,
+        ], true);
         foreach (array_keys($classes) as $class) {
             $rc = new \ReflectionClass($class);
             if ($rc->isInstantiable() && is_subclass_of($class, self::class) &&

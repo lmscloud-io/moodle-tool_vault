@@ -39,7 +39,11 @@ $section->process();
 
 $section->page_setup($PAGE);
 /** @var tool_vault\output\renderer $renderer */
-$renderer = $PAGE->get_renderer('tool_vault');
+try {
+    $renderer = $PAGE->get_renderer('tool_vault');
+} catch (moodle_exception $e) {
+    $renderer = new tool_vault\output\renderer($PAGE, '');
+}
 
 echo $renderer->header();
 echo $section->display($renderer);

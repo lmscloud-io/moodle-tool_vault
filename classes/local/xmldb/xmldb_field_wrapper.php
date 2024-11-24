@@ -78,8 +78,14 @@ class xmldb_field_wrapper extends xmldb_field {
         if ($this->getType() == XMLDB_TYPE_CHAR && $origlength > self::CHAR_MAX_LENGTH) {
             $this->setLength(self::CHAR_MAX_LENGTH);
         }
+        if ($this->getType() == XMLDB_TYPE_NUMBER && $origlength > self::NUMBER_MAX_LENGTH) {
+            $this->setLength(self::NUMBER_MAX_LENGTH);
+        }
+        if ($this->getType() == XMLDB_TYPE_FLOAT && $origlength > self::FLOAT_MAX_LENGTH) {
+            $this->setLength(self::FLOAT_MAX_LENGTH);
+        }
         $res = parent::validateDefinition($xmldbtable);
-        if ($this->getType() == XMLDB_TYPE_CHAR && $origlength > self::CHAR_MAX_LENGTH) {
+        if ($this->getLength() !== $origlength) {
             $this->setLength($origlength);
         }
         return $res;

@@ -34,6 +34,18 @@ if (moodle_needs_upgrading()) {
     cli_error("Moodle upgrade pending, execution suspended.");
 }
 
+if (!function_exists('cli_writeln')) {
+    function cli_writeln($message) {
+        echo $message . PHP_EOL;
+    }
+}
+
+if (!function_exists('cli_write')) {
+    function cli_write($message) {
+        echo $message;
+    }
+}
+
 // Increase time and memory limit.
 @set_time_limit(0);
 raise_memory_limit(MEMORY_HUGE);

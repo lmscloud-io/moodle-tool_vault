@@ -32,7 +32,19 @@ class database_column_info extends \database_column_info {
      * @return database_column_info
      */
     public static function clone_from(\database_column_info $obj) {
-        return new static((object)$obj->data);
+        return new static((object)self::get_data($obj));
+    }
+
+    protected static function get_data(\database_column_info $obj) {
+        if (property_exists($obj, 'data')) {
+            (array)$obj->data;
+        } else {
+            $r = [];
+            foreach (get_class_vars(get_class($obj)) as $k => $v) {
+                $r[$k] = $obj->$k;
+            }
+            return $r;
+        }
     }
 
     /**
@@ -46,19 +58,20 @@ class database_column_info extends \database_column_info {
      */
     public function to_xmldb_field($deftable) {
         global $DB;
+        $data = self::get_data($this);
 
         if ($DB->get_dbfamily() === 'mysql') {
-            if ($this->data['type'] === 'mediumint') {
+            if ($data['type'] === 'mediumint') {
                 // There is an error in setFromADOField() function, type 'mediumint' is missing.
-                $this->data['type'] = 'smallint';
+                $data['type'] = 'smallint';
             }
-            if ($this->data['type'] === 'double') {
+            if ($data['type'] === 'double') {
                 // Function xmldb_field::validateDefinition() is outdated, it thinks 20 is the max for the
                 // length of float/double field.
-                $this->data['max_length'] = min($this->data['max_length'], \xmldb_field::FLOAT_MAX_LENGTH);
+                $data['max_length'] = min($data['max_length'], \xmldb_field::FLOAT_MAX_LENGTH);
             }
         }
-        $this->data['type'] = (string)$this->data['type']; // Prevent PHP8 warnings.
+        $data['type'] = (string)$data['type']; // Prevent PHP8 warnings.
 
         $field = new \xmldb_field($this->name);
         $field->setFromADOField($this);
