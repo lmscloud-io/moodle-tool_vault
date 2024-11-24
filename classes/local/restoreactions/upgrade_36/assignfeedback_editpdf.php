@@ -16,6 +16,7 @@
 
 // phpcs:ignoreFile
 // Mdlcode-disable incorrect-package-name.
+// Mdlcode-disable unknown-db-tablename.
 
 /**
  * Upgrade code for the feedback_editpdf module.
