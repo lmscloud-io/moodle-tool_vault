@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
 /**
  * Upgrade script for the quiz module.
  *
@@ -174,15 +177,10 @@ function tool_vault_31_xmldb_quiz_upgrade($oldversion) {
                 HAVING MIN(firstslot) > 1");
 
         if ($problemquizzes) {
-            $pbar = new progress_bar('upgradequizfirstsection', 500, true);
-            $total = count($problemquizzes);
-            $done = 0;
             foreach ($problemquizzes as $problemquiz) {
                 $DB->set_field('quiz_sections', 'firstslot', 1,
                         array('quizid' => $problemquiz->quizid,
                         'firstslot' => $problemquiz->firstsectionfirstslot));
-                $done += 1;
-                $pbar->update($done, $total, "Fixing quiz layouts - {$done}/{$total}.");
             }
         }
 

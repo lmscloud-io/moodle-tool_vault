@@ -13,7 +13,10 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-//
+
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
 // This file is part of BasicLTI4Moodle
 //
 // BasicLTI4Moodle is an IMS BasicLTI (Basic Learning Tools for Interoperability)
@@ -47,6 +50,8 @@
 
  defined('MOODLE_INTERNAL') || die;
 
+use tool_vault\local\restoreactions\upgrade_31\helpers\mod_lti_helper;
+
 /**
  * xmldb_lti_upgrade is the function that upgrades
  * the lti module database when is needed
@@ -60,8 +65,6 @@
  */
 function tool_vault_31_xmldb_lti_upgrade($oldversion) {
     global $CFG, $DB;
-
-    require_once(__DIR__ . '/upgradelib.php');
 
     $dbman = $DB->get_manager();
 
@@ -164,7 +167,7 @@ function tool_vault_31_xmldb_lti_upgrade($oldversion) {
 
     if ($oldversion < 2014100300) {
 
-        mod_lti_upgrade_custom_separator();
+        mod_lti_helper::mod_lti_upgrade_custom_separator();
 
         // Lti savepoint reached.
         upgrade_mod_savepoint(true, 2014100300, 'lti');

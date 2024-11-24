@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
 /**
  * This file keeps track of upgrades to the quiz_results block
  *
@@ -42,7 +45,7 @@
  * @param int $oldversion
  * @param object $block
  */
-function tool_vault_31_xmldb_block_quiz_results_upgrade($oldversion, $block) {
+function tool_vault_31_xmldb_block_quiz_results_upgrade($oldversion) {
     global $DB, $CFG;
 
     if ($oldversion < 2015022200) {
