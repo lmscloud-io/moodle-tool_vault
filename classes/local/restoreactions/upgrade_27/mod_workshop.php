@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -14,6 +13,11 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
+use tool_vault\local\restoreactions\upgrade_27\helpers\mod_workshop_helper;
 
 /**
  * Keeps track of upgrades to the workshop module
@@ -67,7 +71,6 @@ function tool_vault_27_xmldb_workshop_upgrade($oldversion) {
      * Recreate all workshop calendar events
      */
     if ($oldversion < 2012041701) {
-        require_once(dirname(dirname(__FILE__)) . '/lib.php');
 
         $sql = "SELECT w.id, w.course, w.name, w.intro, w.introformat, w.submissionstart,
                        w.submissionend, w.assessmentstart, w.assessmentend,
@@ -81,7 +84,7 @@ function tool_vault_27_xmldb_workshop_upgrade($oldversion) {
         foreach ($rs as $workshop) {
             $cmid = $workshop->cmid;
             unset($workshop->cmid);
-            workshop_calendar_update($workshop, $cmid);
+            mod_workshop_helper::workshop_calendar_update($workshop, $cmid);
         }
         $rs->close();
         upgrade_mod_savepoint(true, 2012041701, 'workshop');

@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
 namespace tool_vault\local\restoreactions\upgrade_27;
 
 use tool_vault\api;
@@ -59,7 +62,7 @@ class upgrade_27 {
             api::report_error($t);
         }
 
-        set_config('version', 2016052318.00);
+        set_config('version', 2014051220.00);
         set_config('release', '2.7.20');
         set_config('branch', '27');
     }

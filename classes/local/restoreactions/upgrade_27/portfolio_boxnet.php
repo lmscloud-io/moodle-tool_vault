@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
 /**
  * Upgrade.
  *
@@ -36,24 +39,8 @@ function tool_vault_27_xmldb_portfolio_boxnet_upgrade($oldversion) {
     $dbman = $DB->get_manager();
 
     if ($oldversion < 2013110602) {
-        require_once($CFG->libdir . '/portfoliolib.php');
-        require_once($CFG->dirroot . '/portfolio/boxnet/db/upgradelib.php');
 
-        $existing = $DB->get_record('portfolio_instance', array('plugin' => 'boxnet'), '*', IGNORE_MULTIPLE);
-        if ($existing) {
-
-            // Only disable or message the admins when the portfolio hasn't been set for APIv2.
-            $instance = portfolio_instance($existing->id, $existing);
-            if ($instance->get_config('clientid') === null && $instance->get_config('clientsecret') === null) {
-
-                // Disable Box.net.
-                $instance->set('visible', 0);
-                $instance->save();
-
-                // Message the admins.
-                portfolio_boxnet_admin_upgrade_notification();
-            }
-        }
+        // Vault: removed upgrade script that was hiding instances and sending admin notifications.
 
         upgrade_plugin_savepoint(true, 2013110602, 'portfolio', 'boxnet');
     }

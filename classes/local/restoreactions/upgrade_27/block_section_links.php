@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
 /**
  * This file keeps track of upgrades to the section links block
  *
@@ -44,7 +47,7 @@
  * @param int $oldversion
  * @param object $block
  */
-function tool_vault_27_xmldb_block_section_links_upgrade($oldversion, $block) {
+function tool_vault_27_xmldb_block_section_links_upgrade($oldversion) {
     global $DB;
 
     // Moodle v2.3.0 release upgrade line

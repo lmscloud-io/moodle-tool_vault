@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of plugin tool_vault - https://lmsvault.io
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,30 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-// phpcs:ignoreFile
-// Mdlcode-disable incorrect-package-name.
+namespace tool_vault\local\restoreactions\upgrade_27\helpers;
 
 /**
- * Database log store upgrade.
+ * Class core_cache_helper
  *
- * @package    logstore_database
- * @copyright  2014 onwards Ankit Agarwal <ankit.agrr@gmail.com>
+ * @package    tool_vault
+ * @copyright  Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-function tool_vault_27_xmldb_logstore_database_upgrade($oldversion) {
-
-    if ($oldversion < 2014041700) {
-        // Clean up old config.
-        unset_config('excludelevels', 'logstore_database');
-        unset_config('excludeactions', 'logstore_database');
-
-        // Savepoint reached.
-        upgrade_plugin_savepoint(true, 2014041700, 'logstore', 'database');
+class core_cache_helper {
+    public static function update_site_identifier($siteidentifier) {
+        // TODO do not use core methods.
+        \cache_helper::update_site_identifier($siteidentifier);
     }
 
-    // Moodle v2.7.0 release upgrade line.
-    // Put any upgrade step following this.
-
-    return true;
+    public static function cache_update_default_config_stores() {
+        // The features bin needs updating.
+        \cache_config_writer::update_default_config_stores();
+    }
 }

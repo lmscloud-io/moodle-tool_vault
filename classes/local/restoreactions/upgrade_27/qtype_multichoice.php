@@ -14,6 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+// Mdlcode-disable unknown-db-tablename.
+
 /**
  * Multiple choice question type upgrade code.
  *

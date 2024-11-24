@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
 /**
  * Spellchecker upgrade script.
  *
@@ -24,14 +27,15 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use tool_vault\local\restoreactions\upgrade_27\helpers\tinymce_helper;
+
 function tool_vault_27_xmldb_tinymce_spellchecker_upgrade($oldversion) {
     global $CFG, $DB;
-    require_once(__DIR__.'/upgradelib.php');
 
     $dbman = $DB->get_manager();
 
     if ($oldversion < 2012051800) {
-        tinymce_spellchecker_migrate_settings();
+        tinymce_helper::tinymce_spellchecker_migrate_settings();
         upgrade_plugin_savepoint(true, 2012051800, 'tinymce', 'spellchecker');
     }
 

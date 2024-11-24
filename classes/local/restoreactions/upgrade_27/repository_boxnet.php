@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
 /**
  * Upgrade.
  *
@@ -43,30 +46,8 @@ function tool_vault_27_xmldb_repository_boxnet_upgrade($oldversion) {
 
     if ($oldversion < 2013110700) {
         require_once($CFG->dirroot . '/repository/lib.php');
-        require_once($CFG->dirroot . '/repository/boxnet/db/upgradelib.php');
 
-        $clientid = get_config('boxnet', 'clientid');
-        $clientsecret = get_config('boxnet', 'clientsecret');
-
-        // Only proceed if the repository hasn't been set for APIv2 yet.
-        if ($clientid === false && $clientsecret === false) {
-            $params = array();
-            $params['context'] = array();
-            $params['onlyvisible'] = false;
-            $params['type'] = 'boxnet';
-            $instances = repository::get_instances($params);
-
-            // Notify the admin about the migration process if they are using the repo.
-            if (!empty($instances)) {
-                repository_boxnet_admin_upgrade_notification();
-            }
-
-            // Hide the repository.
-            $repositorytype = repository::get_type_by_typename('boxnet');
-            if (!empty($repositorytype)) {
-                $repositorytype->update_visibility(false);
-            }
-        }
+        // Upgrade script removed in Vault, it was sending admin notification and updating visibility.
 
         upgrade_plugin_savepoint(true, 2013110700, 'repository', 'boxnet');
     }

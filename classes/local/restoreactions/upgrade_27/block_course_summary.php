@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
 /**
  * This file keeps track of upgrades to the course summary block
  *
@@ -43,7 +46,7 @@
  * @param int $oldversion
  * @param object $block
  */
-function tool_vault_27_xmldb_block_course_summary_upgrade($oldversion, $block) {
+function tool_vault_27_xmldb_block_course_summary_upgrade($oldversion) {
     global $DB;
 
     // Moodle v2.4.0 release upgrade line
