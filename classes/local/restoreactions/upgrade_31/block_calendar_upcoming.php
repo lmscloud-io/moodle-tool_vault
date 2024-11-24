@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
+
 /**
  * This file keeps track of upgrades to the calendar_upcoming block
  *
@@ -42,7 +45,7 @@
  * @param int $oldversion
  * @param object $block
  */
-function tool_vault_31_xmldb_block_calendar_upcoming_upgrade($oldversion, $block) {
+function tool_vault_31_xmldb_block_calendar_upcoming_upgrade($oldversion) {
     global $DB;
 
     if ($oldversion < 2014062600) {

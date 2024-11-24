@@ -14,6 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+// Mdlcode-disable missing-docblock.
+// Mdlcode-disable unknown-db-tablename.
+
 // This file keeps track of upgrades to
 // the feedback module
 //
@@ -36,9 +40,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use tool_vault\local\restoreactions\upgrade_31\helpers\mod_feedback_helper;
+
 function tool_vault_31_xmldb_feedback_upgrade($oldversion) {
     global $CFG, $DB;
-    require_once($CFG->dirroot . '/mod/feedback/db/upgradelib.php');
 
     $dbman = $DB->get_manager(); // Loads ddl manager and xmldb classes.
 
@@ -83,7 +88,7 @@ function tool_vault_31_xmldb_feedback_upgrade($oldversion) {
 
         // Conditionally launch add index completed_item.
         if (!$dbman->index_exists($table, $index)) {
-            mod_feedback_upgrade_delete_duplicate_values();
+            mod_feedback_helper::mod_feedback_upgrade_delete_duplicate_values();
             $dbman->add_index($table, $index);
         }
 
@@ -99,7 +104,7 @@ function tool_vault_31_xmldb_feedback_upgrade($oldversion) {
 
         // Conditionally launch add index completed_item.
         if (!$dbman->index_exists($table, $index)) {
-            mod_feedback_upgrade_delete_duplicate_values(true);
+            mod_feedback_helper::mod_feedback_upgrade_delete_duplicate_values(true);
             $dbman->add_index($table, $index);
         }
 
@@ -117,7 +122,7 @@ function tool_vault_31_xmldb_feedback_upgrade($oldversion) {
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
             // Run upgrade script to fill the new field courseid with the data from feedback_value table.
-            mod_feedback_upgrade_courseid(false);
+            mod_feedback_helper::mod_feedback_upgrade_courseid(false);
         }
 
         // Define field courseid to be added to feedback_completedtmp.
@@ -128,7 +133,7 @@ function tool_vault_31_xmldb_feedback_upgrade($oldversion) {
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
             // Run upgrade script to fill the new field courseid with the data from feedback_valuetmp table.
-            mod_feedback_upgrade_courseid(true);
+            mod_feedback_helper::mod_feedback_upgrade_courseid(true);
         }
 
         // Define table feedback_tracking to be dropped.

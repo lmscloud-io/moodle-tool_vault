@@ -1,4 +1,6 @@
 <?php
+
+use tool_vault\local\restoreactions\upgrade_31\helpers\filter_helper;
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -13,6 +15,9 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+// phpcs:ignoreFile
+// Mdlcode-disable incorrect-package-name.
 
 /**
  * MathJAX filter upgrade code.
@@ -133,11 +138,11 @@ MathJax.Hub.Config({
 
     if ($oldversion < 2016052301) {
         $httpurl = get_config('filter_mathjaxloader', 'httpurl');
-        $newcdnurl = filter_mathjaxloader_upgrade_cdn_cloudflare($httpurl, true);
+        $newcdnurl = filter_helper::filter_mathjaxloader_upgrade_cdn_cloudflare($httpurl, true);
         set_config('httpurl', $newcdnurl, 'filter_mathjaxloader');
 
         $httpsurl = get_config('filter_mathjaxloader', 'httpsurl');
-        $newcdnurl = filter_mathjaxloader_upgrade_cdn_cloudflare($httpsurl, false);
+        $newcdnurl = filter_helper::filter_mathjaxloader_upgrade_cdn_cloudflare($httpsurl, false);
         set_config('httpsurl', $newcdnurl, 'filter_mathjaxloader');
 
         $mathjaxconfig = get_config('filter_mathjaxloader', 'mathjaxconfig');
