@@ -20,6 +20,7 @@ use core_component;
 use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\checks\version_restore;
+use tool_vault\local\restoreactions\upgrade_27\upgrade_27;
 use tool_vault\local\restoreactions\upgrade_31\upgrade_31;
 use tool_vault\local\restoreactions\upgrade_311\upgrade_311;
 use tool_vault\local\restoreactions\upgrade_36\upgrade_36;
@@ -59,16 +60,23 @@ class upgrade extends restore_action {
         // Upgrade to intermediate release.
         $intermediaterelease = version_restore::get_required_core_intermediate_release($CFG->release, $coderelease);
 
+        if ($intermediaterelease && version_compare(normalize_version($CFG->release), '2.7', '<=')) {
+            $siteupgraded = true;
+            $logger->add_to_log('Upgrading Moodle from '.$CFG->release.' to 2.7.20...');
+            upgrade_27::upgrade($logger);
+            $logger->add_to_log('...done');
+        }
+
         if ($intermediaterelease && version_compare(normalize_version($CFG->release), '3.1', '<=')) {
             $siteupgraded = true;
-            $logger->add_to_log('Upgrading Moodle from '.$CFG->release.' to 3.1...');
+            $logger->add_to_log('Upgrading Moodle from '.$CFG->release.' to 3.1.18...');
             upgrade_31::upgrade($logger);
             $logger->add_to_log('...done');
         }
 
         if ($intermediaterelease && version_compare(normalize_version($CFG->release), '3.6', '<=')) {
             $siteupgraded = true;
-            $logger->add_to_log('Upgrading Moodle from '.$CFG->release.' to 3.6...');
+            $logger->add_to_log('Upgrading Moodle from '.$CFG->release.' to 3.6.10...');
             upgrade_36::upgrade($logger);
             $logger->add_to_log('...done');
         }

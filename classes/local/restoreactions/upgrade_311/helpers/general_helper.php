@@ -43,8 +43,6 @@ class general_helper {
                 $task->set_custom_data($customdata);
             }
             \core\task\manager::queue_adhoc_task($task, $checkforexisting);
-        } else {
-            mtrace("!!!! Skipping scheduling ad-hoc task: " . $classname);
         }
     }
 
