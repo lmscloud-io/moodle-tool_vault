@@ -16,6 +16,8 @@
 
 namespace tool_vault\local\helpers;
 
+use tool_vault\local\helpers\compat;
+
 /**
  * Wrapper for core plugin validator with some additional features and simplifications
  *
@@ -113,7 +115,7 @@ class plugin_validator extends \core\update\validator {
                 $info = $this->parse_version_php($fullpath);
                 $component = $info['plugin->component'];
             }
-            list($type, $name) = \core_component::normalize_component($component);
+            list($type, $name) = compat::normalize_component($component);
             $this->assertions['plugintype'] = $type;
         }
 

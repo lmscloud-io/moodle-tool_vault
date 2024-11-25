@@ -148,7 +148,10 @@ class dbtable {
         }
         foreach ($this->get_xmldb_table()->getIndexes() as $index) {
             $index->setComment(null);
-            $index->setHints([]);
+            if (method_exists($index, 'setHints')) {
+                // Method added in 2.4.
+                $index->setHints([]);
+            }
         }
         foreach ($this->get_xmldb_table()->getKeys() as $key) {
             $key->setComment(null);
@@ -356,8 +359,9 @@ class dbtable {
         if ($dbfields) {
             foreach ($dbfields as $dbfield) {
                 $deftable = $structure->find_table_definition($tablename);
-                $xmldbtable->addField(self::fix_field(
-                    database_column_info::clone_from($dbfield)->to_xmldb_field($deftable), $tablename));
+                $field = self::fix_field(
+                    database_column_info::clone_from($dbfield)->to_xmldb_field($deftable), $tablename);
+                $xmldbtable->addField($field);
             }
         }
         $table = new self($xmldbtable, '?');

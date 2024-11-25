@@ -57,7 +57,7 @@ class database_column_info extends \database_column_info {
      * @return \xmldb_field
      */
     public function to_xmldb_field($deftable) {
-        global $DB;
+        global $DB, $CFG;
         $data = self::get_data($this);
 
         if ($DB->get_dbfamily() === 'mysql') {
@@ -68,7 +68,8 @@ class database_column_info extends \database_column_info {
             if ($data['type'] === 'double') {
                 // Function xmldb_field::validateDefinition() is outdated, it thinks 20 is the max for the
                 // length of float/double field.
-                $data['max_length'] = min($data['max_length'], \xmldb_field::FLOAT_MAX_LENGTH);
+                $doublemax = (float)$CFG->version >= 2012062500 ? \xmldb_field::FLOAT_MAX_LENGTH : 20;
+                $data['max_length'] = min($data['max_length'], $doublemax);
             }
         }
         $data['type'] = (string)$data['type']; // Prevent PHP8 warnings.

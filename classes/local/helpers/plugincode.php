@@ -16,6 +16,8 @@
 
 namespace tool_vault\local\helpers;
 
+use tool_vault\local\helpers\compat;
+
 /**
  * Various methods related to archiving, extracting and validating add-on plugins code
  *
@@ -116,13 +118,13 @@ class plugincode {
      */
     public static function guess_plugin_path($pluginname) {
         global $CFG;
-        $dir = \core_component::get_component_directory($pluginname);
+        $dir = compat::get_component_directory($pluginname);
         if ($dir) {
             return $dir;
         }
-        list($ptype, $pname) = \core_component::normalize_component($pluginname);
-        $path = isset(\core_component::get_plugin_types()[$ptype]) ?
-            \core_component::get_plugin_types()[$ptype] : ($CFG->dirroot .'/'. $ptype);
+        list($ptype, $pname) = compat::normalize_component($pluginname);
+        $path = isset(compat::get_plugin_types()[$ptype]) ?
+        compat::get_plugin_types()[$ptype] : ($CFG->dirroot .'/'. $ptype);
         return $path . '/' . $pname;
     }
 
@@ -136,21 +138,6 @@ class plugincode {
         global $CFG;
         $dir = self::guess_plugin_path($pluginname);
         return preg_replace('/^'.preg_quote("{$CFG->dirroot}/", '/').'/', "", $dir);
-    }
-
-    /**
-     * Can tool_vault create/override plugin folder
-     *
-     * @param string $pluginname
-     * @return bool
-     */
-    public static function can_write_to_plugin_dir($pluginname) {
-        $dir = self::guess_plugin_path($pluginname);
-        if (file_exists($dir)) {
-            return (bool)\core_plugin_manager::instance()->is_directory_removable($dir);
-        } else {
-            return is_writable(dirname($dir));
-        }
     }
 
     /**

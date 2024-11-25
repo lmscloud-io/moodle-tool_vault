@@ -29,6 +29,8 @@ define('NO_UPGRADE_CHECK', true);
 
 require(__DIR__ . '/../../../config.php');
 
+require_once("{$CFG->dirroot}/{$CFG->admin}/tool/vault/autoloader.php");
+
 $accesskey = required_param('accesskey', PARAM_ALPHANUM);
 $operation = \tool_vault\local\models\operation_model::get_by_access_key($accesskey);
 

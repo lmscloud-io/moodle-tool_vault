@@ -87,8 +87,11 @@ class plugindata {
             'capabilities',
             'files',
         ];
-        if ((int)($CFG->branch) < 39) {
+        if ((int)($CFG->version) < 2020061500) {
             $tables = array_diff($tables, ['event']); // Component field was added in 3.9.
+        }
+        if ((int)($CFG->version) < 2014051200) {
+            $tables = array_diff($tables, ['tag_instance']); // Component field was added in 2.7.
         }
         return $tables;
     }

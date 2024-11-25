@@ -24,6 +24,7 @@
 
 require(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
+require_once("{$CFG->dirroot}/{$CFG->admin}/tool/vault/autoloader.php");
 
 $section = \tool_vault\local\uiactions\base::get_handler();
 admin_externalpage_setup('tool_vault_index', '', null, $section->url(), ['nosearch' => true]);

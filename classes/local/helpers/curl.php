@@ -112,7 +112,7 @@ class curl extends \curl {
      */
     public function request_failed() {
         $info = $this->get_info() + ['http_code' => 0];
-        return $this->errno || ($info['http_code'] != 200);
+        return !empty($this->errno) || ($info['http_code'] != 200);
     }
 
     /**

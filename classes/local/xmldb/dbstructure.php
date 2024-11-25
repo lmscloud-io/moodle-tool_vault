@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\xmldb;
 
+use tool_vault\local\helpers\compat;
 use tool_vault\local\helpers\siteinfo;
 use xmldb_field;
 use xmldb_index;
@@ -114,9 +115,9 @@ class dbstructure {
     protected static function get_db_directories() {
         global $CFG;
         $dbdirs = ['core' => $CFG->libdir.'/db'];
-        $plugintypes = \core_component::get_plugin_types();
+        $plugintypes = compat::get_plugin_types();
         foreach ($plugintypes as $plugintype => $pluginbasedir) {
-            if ($plugins = \core_component::get_plugin_list($plugintype)) {
+            if ($plugins = compat::get_plugin_list($plugintype)) {
                 foreach ($plugins as $plugin => $plugindir) {
                     $dbdirs[$plugintype.'_'.$plugin] = $plugindir.'/db';
                 }

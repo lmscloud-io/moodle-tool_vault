@@ -30,6 +30,8 @@ use tool_vault\output\start_backup_popup;
 
 require_once(__DIR__ . '/../../../../config.php');
 
+require_once("{$CFG->dirroot}/{$CFG->admin}/tool/vault/autoloader.php");
+
 if (moodle_needs_upgrading()) {
     cli_error("Moodle upgrade pending, execution suspended.");
 }

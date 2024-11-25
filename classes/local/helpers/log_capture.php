@@ -55,7 +55,7 @@ class log_capture {
         self::$olddebug = [
             'debug' => $CFG->debug ?: null,
             'debugdisplay' => $CFG->debugdisplay ?: null,
-            'debugdeveloper' => $CFG->debugdeveloper ?: false,
+            'debugdeveloper' => !empty($CFG->debugdeveloper),
         ];
         $CFG->debug = (E_ALL | E_STRICT);
         $CFG->debugdisplay = 1;

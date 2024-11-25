@@ -16,6 +16,7 @@
 
 namespace tool_vault;
 
+use tool_vault\local\helpers\compat;
 use tool_vault\local\helpers\tempfiles;
 
 /**
@@ -45,6 +46,6 @@ final class api_test extends \advanced_testcase {
      * This is to be replaced by some actually usefule test.
      */
     public function test_dummy() {
-        $this->assertNotEmpty(\core_component::get_component_directory('tool_vault'));
+        $this->assertNotEmpty(compat::get_component_directory('tool_vault'));
     }
 }

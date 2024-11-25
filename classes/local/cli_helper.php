@@ -290,7 +290,7 @@ class cli_helper {
      * @param string $text text to be written
      */
     protected function cli_write($text) {
-        if (PHPUNIT_TEST) {
+        if (defined('PHPUNIT_TEST') && PHPUNIT_TEST) {
             echo $text;
         } else {
             cli_write($text);
@@ -325,7 +325,7 @@ class cli_helper {
      * @throws \moodle_exception
      */
     protected function clidie($errorcode) {
-        if (!PHPUNIT_TEST) {
+        if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
             die($errorcode);
         } else {
             throw new \moodle_exception('CLI script finished with error code '.$errorcode);
@@ -338,7 +338,7 @@ class cli_helper {
      * @return void
      */
     protected function cli_problem($text) {
-        if (PHPUNIT_TEST) {
+        if (defined('PHPUNIT_TEST') && PHPUNIT_TEST) {
             echo $text;
         } else {
             cli_problem($text);

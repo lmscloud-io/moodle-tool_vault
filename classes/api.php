@@ -235,7 +235,7 @@ class api {
             $curl->setHeader($headers);
             $rv = $curl->$method($url, $params, $options);
             $httpcode = (int)(isset($curl->get_info()['http_code']) ? $curl->get_info()['http_code'] : 0);
-            if ($curl->errno || $httpcode != 200) {
+            if (!empty($curl->errno) || $httpcode != 200) {
                 $apiexception = self::prepare_api_exception($curl, $rv, strtoupper($method) . ' ' . $url);
                 if ($httpcode || $i == constants::REQUEST_API_RETRIES - 1) {
                     // Non-zero httpcode means that there was an actual error coming from server (Unauthorized, Forbidden, etc).

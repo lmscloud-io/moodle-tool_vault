@@ -16,7 +16,6 @@
 
 namespace tool_vault\local\helpers;
 
-use core_component;
 use tool_vault\api;
 use tool_vault\local\xmldb\dbtable;
 
@@ -37,16 +36,16 @@ class siteinfo {
     public static function get_plugins_list_full($withnames = false) {
         global $CFG;
         $list = [];
-        foreach (core_component::get_plugin_types() as $type => $unused1) {
-            $standard = \core_plugin_manager::standard_plugins_list($type) ?: [];
-            foreach (core_component::get_plugin_list($type) as $plug => $dir) {
+        foreach (compat::get_plugin_types() as $type => $unused1) {
+            $standard = compat::standard_plugins_list($type) ?: [];
+            foreach (compat::get_plugin_list($type) as $plug => $dir) {
                 $pluginname = $type.'_'.$plug;
                 $isaddon = in_array($plug, $standard) ? null : true;
-                $plugininfo = ($withnames || $isaddon) ? self::get_plugin_info($pluginname) : null;
+                $plugininfo = ($withnames || $isaddon) ? compat::get_plugin_info($pluginname) : null;
                 $list[$pluginname] = array_filter([
                     'version' => get_config($pluginname, 'version'),
                     'isaddon' => $isaddon,
-                    'parent' => core_component::get_subtype_parent($type),
+                    'parent' => compat::get_subtype_parent($type),
                     'name' => $plugininfo ? $plugininfo->displayname : null,
                     'path' => $isaddon ? preg_replace('/^'.preg_quote("{$CFG->dirroot}/", '/').'/', "", $dir) : null,
                     'dependencies' => $isaddon ? $plugininfo->dependencies : null,
@@ -58,19 +57,6 @@ class siteinfo {
             }
         }
         return $list;
-    }
-
-    /**
-     * Get info about plugin
-     *
-     * @param string $plugin
-     * @return \core\plugininfo\base
-     */
-    protected static function get_plugin_info($plugin) {
-        $pluginman = \core_plugin_manager::instance();
-        $plugin = $pluginman->get_plugin_info($plugin);
-        $plugin->load_disk_version();
-        return $plugin;
     }
 
     /**
@@ -98,7 +84,7 @@ class siteinfo {
      */
     public static function plugin_has_xmldb_uninstall_function($plugin) {
         // Custom plugin uninstall.
-        if ($plugindirectory = core_component::get_component_directory($plugin)) {
+        if ($plugindirectory = compat::get_component_directory($plugin)) {
             $uninstalllib = $plugindirectory . '/db/uninstall.php';
             if (file_exists($uninstalllib)) {
                 require_once($uninstalllib);
@@ -119,10 +105,10 @@ class siteinfo {
      * @return bool
      */
     public static function plugin_has_subplugins($plugin) {
-        list($type, $name) = core_component::normalize_component($plugin);
-        $subplugintypes = core_component::get_plugin_types_with_subplugins();
+        list($type, $name) = compat::normalize_component($plugin);
+        $subplugintypes = compat::get_plugin_types_with_subplugins();
         if (isset($subplugintypes[$type])) {
-            $base = core_component::get_plugin_directory($type, $name);
+            $base = compat::get_plugin_directory($type, $name);
 
             $subpluginsfile = "{$base}/db/subplugins.json";
             if (file_exists($subpluginsfile)) {
@@ -134,7 +120,7 @@ class siteinfo {
 
             if (!empty($subplugins)) {
                 foreach (array_keys($subplugins) as $subplugintype) {
-                    $instances = core_component::get_plugin_list($subplugintype);
+                    $instances = compat::get_plugin_list($subplugintype);
                     if ($instances) {
                         return true;
                     }

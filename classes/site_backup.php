@@ -114,7 +114,7 @@ class site_backup extends operation_base {
             'wwwroot' => $CFG->wwwroot,
             'dbengine' => $DB->get_dbfamily(),
             'version' => $CFG->version,
-            'branch' => $CFG->branch,
+            'branch' => isset($CFG->branch) ? $CFG->branch : '', // TODO branch is not available in 2.2.
             'release' => $CFG->release,
             'tool_vault_version' => get_config('tool_vault', 'version'),
             'email' => !empty($USER->email) ? $USER->email : '',
@@ -510,7 +510,7 @@ class site_backup extends operation_base {
      * This function works with any file storage (local or remote)
      */
     public function export_filedir() {
-        global $DB;
+        global $DB, $CFG;
 
         $this->add_to_log('Starting files backup');
         $fs = get_file_storage();
@@ -521,14 +521,22 @@ class site_backup extends operation_base {
 
         do {
             $subquery = ($lasthash ? ' WHERE contenthash > ?' : '');
-            $sql = 'SELECT ' . self::instance_sql_fields('f', 'r') . "
+            if ((float)$CFG->version >= 2012062500.00) {
+                // Table 'file_reference' was added in 2.3.
+                $fr = "LEFT JOIN {files_reference} r ON f.referencefileid = r.id";
+                $fields = self::instance_sql_fields('f', 'r');
+            } else {
+                $fr = '';
+                $fields = self::instance_sql_fields('f', null);
+            }
+            $sql = "SELECT $fields
                 FROM (SELECT contenthash, min(id) AS id
                     FROM {files}
                     $subquery
                     GROUP BY contenthash
                 ) filehash
                 JOIN {files} f ON f.id = filehash.id
-                LEFT JOIN {files_reference} r ON f.referencefileid = r.id
+                $fr
                 ORDER BY filehash.contenthash";
             $records = $DB->get_records_sql($sql, [$lasthash], 0, constants::FILES_BATCH);
             foreach ($records as $filerecord) {
@@ -565,11 +573,12 @@ class site_backup extends operation_base {
         $fields = [];
         $fields[] = $filesprefix.'.id AS id';
         foreach ($filefields as $field) {
-            $fields[] = "{$filesprefix}.{$field}";
+            $fields[] = ($filesreferenceprefix || $field !== 'referencefileid') ? "{$filesprefix}.{$field}" :
+                "NULL AS {$field}";
         }
 
         foreach ($referencefields as $field => $alias) {
-            $fields[] = "{$filesreferenceprefix}.{$field} AS {$alias}";
+            $fields[] = $filesreferenceprefix ? "{$filesreferenceprefix}.{$field} AS {$alias}" : "NULL AS {$alias}";
         }
 
         return implode(', ', $fields);

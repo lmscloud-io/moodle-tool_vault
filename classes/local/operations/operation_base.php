@@ -146,7 +146,9 @@ abstract class operation_base implements logger {
      * @return bool
      */
     public function safe_start_and_execute($pid) {
-        \core_shutdown_manager::register_function([$this, 'on_shutdown']);
+        if (class_exists('core_shutdown_manager')) {
+            \core_shutdown_manager::register_function([$this, 'on_shutdown']);
+        }
         $rv = false;
         log_capture::start_capturing($this->model);
         try {

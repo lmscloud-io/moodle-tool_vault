@@ -25,6 +25,8 @@
 use tool_vault\api;
 use tool_vault\output\start_backup_popup;
 
+require_once("{$CFG->dirroot}/{$CFG->admin}/tool/vault/autoloader.php");
+
 /**
  * Callback executed from setup.php on every page.
  *
