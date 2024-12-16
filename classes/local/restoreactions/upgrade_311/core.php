@@ -2229,7 +2229,7 @@ function tool_vault_311_core_upgrade($oldversion) {
         $field = new xmldb_field('password', XMLDB_TYPE_CHAR, '50');
         if ($dbman->field_exists($table, $field)) {
             // If there is a current backpack set then copy it across to the new structure.
-            if ($CFG->badges_defaultissuercontact) {
+            if (!empty($CFG->badges_defaultissuercontact)) {
                 // Get the currently used site backpacks.
                 $records = $DB->get_records_select('badge_external_backpack', "password IS NOT NULL AND password != ''");
                 $backpack = [
