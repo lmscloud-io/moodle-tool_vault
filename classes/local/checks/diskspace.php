@@ -72,7 +72,10 @@ class diskspace extends check_base {
         // There should be enough space to archive the largest file. In the worst case we already have almost
         // constants::UPLOAD_SIZE of files prepared and then add the largest file/table. After that we archive
         // them and in the worst case the archive is the same size as the original.
-        $requiredspace = (constants::UPLOAD_SIZE + max($maxfilesize, $dbmaxsize, $maxdatarootfilesize)) * 2;
+        $requiredspacefiles = min($totalsize, constants::UPLOAD_SIZE + $maxfilesize) * 2;
+        $requiredspacedb = min($dbtotalsize, constants::UPLOAD_SIZE + $dbmaxsize) * 2;
+        $requiredspacedataroot = min($datarootsize, constants::UPLOAD_SIZE + $maxdatarootfilesize) * 2;
+        $requiredspace = max($requiredspacefiles, $requiredspacedb, $requiredspacedataroot);
         $freespace = tempfiles::get_free_space($requiredspace);
         $enoughspace = $freespace === true || $requiredspace < $freespace;
 
