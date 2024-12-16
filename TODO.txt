@@ -1,0 +1,65 @@
+docker pull mysql:5.5.62
+docker run --name mysql5.5.62 -p 3316:3306 -e MYSQL_ROOT_PASSWORD=root -d mysql:5.5.62
+
+---
+
+Features that I use in tool_vault that are not available in older versions
+
+2.6 : Class autoloading
+? : Templates
+? : Scheduled tasks
+? : Shutdown manager
+? : behat tests
+3.4 : requires php7 or later
+3.0-3.3 : work on both php5 & php7
+? : after config hook
+
+
+
+2.5
++ core_shutdown_manager does not exist
++ autoloader - does not exist
++ core_component does not exist
++ templatable interface does not exist
+- scheduled tasks do not exist!!! - IMPORTANT tool_vault scheduled task need to be created after restore&upgrade
+
+2.4
+- requires previous fields in the xmldb (can be temporarily disabled)
+
+2.2
+- modifications to the install.xml
+
+2.1
+- plugin type 'tool' does not exist.
+
+
+  {"moodle": 19, "version": "2007101509", "phpmin": "4.3.0", "phpmax": "4.x"},
+  {"moodle": 20, "version": "2010112400", "phpmin": "5.2.8", "phpmax": "?"},
+  {"moodle": 21, "version": "2011070100", "phpmin": "5.3.2", "phpmax": "?"},
+  {"moodle": 22, "version": "2011120500", "phpmin": "5.3.2", "phpmax": "?"},
+  {"moodle": 23, "version": "2012062500", "phpmin": "5.3.2", "phpmax": "?"},
+  {"moodle": 24, "version": "2012120300", "phpmin": "5.3.2", "phpmax": "?"},
+  {"moodle": 25, "version": "2013051400", "phpmin": "5.3.3", "phpmax": "?"},
+  {"moodle": 26, "version": "2013111800", "phpmin": "5.3.3", "phpmax": "?"},
+  {"moodle": 27, "version": "2014051200", "phpmin": "5.4.4", "phpmax": "5.6"},
+  {"moodle": 28, "version": "2014111000", "phpmin": "5.4.4", "phpmax": "5.6"},
+  {"moodle": 29, "version": "2015051100", "phpmin": "5.4.4", "phpmax": "5.6"},
+  {"moodle": 30, "version": "2015111600", "phpmin": "5.4.4", "phpmax": "7.0"},
+  {"moodle": 31, "version": "2016052300", "phpmin": "5.4.4", "phpmax": "7.0"},
+  {"moodle": 32, "version": "2016120500", "phpmin": "5.6.5", "phpmax": "7.1"},
+  {"moodle": 33, "version": "2017051500", "phpmin": "5.6.5", "phpmax": "7.1"},
+  {"moodle": 34, "version": "2017111300", "phpmin": "7.0", "phpmax": "7.2"},
+  {"moodle": 35, "version": "2018051700", "phpmin": "7.0", "phpmax": "7.2"},
+  {"moodle": 36, "version": "2018120300", "phpmin": "7.1", "phpmax": "7.3"},
+  {"moodle": 37, "version": "2019052000", "phpmin": "7.1", "phpmax": "7.3"},
+  {"moodle": 38, "version": "2019111800", "phpmin": "7.1", "phpmax": "7.4"},
+  {"moodle": 39, "version": "2020061500", "phpmin": "7.2", "phpmax": "7.4"},
+  {"moodle": 310, "version": "2020110900", "phpmin": "7.2", "phpmax": "7.4"},
+  {"moodle": 311, "version": "2021051700", "phpmin": "7.3", "phpmax": "8.0"},
+  {"moodle": 400, "version": "2022041900", "phpmin": "7.3", "phpmax": "8.0"},
+  {"moodle": 401, "version": "2022112800", "phpmin": "7.4", "phpmax": "8.1"},
+  {"moodle": 402, "version": "2023042400", "phpmin": "8.0", "phpmax": "8.2"},
+  {"moodle": 403, "version": "2023100900", "phpmin": "8.0", "phpmax": "8.2"},
+  {"moodle": 404, "version": "2024042200", "phpmin": "8.1", "phpmax": "8.3"},
+  {"moodle": 405, "version": "2024100700", "phpmin": "8.1", "phpmax": "8.3"},
+  {"moodle": 500, "phpmin": "8.1", "phpmax": "8.3"}
