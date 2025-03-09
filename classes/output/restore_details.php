@@ -64,6 +64,7 @@ class restore_details implements \templatable {
             'haslogsshort' => $this->restore->has_logs_shortneded(),
             'errormessage' => error_with_backtrace::create_from_model($this->restore)->export_for_template($output),
             'statusstr' => ui::format_status($this->restore->status),
+            'encrypted' => (int)$this->restore->get_encrypted(),
             'encryptedstr' => ui::format_encrypted($this->restore->get_encrypted()),
             'timestarted' => ui::format_time($this->restore->timecreated),
             'timefinished' => ui::format_time($this->restore->get_finished_time()),
@@ -73,6 +74,8 @@ class restore_details implements \templatable {
             'siteurl' => $CFG->wwwroot,
             'isprogresspage' => $this->isprogresspage,
             'prechecks' => [],
+            'restoreid' => $this->restore->id,
+            'resumeurl' => $this->restore->can_resume() ? \tool_vault\local\uiactions\restore_resume::url(['id' => $this->restore->id])->out(false) : null,
         ];
 
         if ($this->restore->status == constants::STATUS_INPROGRESS) {

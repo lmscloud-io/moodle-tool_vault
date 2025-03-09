@@ -127,7 +127,7 @@ class site_restore extends operation_base {
         } else {
             // Resuming restore.
             $model = restore_model::get_restore_to_resume();
-            $model->set_details(['timeresumed' => time()]);
+            $model->set_details(['timeresumed' => time(), 'error' => '', 'errorbacktrace' => '']);
         }
 
         $encryptionkey = api::prepare_encryption_key($params['passphrase'] ?? '');
@@ -201,9 +201,9 @@ class site_restore extends operation_base {
             restore_action::execute_before_restore($this);
             $this->restore_db();
         } else {
-            $this->load_db_structure();
             $this->ensure_db_restored();
             $this->add_to_log('Resuming restore. All pre-checks are skipped');
+            $this->load_db_structure();
         }
 
         restore_action::execute_after_db_restore($this);
@@ -228,9 +228,7 @@ class site_restore extends operation_base {
      * @return void
      */
     protected function ensure_db_restored() {
-        $helper = $this->get_files_restore(constants::FILENAME_DBDUMP);
-        if ($helper->has_unfinished_archives()) {
-            // TODO check if we really need this restriction. If we do - create error string.
+        if (!$this->model->is_db_restored()) {
             throw new moodle_exception('Can not resume restore with incomplete database restore stage. '.
                 'Restore can only be resumed if it failed during dataroot or files stages.');
         }

@@ -93,4 +93,34 @@ class restore_model extends restore_base_model {
                 ui::format_status($model->status));
         }
     }
+
+    /**
+     * Can be resumed?
+     *
+     * @return bool
+     */
+    public function can_resume(): bool {
+        if ($this->status !== constants::STATUS_FAILED) {
+            return false;
+        }
+        $restorekey = $this->get_details()['restorekey'] ?? null;
+        if (!$restorekey) {
+            return false;
+        }
+        /** @var restore_model|null $model */
+        $lastmodel = self::get_last_of([self::class]);
+        return $lastmodel && $lastmodel->id === $this->id && $this->is_db_restored();
+    }
+
+    /**
+     * Extra check when resuming - is the DB restored?
+     *
+     * @return bool
+     */
+    public function is_db_restored(): bool {
+        global $DB;
+        $cnt = $DB->count_records_select(backup_file::TABLE, "operationid = ? AND filetype = ? AND status <> ?",
+            [$this->id, constants::FILENAME_DBDUMP, constants::STATUS_FINISHED]);
+        return $cnt == 0;
+    }
 }

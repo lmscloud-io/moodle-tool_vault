@@ -36,7 +36,21 @@
     <caption class="accesshide">{{#str}} restoredetails, tool_vault {{/str}}</caption>
     <tr>
         <th>{{#str}} status, moodle {{/str}}</th>
-        <td>{{{statusstr}}}</td>
+        <td>{{{statusstr}}}
+            {{#resumeurl}}
+                <form action="#" data-url="{{resumeurl}}" method="POST" data-action="resumerestore"
+                        data-restoreid="{{restoreid}}" data-encrypted="{{encrypted}}" style="display: inline;">
+                    <input type="hidden" name="passphrase" value="">
+                    <input type="submit" value={{#quote}}{{#str}} resume, tool_vault {{/str}}{{/quote}} class="btn btn-secondary"
+                        style="display: inline;" >
+                </form>
+            {{#js}}
+                require(['tool_vault/vault'], function(Vault) {
+                    Vault.initResumeRestore("{{restoreid}}");
+                });
+            {{/js}}
+            {{/resumeurl}}
+        </td>
     </tr>
     <tr>
         <th>{{#str}} performedby, tool_vault {{/str}}</th>

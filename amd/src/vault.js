@@ -33,6 +33,7 @@ const SELECTORS = {
     START_BACKUP: 'form[data-action="startbackup"]',
     START_DRYRUN: 'form[data-action="startdryrun"]',
     START_RESTORE: 'form[data-action="startrestore"]',
+    RESUME_RESTORE: 'form[data-action="resumerestore"]',
 };
 
 const submitForm = (backupForm, modal) => {
@@ -161,6 +162,33 @@ export const initStartRestore = (backupkey) => {
             body: Templates.render('tool_vault/start_restore_popup',
                 {dryrun: 0, encrypted: parseInt(restoreForm.getAttribute('data-encrypted'))}),
             buttons: {save: getString('startrestore', 'tool_vault')},
+            removeOnClose: true
+        })
+            .then(function(modal) {
+                modal.show();
+
+                modal.getRoot().on(ModalEvents.save, () => submitForm(restoreForm, modal));
+                modal.getRoot().on(ModalEvents.cancel, () => modal.hide());
+
+                return modal;
+            })
+            .catch(Notification.exception);
+    });
+};
+
+export const initResumeRestore = (restoreid) => {
+    const restoreForm = document.querySelector(SELECTORS.RESUME_RESTORE + `[data-restoreid="${restoreid}"]`);
+    if (!restoreForm) {
+        return;
+    }
+    restoreForm.addEventListener('submit', event => {
+        event.preventDefault();
+        ModalFactory.create({
+            type: ModalFactory.types.SAVE_CANCEL,
+            title: getString('resumerestore', 'tool_vault'),
+            body: Templates.render('tool_vault/start_restore_popup',
+                {dryrun: 0, resume: 1, encrypted: parseInt(restoreForm.getAttribute('data-encrypted'))}),
+            buttons: {save: getString('resume', 'tool_vault')},
             removeOnClose: true
         })
             .then(function(modal) {

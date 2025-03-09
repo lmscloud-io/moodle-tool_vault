@@ -30,7 +30,12 @@
     <p>{{#str}} startrestoreprecheck_desc, tool_vault {{/str}}</p>
 {{/dryrun}}
 {{^dryrun}}
+    {{#resume}}
+    <p>{{#str}} resumerestore_desc, tool_vault {{/str}}</p>
+    {{/resume}}
+    {{^resume}}
     <p>{{#str}} startrestore_desc, tool_vault {{/str}}</p>
+    {{/resume}}
 {{/dryrun}}
 {{#encrypted}}
     <p>{{#str}} enterpassphrase, tool_vault {{/str}}:</p>
