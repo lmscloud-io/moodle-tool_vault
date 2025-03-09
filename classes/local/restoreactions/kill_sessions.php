@@ -37,7 +37,8 @@ class kill_sessions extends restore_action {
     public function execute(site_restore $logger, string $stage) {
         global $CFG;
         $logger->add_to_log('Killing all sessions...');
-        if ($CFG->version >= 2024092000) {
+        if (method_exists('\core\session\manager', 'destroy_all')) {
+            // For Moodle 4.5 and above.
             \core\session\manager::destroy_all();
         } else {
             \core\session\manager::kill_all_sessions();

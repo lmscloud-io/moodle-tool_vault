@@ -125,7 +125,7 @@ final class site_restore_test extends \advanced_testcase {
             ['name' => constants::FILENAME_DBDUMP.'.zip'],
         ]);
         $this->curl_mock_file_download($filepathstructure);
-        $siterestore->prepare_restore_db();
+        $siterestore->load_db_structure();
 
         // Set structure to contain only book table.
         $structure = $siterestore->get_db_structure();

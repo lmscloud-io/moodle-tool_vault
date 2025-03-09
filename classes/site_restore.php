@@ -16,6 +16,7 @@
 
 namespace tool_vault;
 
+use core\exception\moodle_exception;
 use tool_vault\local\checks\check_base;
 use tool_vault\local\checks\plugins_restore;
 use tool_vault\local\checks\restore_precheck_failed;
@@ -87,18 +88,18 @@ class site_restore extends operation_base {
     /**
      * Schedule restore
      *
-     * @param array $params
+     * @param array $params ['backupkey' => ?, 'passphrase' => ?, 'resume' => ?]
      * @return static
      */
     public static function schedule(array $params = []): operation_base {
         global $USER;
-        if (empty($params['backupkey'])) {
+        if (empty($params['resume']) && empty($params['backupkey'])) {
             throw new \coding_exception('Parameter backupkey is required for site_restore::schedule()');
         }
         if (!api::are_restores_allowed()) {
             throw new \moodle_exception('error_restoresnotallowed', 'tool_vault');
         }
-        $backupkey = $params['backupkey'];
+
         if ($records = restore_model::get_records([constants::STATUS_SCHEDULED])) {
             // Pressed button twice maybe?
             return new static(reset($records));
@@ -110,18 +111,29 @@ class site_restore extends operation_base {
             throw new \moodle_exception('error_anotherbackupisinprogress', 'tool_vault');
         }
 
-        $model = new restore_model();
+        if (empty($params['resume'])) {
+            // Starting new restore.
+            $backupkey = $params['backupkey'];
+
+            $model = new restore_model();
+            $model
+                ->set_backupkey($backupkey)
+                ->set_details([
+                    'id' => $USER->id ?? '',
+                    'username' => $USER->username ?? '',
+                    'fullname' => $USER ? fullname($USER) : '',
+                    'email' => $USER->email ?? '',
+                ]);
+        } else {
+            // Resuming restore.
+            $model = restore_model::get_restore_to_resume();
+            $model->set_details(['timeresumed' => time()]);
+        }
+
         $encryptionkey = api::prepare_encryption_key($params['passphrase'] ?? '');
         $model
-            ->set_status( constants::STATUS_SCHEDULED)
-            ->set_backupkey($backupkey)
-            ->set_details([
-                'id' => $USER->id ?? '',
-                'username' => $USER->username ?? '',
-                'fullname' => $USER ? fullname($USER) : '',
-                'email' => $USER->email ?? '',
-                'encryptionkey' => $encryptionkey,
-            ])
+            ->set_status(constants::STATUS_SCHEDULED)
+            ->set_details(['encryptionkey' => $encryptionkey])
             ->save();
         $model->add_log("Restore scheduled");
         return new static($model);
@@ -139,12 +151,27 @@ class site_restore extends operation_base {
         if (!api::are_restores_allowed()) {
             throw new \moodle_exception('error_restoresnotallowed', 'tool_vault');
         }
-        $restorekey = api::request_new_restore_key(['backupkey' => $this->model->backupkey]);
+        $params = ['backupkey' => $this->model->backupkey];
+        if (!$this->is_resumed()) {
+            $restorekey = api::request_new_restore_key($params);
+            $this->model->set_details(['restorekey' => $restorekey]);
+        } else {
+            $restorekey = $this->model->get_details()['restorekey'];
+            api::update_restore($restorekey, $params, 'resume');
+        }
         $this->model->set_pid_for_logging($pid);
         $this->model
             ->set_status(constants::STATUS_INPROGRESS)
-            ->set_details(['restorekey' => $restorekey])
             ->save();
+    }
+
+    /**
+     * Is this a resumed restore (vs an initial restore)
+     *
+     * @return bool
+     */
+    protected function is_resumed(): bool {
+        return !empty($this->model->get_details()['timeresumed']);
     }
 
     /**
@@ -154,24 +181,31 @@ class site_restore extends operation_base {
      * @throws \moodle_exception
      */
     public function execute() {
-        $this->add_to_log('Preparing to restore');
+        if (!$this->is_resumed()) {
+            $this->add_to_log('Preparing to restore');
 
-        $this->prechecks = site_restore_dryrun::execute_prechecks(
-            $this->get_files_restore(constants::FILENAME_DBSTRUCTURE), $this->model, $this);
+            $this->prechecks = site_restore_dryrun::execute_prechecks(
+                $this->get_files_restore(constants::FILENAME_DBSTRUCTURE), $this->model, $this);
 
-        foreach ($this->prechecks as $chk) {
-            if (!$chk->success()) {
-                throw new restore_precheck_failed($chk);
+            foreach ($this->prechecks as $chk) {
+                if (!$chk->success()) {
+                    throw new restore_precheck_failed($chk);
+                }
             }
+
+            $this->load_db_structure();
+
+            // From this moment on we can not throw any exceptions, we have to try to restore as much as possible skipping problems.
+            $this->add_to_log('Restore started');
+
+            restore_action::execute_before_restore($this);
+            $this->restore_db();
+        } else {
+            $this->load_db_structure();
+            $this->ensure_db_restored();
+            $this->add_to_log('Resuming restore. All pre-checks are skipped');
         }
 
-        $this->prepare_restore_db();
-
-        // From this moment on we can not throw any exceptions, we have to try to restore as much as possible skipping problems.
-        $this->add_to_log('Restore started');
-
-        restore_action::execute_before_restore($this);
-        $this->restore_db();
         restore_action::execute_after_db_restore($this);
         $this->restore_dataroot();
         restore_action::execute_after_dataroot_restore($this);
@@ -189,6 +223,20 @@ class site_restore extends operation_base {
     }
 
     /**
+     * Throws an exception if the database restore stage is not complete (used when resuming restore)
+     *
+     * @return void
+     */
+    protected function ensure_db_restored() {
+        $helper = $this->get_files_restore(constants::FILENAME_DBDUMP);
+        if ($helper->has_unfinished_archives()) {
+            // TODO check if we really need this restriction. If we do - create error string.
+            throw new moodle_exception('Can not resume restore with incomplete database restore stage. '.
+                'Restore can only be resumed if it failed during dataroot or files stages.');
+        }
+    }
+
+    /**
      * Retrns DB structure
      *
      * @return dbstructure
@@ -200,13 +248,11 @@ class site_restore extends operation_base {
     /**
      * Prepare to restore db
      */
-    public function prepare_restore_db() {
+    public function load_db_structure() {
         $helper = $this->get_files_restore(constants::FILENAME_DBSTRUCTURE);
         $filepath = $helper->get_all_files()[constants::FILE_STRUCTURE];
 
         $this->dbstructure = dbstructure::load_from_backup($filepath);
-
-        // TODO do all the checks that all tables exist and have necessary fields.
     }
 
     /**
@@ -397,11 +443,11 @@ class site_restore extends operation_base {
                 return $lastlog;
             }
             $totalcnt = (string)$totaltables;
-            $percent = $totalorigsize ? sprintf("(%3d)", (int)(100.0 * $totalextracted / $totalorigsize)) : '';
+            $percent = $totalorigsize ? sprintf("%3d", (int)(100.0 * $totalextracted / $totalorigsize)) : '';
             $totalsize = $totalorigsize ? display_size($totalorigsize) : '?';
             $cnt = str_pad($tablescnt, strlen($totalcnt), " ", STR_PAD_LEFT);
             $size = str_pad(display_size($totalextracted), max(9, strlen($totalsize)), " ", STR_PAD_LEFT);
-            $this->add_to_log("Restored {$cnt}/{$totalcnt} tables, {$size}/{$totalsize} {$percent}%");
+            $this->add_to_log("Restored {$cnt}/{$totalcnt} tables, {$size}/{$totalsize} ({$percent}%)");
             return time();
         };
 
@@ -543,11 +589,12 @@ class site_restore extends operation_base {
      */
     public function restore_dataroot() {
         global $CFG;
-        $this->add_to_log('Starting dataroot restore');
         $helper = $this->get_files_restore(constants::FILENAME_DATAROOT);
 
-        if ($helper->is_first_archive()) {
-            // Delete everything from the current dataroot (this will not be executed if we resume restore).
+        if (!$this->is_resumed() || $helper->is_first_archive()) {
+            $this->add_to_log('Starting dataroot restore');
+            // Delete everything from the current dataroot (this will not be executed if we resume restore
+            // and we already restored something in the previous run).
             $handle = opendir($CFG->dataroot);
             while (($file = readdir($handle)) !== false) {
                 if (!siteinfo::is_dataroot_path_skipped_restore($file) && $file !== '.' && $file !== '..') {
@@ -563,6 +610,11 @@ class site_restore extends operation_base {
                 }
             }
             closedir($handle);
+        } else if (!$helper->has_unfinished_archives()) {
+            // This is a resume process and there are no archives left, nothing to do, do not log anything.
+            return;
+        } else {
+            $this->add_to_log('Resuming dataroot restore');
         }
 
         // Start extracting files.
@@ -630,7 +682,6 @@ class site_restore extends operation_base {
      */
     public function mark_as_failed(\Throwable $t) {
         parent::mark_as_failed($t);
-        $this->model->set_details(['encryptionkey' => ''])->save();
         $restorekey = $this->model->get_details()['restorekey'] ?? '';
         if ($restorekey) {
             $faileddetails = $this->get_error_message_for_server($t);

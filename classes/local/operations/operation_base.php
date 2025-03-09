@@ -94,8 +94,18 @@ abstract class operation_base implements logger {
         } else {
             $this->model->set_status(constants::STATUS_FAILEDTOSTART);
         }
-        $this->model->set_error($t)->save();
-        $this->add_to_log('Operation failed: '.$t->getMessage(), constants::LOGLEVEL_ERROR);
+        $this->model->set_error($t);
+        if (!empty($this->model->get_details()['encryptionkey'])) {
+            $this->model->set_details(['encryptionkey' => '']);
+        }
+        try {
+            $this->model->save();
+        // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+        } catch (\Throwable $tnew) {
+            // Sometimes mysql locks up so badly, it can't even insert or update logs, it triggers
+            // "Mysql has gone away" exception.
+        }
+        $this->add_to_log_from_exception_handler('Operation failed: '.$t->getMessage(), constants::LOGLEVEL_ERROR);
     }
 
     /**
@@ -134,6 +144,23 @@ abstract class operation_base implements logger {
             if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
                 mtrace($this->model->format_log_line($logrecord, false));
             }
+        }
+    }
+
+    /**
+     * Log action if possible (never throw exceptions from this function)
+     *
+     * @param string $message
+     * @param string $loglevel
+     * @return void
+     */
+    public function add_to_log_from_exception_handler(string $message, string $loglevel = constants::LOGLEVEL_INFO) {
+        try {
+            $this->add_to_log($message, $loglevel);
+        // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+        } catch (\Throwable $t) {
+            // Sometimes mysql locks up so badly, it can't even insert or update logs, it triggers
+            // "Mysql has gone away" exception.
         }
     }
 

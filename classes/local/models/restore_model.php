@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\models;
 
+use core\exception\moodle_exception;
 use tool_vault\constants;
 use tool_vault\local\helpers\ui;
 
@@ -64,5 +65,32 @@ class restore_model extends restore_base_model {
             $this->generate_access_key();
         }
         return parent::save();
+    }
+
+    /**
+     * Finds the last restore and checks that it has started and failed
+     *
+     * @throws \moodle_exception
+     * @return restore_model
+     */
+    public static function get_restore_to_resume(): restore_model {
+        /** @var restore_model|null $model */
+        $model = self::get_last_of([self::class]);
+        if (!$model || $model->status === constants::STATUS_FINISHED) {
+            throw new moodle_exception('error_nothingtorestore', 'tool_vault');
+        }
+        if ($model->status === constants::STATUS_FAILED) {
+            $restorekey = $model->get_details()['restorekey'] ?? null;
+            if (!$restorekey) {
+                // This should never happen, if the restorekey is not present, the status would be
+                // failed to start.
+                throw new moodle_exception('Last restore process does not have restorekey');
+            }
+            return $model;
+        } else {
+            // Other statuses - failed to start, inprogress, scheduled.
+            throw new moodle_exception('error_cannotresumerestore', 'tool_vault', '',
+                ui::format_status($model->status));
+        }
     }
 }

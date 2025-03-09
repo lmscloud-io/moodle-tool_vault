@@ -239,7 +239,6 @@ class site_restore_dryrun extends operation_base {
      */
     public function mark_as_failed(\Throwable $t) {
         parent::mark_as_failed($t);
-        $this->model->set_details(['encryptionkey' => ''])->save();
         $restorekey = $this->model->get_details()['restorekey'] ?? '';
         if ($restorekey) {
             $faileddetails = $this->get_error_message_for_server($t);

@@ -99,6 +99,15 @@ class files_restore {
     }
 
     /**
+     * Are there any archives that were not processed yet
+     *
+     * @return bool
+     */
+    public function has_unfinished_archives(): bool {
+        return $this->currentseq > 0;
+    }
+
+    /**
      * Are we on the very first backup archive (which means we are starting restore for the first time and not resuming)
      *
      * @return bool

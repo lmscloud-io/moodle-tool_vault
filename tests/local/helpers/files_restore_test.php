@@ -238,7 +238,7 @@ final class files_restore_test extends \advanced_testcase {
         ]);
 
         // Read db structure.
-        $siterestore->prepare_restore_db();
+        $siterestore->load_db_structure();
 
         // Start pulling tables one by one and check response.
         $filesrestore = $siterestore->get_files_restore(constants::FILENAME_DBDUMP);

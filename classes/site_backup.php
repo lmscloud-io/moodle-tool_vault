@@ -166,7 +166,6 @@ class site_backup extends operation_base {
      */
     public function mark_as_failed(\Throwable $t) {
         parent::mark_as_failed($t);
-        $this->model->set_details(['encryptionkey' => ''])->save();
         if (!$this->model->backupkey) {
             return;
         }
@@ -176,7 +175,8 @@ class site_backup extends operation_base {
         } catch (\Throwable $tapi) {
             // One of the reason for the failed backup - impossible to communicate with the API,
             // in which case this request will also fail.
-            $this->add_to_log('Could not mark remote backup as failed: '.$tapi->getMessage(), constants::LOGLEVEL_WARNING);
+            $this->add_to_log_from_exception_handler('Could not mark remote backup as failed: '.
+                $tapi->getMessage(), constants::LOGLEVEL_WARNING);
         }
     }
 

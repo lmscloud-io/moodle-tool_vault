@@ -100,12 +100,24 @@ class cli_helper {
         ];
         if ($this->script === self::SCRIPT_RESTORE) {
             $options += [
+                'resume' => [
+                    'hasvalue' => false,
+                    'description' => 'Resume the last restore',
+                    'validation' => function($resume) {
+                        if ($resume && !empty($this->clioptions['backupkey'])) {
+                            $this->cli_error('When --resume is specified, the --backupkey argument is not needed');
+                        }
+                        if ($resume && !empty($this->clioptions['dryrun'])) {
+                            $this->cli_error('You can not use --resume and --dryrun at the same time');
+                        }
+                    },
+                ],
                 'backupkey' => [
                     'hasvalue' => 'BACKUPKEY',
                     'description' => 'Backup key',
                     'default' => null,
                     'validation' => function ($backupkey) {
-                        if (!$backupkey) {
+                        if (!$backupkey && empty($this->clioptions['resume'])) {
                             $this->cli_error('Argument --backupkey is required');
                         }
                     },

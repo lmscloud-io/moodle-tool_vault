@@ -2,6 +2,16 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## Unreleased
+
+### Added
+- Allow to resume a restore that failed during datadir or files stages. For restores that
+  require upgrade step, the restore can only be resumed from the CLI.
+
+### Fixed
+- Improved required temporary disk space calculation for very small backups
+- Improved server error logging when "Mysql has gone away" and can't write to database
+
 ## [2.9] - 2024-11-17
 
 ### Fixed

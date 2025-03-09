@@ -28,6 +28,7 @@ define('TOOL_VAULT_CLI_SCRIPT', true);
 use tool_vault\api;
 use tool_vault\local\cli_helper;
 use tool_vault\local\exceptions\api_exception;
+use tool_vault\local\models\restore_model;
 
 require_once(__DIR__ . '/../../../../config.php');
 
@@ -48,9 +49,13 @@ $clihelper->validate_cli_options();
 $params = [
     'backupkey' => $clihelper->get_cli_option('backupkey'),
     'passphrase' => $clihelper->get_cli_option('passphrase'),
+    'resume' => $clihelper->get_cli_option('resume'),
 ];
 
 try {
+    if ($params['resume']) {
+        $params['backupkey'] = restore_model::get_restore_to_resume()->backupkey;
+    }
     api::validate_backup($params['backupkey'] ?? '', $params['passphrase'] ?? '');
 } catch (api_exception $e) {
     cli_error($e->getMessage());
