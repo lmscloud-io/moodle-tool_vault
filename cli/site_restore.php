@@ -29,6 +29,7 @@ use tool_vault\api;
 use tool_vault\local\cli_helper;
 use tool_vault\local\exceptions\api_exception;
 use tool_vault\local\models\restore_model;
+use tool_vault\local\models\operation_model;
 
 require_once(__DIR__ . '/../../../../config.php');
 
@@ -42,6 +43,9 @@ if ($clihelper->get_cli_option('help')) {
     $clihelper->print_help();
     die();
 }
+
+// Start with failing all stuck operations.
+operation_model::fail_all_stuck_operations();
 
 // Validate all arguments.
 $clihelper->validate_cli_options();

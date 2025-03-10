@@ -654,6 +654,22 @@ class site_restore extends operation_base {
         $this->add_to_log('Starting files restore');
         $fs = get_file_storage();
         $helper = $this->get_files_restore(constants::FILENAME_FILEDIR);
+
+        $lastlog = time();
+        $totalorigsize = $helper->get_total_orig_size();
+
+        $logprogress = function($lastlog, $totalextracted, $force = false) use ($totalorigsize) {
+            if (!$force && time() - $lastlog <= constants::LOG_FREQUENCY) {
+                return $lastlog;
+            }
+            $percent = $totalorigsize ? sprintf("%3d", (int)(100.0 * $totalextracted / $totalorigsize)) : '';
+            $totalsize = $totalorigsize ? display_size($totalorigsize) : '?';
+            $size = str_pad(display_size($totalextracted), max(9, strlen($totalsize)), " ", STR_PAD_LEFT);
+            $this->add_to_log("Processed {$size}/{$totalsize} ({$percent}%)");
+            return time();
+        };
+
+        $totalprocessed = $helper->get_total_orig_size_finished();
         while (($nextfile = $helper->get_next_file()) !== null) {
             [$filepath, $subpath] = $nextfile;
             $file = basename($filepath);
@@ -668,7 +684,11 @@ class site_restore extends operation_base {
                 $this->add_to_log('- could not add file with contenthash '.$file.' to file system: '.$t->getMessage(),
                     constants::LOGLEVEL_WARNING);
             }
+            // Add to log.
+            $totalprocessed += filesize($filepath);
+            $lastlog = $logprogress($lastlog, $totalprocessed);
         }
+        $lastlog = $logprogress($lastlog, $totalprocessed, true);
         $this->add_to_log('Finished files restore');
     }
 
@@ -684,6 +704,10 @@ class site_restore extends operation_base {
         if ($restorekey) {
             $faileddetails = $this->get_error_message_for_server($t);
             api::update_restore_ignoring_errors($restorekey, ['faileddetails' => $faileddetails], constants::STATUS_FAILED);
+        }
+        if ($this->model->is_db_restored()) {
+            $this->add_to_log_from_exception_handler('In some cases you will be able to resume the restore process. '.
+                'Please refer to '.api::get_frontend_url().'/faq', constants::LOGLEVEL_ERROR);
         }
     }
 }

@@ -68,9 +68,13 @@ echo html_writer::start_div('p-3');
 /** @var tool_vault\output\renderer $renderer */
 $renderer = $PAGE->get_renderer('tool_vault');
 
+if ($operation) {
+    $operation->fail_if_stuck();
+}
+
 $isoldoperation = $operation &&
     !in_array($operation->status, [\tool_vault\constants::STATUS_INPROGRESS, \tool_vault\constants::STATUS_SCHEDULED]) &&
-    $operation->timemodified < time() - HOURSECS;
+    $operation->timemodified < time() - DAYSECS;
 
 if ($operation instanceof \tool_vault\local\models\backup_model) {
     if ($isoldoperation) {

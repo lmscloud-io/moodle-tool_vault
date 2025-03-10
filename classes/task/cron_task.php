@@ -62,7 +62,7 @@ class cron_task extends \core\task\scheduled_task {
     /**
      * Analyse all operations that are scheduled or in progress and split them into groups
      *
-     * @return array|array[]
+     * @return operation_model[][]
      */
     protected function get_queue() {
         /** @var operation_model[] $records */
@@ -104,33 +104,9 @@ class cron_task extends \core\task\scheduled_task {
 
         $queue = $this->get_queue();
 
-        // Check if any operation is stuck - there was no activity for the last constants::LOCK_TIMEOUT seconds.
-        foreach ($queue[self::Q_INPROGRESS_STUCK] as $record) {
-            if ($record instanceof backup_model || $record instanceof restore_model) {
-                // We found a backup or restore that is stuck. Attempt to resume it.
-                $this->resume_operation($record);
-                // Nothing else will run in this cron job.
-                return;
-            }
-
-            if ($record instanceof check_model && $record->parentid && ($parent = operation_model::get_by_id($record->parentid))) {
-                if ($parent->status !== constants::STATUS_INPROGRESS) {
-                    // Something strange, the parent operation finished but this check is stuck in progress,
-                    // mark it with the same status as the parent. This should not really happen.
-                    mtrace("Operation with type {$record->type} and id {$record->id} has status {$record->status}. ".
-                        "Changing status to the status of the parent operation - {$parent->status}");
-                    $record->set_status($parent->status)->save();
-                    continue;
-                } else {
-                    // The check has a parent in progress - ignore it, we will process the parent when they get stuck.
-                    continue;
-                }
-            }
-
-            // Either check or dry-run has stuck, they can not be resumed. Fail it.
-            mtrace("Operation with type {$record->type} and id {$record->id} has timed out, failing it");
-            $record->add_log('Operation timed out');
-            $record->set_status(constants::STATUS_FAILED)->save();
+        // If there are any operations in progress that are stuck - fail them and re-read the queue.
+        if ($queue[self::Q_INPROGRESS_STUCK] && operation_model::fail_all_stuck_operations()) {
+            $queue = $this->get_queue();
         }
 
         // If there are any scheduled pre-checks or dry-runs, execute them. Fetch queue after each time because
@@ -153,13 +129,12 @@ class cron_task extends \core\task\scheduled_task {
     }
 
     /**
-     * Resume stuck backup or restore
+     * Mark the operation that is stuck as failed
      *
      * @param operation_model $model
      * @return void
      */
-    protected function resume_operation(operation_model $model) {
-        // TODO implement resume.
+    protected function fail_stuck_operation(operation_model $model) {
         $postfix = '';
         if ($model instanceof restore_model) {
             $postfix = "\nIf the database restore did not finish, your site may be in an inconsistent state and will not work.".

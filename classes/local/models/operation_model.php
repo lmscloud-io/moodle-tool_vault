@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\models;
 
+use tool_vault\api;
 use tool_vault\constants;
 
 /**
@@ -555,5 +556,59 @@ abstract class operation_model {
             return $this->timemodified;
         }
         return 0;
+    }
+
+    /**
+     * Mark operation as failed if it is "stuck" (did not have any logs for LOCK_TIMEOUT seconds)
+     *
+     * @return bool
+     */
+    public function fail_if_stuck(): bool {
+        if (!$this->id || !$this->is_stuck()) {
+            return false;
+        }
+
+        if ($this instanceof backup_model || $this instanceof restore_model) {
+            $this->add_log('There was no activity for over ' . (constants::LOCK_TIMEOUT / 60) .
+                ' minutes. It is possible that the cron process was interrupted or timed out. '.
+                'Operation is marked as failed, access to the site is now allowed.', constants::LOGLEVEL_ERROR);
+            if ($this instanceof restore_model) {
+                if ($this->is_db_restored()) {
+                    $this->add_log('In some cases you will be able to resume the restore process. '.
+                        'Please refer to '.api::get_frontend_url().'/faq', constants::LOGLEVEL_ERROR);
+                } else {
+                    $this->add_log("If the database restore did not finish, ".
+                        "your site may be in an inconsistent state and will not work.".
+                        ' You will need to re-install Moodle and repeat the restore process.', constants::LOGLEVEL_ERROR);
+                }
+            }
+        } else if ($this instanceof check_model && $this->parentid
+                && ($parent = self::get_by_id($this->parentid))
+                && $parent->status !== constants::STATUS_INPROGRESS) {
+            // The check has a parent in progress - ignore it, we will process the parent when they get stuck.
+            return false;
+        } else {
+            $this->add_log('Operation timed out', constants::LOGLEVEL_ERROR);
+        }
+
+        if (!empty($this->get_details()['encryptionkey'])) {
+            $this->set_details(['encryptionkey' => '']);
+        }
+        $this->set_status(constants::STATUS_FAILED)->save();
+        return true;
+    }
+
+    /**
+     * Mark all stuck operations as failed
+     *
+     * @return bool if anything was marked as failed
+     */
+    public static function fail_all_stuck_operations(): bool {
+        $records = self::get_records([constants::STATUS_INPROGRESS], 'id');
+        $result = false;
+        foreach ($records as $record) {
+            $result = $record->fail_if_stuck() || $result;
+        }
+        return $result;
     }
 }

@@ -75,7 +75,8 @@ class restore_details implements \templatable {
             'isprogresspage' => $this->isprogresspage,
             'prechecks' => [],
             'restoreid' => $this->restore->id,
-            'resumeurl' => $this->restore->can_resume() ? \tool_vault\local\uiactions\restore_resume::url(['id' => $this->restore->id])->out(false) : null,
+            'resumeurl' => $this->restore->can_resume() ?
+                \tool_vault\local\uiactions\restore_resume::url(['id' => $this->restore->id])->out(false) : null,
         ];
 
         if ($this->restore->status == constants::STATUS_INPROGRESS) {

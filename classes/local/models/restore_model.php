@@ -95,7 +95,13 @@ class restore_model extends restore_base_model {
     }
 
     /**
-     * Can be resumed?
+     * Can the restore be resumed?
+     *
+     * The restore can be resumed if:
+     * - it has failed
+     * - it failed after the restorekey was obtained
+     * - it is the last restore we made on this site
+     * - the DB dump has been fully restored (resume is only possible on the dataroot and files stages)
      *
      * @return bool
      */
@@ -107,7 +113,7 @@ class restore_model extends restore_base_model {
         if (!$restorekey) {
             return false;
         }
-        /** @var restore_model|null $model */
+        /** @var restore_model|null $lastmodel */
         $lastmodel = self::get_last_of([self::class]);
         return $lastmodel && $lastmodel->id === $this->id && $this->is_db_restored();
     }
@@ -119,8 +125,11 @@ class restore_model extends restore_base_model {
      */
     public function is_db_restored(): bool {
         global $DB;
-        $cnt = $DB->count_records_select(backup_file::TABLE, "operationid = ? AND filetype = ? AND status <> ?",
-            [$this->id, constants::FILENAME_DBDUMP, constants::STATUS_FINISHED]);
-        return $cnt == 0;
+        $sql = "SELECT COUNT(*) AS totalcnt, SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) AS finishedcnt
+            FROM {" . backup_file::TABLE . "}
+            WHERE operationid = ? AND filetype = ?";
+        $params = [constants::STATUS_FINISHED, $this->id, constants::FILENAME_DBDUMP];
+        $record = $DB->get_record_sql($sql, $params);
+        return !empty($record->totalcnt) && $record->totalcnt == $record->finishedcnt;
     }
 }

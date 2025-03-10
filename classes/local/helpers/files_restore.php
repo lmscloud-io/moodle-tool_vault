@@ -247,6 +247,21 @@ class files_restore {
     }
 
     /**
+     * Total unpacked size of all archives of this type that have status='finished'
+     *
+     * @return int
+     */
+    public function get_total_orig_size_finished(): int {
+        $size = 0;
+        foreach ($this->backupfiles as $file) {
+            if ($file->status === constants::STATUS_FINISHED) {
+                $size += $file->origsize;
+            }
+        }
+        return $size;
+    }
+
+    /**
      * Returns the next table in the backup file and all files
      *
      * @return array|null [table name, [path to file with json dump]]

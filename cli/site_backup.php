@@ -22,11 +22,12 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
- define('CLI_SCRIPT', true);
- define('TOOL_VAULT_CLI_SCRIPT', true);
+define('CLI_SCRIPT', true);
+define('TOOL_VAULT_CLI_SCRIPT', true);
 
 use tool_vault\local\cli_helper;
 use tool_vault\output\start_backup_popup;
+use tool_vault\local\models\operation_model;
 
 require_once(__DIR__ . '/../../../../config.php');
 
@@ -44,6 +45,9 @@ if ($clihelper->get_cli_option('help')) {
     $clihelper->print_help();
     die();
 }
+
+// Start with failing all stuck operations.
+operation_model::fail_all_stuck_operations();
 
 // Validate all arguments.
 $clihelper->validate_cli_options();
