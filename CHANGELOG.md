@@ -2,7 +2,7 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-## Unreleased
+## [2.10] - 2025-03-14
 
 ### Added
 - Allow to resume a restore that failed during datadir or files stages. For restores that
