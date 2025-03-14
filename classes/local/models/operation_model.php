@@ -543,7 +543,12 @@ abstract class operation_model {
             $params['backupkey'] = $extra['backupkey'];
         }
         $records = static::get_records_select($sql, $params, 'timecreated DESC', 0, 1);
-        return $records ? reset($records) : null;
+        if ($records) {
+            $record = reset($records);
+            $record->fail_if_stuck();
+            return $record;
+        }
+        return null;
     }
 
     /**

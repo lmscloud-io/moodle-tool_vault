@@ -61,7 +61,7 @@ try {
         $params['backupkey'] = restore_model::get_restore_to_resume()->backupkey;
     }
     api::validate_backup($params['backupkey'] ?? '', $params['passphrase'] ?? '');
-} catch (api_exception $e) {
+} catch (\Exception $e) {
     cli_error($e->getMessage());
 }
 

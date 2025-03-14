@@ -16,8 +16,10 @@
 
 namespace tool_vault\local\uiactions;
 
-use core\exception\moodle_exception;
+use tool_vault\api;
+use tool_vault\local\exceptions\api_exception;
 use tool_vault\local\helpers\ui;
+use tool_vault\local\models\restore_model;
 
 /**
  * Resume restore
@@ -37,10 +39,12 @@ class restore_resume extends base {
         $restoreid = required_param('id', PARAM_INT);
         $passphrase = optional_param('passphrase', '', PARAM_RAW);
         try {
-            $restore = \tool_vault\site_restore::schedule(['resume' => true, 'passphrase' => $passphrase]);
-        } catch (moodle_exception $e) {
+            $model = restore_model::get_restore_to_resume();
+            api::validate_backup($model->backupkey, $passphrase);
+        } catch (\Exception $e) {
             redirect(restore_details::url(['id' => $restoreid]), $e->getMessage(), 0, \core\output\notification::NOTIFY_ERROR);
         }
+        $restore = \tool_vault\site_restore::schedule(['resume' => true, 'passphrase' => $passphrase]);
         redirect(ui::progressurl(['accesskey' => $restore->get_model()->accesskey]));
     }
 

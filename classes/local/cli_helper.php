@@ -118,7 +118,7 @@ class cli_helper {
                     'default' => null,
                     'validation' => function ($backupkey) {
                         if (!$backupkey && empty($this->clioptions['resume'])) {
-                            $this->cli_error('Argument --backupkey is required');
+                            $this->cli_error('One of --resume or --backupkey is required. Run with --help for more details');
                         }
                     },
                 ],

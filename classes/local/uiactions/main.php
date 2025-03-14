@@ -19,6 +19,9 @@ namespace tool_vault\local\uiactions;
 use moodle_url;
 use tool_vault\api;
 use tool_vault\form\apikey_form_legacy;
+use tool_vault\local\models\operation_model;
+use tool_vault\local\models\restore_model;
+use tool_vault\output\last_operation;
 
 /**
  * Class main
@@ -62,6 +65,9 @@ class main extends base {
             ];
         }
 
+        /** @var restore_model $lastoperation */
+        $lastoperation = operation_model::get_last_of([restore_model::class]);
+
         $rv = $output->render_from_template('tool_vault/main', [
             'pixbaseurl' => $CFG->wwwroot . '/admin/tool/vault/pix',
             'mainurl' => $CFG->wwwroot . '/admin/tool/vault/index.php',
@@ -70,6 +76,8 @@ class main extends base {
             'registrationform' => $this->registration_form($output),
             'isregistered' => api::is_registered(),
             'registrationinfo' => $registrationinfo ?? null,
+            'lastoperation' => $lastoperation && $lastoperation->can_resume() ?
+                (new last_operation($lastoperation))->export_for_template($output) : null,
         ]);
 
         return $rv;

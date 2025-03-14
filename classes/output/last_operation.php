@@ -93,6 +93,9 @@ class last_operation implements \templatable {
             } else {
                 $this->title = get_string('lastop_restorefailed_header', 'tool_vault');
                 $this->text = get_string('lastop_restorefailed_text', 'tool_vault', ui::format_time($this->operation->timecreated));
+                if ($operation->can_resume()) {
+                    $this->text .= '<br><b>' . get_string('lastop_restorefailed_canberesumed', 'tool_vault').'</b>';
+                }
             }
             if ($operation->status === constants::STATUS_INPROGRESS || $operation->status === constants::STATUS_SCHEDULED) {
                 $this->detailsurl = new \moodle_url('/admin/tool/vault/progress.php', ['accesskey' => $operation->accesskey]);

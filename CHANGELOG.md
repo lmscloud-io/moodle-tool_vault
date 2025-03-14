@@ -6,7 +6,8 @@ All notable changes to the tool_vault plugin will be documented in this file.
 
 ### Added
 - Allow to resume a restore that failed during datadir or files stages. For restores that
-  require upgrade step, the restore can only be resumed from the CLI.
+  require upgrade step, the restore can only be resumed from the CLI, since cron will not
+  run if an upgrade is pending.
 
 ### Fixed
 - Improved required temporary disk space calculation for very small backups
