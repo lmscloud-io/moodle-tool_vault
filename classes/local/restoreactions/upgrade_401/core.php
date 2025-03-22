@@ -1122,8 +1122,8 @@ privatefiles,moodle|/user/files.php';
         }
 
         // Show a progress bar.
-        $pbar = new progress_bar('upgradeusernotificationpreferences', 500, true);
-        $pbar->update($i, $total, "Upgrading user notifications preferences - $i/$total.");
+        // $pbar = new progress_bar('upgradeusernotificationpreferences', 500, true);
+        // $pbar->update($i, $total, "Upgrading user notifications preferences - $i/$total.");
 
         // We're migrating provider per provider to reduce memory usage.
         $providers = $DB->get_records('message_providers', null, 'name');
@@ -1222,7 +1222,7 @@ privatefiles,moodle|/user/files.php';
                 }
 
                 // Update progress.
-                $pbar->update($i, $total, "Upgrading user notifications preferences - $i/$total.");
+                // $pbar->update($i, $total, "Upgrading user notifications preferences - $i/$total.");
             }
             $rs->close();
 
@@ -1235,7 +1235,7 @@ privatefiles,moodle|/user/files.php';
             $DB->delete_records_select('user_preferences', $deleteselect, $deleteparams);
 
             // Update progress.
-            $pbar->update($i, $total, "Upgrading user notifications preferences - $i/$total.");
+            // $pbar->update($i, $total, "Upgrading user notifications preferences - $i/$total.");
         }
 
         core_plugin_manager::reset_caches();
@@ -1247,7 +1247,7 @@ privatefiles,moodle|/user/files.php';
         $DB->delete_records_select('user_preferences', $allrecordsloggedinoffsql, $allrecordsparams);
 
         // Update progress.
-        $pbar->update($total, $total, "Upgrading user notifications preferences - $total/$total.");
+        // $pbar->update($total, $total, "Upgrading user notifications preferences - $total/$total.");
 
         upgrade_main_savepoint(true, 2022012100.02);
     }
@@ -1457,7 +1457,7 @@ privatefiles,moodle|/user/files.php';
 
         // Count all the slot tags to be migrated (for progress bar).
         $total = $DB->count_records('quiz_slot_tags');
-        $pbar = new progress_bar('migratequestiontags', 1000, true);
+        // $pbar = new progress_bar('migratequestiontags', 1000, true);
         $i = 0;
         // Updating slot_tags for random question tags.
         // Now fetch any quiz slot tags and update those slot details into the question_set_references.
@@ -1495,7 +1495,7 @@ privatefiles,moodle|/user/files.php';
             $tagstrings[] = "{$tag->tagid},{$tag->tagname}";
             // Update progress.
             $i++;
-            $pbar->update($i, $total, "Migrating question tags - $i/$total.");
+            // $pbar->update($i, $total, "Migrating question tags - $i/$total.");
         }
         if ($tagstrings) {
             $runinsert($lastslot, $tagstrings);
