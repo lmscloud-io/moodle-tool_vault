@@ -77,7 +77,7 @@ class upgrade_402 {
                 // Standard plugin {$plugin} not found. It will be installed during the full upgrade.
                 continue;
             }
-            if (file_exists(__DIR__ ."/". $plugin .".php")) {
+            if (file_exists(__DIR__ ."/". $plugin .".php") && \core_component::get_component_directory($plugin)) {
                 require_once(__DIR__ ."/". $plugin .".php");
                 $pluginshort = preg_replace("/^mod_/", "", $plugin);
                 $funcname = "tool_vault_402_xmldb_{$pluginshort}_upgrade";
