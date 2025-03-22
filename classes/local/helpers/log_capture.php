@@ -57,7 +57,11 @@ class log_capture {
             'debugdisplay' => $CFG->debugdisplay ?? null,
             'debugdeveloper' => $CFG->debugdeveloper ?? false,
         ];
-        $CFG->debug = (E_ALL | E_STRICT);
+        if (version_compare(phpversion(), '8.4', '<')) {
+            $CFG->debug = (E_ALL | E_STRICT);
+        } else {
+            $CFG->debug = (E_ALL);
+        }
         $CFG->debugdisplay = 1;
         $CFG->debugdeveloper = true;
         if (!self::$olddebug['debugdeveloper']) {

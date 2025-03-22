@@ -90,7 +90,7 @@ class recalc_version_hash extends restore_action {
         $CFG->siteidentifier = $DB->get_field('config', 'value', ['name' => 'siteidentifier']);
         initialise_cfg();
         $CFG->debug = $CFG->debug ?? 0;
-        $CFG->debugdeveloper = (($CFG->debug & (E_ALL | E_STRICT)) === (E_ALL | E_STRICT));
+        $CFG->debugdeveloper = (($CFG->debug & E_ALL) === E_ALL);
         log_capture::force_debug();
     }
 
