@@ -83,7 +83,7 @@ jobs:
 
       - name: Install moodle-plugin-ci
         run: |
-          moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1 --no-init
+          moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
           moodle-plugin-ci add-config "define('PHPUNIT_LONGTEST', true);"
           if [[ "${{ github.event.inputs.runonstaging }}" == "true" ]]; then
             LMSVAULTSTAGING="${{ vars.LMSVAULTSTAGING }}"
@@ -118,11 +118,6 @@ jobs:
           fi
           moodle-plugin-ci add-config "define('TOOL_VAULT_TEST_STORAGE', '${{ github.event.inputs.storage }}');"
           moodle-plugin-ci add-config "define('PHPUNIT_BACKUPTEMPDIR', '$(pwd)/tmpbackup');"
-          pushd moodle
-          sed -i 's|E_ALL \| E_STRICT|E_ALL|g' config.php
-          php admin/tool/phpunit/cli/util.php --install
-          php admin/tool/behat/cli/init.php --add-core-features-to-theme --scss-deprecations
-          popd
         env:
           DB: ${{ matrix.database }}
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
@@ -134,7 +129,7 @@ jobs:
       - name: Behat features
         id: behat
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci behat --profile chrome --start-servers
+        run: moodle-plugin-ci behat --profile chrome --scss-deprecations
 
       - name: Upload Behat Faildump
         if: ${{ failure() && steps.behat.outcome == 'failure' }}

@@ -5,7 +5,7 @@ All notable changes to the tool_vault plugin will be documented in this file.
 ## Unreleased
 
 ### Added
-- Support for Moodle 5.0
+- Support for Moodle 5.0 and PHP 8.4
 
 ## [2.10] - 2025-03-14
 
