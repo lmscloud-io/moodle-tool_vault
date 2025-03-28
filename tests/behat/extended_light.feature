@@ -77,3 +77,53 @@ Feature: Performing full site backup and restore with a light account in Vault
       | Western North America |
       | Asia-Pacific          |
       | Europe                |
+
+  Scenario Outline: Vault restore a specific backup (light)
+    Given test API key for light account is specified for tool_vault
+    And I can restore backup <backupkey> made in version <version> using <env> key
+    And the following config values are set as admin:
+      | allowrestore             | 1     | tool_vault |
+      | allowrestorewithmissing  | 1     | tool_vault |
+      | upgradeafterrestore      | 1     | tool_vault |
+      | restoreremovemissing     | 1     | tool_vault |
+      | restorepreservepasswords | admin | tool_vault |
+    # Restore pre-check
+    And I log in as "admin"
+    And I navigate to "Server > Vault - Site migration" in site administration
+    And I click on "Site restore" "link" in the "region-main" "region"
+    And I click on "Refresh" "link" in the "region-main" "region"
+    And I click on "Run pre-check" "button" in the row of my vault backup
+    And I click on "Run pre-check" "button" in the "Run pre-check" "dialogue"
+    And I run the scheduled task "tool_vault\task\cron_task"
+    And I reload the page
+    And I should see "Restore can be performed"
+    And I should see "There is enough disk space in the temporary directory to perform site restore"
+    And I log out
+    # Restore
+    And I log in as "admin"
+    And I navigate to "Server > Vault - Site migration" in site administration
+    And I click on "Site restore" "link" in the "region-main" "region"
+    And I click on "Restore this backup" "button" in the row of my vault backup
+    And I click on "Restore this backup" "button" in the "Restore this backup" "dialogue"
+    And I should see "[info] Restore scheduled"
+    And I wait "2" seconds
+    And I run the scheduled task "tool_vault\task\cron_task"
+    And I reload the page
+    And I log in as "admin"
+    And I navigate to "Server > Vault - Site migration" in site administration
+    And I click on "Site restore" "link" in the "region-main" "region"
+    And I should see "Restore completed"
+    And I follow "Vault - Site migration"
+    And I click on "History" "link" in the "region-main" "region"
+    And I click on "View details" "link" in the "Past restores on this site" "table"
+    And the following should exist in the "Restore details" table:
+      | -1-        | -2-       |
+      | Status     | Completed |
+      | Logs       | ...       |
+    And I follow "Expand logs"
+    And I should not see "Expand logs"
+    And I should see "Collapse logs"
+
+    Examples:
+      | backupkey                        | version | env  | comment |
+      | B1B9VIFRGXCHZX1N34T3HSFK681GFDKQ | 3.9     | prod |         |

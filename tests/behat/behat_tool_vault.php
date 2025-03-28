@@ -79,6 +79,27 @@ class behat_tool_vault extends behat_base {
     }
 
     /**
+     * Skip tests if the storage is not in whitelisted
+     *
+     * @Given I can restore backup :backup made in version :version using :env key
+     * @param string $backup
+     * @param string $version
+     * @param string $env
+     */
+    public function i_can_restore_backup_made_in_version_using_env($backup, $version, $env) {
+        global $CFG;
+        $isstaging = defined('TOOL_VAULT_TEST_API_URL') && !empty(TOOL_VAULT_TEST_API_URL);
+        if (($env !== 'staging' && $isstaging) || ($env !== 'prod' && !$isstaging)) {
+            throw new \Moodle\BehatExtension\Exception\SkippedException('Environment '.$env.'does not match');
+        }
+        if (version_compare($version, normalize_version($CFG->release), '>')) {
+            throw new \Moodle\BehatExtension\Exception\SkippedException(
+                'Moodle version '.$CFG->release.' is too old to restore backup made in version '.$version);
+        }
+        set_config('behat_backup_name', $backup, 'tool_vault');
+    }
+
+    /**
      * Generate a random backup name and set it in the form
      *
      * @Given /^I set vault backup description field$/
