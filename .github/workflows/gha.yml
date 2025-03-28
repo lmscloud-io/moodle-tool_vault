@@ -113,7 +113,6 @@ jobs:
       - name: Initialise moodle-plugin-ci
         run: |
           civersion=$(if [[ "${{ matrix.php }}" =~ ^7.[0123]$ ]]; then echo "^3"; fi)
-          extrabehatoptions=$(if [[ "${{ matrix.php }}" =~ ^7.[0123]$ ]]; then echo ""; else echo "--scss-deprecations"; fi)
           composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci  ${civersion:-^4}
           echo $(cd ci/bin; pwd) >> $GITHUB_PATH
           echo $(cd ci/vendor/bin; pwd) >> $GITHUB_PATH
@@ -125,6 +124,9 @@ jobs:
           moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
           moodle-plugin-ci add-config "define('PHPUNIT_LONGTEST', true);"
           moodle-plugin-ci add-config "define('PHPUNIT_BACKUPTEMPDIR', '$(pwd)/tmpbackup');"
+          if [[ "${{ matrix.php }}" !~ ^7 ]]; then
+            php moodle/admin/tool/behat/cli/util.php --enable --add-core-features-to-theme --scss-deprecations
+          fi
         env:
           DB: ${{ matrix.database }}
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
@@ -171,7 +173,7 @@ jobs:
       - name: Behat features
         id: behat
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci behat --profile chrome ${extrabehatoptions}
+        run: moodle-plugin-ci behat --profile chrome
 
       - name: Upload Behat Faildump
         if: ${{ failure() && steps.behat.outcome == 'failure' }}
