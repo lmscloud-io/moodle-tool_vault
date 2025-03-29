@@ -151,8 +151,13 @@ class upgrade extends restore_action {
      * @return void
      */
     protected function disable_caches() {
+        global $CFG;
         // We can not redefine CACHE_DISABLE_ALL that normally has to be set during upgrade. But we can hack the
         // factory class to use the disabled factory instance.
+        if (file_exists($CFG->dirroot.'/cache/disabledlib.php')) {
+            require_once($CFG->dirroot.'/cache/disabledlib.php');
+        }
+
         $class = new \ReflectionClass(\cache_factory_disabled::class);
         $constructor = $class->getConstructor();
         $constructor->setAccessible(true);
