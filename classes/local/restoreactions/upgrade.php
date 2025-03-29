@@ -132,16 +132,11 @@ class upgrade extends restore_action {
             'mod/data:managecomments',
             'mod/lti:addmanualinstance',
         ];
-        $changed = false;
         foreach ($caps as $cap) {
             if (get_deprecated_capability_info($cap)) {
                 $DB->delete_records('role_capabilities', ['capability' => $cap]);
                 $DB->delete_records('capabilities', ['name' => $cap]);
-                $changed = true;
             }
-        }
-        if ($changed) {
-            \cache::make('core', 'capabilities')->purge();
         }
     }
 
