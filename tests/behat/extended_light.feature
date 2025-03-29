@@ -122,6 +122,8 @@ Feature: Performing full site backup and restore with a light account in Vault
     And I follow "Expand logs"
     And I should not see "Expand logs"
     And I should see "Collapse logs"
+    And I navigate to "Reports > Performance overview" in site administration
+    And I should see "OK" in the "Database schema is correct" "table_row"
 
     Examples:
       | backupkey                        | version | env  | comment |
