@@ -32,7 +32,7 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $oldversion
  * @return bool
  */
-function xmldb_assignfeedback_editpdf_upgrade($oldversion) {
+function tool_vault_402_xmldb_assignfeedback_editpdf_upgrade($oldversion) {
     global $CFG, $DB;
 
     $dbman = $DB->get_manager();
