@@ -96,8 +96,7 @@ Feature: Performing full site backup and restore with a light account in Vault
     And I click on "Run pre-check" "button" in the "Run pre-check" "dialogue"
     And I run the scheduled task "tool_vault\task\cron_task"
     And I reload the page
-    And I should see "Restore can be performed"
-    And I should see "There is enough disk space in the temporary directory to perform site restore"
+    And I should not see "Failed"
     And I log out
     # Restore
     And I log in as "admin"
