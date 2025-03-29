@@ -41,8 +41,7 @@ function tool_vault_402_xmldb_assignfeedback_editpdf_upgrade($oldversion) {
     // Put any upgrade step following this.
 
     if ($oldversion < 2022112801) {
-        \tool_vault\local\restoreactions\upgrade_402\helpers\general_helper::queue_adhoc_task(
-            \assignfeedback_editpdf\task\remove_orphaned_editpdf_files::class);
+        \tool_vault\task\after_upgrade_task::schedule(\assignfeedback_editpdf\task\remove_orphaned_editpdf_files::class);
 
         upgrade_plugin_savepoint(true, 2022112801, 'assignfeedback', 'editpdf');
     }

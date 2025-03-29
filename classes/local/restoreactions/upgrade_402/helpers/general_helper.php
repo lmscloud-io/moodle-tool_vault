@@ -25,15 +25,4 @@ namespace tool_vault\local\restoreactions\upgrade_402\helpers;
  */
 class general_helper {
 
-    /**
-     * Schedule ad-hoc task
-     *
-     * @param string $classname
-     * @param bool $checkforexisting
-     * @param \stdClass|null $customdata
-     */
-    public static function queue_adhoc_task($classname, $checkforexisting = false, $customdata = null) {
-        \tool_vault\local\restoreactions\upgrade_311\helpers\general_helper::queue_adhoc_task(
-            $classname, $checkforexisting, $customdata);
-    }
 }

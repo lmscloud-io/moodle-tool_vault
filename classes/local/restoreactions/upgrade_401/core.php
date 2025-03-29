@@ -46,6 +46,7 @@
 
 use tool_vault\local\restoreactions\upgrade_401\helpers\adminpresets_helper;
 use tool_vault\local\restoreactions\upgrade_401\helpers\general_helper;
+use tool_vault\task\after_upgrade_task;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -1919,7 +1920,7 @@ privatefiles,moodle|/user/files.php';
 
     if ($oldversion < 2022052500.00) {
         // Start an adhoc task to fix the file timestamps of restored files.
-        general_helper::queue_adhoc_task(\core\task\fix_file_timestamps_task::class);
+        after_upgrade_task::schedule(\core\task\fix_file_timestamps_task::class);
 
         // Main savepoint reached.
         upgrade_main_savepoint(true, 2022052500.00);

@@ -45,6 +45,7 @@
 
 use tool_vault\local\restoreactions\upgrade_311\helpers\general_helper;
 use tool_vault\local\restoreactions\upgrade_311\helpers\profilefield_helper;
+use tool_vault\task\after_upgrade_task;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -852,13 +853,7 @@ function tool_vault_311_core_upgrade($oldversion) {
         if ($needsfixing) {
 
             // Create adhoc task to search and recover orphaned calendar events.
-            $record = new \stdClass();
-            $record->classname = '\core\task\calendar_fix_orphaned_events';
-
-            // Next run time based from nextruntime computation in \core\task\manager::queue_adhoc_task().
-            $nextruntime = time() - 1;
-            $record->nextruntime = $nextruntime;
-            $DB->insert_record('task_adhoc', $record);
+            after_upgrade_task::schedule(\core\task\calendar_fix_orphaned_events::class);
         }
 
         // Main savepoint reached.
