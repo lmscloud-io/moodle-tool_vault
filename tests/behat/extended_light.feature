@@ -122,6 +122,10 @@ Feature: Performing full site backup and restore with a light account in Vault
     And I follow "Expand logs"
     And I should not see "Expand logs"
     And I should see "Collapse logs"
+    # Make sure there are no errors in the adhoc tasks scheduled during upgrade
+    And I run all adhoc tasks
+    # Database schema check is available in 4.0 and up
+    And the site is running Moodle version 4.0 or higher
     And I navigate to "Reports > Performance overview" in site administration
     And I should see "OK" in the "Database schema is correct" "table_row"
 
