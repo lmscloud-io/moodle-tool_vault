@@ -127,3 +127,11 @@ Feature: Performing full site backup and restore with a light account in Vault
     Examples:
       | backupkey                        | version | env  | comment |
       | B1B9VIFRGXCHZX1N34T3HSFK681GFDKQ | 3.9     | prod |         |
+      | AE5O4CDDOIVKC6E6SA773G0H3SIM3EO7 | 3.10    | prod |         |
+      | NLASEBID4A30PYM3UKEWRIW7OF0C09QG | 3.11    | prod |         |
+      | BBWSBZTLYC7CEENGOG3F0424QNU9UHAF | 4.0     | prod |         |
+      | XC7Y4AWFBKAH7VU3DJBGTRQZ59EPMAID | 4.1     | prod |         |
+      | 9ZZ6M8BARMVO6NI954POL2TDE04TP6U0 | 4.2     | prod |         |
+      | UU54WLITR0ZN67KZ75XY773PJ3UUQ6P1 | 4.3     | prod |         |
+      | TBNWY5HE1JSVGAZKJZ6TJNN5H2RSM4FN | 4.4     | prod |         |
+      | IWWYFNDP5QEHDV6EEABMZK4YODPXENDD | 4.5     | prod |         |
