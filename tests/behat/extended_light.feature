@@ -133,10 +133,10 @@ Feature: Performing full site backup and restore with a light account in Vault
       | backupkey                        | version | env  | comment |
       | B1B9VIFRGXCHZX1N34T3HSFK681GFDKQ | 3.9     | prod |         |
       | AE5O4CDDOIVKC6E6SA773G0H3SIM3EO7 | 3.10    | prod |         |
-      | NLASEBID4A30PYM3UKEWRIW7OF0C09QG | 3.11    | prod |         |
-      | BBWSBZTLYC7CEENGOG3F0424QNU9UHAF | 4.0     | prod |         |
-      | XC7Y4AWFBKAH7VU3DJBGTRQZ59EPMAID | 4.1     | prod |         |
-      | 9ZZ6M8BARMVO6NI954POL2TDE04TP6U0 | 4.2     | prod |         |
-      | UU54WLITR0ZN67KZ75XY773PJ3UUQ6P1 | 4.3     | prod |         |
-      | TBNWY5HE1JSVGAZKJZ6TJNN5H2RSM4FN | 4.4     | prod |         |
-      | IWWYFNDP5QEHDV6EEABMZK4YODPXENDD | 4.5     | prod |         |
+      | 8LWO9N62PF7126K6HD39ZSDRUNRCEZXB | 3.11    | prod |         |
+      | RNTBHH43JDQXJHXCXGJY357JR6LS6IPB | 4.0     | prod |         |
+      | 79N139YRC5NZ6ISDMG28W9HNBMB7VH58 | 4.1     | prod |         |
+      | V7P7QEH4JTRHXBCMZHZA86T35XIWDZ54 | 4.2     | prod |         |
+      | IETJ6X5OZZVD8A90PI7B7OH4CM0Y4FGV | 4.3     | prod |         |
+      | 1KPPNNA2C2IBTJEYFN918063A4DN6B00 | 4.4     | prod |         |
+      | RV281ZXAK6C4UUY8E2ZOR99BHQSCMDS6 | 4.5     | prod |         |
