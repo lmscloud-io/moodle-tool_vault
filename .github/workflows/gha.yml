@@ -87,12 +87,14 @@ jobs:
             runchecks: 'all'
             moodle-branch: 'MOODLE_405_STABLE'
             database: 'mariadb'
+            scssdeprecations: '1'
           - php: '8.2'
             moodle-branch: 'main' # TODO replace with 'MOODLE_500_STABLE' once it is released
             database: 'pgsql'
           - php: '8.4'
             moodle-branch: 'main' # TODO replace with 'MOODLE_500_STABLE' once it is released
             database: 'mariadb'
+            scssdeprecations: '1'
 
     steps:
       - name: Check out repository code
@@ -124,7 +126,7 @@ jobs:
           moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
           moodle-plugin-ci add-config "define('PHPUNIT_LONGTEST', true);"
           moodle-plugin-ci add-config "define('PHPUNIT_BACKUPTEMPDIR', '$(pwd)/tmpbackup');"
-          if [[ ! "${{ matrix.php }}" =~ ^7 ]]; then
+          if [[ "${{ matrix.scssdeprecations }}" == "1" ]]; then
             php moodle/admin/tool/behat/cli/util_single_run.php --enable --add-core-features-to-theme --scss-deprecations
           fi
         env:
