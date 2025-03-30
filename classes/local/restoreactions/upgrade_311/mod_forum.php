@@ -1,6 +1,4 @@
 <?php
-
-use tool_vault\task\after_upgrade_task;
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -46,6 +44,8 @@ use tool_vault\task\after_upgrade_task;
  */
 
 defined('MOODLE_INTERNAL') || die();
+
+use tool_vault\task\after_upgrade_task;
 
 function tool_vault_311_xmldb_forum_upgrade($oldversion) {
     global $CFG, $DB;

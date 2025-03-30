@@ -27,10 +27,6 @@
  * @author    Fred Dixon  (ffdixon [at] blindsidenetworks [dt] com)
  */
 
-use mod_bigbluebuttonbn\plugin;
-use mod_bigbluebuttonbn\local\config;
-use mod_bigbluebuttonbn\task\upgrade_recordings_task;
-
 /**
  * Performs data migrations and updates on upgrade.
  *
