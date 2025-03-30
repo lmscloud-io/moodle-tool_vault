@@ -125,7 +125,7 @@ jobs:
           moodle-plugin-ci add-config "define('PHPUNIT_LONGTEST', true);"
           moodle-plugin-ci add-config "define('PHPUNIT_BACKUPTEMPDIR', '$(pwd)/tmpbackup');"
           if [[ ! "${{ matrix.php }}" =~ ^7 ]]; then
-            php moodle/admin/tool/behat/cli/util.php --enable --add-core-features-to-theme --scss-deprecations
+            php moodle/admin/tool/behat/cli/util_single_run.php --enable --add-core-features-to-theme --scss-deprecations
           fi
         env:
           DB: ${{ matrix.database }}
