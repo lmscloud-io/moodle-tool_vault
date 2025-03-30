@@ -131,10 +131,16 @@ class upgrade extends restore_action {
             'mod/data:comment',
             'mod/data:managecomments',
             'mod/lti:addmanualinstance',
+            'tiny/premium:accesspremium',
         ];
         foreach ($caps as $cap) {
-            if (get_deprecated_capability_info($cap)) {
-                $DB->delete_records('role_capabilities', ['capability' => $cap]);
+            if (($info = get_deprecated_capability_info($cap))) {
+                if (!empty($info['replacement']) && !$DB->record_exists('capabilities', ['name' => $info['replacement']])) {
+                    $DB->execute('UPDATE {role_capabilities} SET capability = ? WHERE capability = ?',
+                        [$info['replacement'], $cap]);
+                } else {
+                    $DB->delete_records('role_capabilities', ['capability' => $cap]);
+                }
                 $DB->delete_records('capabilities', ['name' => $cap]);
             }
         }
@@ -169,6 +175,8 @@ class upgrade extends restore_action {
      * @return void
      */
     protected function enable_caches() {
-        \cache_factory::instance(true);
+        $reflection = new \ReflectionProperty(\cache_factory::class, 'instance');
+        $reflection->setAccessible(true);
+        $reflection->setValue(null, null);
     }
 }
