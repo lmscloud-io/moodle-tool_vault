@@ -165,6 +165,10 @@ class siteinfo {
                 'phpunit',
                 'phpunittestdir.txt',
                 'originaldatafiles.json',
+                // For behat.
+                'behattestdir.txt',
+                'behat_dump',
+                'behat',
                 // Vault temp dir.
                 '__vault_restore__',
             ]) || preg_match('/^\\./', $path);

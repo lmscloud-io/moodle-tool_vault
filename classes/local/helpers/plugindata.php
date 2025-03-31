@@ -193,6 +193,11 @@ class plugindata {
                     $params += $res[1];
                 }
             }
+            if ($tablename === 'config') {
+                $p = self::generate_param_name();
+                $sqls[] = $negated ? "(name <> :{$p})" : "name = :{$p}";
+                $params[$p] = 'behattest';
+            }
         }
 
         if (!$sqls) {

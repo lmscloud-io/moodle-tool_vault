@@ -8,7 +8,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:13
+        image: postgres:14
         env:
           POSTGRES_USER: 'postgres'
           POSTGRES_HOST_AUTH_METHOD: 'trust'
@@ -87,6 +87,14 @@ jobs:
             runchecks: 'all'
             moodle-branch: 'MOODLE_405_STABLE'
             database: 'mariadb'
+            scssdeprecations: '1'
+          - php: '8.2'
+            moodle-branch: 'main' # TODO replace with 'MOODLE_500_STABLE' once it is released
+            database: 'pgsql'
+          - php: '8.4'
+            moodle-branch: 'main' # TODO replace with 'MOODLE_500_STABLE' once it is released
+            database: 'mariadb'
+            scssdeprecations: '1'
 
     steps:
       - name: Check out repository code
@@ -118,6 +126,9 @@ jobs:
           moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
           moodle-plugin-ci add-config "define('PHPUNIT_LONGTEST', true);"
           moodle-plugin-ci add-config "define('PHPUNIT_BACKUPTEMPDIR', '$(pwd)/tmpbackup');"
+          if [[ "${{ matrix.scssdeprecations }}" == "1" ]]; then
+            php moodle/admin/tool/behat/cli/util_single_run.php --enable --add-core-features-to-theme --scss-deprecations
+          fi
         env:
           DB: ${{ matrix.database }}
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
@@ -162,8 +173,18 @@ jobs:
         run: moodle-plugin-ci phpunit --fail-on-warning
 
       - name: Behat features
+        id: behat
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci behat --profile chrome
+
+      - name: Upload Behat Faildump
+        if: ${{ failure() && steps.behat.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Behat Faildump (${{ join(matrix.*, ', ') }})
+          path: ${{ github.workspace }}/moodledata/behat_dump
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: Mark cancelled jobs as failed.
         if: ${{ cancelled() }}

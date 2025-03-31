@@ -427,6 +427,7 @@ class site_backup extends operation_base {
         }
         closedir($handle);
         if (empty($pathstoexport)) {
+            $filesbackup->finish();
             $this->add_to_log('Nothing to export in dataroot');
             return;
         }
