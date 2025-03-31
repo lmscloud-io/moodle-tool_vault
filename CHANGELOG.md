@@ -2,6 +2,15 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## [2.11] - 2025-03-31
+
+### Added
+- Support for Moodle 5.0 and PHP 8.4. Upgrade scripts to support the new version.
+### Fixed
+- Some ad-hoc tasks were not properly scheduled during the built-in upgrade
+- Disable caches during the built-in upgrade
+- Prevent debugging messages during the built-in upgrade (see also MDL-77237)
+
 ## [2.10] - 2025-03-14
 
 ### Added
