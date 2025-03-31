@@ -45,6 +45,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use tool_vault\task\after_upgrade_task;
+
 function tool_vault_311_xmldb_forum_upgrade($oldversion) {
     global $CFG, $DB;
 
@@ -132,14 +134,7 @@ function tool_vault_311_xmldb_forum_upgrade($oldversion) {
 
     if ($oldversion < 2019071902) {
         // Create adhoc task for upgrading of existing forum_posts.
-        $record = new \stdClass();
-        $record->classname = '\mod_forum\task\refresh_forum_post_counts';
-        $record->component = 'mod_forum';
-
-        // Next run time based from nextruntime computation in \core\task\manager::queue_adhoc_task().
-        $nextruntime = time() - 1;
-        $record->nextruntime = $nextruntime;
-        $DB->insert_record('task_adhoc', $record);
+        after_upgrade_task::schedule(\mod_forum\task\refresh_forum_post_counts::class);
 
         // Main savepoint reached.
         upgrade_mod_savepoint(true, 2019071902, 'forum');

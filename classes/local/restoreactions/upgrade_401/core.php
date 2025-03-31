@@ -46,6 +46,7 @@
 
 use tool_vault\local\restoreactions\upgrade_401\helpers\adminpresets_helper;
 use tool_vault\local\restoreactions\upgrade_401\helpers\general_helper;
+use tool_vault\task\after_upgrade_task;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -1121,10 +1122,6 @@ privatefiles,moodle|/user/files.php';
             $total = 1; // Avoid division by zero.
         }
 
-        // Show a progress bar.
-        $pbar = new progress_bar('upgradeusernotificationpreferences', 500, true);
-        $pbar->update($i, $total, "Upgrading user notifications preferences - $i/$total.");
-
         // We're migrating provider per provider to reduce memory usage.
         $providers = $DB->get_records('message_providers', null, 'name');
         foreach ($providers as $provider) {
@@ -1220,9 +1217,6 @@ privatefiles,moodle|/user/files.php';
                     $deleteselect = 'name = :name AND id IN (' . implode(',', $deleterecords) . ')';
                     $DB->delete_records_select('user_preferences', $deleteselect, $deleteparams);
                 }
-
-                // Update progress.
-                $pbar->update($i, $total, "Upgrading user notifications preferences - $i/$total.");
             }
             $rs->close();
 
@@ -1233,9 +1227,6 @@ privatefiles,moodle|/user/files.php';
             $deleteselect = 'name = :name';
             $i += $DB->count_records_select('user_preferences', $deleteselect, $deleteparams);
             $DB->delete_records_select('user_preferences', $deleteselect, $deleteparams);
-
-            // Update progress.
-            $pbar->update($i, $total, "Upgrading user notifications preferences - $i/$total.");
         }
 
         core_plugin_manager::reset_caches();
@@ -1245,9 +1236,6 @@ privatefiles,moodle|/user/files.php';
         $allrecordsloggedin = $DB->sql_like('name', ':loggedin');
         $allrecordsloggedinoffsql = "$allrecordsloggedin OR $allrecordsloggedoff";
         $DB->delete_records_select('user_preferences', $allrecordsloggedinoffsql, $allrecordsparams);
-
-        // Update progress.
-        $pbar->update($total, $total, "Upgrading user notifications preferences - $total/$total.");
 
         upgrade_main_savepoint(true, 2022012100.02);
     }
@@ -1455,10 +1443,6 @@ privatefiles,moodle|/user/files.php';
         $transaction = $DB->start_delegated_transaction();
         upgrade_set_timeout(3600);
 
-        // Count all the slot tags to be migrated (for progress bar).
-        $total = $DB->count_records('quiz_slot_tags');
-        $pbar = new progress_bar('migratequestiontags', 1000, true);
-        $i = 0;
         // Updating slot_tags for random question tags.
         // Now fetch any quiz slot tags and update those slot details into the question_set_references.
         $slottags = $DB->get_recordset('quiz_slot_tags', [], 'slotid ASC');
@@ -1493,9 +1477,6 @@ privatefiles,moodle|/user/files.php';
 
             $lastslot = $tag->slotid;
             $tagstrings[] = "{$tag->tagid},{$tag->tagname}";
-            // Update progress.
-            $i++;
-            $pbar->update($i, $total, "Migrating question tags - $i/$total.");
         }
         if ($tagstrings) {
             $runinsert($lastslot, $tagstrings);
@@ -1939,7 +1920,7 @@ privatefiles,moodle|/user/files.php';
 
     if ($oldversion < 2022052500.00) {
         // Start an adhoc task to fix the file timestamps of restored files.
-        general_helper::queue_adhoc_task(\core\task\fix_file_timestamps_task::class);
+        after_upgrade_task::schedule(\core\task\fix_file_timestamps_task::class);
 
         // Main savepoint reached.
         upgrade_main_savepoint(true, 2022052500.00);

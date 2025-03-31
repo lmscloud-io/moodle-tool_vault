@@ -26,27 +26,6 @@ namespace tool_vault\local\restoreactions\upgrade_311\helpers;
 class general_helper {
 
     /**
-     * Schedule ad-hoc task
-     *
-     * @param string $classname
-     * @param bool $checkforexisting
-     * @param \stdClass|null $customdata
-     */
-    public static function queue_adhoc_task($classname, $checkforexisting = false, $customdata = null) {
-        global $DB;
-        if (class_exists($classname) && is_a($classname, \core\task\adhoc_task::class)) {
-            /** @var \core\task\adhoc_task $task */
-            $task = new $classname();
-            if ($customdata !== null) {
-                $task->set_custom_data($customdata);
-            }
-            \core\task\manager::queue_adhoc_task($task, $checkforexisting);
-        } else {
-            mtrace("!!!! Skipping scheduling ad-hoc task: " . $classname);
-        }
-    }
-
-    /**
      * Detects if the site may need to get the calendar events fixed or no. With optional output.
      *
      * @param bool $output true if the function must output information, false if not.
