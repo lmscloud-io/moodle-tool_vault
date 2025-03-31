@@ -53,6 +53,7 @@ class upgrade extends restore_action {
         }
 
         $siteupgraded = false;
+        $this->disable_caches();
 
         // Upgrade to intermediate release.
         $intermediaterelease = version_restore::get_required_core_intermediate_release($CFG->release, $coderelease);
@@ -92,6 +93,7 @@ class upgrade extends restore_action {
                 }
                 set_config('release', $coderelease);
                 set_config('branch', $codeinfo['branch']);
+                $this->cleanup_deprecated_capabilities();
                 upgrade_noncore(true);
                 $curuser = $USER;
                 \core\session\manager::set_user(get_admin());
@@ -111,5 +113,69 @@ class upgrade extends restore_action {
         if (!$siteupgraded) {
             $logger->add_to_log('Moodle core and plugins are up to date. No upgrade is required.');
         }
+     }
+
+    /**
+     * Fix for the debugging message because of deprecated capabilities
+     *
+     * @return void
+     */
+    protected function cleanup_deprecated_capabilities() {
+        // TODO remove when https://tracker.moodle.org/browse/MDL-77237 is fixed.
+        global $DB;
+        if (!function_exists('get_deprecated_capability_info')) {
+            return;
+        }
+        $caps = [
+            'mod/data:comment',
+            'mod/data:managecomments',
+            'mod/lti:addmanualinstance',
+            'tiny/premium:accesspremium',
+        ];
+        foreach ($caps as $cap) {
+            if (($info = get_deprecated_capability_info($cap))) {
+                if (!empty($info['replacement']) && !$DB->record_exists('capabilities', ['name' => $info['replacement']])) {
+                    $DB->execute('UPDATE {role_capabilities} SET capability = ? WHERE capability = ?',
+                        [$info['replacement'], $cap]);
+                } else {
+                    $DB->delete_records('role_capabilities', ['capability' => $cap]);
+                }
+                $DB->delete_records('capabilities', ['name' => $cap]);
+            }
+        }
+    }
+
+    /**
+     * Disable caches during upgrade
+     *
+     * @return void
+     */
+    protected function disable_caches() {
+        global $CFG;
+        // We can not redefine CACHE_DISABLE_ALL that normally has to be set during upgrade. But we can hack the
+        // factory class to use the disabled factory instance.
+        if (file_exists($CFG->dirroot.'/cache/disabledlib.php')) {
+            require_once($CFG->dirroot.'/cache/disabledlib.php');
+        }
+
+        $class = new \ReflectionClass(\cache_factory_disabled::class);
+        $constructor = $class->getConstructor();
+        $constructor->setAccessible(true);
+        $object = $class->newInstanceWithoutConstructor();
+        $constructor->invoke($object, 1);
+
+        $reflection = new \ReflectionProperty(\cache_factory::class, 'instance');
+        $reflection->setAccessible(true);
+        $reflection->setValue(null, $object);
+    }
+
+    /**
+     * Re-enable caches
+     * @return void
+     */
+    protected function enable_caches() {
+        $reflection = new \ReflectionProperty(\cache_factory::class, 'instance');
+        $reflection->setAccessible(true);
+        $reflection->setValue(null, null);
     }
 }
