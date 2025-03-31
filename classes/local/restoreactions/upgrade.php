@@ -113,7 +113,7 @@ class upgrade extends restore_action {
         if (!$siteupgraded) {
             $logger->add_to_log('Moodle core and plugins are up to date. No upgrade is required.');
         }
-     }
+    }
 
     /**
      * Fix for the debugging message because of deprecated capabilities
