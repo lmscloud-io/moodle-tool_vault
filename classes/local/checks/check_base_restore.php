@@ -47,7 +47,7 @@ abstract class check_base_restore extends check_base {
         if (!in_array($class, ['badge-info', 'badge-warning', 'badge-danger'])) {
             throw new \coding_exception('Unrecognised badge class: '.s($class));
         }
-        return "<span class=\"badge {$class} mr-1\">{$text}</span><span class=\"accesshide\">. </span>";
+        return "<span class=\"badge {$class} mx-1\">{$text}</span><span class=\"accesshide\">. </span>";
     }
 
     /**
