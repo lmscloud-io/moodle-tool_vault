@@ -62,6 +62,7 @@ class profilefield_helper {
      */
     public static function user_profile_social_create_profilefield($social) {
         global $DB, $CFG;
+        require_once($CFG->dirroot . '/user/profile/definelib.php');
 
         $hiddenfields = explode(',', $CFG->hiddenuserfields);
         $confignames = [
