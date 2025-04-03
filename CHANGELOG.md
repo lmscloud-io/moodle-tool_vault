@@ -2,6 +2,11 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## [2.12] - 2025-04-03
+
+### Fixed
+- Exception in built-in upgrade when some users have "social" fields
+
 ## [2.11] - 2025-03-31
 
 ### Added
