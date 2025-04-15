@@ -82,7 +82,7 @@ class diskspace extends check_base {
         $requiredspacedataroot = min($datarootsize, constants::UPLOAD_SIZE + $maxdatarootfilesize) * 2;
         $requiredspace = max($requiredspacefiles, $requiredspacedb, $requiredspacedataroot, $codesize * 2);
         $freespace = tempfiles::get_free_space($requiredspace);
-        $enoughspace = $requiredspace < $freespace;
+        $enoughspace = $freespace === true || $requiredspace < $freespace;
 
         // Save results.
         $this->model->set_details([
