@@ -2,7 +2,13 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-## Unreleased
+## [3.9.13] - 2025-05-10
+### Changed
+- New version numbering scheme. The version number now has format X.Y.Z, where:
+  - X.Y is the minimum supported version of Moodle (for example, 3.9)
+  - Z is the version of the plugin within this series
+  Maximum supported version of Moodle can be found in the version.php file, for example
+  `$plugin->supported = [39, 500];` means that the plugin will work on Moodle 3.9 to 5.0.
 ### Fixed
 - Do not analyse plugins in restore pre-check if the backup is from a higher version of Moodle
 - Small fixes to the db schema check when the backed up site had incorrect field types
