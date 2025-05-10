@@ -172,6 +172,7 @@ class dbstructure {
         if (isset($xmlarr['XMLDB']['#']['TABLES']['0']['#']['TABLE'])) {
             foreach ($xmlarr['XMLDB']['#']['TABLES']['0']['#']['TABLE'] as $xmltable) {
                 $name = strtolower(trim($xmltable['@']['NAME']));
+                $this->fix_table_xml_from_backup($xmltable);
                 // Mdlcode-disable-next-line cannot-parse-db-tablename.
                 $table = new xmldb_table($name);
                 $table->arr2xmldb_table($xmltable);
@@ -180,6 +181,23 @@ class dbstructure {
         }
         set_config('xmldbdisablecommentchecking', $oldxmldb);
         // TODO try to match indexes/keys with the actual tables.
+    }
+
+    /**
+     * Fix definitions from backup that are no longer valid
+     *
+     * @param mixed $xmltable
+     * @return void
+     */
+    protected function fix_table_xml_from_backup(&$xmltable) {
+        foreach ($xmltable['#']['FIELDS']['0']['#']['FIELD'] as &$xmlarr) {
+            $type = strtolower(trim($xmlarr['@']['TYPE'] ?? ''));
+            // Old versions of Moodle had 'text' or 'binary' fields with default values, they are no longer valid in
+            // the current versions of Moodle. To avoid debugging messages, remove default.
+            if (in_array($type, ['text', 'binary']) && isset($xmlarr['@']['DEFAULT'])) {
+                unset($xmlarr['@']['DEFAULT']);
+            }
+        }
     }
 
     /**

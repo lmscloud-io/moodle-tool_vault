@@ -31,6 +31,7 @@ $string['addonplugins_extraplugins'] = 'Extra plugins';
 $string['addonplugins_extraplugins_desc'] = "The following plugins are present on this site but not present in the backup. All data associated with these plugins will be deleted during the restore process. After the restore process is finished you will be prompted to run the Moodle upgrade process that will re-install these plugins.";
 $string['addonplugins_fail'] = 'The backup contains plugins with higher versions than the code on this site. You must upgrade the code for these plugins before restoring from this backup.';
 $string['addonplugins_fail_missing'] = 'Some add-on plugins are present in the backup but not installed on this site. You must either install these plugins or enable the setting "Allow restore with missing plugins".';
+$string['addonplugins_fail_skipped'] = 'Add-on plugins can not be analysed when backup has a higher Moodle branch';
 $string['addonplugins_missing'] = 'Missing plugins';
 $string['addonplugins_missing_autoremove'] = 'Missing plugins will be automatically removed after restore. <a href="{$a}">Change</a>';
 $string['addonplugins_missing_desc'] = "The following plugins are present in the backup but are not installed on this site. After the restore these plugins will be listed as \"Missing from disk\", you can choose to uninstall them or keep the data until you add the code for the plugins. Until then, you may experience errors, for example, missing scheduled tasks.";

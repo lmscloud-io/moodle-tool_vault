@@ -43,9 +43,11 @@ class diskspace_restore extends check_base_restore {
         $sizes = array_fill_keys($filetypes, 0);
         foreach ($parent->get_files() as $file) {
             $bfile = backup_file::create($file);
-            $largestarchive = max($largestarchive, $bfile->filesize + $bfile->origsize);
-            $origsizes[$bfile->filetype] += $bfile->origsize;
-            $sizes[$bfile->filetype] += $bfile->filesize;
+            if (in_array($bfile->filetype, $filetypes)) {
+                $largestarchive = max($largestarchive, $bfile->filesize + $bfile->origsize);
+                $origsizes[$bfile->filetype] += $bfile->origsize;
+                $sizes[$bfile->filetype] += $bfile->filesize;
+            }
         }
 
         $mintmpspace = $largestarchive + $sizes[constants::FILENAME_DBSTRUCTURE] + $origsizes[constants::FILENAME_DBSTRUCTURE];

@@ -2,6 +2,11 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## Unreleased
+### Fixed
+- Do not analyse plugins in restore pre-check if the backup is from a higher version of Moodle
+- Small fixes to the db schema check when the backed up site had incorrect field types
+
 ## [2.12] - 2025-04-03
 
 ### Fixed

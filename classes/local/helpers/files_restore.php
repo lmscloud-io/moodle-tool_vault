@@ -218,7 +218,7 @@ class files_restore {
     /**
      * Returns the next file in the backup
      *
-     * @return array|null [full path on disk, local path in archive]
+     * @return string|null
      */
     protected function get_next(): ?string {
         if (!count($this->curentfileslist)) {
