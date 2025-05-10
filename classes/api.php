@@ -236,10 +236,12 @@ class api {
                     // In case of zero httpcode we will retry the request up to certain number of times.
                     throw $apiexception;
                 }
+                $delay = ($i + 1) * 2;
                 if ($logger) {
                     $logger->add_to_log($apiexception->getMessage() . " (attempt ".($i + 1)."/".
                         constants::REQUEST_API_RETRIES.")", constants::LOGLEVEL_WARNING);
                 }
+                sleep($delay);
             } else {
                 break;
             }
@@ -295,9 +297,12 @@ class api {
         $error = $curl->error;
         $info = $curl->get_info();
         $httpcode = (int)($info['http_code'] ?? 0);
+        $url = $curl->get_info()['url'] ?? '';
+        $url = parse_url($url, PHP_URL_HOST);
+        $urlshortened = (preg_match('/^.*\.([^\.]+\.[^\.]+\.[^\.]+)$/', $url, $matches)) ? $matches[1] : $url;
         if ($httpcode) {
             // This is an error returned by the server.
-            $errormessage = "AWS S3 error ({$httpcode})";
+            $errormessage = "$urlshortened error ({$httpcode})";
 
             if (strlen($response) && substr($response, 0, 6) === '<?xml ') {
                 $xmlarr = xmlize($response);
@@ -311,7 +316,9 @@ class api {
             return new api_exception($errormessage, $httpcode);
         } else {
             // This is a connection error.
-            return new api_exception("Can not connect to AWS S3, errno $errno: ". $error, 0);
+            $url = $curl->get_info()['url'] ?? '';
+            $url = parse_url($url, PHP_URL_HOST);
+            return new api_exception("Can not connect to $url, errno $errno: ". $error, 0);
         }
     }
 
@@ -367,7 +374,9 @@ class api {
                 if ($i == constants::REQUEST_S3_RETRIES - 1) {
                     throw $s3exception;
                 }
-                $sitebackup->add_to_log("Retrying");
+                $delay = ($i + 1) * 10;
+                $sitebackup->add_to_log("Retrying in $delay seconds");
+                sleep($delay);
             } else {
                 // On success extract ETag from the response headers.
                 if (preg_match('/\nETag: (.+?)\r?\n/', "\n{$resheader}\n", $match)) {
@@ -410,7 +419,9 @@ class api {
                 if ($i == constants::REQUEST_S3_RETRIES - 1) {
                     throw $s3exception;
                 }
-                $sitebackup->add_to_log("Retrying");
+                $delay = ($i + 1) * 10;
+                $sitebackup->add_to_log("Retrying in $delay seconds");
+                sleep($delay);
             } else {
                 break;
             }
@@ -683,9 +694,11 @@ class api {
                 if ($i == constants::REQUEST_S3_RETRIES - 1) {
                     throw $s3exception;
                 }
+                $delay = ($i + 1) * 10;
                 if ($logger) {
-                    $logger->add_to_log("Retrying");
+                    $logger->add_to_log("Retrying in $delay seconds");
                 }
+                sleep($delay);
             } else {
                 break;
             }
