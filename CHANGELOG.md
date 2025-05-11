@@ -2,6 +2,10 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## Unreleased
+### Fixed
+- Changed reference to namespaced moodle_exception class not available in the old Moodle versions
+
 ## [3.9.16] - 2026-03-02
 ### Fixed
 - Fixed wildcard pattern matching in the backup exclude tables setting #21
