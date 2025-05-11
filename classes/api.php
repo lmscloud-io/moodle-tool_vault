@@ -741,7 +741,7 @@ class api {
     /**
      * When scheduling new backup check if server allows it
      *
-     * @return mixed
+     * @return array
      * @throws \moodle_exception
      */
     public static function precheck_backup_allowed() {

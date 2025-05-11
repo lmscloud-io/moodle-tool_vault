@@ -32,13 +32,6 @@ use tool_vault\output\last_operation;
 class main extends base {
 
     /**
-     * Process action
-     */
-    public function process() {
-        parent::process();
-    }
-
-    /**
      * Display
      *
      * @param \renderer_base $output

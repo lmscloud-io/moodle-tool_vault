@@ -27,10 +27,10 @@ import Templates from 'core/templates';
 import Notification from 'core/notification';
 import {get_string as getString, get_strings as getStrings} from 'core/str';
 import Pending from 'core/pending';
-import Fragment from 'core/fragment';
+import ModalForm from 'core_form/modalform';
 
 const SELECTORS = {
-    START_BACKUP: 'form[data-action="startbackup"]',
+    START_BACKUP: '[data-action="startbackup"]',
     START_DRYRUN: 'form[data-action="startdryrun"]',
     START_RESTORE: 'form[data-action="startrestore"]',
     RESUME_RESTORE: 'form[data-action="resumerestore"]',
@@ -50,74 +50,41 @@ const submitForm = (backupForm, modal) => {
 };
 
 /**
- * Loads a fragment with a popup showing a spinner while the fragment is loading.
- * In case of an error, the error message is shown in the same popup.
- *
- * @param {String} title
- * @param {String} tempBody
- * @param {String} fragmentName
- * @param {Number} contextid
- * @param {Object} args
- * @returns {Promise}
- */
-const loadFragmentWithPopup = async(title, tempBody, fragmentName, contextid, args = {}) => {
-    let activeModal = null;
-    let fragment = null;
-    try {
-        activeModal = await ModalFactory.create({
-            type: ModalFactory.types.CANCEL,
-            title,
-            body: tempBody
-        });
-        activeModal.show();
-        fragment = await Fragment.loadFragment('tool_vault', fragmentName, contextid, args);
-        activeModal.destroy();
-    } catch (e) {
-        if (activeModal) {
-            activeModal.setBody(e.message);
-        } else {
-            Notification.exception(e);
-        }
-    }
-    return fragment;
-};
-
-/**
  * Register listener for "start backup" button
  */
 export const initStartBackup = () => {
-    const backupForm = document.querySelector(SELECTORS.START_BACKUP);
-    if (!backupForm) {
+    const startBackupButton = document.querySelector(SELECTORS.START_BACKUP);
+    if (!startBackupButton) {
         return;
     }
-    const contextid = backupForm.getAttribute('data-contextid');
-    backupForm.addEventListener('submit', async(event) => {
+    startBackupButton.addEventListener('click', async(event) => {
         event.preventDefault();
         const pendingPromise = new Pending('tool/vault:startBackupPopup');
-
         const [title, tempBody, saveButtonText] = await getStrings([
             {key: 'startbackup', component: 'tool_vault'},
             {key: 'pleasewait', component: 'tool_vault'},
             {key: 'startbackup', component: 'tool_vault'}
         ]);
-        const fragment = await loadFragmentWithPopup(title, tempBody, 'start_backup', contextid);
 
-        if (!fragment) {
-            pendingPromise.resolve();
-            return;
-        }
-
-        const modal = await ModalFactory.create({
-            type: ModalFactory.types.SAVE_CANCEL,
-            title,
-            body: fragment,
-            buttons: {save: saveButtonText},
-            removeOnClose: true
+        const modalForm = new ModalForm({
+            formClass: 'tool_vault\\form\\start_backup_form',
+            modalConfig: {title, body: tempBody},
+            saveButtonText: saveButtonText,
+            args: {},
+            returnFocus: startBackupButton,
         });
-        modal.show();
-
-        modal.getRoot().on(ModalEvents.save, () => submitForm(backupForm, modal));
-        modal.getRoot().on(ModalEvents.cancel, () => modal.hide());
+        modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (c) => {
+            window.location.href = c.detail;
+        });
+        modalForm.addEventListener(modalForm.events.LOADED, () => {
+            const button = modalForm.modal.getFooter().find("[data-action='save']");
+            if (button) {
+                button.addClass('hidden');
+                modalForm.modal.getRoot().on(ModalEvents.bodyRendered, () =>
+                    setTimeout(() => button.removeClass('hidden'), 500));
+            }
+        });
+        await modalForm.show();
         pendingPromise.resolve();
     });
 };

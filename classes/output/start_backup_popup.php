@@ -15,17 +15,17 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace tool_vault\output;
-use tool_vault\api;
+
 use tool_vault\local\cli_helper;
 
 /**
- * Class start_backup
+ * Prepare information for the start backup popup or start backup CLI
  *
  * @package    tool_vault
  * @copyright  2024 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class start_backup_popup implements \templatable {
+class start_backup_popup {
     /** @var array */
     protected $precheckresults;
 
@@ -44,51 +44,78 @@ class start_backup_popup implements \templatable {
     }
 
     /**
-     * Function to export the renderer data in a format that is suitable for a mustache template
+     * List of available storage buckets for this API key
      *
-     * @param \renderer_base $output Used to do a final render of any components that need to be rendered for export.
-     * @return array|\stdClass
+     * @return array where each element is an array with the following keys:
+     *    - id (string) - bucket ID (internal name)
+     *    - label (string) - bucket label (display name)
+     *    - isdefault (bool) - true if this bucket is default
+     *    - encryption (bool) - true if this bucket supports encryption
      */
-    public function export_for_template(\renderer_base $output) {
-        global $CFG, $USER;
-
+    protected function get_buckets(): array {
         $result = $this->precheckresults;
-
-        $description = get_string('defaultbackupdescription', 'tool_vault',
-            (object)[
-                'site' => $CFG->wwwroot,
-                'name' => fullname($USER, true),
-            ]);
-        $data = ['description' => $description];
-
         if (!empty($result['buckets']) && is_array($result['buckets'])) {
-            $data['buckets'] = [];
-            $hasext = false;
-            foreach ($result['buckets'] as $bucket) {
-                $data['buckets'][] = [
-                    'id' => $bucket['id'],
-                    'label' => $bucket['label'],
-                    'isdefault' => !empty($bucket['isdefault']),
-                ];
-                $default = (empty($bucket['isdefault']) && !empty($default)) ? $default : $bucket;
-                $hasext = $hasext || (($bucket['type'] ?? '') === 'ext');
+            return $result['buckets'];
+        }
+        return [];
+    }
+
+    /**
+     * Returns the options for the storage select element (default bucket first)
+     *
+     * @return array name=>label
+     */
+    public function get_buckets_select(): array {
+        $buckets = [];
+        $hasext = false;
+        foreach ($this->get_buckets() as $bucket) {
+            $b = [$bucket['id'] => $bucket['label']];
+            if (!empty($bucket['isdefault'])) {
+                $buckets = $b + $buckets;
+            } else {
+                $buckets = $buckets + $b;
             }
-            $data['withencryption'] = !empty($default['encryption']);
-            $data['showbucketselect'] = (count($data['buckets']) > 1) || $hasext;
+            $hasext = $hasext || (($bucket['type'] ?? '') === 'ext');
         }
+        $showbucketselect = (count($buckets) > 1) || $hasext;
+        return $showbucketselect ? $buckets : [];
+    }
 
-        $data['expiredays'] = (int)($result['expiredays'] ?? 0);
-        $data['canchangeexpiration'] = !empty($result['canchangeexpiration']);
+    /**
+     * Does any bucket support passphrase encryption
+     *
+     * @return bool
+     */
+    public function get_with_encryption(): bool {
+        $bucketswithenc = array_filter($this->get_buckets(), fn($bucket) => !empty($bucket['encryption']));
+        return !empty($bucketswithenc);
+    }
 
-        $limit = (int)($result['limit'] ?? 0);
-        if ($limit) {
-            $data['limit'] = display_size($limit);
-        }
+    /**
+     * Default expiration time in days (0 means never)
+     *
+     * @return int
+     */
+    public function get_expiration_days(): int {
+        return (int)($this->precheckresults['expiredays'] ?? 0);
+    }
 
-        $data['showupgrademessage'] = empty($result['canchangeexpiration']) || $limit > 0;
-        $data['vaulturl'] = api::get_frontend_url();
+    /**
+     * Can user change expiration time
+     *
+     * @return bool
+     */
+    public function get_can_change_expiration(): bool {
+        return !empty($this->precheckresults['canchangeexpiration']);
+    }
 
-        return $data;
+    /**
+     * Maximum size of backup allowed, in bytes, archived
+     *
+     * @return int
+     */
+    public function get_limit(): int {
+        return (int)($this->precheckresults['limit'] ?? 0);
     }
 
     /**
@@ -98,19 +125,18 @@ class start_backup_popup implements \templatable {
      * @return void
      */
     public function display_in_cli(cli_helper $clihelper) {
-        $precheckresults = $this->precheckresults;
 
-        $expiredays = (int)($precheckresults['expiredays'] ?? 0);
-        if (empty($precheckresults['canchangeexpiration'])) {
+        $expiredays = $this->get_expiration_days();
+        if (!$this->get_can_change_expiration()) {
             $clihelper->cli_writeln('Default backup expiration time: ' .
                 ($expiredays ? "After $expiredays days" : 'Never'));
             $clihelper->cli_writeln('You can not change the expiration time, option --expiredays will be ignored.');
         }
-        if ($limit = (int)($precheckresults['limit'] ?? 0)) {
+        if ($limit = $this->get_limit()) {
             $clihelper->cli_writeln(get_string('startbackup_limit_desc', 'tool_vault', display_size($limit)));
         }
 
-        $buckets = $precheckresults['buckets'] ?? [];
+        $buckets = $this->get_buckets();
         $cntwithenc = 0;
         foreach ($buckets as $bucket) {
             $cntwithenc += empty($bucket['encryption']) ? 0 : 1;
