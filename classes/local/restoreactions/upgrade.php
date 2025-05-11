@@ -127,6 +127,7 @@ class upgrade extends restore_action {
             'mod/data:comment',
             'mod/data:managecomments',
             'mod/lti:addmanualinstance',
+            // Mdlcode-disable-next-line unknown-capability.
             'tiny/premium:accesspremium',
         ];
         foreach ($caps as $cap) {

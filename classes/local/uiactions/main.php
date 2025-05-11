@@ -18,7 +18,6 @@ namespace tool_vault\local\uiactions;
 
 use moodle_url;
 use tool_vault\api;
-use tool_vault\form\apikey_form_legacy;
 use tool_vault\local\models\operation_model;
 use tool_vault\local\models\restore_model;
 use tool_vault\output\last_operation;
@@ -37,15 +36,6 @@ class main extends base {
      */
     public function process() {
         parent::process();
-        // TODO remove legacy code
-        if (!class_exists('\\core_form\\dynamic_form')) {
-            $form = new apikey_form_legacy(self::url());
-            if ($formdata = $form->get_data()) {
-                api::set_api_key($formdata->apikey);
-                $returnurl = $formdata->returnurl;
-                redirect($returnurl ?: self::url());
-            }
-        }
     }
 
     /**
