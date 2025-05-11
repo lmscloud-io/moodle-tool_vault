@@ -16,7 +16,6 @@
 
 namespace tool_vault;
 
-use core\exception\moodle_exception;
 use tool_vault\local\checks\check_base;
 use tool_vault\local\checks\plugins_restore;
 use tool_vault\local\checks\restore_precheck_failed;
@@ -229,7 +228,7 @@ class site_restore extends operation_base {
      */
     protected function ensure_db_restored() {
         if (!$this->model->is_db_restored()) {
-            throw new moodle_exception('Can not resume restore with incomplete database restore stage. '.
+            throw new \moodle_exception('Can not resume restore with incomplete database restore stage. '.
                 'Restore can only be resumed if it failed during dataroot or files stages.');
         }
     }
