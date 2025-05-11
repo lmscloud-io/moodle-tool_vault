@@ -73,7 +73,12 @@ class apikey_form extends dynamic_form {
      * Form definition.
      */
     protected function definition() {
-        apikey_form_helper::definition($this->_form);
+        $mform = $this->_form;
+
+        $mform->addElement('text', 'apikey', get_string('apikey', 'tool_vault'), ['style' => 'width:100%']);
+        $mform->setType('apikey', PARAM_RAW_TRIMMED);
+        $mform->addRule('apikey', null, 'required', null, 'client');
+
         $this->add_action_buttons();
     }
 
@@ -86,7 +91,19 @@ class apikey_form extends dynamic_form {
      */
     public function validation($data, $files) {
         $errors = [];
-        apikey_form_helper::validation($data, $errors);
+
+        if (!strlen($data['apikey'] ?? '')) {
+            $errors['apikey'] = get_string('required');
+        } else if (strlen($data['apikey']) < 15) {
+            $errors['apikey'] = get_string('error_apikeytooshort', 'tool_vault');
+        } else if (strlen($data['apikey']) > 100) {
+            $errors['apikey'] = get_string('error_apikeytoolong', 'tool_vault');
+        } else if (!preg_match('/^[a-zA-Z0-9]+$/', $data['apikey'])) {
+            $errors['apikey'] = get_string('error_apikeycharacters', 'tool_vault');
+        } else if (!api::validate_api_key($data['apikey'])) {
+            $errors['apikey'] = get_string('error_apikeynotvalid', 'tool_vault');
+        }
+
         return $errors;
     }
 }
