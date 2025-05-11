@@ -65,12 +65,6 @@ jobs:
           - php: '8.1'
             moodle-branch: 'MOODLE_401_STABLE'
             database: 'mariadb'
-          - php: '7.3'
-            moodle-branch: 'MOODLE_311_STABLE'
-            database: 'mariadb'
-          - php: '7.2'
-            moodle-branch: 'MOODLE_39_STABLE'
-            database: 'mariadb'
 
     steps:
       - name: Check out repository code

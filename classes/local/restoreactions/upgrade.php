@@ -123,9 +123,6 @@ class upgrade extends restore_action {
     protected function cleanup_deprecated_capabilities() {
         // TODO remove when https://tracker.moodle.org/browse/MDL-77237 is fixed.
         global $DB;
-        if (!function_exists('get_deprecated_capability_info')) {
-            return;
-        }
         $caps = [
             'mod/data:comment',
             'mod/data:managecomments',

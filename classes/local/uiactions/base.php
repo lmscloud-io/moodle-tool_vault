@@ -154,6 +154,7 @@ abstract class base {
                 'vaulturl' => api::get_frontend_url(),
                 'loginsrc' => $registerurl->out(false),
             ];
+            // TODO: remove legacy form
             if (!class_exists('\\core_form\\dynamic_form')) {
                 $data['islegacy'] = 1;
                 $form = new apikey_form_legacy(main::url(), ['returnurl' => static::url()]);

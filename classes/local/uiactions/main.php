@@ -37,6 +37,7 @@ class main extends base {
      */
     public function process() {
         parent::process();
+        // TODO remove legacy code
         if (!class_exists('\\core_form\\dynamic_form')) {
             $form = new apikey_form_legacy(self::url());
             if ($formdata = $form->get_data()) {
