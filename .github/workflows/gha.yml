@@ -89,10 +89,10 @@ jobs:
             database: 'mariadb'
             scssdeprecations: '1'
           - php: '8.2'
-            moodle-branch: 'main' # TODO replace with 'MOODLE_500_STABLE' once it is released
+            moodle-branch: 'MOODLE_500_STABLE'
             database: 'pgsql'
           - php: '8.4'
-            moodle-branch: 'main' # TODO replace with 'MOODLE_500_STABLE' once it is released
+            moodle-branch: 'MOODLE_500_STABLE'
             database: 'mariadb'
             scssdeprecations: '1'
 
