@@ -37,24 +37,21 @@
     <tr>
         <th>{{#str}} status, moodle {{/str}}</th>
         <td>{{{statusstr}}}
-            {{#resumeurl}}
+            {{#canresume}}
                 {{#isprogresspage}}
                     <br><b>This restore can be resumed! Please refer to <a href="{{vaultfaqurl}}" target="_blank">{{vaultfaqurl}}</a></b>
                 {{/isprogresspage}}
                 {{^isprogresspage}}
-                <form action="#" data-url="{{resumeurl}}" method="POST" data-action="resumerestore"
-                        data-restoreid="{{restoreid}}" data-encrypted="{{encrypted}}" style="display: inline;">
-                    <input type="hidden" name="passphrase" value="">
-                    <input type="submit" value={{#quote}}{{#str}} resume, tool_vault {{/str}}{{/quote}} class="btn btn-secondary"
-                        style="display: inline;" >
-                </form>
+                {{#resumerestorebutton}}
+                    {{> core/single_button }}
+                {{/resumerestorebutton}}
                 {{#js}}
                     require(['tool_vault/vault'], function(Vault) {
                         Vault.initResumeRestore("{{restoreid}}");
                     });
                 {{/js}}
                 {{/isprogresspage}}
-            {{/resumeurl}}
+            {{/canresume}}
         </td>
     </tr>
     <tr>
