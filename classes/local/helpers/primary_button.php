@@ -31,8 +31,10 @@ class primary_button extends single_button {
      *
      * @param string $text Button text
      * @param array $attributes Additional attributes
+     * @param bool $disabled Whether the button is disabled
+     * @param bool $isprimary Whether the button is primary or secondary
      */
-    public function __construct(string $text, array $attributes = []) {
+    public function __construct(string $text, array $attributes = [], bool $disabled = false, bool $isprimary = true) {
         global $CFG, $PAGE;
         $url = $PAGE->url;
         if ((int)$CFG->branch == 401) {
@@ -40,15 +42,73 @@ class primary_button extends single_button {
                 $url,
                 $text,
                 'get',
-                true,
+                $isprimary,
                 $attributes);
         } else {
             parent::__construct(
                 $url,
                 $text,
                 'get',
-                single_button::BUTTON_PRIMARY,
+                $isprimary ? single_button::BUTTON_PRIMARY : single_button::BUTTON_SECONDARY,
                 $attributes);
         }
+        if ($disabled) {
+            $this->disabled = true;
+        }
+    }
+
+    /**
+     * Create a button for starting a dry run.
+     *
+     * @param string $backupkey
+     * @param bool $encrypted
+     * @param bool $disabled
+     * @param string|null $label
+     * @return single_button
+     */
+    public static function dryrun_button(string $backupkey, bool $encrypted, bool $disabled, ?string $label = null): single_button {
+        $label = $label ?? get_string('startdryrun', 'tool_vault');
+        $attributes = [
+            'data-action' => 'startdryrun',
+            'data-backupkey' => $backupkey,
+            'data-encrypted' => $encrypted ? 1 : 0,
+        ];
+        return new self($label, $attributes, $disabled, false);
+    }
+
+    /**
+     * Create a button for starting a restore.
+     *
+     * @param string $backupkey
+     * @param bool $encrypted
+     * @param bool $disabled
+     * @param string|null $label
+     * @return single_button
+     */
+    public static function restore_button(string $backupkey, bool $encrypted, bool $disabled,
+            ?string $label = null): single_button {
+        $label = $label ?? get_string('startrestore', 'tool_vault');
+        $attributes = [
+            'data-action' => 'startrestore',
+            'data-backupkey' => $backupkey,
+            'data-encrypted' => $encrypted ? 1 : 0,
+        ];
+        return new self($label, $attributes, $disabled, false);
+    }
+
+    /**
+     * Create a button for resuming a restore.
+     *
+     * @param int $restoreid
+     * @param bool $encrypted
+     * @return single_button
+     */
+    public static function resume_button(int $restoreid, bool $encrypted): single_button {
+        $attributes = [
+            'data-action' => 'resumerestore',
+            'data-restoreid' => $restoreid,
+            'data-encrypted' => $encrypted ? 1 : 0,
+        ];
+        return new self(get_string('resume', 'tool_vault'), $attributes, false, false);
     }
 }

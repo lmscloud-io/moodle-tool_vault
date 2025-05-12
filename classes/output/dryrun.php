@@ -19,11 +19,10 @@ namespace tool_vault\output;
 use renderer_base;
 use tool_vault\api;
 use tool_vault\constants;
+use tool_vault\local\helpers\primary_button;
 use tool_vault\local\helpers\ui;
 use tool_vault\local\models\remote_backup;
-use tool_vault\local\uiactions\restore_dryrun;
 use tool_vault\local\uiactions\restore_remotedetails;
-use tool_vault\local\uiactions\restore_restore;
 use tool_vault\site_restore_dryrun;
 
 /**
@@ -92,12 +91,17 @@ class dryrun implements \templatable {
             ];
         }
         if ($this->remotebackup) {
+            $encrypted = $this->remotebackup->get_encrypted();
+            $rv['restoreallowed'] = $restoreallowed = api::are_restores_allowed() && !api::is_cli_only();
             $rv['showactions'] = true;
-            $rv['restoreallowed'] = api::are_restores_allowed() && !api::is_cli_only();
-            $rv['dryrunurl'] = restore_dryrun::url(['backupkey' => $model->backupkey])->out(false);
-            $rv['restoreurl'] = restore_restore::url(['backupkey' => $model->backupkey])->out(false);
+            $label = get_string('repeatprecheck', 'tool_vault');
+            $startdryrunbutton = primary_button::dryrun_button($model->backupkey, $encrypted, !$restoreallowed, $label);
+            $rv['startdryrunbutton'] = $startdryrunbutton->export_for_template($output);
+            $startrestorebutton = primary_button::restore_button($model->backupkey, $encrypted, !$restoreallowed);
+            $rv['startrestorebutton'] = $startrestorebutton->export_for_template($output);
+
             $rv['startdryrunlabel'] = get_string('repeatprecheck', 'tool_vault');
-            $rv['encrypted'] = (int)$this->remotebackup->get_encrypted();
+            $rv['encrypted'] = (int)$encrypted;
         }
         return $rv;
     }

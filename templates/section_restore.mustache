@@ -71,7 +71,9 @@
             <td>{{totalsizestr}}</td>
             <td>{{encryptedstr}}</td>
             <td>
-                <a href="{{backupdetailsurl}}" class="btn btn-secondary">{{#str}} viewdetails, tool_vault {{/str}}</a>
+                <div class="singlebutton">
+                    <a href="{{backupdetailsurl}}" class="btn btn-secondary">{{#str}} viewdetails, tool_vault {{/str}}</a>
+                </div>
                 {{#showactions}}
                     {{> tool_vault/remote_backup_buttons}}
                 {{/showactions}}

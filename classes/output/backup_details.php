@@ -18,17 +18,14 @@ namespace tool_vault\output;
 
 use tool_vault\api;
 use tool_vault\constants;
+use tool_vault\local\helpers\primary_button;
 use tool_vault\local\helpers\ui;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\dryrun_model;
 use tool_vault\local\models\operation_model;
 use tool_vault\local\models\remote_backup;
 use tool_vault\local\models\restore_model;
-use tool_vault\local\uiactions\restore;
-use tool_vault\local\uiactions\restore_dryrun;
 use tool_vault\local\uiactions\restore_remotedetails;
-use tool_vault\local\uiactions\restore_restore;
-use tool_vault\site_restore_dryrun;
 
 /**
  * Backup details
@@ -141,8 +138,11 @@ class backup_details implements \templatable {
                 }
             }
             $rv['showactions'] = true;
-            $rv['dryrunurl'] = restore_dryrun::url(['backupkey' => $backupkey])->out(false);
-            $rv['restoreurl'] = restore_restore::url(['backupkey' => $backupkey])->out(false);
+            $startdryrunbutton = primary_button::dryrun_button($backupkey, $encrypted, !$rv['restoreallowed']);
+            $rv['startdryrunbutton'] = $startdryrunbutton->export_for_template($output);
+            $startrestorebutton = primary_button::restore_button($backupkey, $encrypted, !$rv['restoreallowed']);
+            $rv['startrestorebutton'] = $startrestorebutton->export_for_template($output);
+
         } else if ($this->fulldetails && !$this->isprogresspage && $this->backup->status === constants::STATUS_FINISHED) {
             $error = get_string('error_backupnotavailable', 'tool_vault', $backupkey);
             // TODO explanation why:

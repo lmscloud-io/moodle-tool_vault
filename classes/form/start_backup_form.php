@@ -59,6 +59,12 @@ class start_backup_form extends dynamic_form {
      */
     protected function check_access_for_dynamic_submission(): void {
         require_capability('moodle/site:config', $this->get_context_for_dynamic_submission());
+        if (api::is_cli_only()) {
+            throw new \moodle_exception('error_usecli', 'tool_vault');
+        }
+        if (!api::is_registered()) {
+            throw new \moodle_exception('warning_backupdisablednoapikey', 'tool_vault');
+        }
     }
 
     /**

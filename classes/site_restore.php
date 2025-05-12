@@ -99,10 +99,6 @@ class site_restore extends operation_base {
             throw new \moodle_exception('error_restoresnotallowed', 'tool_vault');
         }
 
-        if ($records = restore_model::get_records([constants::STATUS_SCHEDULED])) {
-            // Pressed button twice maybe?
-            return new static(reset($records));
-        }
         if (restore_model::get_records([constants::STATUS_INPROGRESS])) {
             throw new \moodle_exception('error_anotherrestoreisinprogress', 'tool_vault');
         }

@@ -21,9 +21,7 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-import ModalFactory from 'core/modal_factory';
 import ModalEvents from 'core/modal_events';
-import Templates from 'core/templates';
 import Notification from 'core/notification';
 import {get_string as getString, get_strings as getStrings} from 'core/str';
 import Pending from 'core/pending';
@@ -31,22 +29,9 @@ import ModalForm from 'core_form/modalform';
 
 const SELECTORS = {
     START_BACKUP: '[data-action="startbackup"]',
-    START_DRYRUN: 'form[data-action="startdryrun"]',
-    START_RESTORE: 'form[data-action="startrestore"]',
-    RESUME_RESTORE: 'form[data-action="resumerestore"]',
-};
-
-const submitForm = (backupForm, modal) => {
-    const popupBody = modal.getBody()[0];
-    for (let i of ['passphrase', 'description', 'bucket', 'expiredays']) {
-        const el1 = popupBody.querySelector(`[name="${i}"]`),
-            el2 = backupForm.querySelector(`input[name="${i}"]`);
-        if (el1 && el2) {
-            el2.value = el1.value;
-        }
-    }
-    backupForm.setAttribute('action', backupForm.getAttribute('data-url'));
-    backupForm.submit();
+    START_DRYRUN: '[data-action="startdryrun"]',
+    START_RESTORE: '[data-action="startrestore"]',
+    RESUME_RESTORE: '[data-action="resumerestore"]',
 };
 
 /**
@@ -89,84 +74,46 @@ export const initStartBackup = () => {
     });
 };
 
+const processRestoreButtonClick = (mainButton, title, isDryRun, isResume = false) => {
+    const modalForm = new ModalForm({
+        formClass: 'tool_vault\\form\\start_restore_form',
+        modalConfig: {title},
+        saveButtonText: title,
+        args: {
+            dryrun: isDryRun ? 1 : 0,
+            resume: isResume ? 1 : 0,
+            backupkey: mainButton.getAttribute('data-backupkey') ?? '',
+            encrypted: parseInt(mainButton.getAttribute('data-encrypted')),
+        },
+        returnFocus: mainButton,
+    });
+    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (c) => {
+        window.location.href = c.detail;
+    });
+    modalForm.show().catch(Notification.exception);
+};
+
 export const initStartDryRun = (backupkey) => {
-    const dryrunForm = document.querySelector(SELECTORS.START_DRYRUN + `[data-backupkey="${backupkey}"]`);
-    if (!dryrunForm) {
-        return;
-    }
-    dryrunForm.addEventListener('submit', event => {
+    const dryrunButton = document.querySelector(SELECTORS.START_DRYRUN + `[data-backupkey="${backupkey}"]`);
+    dryrunButton?.addEventListener('click', (event) => {
         event.preventDefault();
-        ModalFactory.create({
-            type: ModalFactory.types.SAVE_CANCEL,
-            title: getString('startdryrun', 'tool_vault'),
-            body: Templates.render('tool_vault/start_restore_popup',
-                {dryrun: 1, encrypted: parseInt(dryrunForm.getAttribute('data-encrypted'))}),
-            buttons: {save: getString('startdryrun', 'tool_vault')},
-            removeOnClose: true
-        })
-            .then(function(modal) {
-                modal.show();
-
-                modal.getRoot().on(ModalEvents.save, () => submitForm(dryrunForm, modal));
-                modal.getRoot().on(ModalEvents.cancel, () => modal.hide());
-
-                return modal;
-            })
-            .catch(Notification.exception);
+        processRestoreButtonClick(dryrunButton, getString('startdryrun', 'tool_vault'), true);
     });
 };
 
 export const initStartRestore = (backupkey) => {
-    const restoreForm = document.querySelector(SELECTORS.START_RESTORE + `[data-backupkey="${backupkey}"]`);
-    if (!restoreForm) {
-        return;
-    }
-    restoreForm.addEventListener('submit', event => {
+    const restoreButton = document.querySelector(SELECTORS.START_RESTORE + `[data-backupkey="${backupkey}"]`);
+    restoreButton?.addEventListener('click', (event) => {
         event.preventDefault();
-        ModalFactory.create({
-            type: ModalFactory.types.SAVE_CANCEL,
-            title: getString('startrestore', 'tool_vault'),
-            body: Templates.render('tool_vault/start_restore_popup',
-                {dryrun: 0, encrypted: parseInt(restoreForm.getAttribute('data-encrypted'))}),
-            buttons: {save: getString('startrestore', 'tool_vault')},
-            removeOnClose: true
-        })
-            .then(function(modal) {
-                modal.show();
-
-                modal.getRoot().on(ModalEvents.save, () => submitForm(restoreForm, modal));
-                modal.getRoot().on(ModalEvents.cancel, () => modal.hide());
-
-                return modal;
-            })
-            .catch(Notification.exception);
+        processRestoreButtonClick(restoreButton, getString('startrestore', 'tool_vault'), false);
     });
 };
 
 export const initResumeRestore = (restoreid) => {
     const restoreForm = document.querySelector(SELECTORS.RESUME_RESTORE + `[data-restoreid="${restoreid}"]`);
-    if (!restoreForm) {
-        return;
-    }
-    restoreForm.addEventListener('submit', event => {
+    restoreForm?.addEventListener('click', event => {
         event.preventDefault();
-        ModalFactory.create({
-            type: ModalFactory.types.SAVE_CANCEL,
-            title: getString('resumerestore', 'tool_vault'),
-            body: Templates.render('tool_vault/start_restore_popup',
-                {dryrun: 0, resume: 1, encrypted: parseInt(restoreForm.getAttribute('data-encrypted'))}),
-            buttons: {save: getString('resume', 'tool_vault')},
-            removeOnClose: true
-        })
-            .then(function(modal) {
-                modal.show();
-
-                modal.getRoot().on(ModalEvents.save, () => submitForm(restoreForm, modal));
-                modal.getRoot().on(ModalEvents.cancel, () => modal.hide());
-
-                return modal;
-            })
-            .catch(Notification.exception);
+        processRestoreButtonClick(restoreForm, getString('resumerestore', 'tool_vault'), false, true);
     });
 };
 

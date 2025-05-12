@@ -19,6 +19,7 @@ namespace tool_vault\output;
 use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\checks\check_base;
+use tool_vault\local\helpers\primary_button;
 use tool_vault\local\helpers\ui;
 use tool_vault\local\models\restore_model;
 use tool_vault\local\uiactions\restore_remotedetails;
@@ -76,10 +77,15 @@ class restore_details implements \templatable {
             'isprogresspage' => $this->isprogresspage,
             'prechecks' => [],
             'restoreid' => $this->restore->id,
-            'resumeurl' => $this->restore->can_resume() ?
-                \tool_vault\local\uiactions\restore_resume::url(['id' => $this->restore->id])->out(false) : null,
             'vaultfaqurl' => api::get_frontend_url().'/faq',
         ];
+        if ($this->restore->can_resume()) {
+            $rv['canresume'] = true;
+            if (!$this->isprogresspage) {
+                $button = primary_button::resume_button($this->restore->id, $this->restore->get_encrypted());
+                $rv['resumerestorebutton'] = $button->export_for_template($output);
+            }
+        }
 
         if ($this->restore->status == constants::STATUS_INPROGRESS) {
             $lastmodified = $this->restore->get_last_modified();
