@@ -16,7 +16,7 @@
 
 namespace tool_vault\local\models;
 
-use core\exception\moodle_exception;
+use moodle_exception;
 use tool_vault\constants;
 use tool_vault\local\helpers\ui;
 
