@@ -18,6 +18,7 @@ namespace tool_vault\local\uiactions;
 
 use tool_vault\api;
 use tool_vault\constants;
+use tool_vault\local\helpers\primary_button;
 use tool_vault\local\models\backup_model;
 use tool_vault\local\models\operation_model;
 use tool_vault\output\check_display;
@@ -48,14 +49,8 @@ class backup extends base {
      * @return array
      */
     public function export_for_template($output): array {
-        global $CFG, $USER;
-        $button = new \single_button(
-            self::url(),
-            get_string('startbackup', 'tool_vault'),
-            'get',
-            true,
-            ['data-action' => 'startbackup']
-        );
+        $button = new primary_button(get_string('startbackup', 'tool_vault'),
+            ['data-action' => 'startbackup']);
         $whybackupdisabled = null;
         $activeprocesses = operation_model::get_active_processes(true);
         if (api::is_cli_only()) {
