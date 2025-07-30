@@ -175,7 +175,7 @@ $string['lastop_restorescheduled_text'] = 'Your restore is scheduled and will be
 $string['lastupdated'] = 'Last updated';
 $string['loginexplanation'] = 'Create an account on {$a} to be able to backup or restore the site. With the <b>free account</b> you will be able to backup and restore small sites and store them up to 7 days in the cloud.';
 $string['manageremoteaccount'] = 'Manage your account';
-$string['messageprovider:statusupdate'] = 'Status update for Vault - Site migration';
+$string['messageprovider:statusupdate'] = 'Status update for Vault - Site backup and migration';
 $string['moodleversion_backupinfo'] = 'Backup made in version {$a->version} (Moodle {$a->branch})';
 $string['moodleversion_fail'] = 'Site version number has to be greater than or equal to the version in the backup. This backup is {$a->version} and this site is {$a->siteversion}';
 $string['moodleversion_fail_cannotupgrade'] = 'Restore is blocked because Moodle cannot upgrade from {$a->backuprelease} to {$a->currentrelease}. See the <a href="{$a->url}">environment page</a> for upgrade requirements. Vault is able to upgrade from this version if you choose "Automatically upgrade Moodle after restore" in the <a href="{$a->settingsurl}">settings</a>.';
@@ -239,11 +239,11 @@ Note that this will only exclude data in the plugin's own tables, settings, asso
 $string['settings_backupexcludetables'] = 'Exclude tables';
 $string['settings_backupexcludetables_desc'] = 'Vault will back up all tables that start with the prefix \'{$a->prefix}\' even if they are not listed in xmldb schemas of the core or installed plugins.<br>Here you can list extra tables that should not be backed up. Use an asterisk (\'*\') to exclude all extra tables.<br>You must include the table prefix when excluding tables.';
 $string['settings_clionly'] = 'Allow to perform site backup and restore from CLI only';
-$string['settings_clionly_desc'] = 'Checking this will hide the "Vault - Site migration" from the site administration and prevent access to backup and restore. ';
+$string['settings_clionly_desc'] = 'Checking this will hide the "Vault - Site backup and migration" from the site administration and prevent access to backup and restore. ';
 $string['settings_desc'] = "Vault plugin settings where you can configure what to exclude during backup or preserve during restore.";
 $string['settings_forcedebug'] = 'Force debugging during backup and restore';
 $string['settings_forcedebug_desc'] = 'Regardless of the site configuration, developer debugging and debug display will be enabled during backup and restore. This will affect the tool vault logs only, and will not change the values for these settings that are included in the backup.';
-$string['settings_header'] = 'Vault - Site migration settings';
+$string['settings_header'] = 'Vault - Site backup and migration settings';
 $string['settings_headerbackup'] = 'Backup settings';
 $string['settings_headerrestore'] = 'Restore settings';
 $string['settings_restorepreservedataroot'] = 'Preserve paths in dataroot';

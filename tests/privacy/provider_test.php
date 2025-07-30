@@ -21,7 +21,7 @@ use core_privacy\manager;
 use core_privacy\local\metadata\collection;
 
 /**
- * Tests for Vault - Site migration
+ * Tests for Vault - Site backup and migration
  *
  * @covers     \tool_vault\privacy\provider
  * @package    tool_vault

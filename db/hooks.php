@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Hook callbacks for Vault - Site migration
+ * Hook callbacks for Vault - Site backup and migration
  *
  * @package    tool_vault
  * @copyright  Marina Glancy

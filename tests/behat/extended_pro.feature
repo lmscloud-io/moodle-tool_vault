@@ -10,7 +10,7 @@ Feature: Performing full site backup and restore with a pro account in Vault
     And the following config values are set as admin:
       | allowrestore | 1 | tool_vault |
     When I log in as "admin"
-    And I navigate to "Server > Vault - Site migration" in site administration
+    And I navigate to "Server > Vault - Site backup and migration" in site administration
     And I click on "Site backup" "link" in the "region-main" "region"
     And I wait "3" seconds
     And I press "Start backup"
@@ -27,7 +27,7 @@ Feature: Performing full site backup and restore with a pro account in Vault
     And I reload the page
     And I should see "Backup finished"
     And I log in as "admin"
-    And I navigate to "Server > Vault - Site migration" in site administration
+    And I navigate to "Server > Vault - Site backup and migration" in site administration
     And I click on "Site restore" "link" in the "region-main" "region"
     And I click on "Refresh" "link" in the "region-main" "region"
     And I click on "Restore this backup" "button" in the row of my vault backup
@@ -36,10 +36,10 @@ Feature: Performing full site backup and restore with a pro account in Vault
     And I wait "2" seconds
     And I run the scheduled task "tool_vault\task\cron_task"
     And I log in as "admin"
-    And I navigate to "Server > Vault - Site migration" in site administration
+    And I navigate to "Server > Vault - Site backup and migration" in site administration
     And I click on "Site restore" "link" in the "region-main" "region"
     And I should see "Restore completed"
-    And I follow "Vault - Site migration"
+    And I follow "Vault - Site backup and migration"
     And I click on "History" "link" in the "region-main" "region"
     And I click on "View details" "link" in the "Past backups on this site" "table"
     And the following should exist in the "Backup details" table:
@@ -50,7 +50,7 @@ Feature: Performing full site backup and restore with a pro account in Vault
     And I follow "Expand logs"
     And I should not see "Expand logs"
     And I should see "Collapse logs"
-    And I navigate to "Server > Vault - Site migration" in site administration
+    And I navigate to "Server > Vault - Site backup and migration" in site administration
     And I click on "History" "link" in the "region-main" "region"
     And I click on "View details" "link" in the "Past restores on this site" "table"
     And the following should exist in the "Restore details" table:
@@ -76,7 +76,7 @@ Feature: Performing full site backup and restore with a pro account in Vault
     And the following config values are set as admin:
       | allowrestore | 1  | tool_vault |
     When I log in as "admin"
-    And I navigate to "Server > Vault - Site migration" in site administration
+    And I navigate to "Server > Vault - Site backup and migration" in site administration
     And I click on "Site backup" "link" in the "region-main" "region"
     And I press "Start backup"
     And I wait until "Automatically expire backup after" "field" exists
@@ -92,7 +92,7 @@ Feature: Performing full site backup and restore with a pro account in Vault
     And I reload the page
     And I should see "Backup finished"
     And I log in as "admin"
-    And I navigate to "Server > Vault - Site migration" in site administration
+    And I navigate to "Server > Vault - Site backup and migration" in site administration
     And I click on "Site restore" "link" in the "region-main" "region"
     And I click on "Refresh" "link" in the "region-main" "region"
     And I click on "Run pre-check" "button" in the row of my vault backup

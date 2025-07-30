@@ -18,7 +18,7 @@ namespace tool_vault\local\helpers;
 use ReflectionClass;
 
 /**
- * Tests for Vault - Site migration
+ * Tests for Vault - Site backup and migration
  *
  * @covers     \tool_vault\local\helpers\dbops
  * @package    tool_vault

@@ -17,7 +17,7 @@
 namespace tool_vault\local\helpers;
 
 /**
- * Tests for Vault - Site migration
+ * Tests for Vault - Site backup and migration
  *
  * @covers     \tool_vault\local\helpers\tempfiles
  * @package    tool_vault

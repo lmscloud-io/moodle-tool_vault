@@ -2,6 +2,11 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## Unreleased
+### Changed
+- Changed plugin name to "Vault - Site backup and migration" to better reflect its purpose.
+- Button style changes, changes in README file.
+
 ## [3.9.13] - 2025-05-10
 ### Changed
 - New version numbering scheme. The version number now has format X.Y.Z, where:

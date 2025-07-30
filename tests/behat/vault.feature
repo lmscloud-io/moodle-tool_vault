@@ -6,17 +6,17 @@ Feature: Using tool vault
 
   Scenario: Vault UI
     When I log in as "admin"
-    And I navigate to "Server > Vault - Site migration" in site administration
+    And I navigate to "Server > Vault - Site backup and migration" in site administration
     And I click on "Site backup" "link" in the "region-main" "region"
-    And I follow "Vault - Site migration"
+    And I follow "Vault - Site backup and migration"
     And I click on "Site restore" "link" in the "region-main" "region"
-    And I follow "Vault - Site migration"
+    And I follow "Vault - Site backup and migration"
     And I click on "Settings" "link" in the "region-main" "region"
-    And I navigate to "Server > Vault - Site migration" in site administration
+    And I navigate to "Server > Vault - Site backup and migration" in site administration
     And I click on "History" "link" in the "region-main" "region"
     And I run the scheduled task "\tool_vault\task\cron_task"
     And I am on homepage
-    And I navigate to "Server > Vault - Site migration" in site administration
+    And I navigate to "Server > Vault - Site backup and migration" in site administration
     And I click on "Site backup" "link" in the "region-main" "region"
     And I should see "Database modifications"
     And I follow "See full report"
@@ -24,7 +24,7 @@ Feature: Using tool vault
 
   Scenario: Entering API key for Vault
     When I log in as "admin"
-    And I navigate to "Server > Vault - Site migration" in site administration
+    And I navigate to "Server > Vault - Site backup and migration" in site administration
     And the "src" attribute of "#getapikey_iframe" "css_element" should contain "about:blank"
     And I press "Sign in"
     And I wait "2" seconds
@@ -48,7 +48,7 @@ Feature: Using tool vault
   Scenario: Vault forget API key
     Given test API key for any account is specified for tool_vault
     When I log in as "admin"
-    And I navigate to "Server > Vault - Site migration" in site administration
+    And I navigate to "Server > Vault - Site backup and migration" in site administration
     And "I have an API key" "button" should not exist
     And I should see "You are using API key"
     And I follow "Forget API key"
