@@ -51,7 +51,7 @@ jobs:
       matrix:
         include:
           - php: '8.4'
-            moodle-branch: 'main' # TODO replace with 'MOODLE_500_STABLE' once it is released
+            moodle-branch: 'MOODLE_500_STABLE'
             database: 'mariadb'
           - php: '8.3'
             moodle-branch: 'MOODLE_405_STABLE'
