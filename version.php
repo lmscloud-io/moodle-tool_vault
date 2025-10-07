@@ -29,5 +29,5 @@ $plugin->component    = 'tool_vault';
 $plugin->release      = '3.9.14';
 $plugin->version      = 2025073000;
 $plugin->requires     = 2020061500;
-$plugin->supported    = [39, 500];
+$plugin->supported    = [39, 501];
 $plugin->maturity     = MATURITY_STABLE;
