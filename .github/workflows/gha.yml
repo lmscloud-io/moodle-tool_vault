@@ -85,14 +85,12 @@ jobs:
           - php: '8.1'
             moodle-branch: 'MOODLE_405_STABLE'
             database: 'mariadb'
-            scssdeprecations: '1'
           - php: '8.2'
             moodle-branch: 'MOODLE_500_STABLE'
             database: 'pgsql'
           - php: '8.4'
             moodle-branch: 'MOODLE_500_STABLE'
             database: 'mariadb'
-            scssdeprecations: '1'
           - php: '8.2'
             moodle-branch: 'MOODLE_501_STABLE'
             database: 'mariadb'
@@ -134,7 +132,7 @@ jobs:
           moodle-plugin-ci add-config "define('PHPUNIT_LONGTEST', true);"
           moodle-plugin-ci add-config "define('PHPUNIT_BACKUPTEMPDIR', '$(pwd)/tmpbackup');"
           if [[ "${{ matrix.scssdeprecations }}" == "1" ]]; then
-            php moodle/admin/tool/behat/cli/util_single_run.php --enable --add-core-features-to-theme --scss-deprecations
+            php moodle/public/admin/tool/behat/cli/util_single_run.php --enable --add-core-features-to-theme --scss-deprecations
           fi
         env:
           DB: ${{ matrix.database }}
