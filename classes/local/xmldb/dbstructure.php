@@ -168,7 +168,7 @@ class dbstructure {
         global $CFG;
         $oldxmldb = $CFG->xmldbdisablecommentchecking ?? null;
         $CFG->xmldbdisablecommentchecking = 1;
-        $xmlarr = xmlize(file_get_contents($filepath));
+        $xmlarr = \tool_vault\api::parse_xml(file_get_contents($filepath));
         if (isset($xmlarr['XMLDB']['#']['TABLES']['0']['#']['TABLE'])) {
             foreach ($xmlarr['XMLDB']['#']['TABLES']['0']['#']['TABLE'] as $xmltable) {
                 $name = strtolower(trim($xmltable['@']['NAME']));

@@ -305,7 +305,7 @@ class api {
             $errormessage = "$urlshortened error ({$httpcode})";
 
             if (strlen($response) && substr($response, 0, 6) === '<?xml ') {
-                $xmlarr = xmlize($response);
+                $xmlarr = self::parse_xml($response);
                 $s3errorcode = $xmlarr['Error']['#']['Code'][0]['#'] ?? null;
                 $s3errormessage = $xmlarr['Error']['#']['Message'][0]['#'] ?? null;
                 if ($s3errorcode || $s3errormessage) {
@@ -427,7 +427,7 @@ class api {
             }
         }
 
-        $xmlarr = xmlize($res);
+        $xmlarr = self::parse_xml($res);
         $uploadid = $xmlarr['InitiateMultipartUploadResult']['#']['UploadId'][0]['#'] ?? null;
 
         if (!$uploadid) {
@@ -891,6 +891,22 @@ class api {
                 debugging($t->getMessage(), DEBUG_DEVELOPER);
             }
             return false;
+        }
+    }
+
+    /**
+     * Parse XML string into an array
+     *
+     * @param string $text
+     * @return array|false representation of the parsed XML.
+     */
+    public static function parse_xml($text) {
+        global $CFG;
+        if ($CFG->branch < 501) {
+            require_once($CFG->libdir.'/xmlize.php');
+            return xmlize($text);
+        } else {
+            return (new \core\xml_parser())->parse($text);
         }
     }
 }

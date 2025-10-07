@@ -72,7 +72,7 @@ final class dbtable_test extends \advanced_testcase {
 
         $oldxmldb = $CFG->xmldbdisablecommentchecking ?? null;
         $CFG->xmldbdisablecommentchecking = 1;
-        $xmlarr = xmlize($xml);
+        $xmlarr = \tool_vault\api::parse_xml($xml);
         foreach ($xmlarr['XMLDB']['#']['TABLE'] as $xmltable) {
             $name = strtolower(trim($xmltable['@']['NAME']));
             // Mdlcode-disable-next-line cannot-parse-db-tablename.
