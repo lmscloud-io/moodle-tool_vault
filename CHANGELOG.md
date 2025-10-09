@@ -2,6 +2,10 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## [3.9.15] - 2025-10-09
+### Added
+- Support for Moodle 5.1
+
 ## [3.9.14] - 2025-07-30
 ### Changed
 - Changed plugin name to "Vault - Site backup and migration" to better reflect its purpose.
