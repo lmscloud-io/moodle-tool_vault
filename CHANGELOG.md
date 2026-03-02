@@ -2,6 +2,13 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## [3.9.16] - 2026-03-02
+### Fixed
+- Fixed wildcard pattern matching in the backup exclude tables setting #21
+- Fixed "Show backtrace" link toggling wrong section when multiple errors are displayed #5
+- Fixed orphaned temporary directories causing debugging messages in PHPUnit tests #18
+- Coding style fixes to comply with the latest version of moodle-plugin-ci
+
 ## [3.9.15] - 2025-10-09
 ### Added
 - Support for Moodle 5.1
