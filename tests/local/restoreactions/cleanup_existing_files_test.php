@@ -33,7 +33,7 @@ use tool_vault\site_restore;
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_backup_mock.php');
+require_once($CFG->dirroot . '/' . $CFG->admin . '/tool/vault/tests/fixtures/site_backup_mock.php');
 
 /**
  * The cleanup_existing_files test class.
@@ -45,7 +45,6 @@ require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_back
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class cleanup_existing_files_test extends \advanced_testcase {
-
     /**
      * Cleanup all temp files
      *
@@ -63,7 +62,7 @@ final class cleanup_existing_files_test extends \advanced_testcase {
         // Create a file in filedir.
         $file = $this->create_file();
         $chash = $file->get_contenthash();
-        $filepathondisk = $CFG->dataroot.'/filedir/'.substr($chash, 0, 2).'/'.substr($chash, 2, 2).'/'.$chash;
+        $filepathondisk = $CFG->dataroot . '/filedir/' . substr($chash, 0, 2) . '/' . substr($chash, 2, 2) . '/' . $chash;
         $this->assertTrue(file_exists($filepathondisk));
 
         $siterestore = $this->create_site_restore();

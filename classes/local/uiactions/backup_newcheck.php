@@ -26,7 +26,6 @@ use tool_vault\local\checks\check_base;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_newcheck extends base {
-
     /**
      * Process action
      */

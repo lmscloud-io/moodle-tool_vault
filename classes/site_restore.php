@@ -43,7 +43,6 @@ use tool_vault\local\xmldb\dbtable;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class site_restore extends operation_base {
-
     /** @var restore_model */
     protected $model;
     /** @var check_base[] */
@@ -185,7 +184,10 @@ class site_restore extends operation_base {
             $this->add_to_log('Preparing to restore');
 
             $this->prechecks = site_restore_dryrun::execute_prechecks(
-                $this->get_files_restore(constants::FILENAME_DBSTRUCTURE), $this->model, $this);
+                $this->get_files_restore(constants::FILENAME_DBSTRUCTURE),
+                $this->model,
+                $this
+            );
 
             foreach ($this->prechecks as $chk) {
                 if (!$chk->success()) {
@@ -229,7 +231,7 @@ class site_restore extends operation_base {
      */
     protected function ensure_db_restored() {
         if (!$this->model->is_db_restored()) {
-            throw new moodle_exception('Can not resume restore with incomplete database restore stage. '.
+            throw new moodle_exception('Can not resume restore with incomplete database restore stage. ' .
                 'Restore can only be resumed if it failed during dataroot or files stages.');
         }
     }
@@ -272,8 +274,10 @@ class site_restore extends operation_base {
         foreach ($confs as $conf) {
             if ($tablename === 'config' && empty($conf['plugin'])) {
                 set_config($conf['name'], $conf['value']);
-            } else if ($tablename === 'config_plugins' && !empty($conf['plugin'])
-                    && !in_array($conf['plugin'], siteinfo::get_excluded_plugins_restore())) {
+            } else if (
+                $tablename === 'config_plugins' && !empty($conf['plugin'])
+                    && !in_array($conf['plugin'], siteinfo::get_excluded_plugins_restore())
+            ) {
                 set_config($conf['name'], $conf['value'], $conf['plugin']);
             }
         }
@@ -345,11 +349,15 @@ class site_restore extends operation_base {
             if ($usernames) {
                 $data['passwords'] = [];
                 foreach ($usernames as $username) {
-                    $data['passwords'][$username] = $DB->get_field_select('user', 'password', 'username = ? AND auth = ?',
-                        [$username, 'manual']);
+                    $data['passwords'][$username] = $DB->get_field_select(
+                        'user',
+                        'password',
+                        'username = ? AND auth = ?',
+                        [$username, 'manual']
+                    );
                     if (empty($data['passwords'][$username])) {
                         $this->add_to_log('Could not preserve password of the "' . $username .
-                            '" user, user does not exist on this site '.
+                            '" user, user does not exist on this site ' .
                             'or does not have a password', constants::LOGLEVEL_WARNING);
                     }
                 }
@@ -386,7 +394,7 @@ class site_restore extends operation_base {
                     $DB->update_record('user', (object)['id' => $userid, 'password' => $data['passwords'][$username]]);
                 } else {
                     $this->add_to_log('Could not preserve password of the "' . $username .
-                        '" user, user does not exist on the backed up site '.
+                        '" user, user does not exist on the backed up site ' .
                         'or has a different authentication method', constants::LOGLEVEL_WARNING);
                 }
             }
@@ -402,7 +410,7 @@ class site_restore extends operation_base {
      * @return array
      */
     protected static function fix_field_quotes(array $fields): array {
-        return array_map(function($f) {
+        return array_map(function ($f) {
             return trim($f, '"`'); // phpcs:ignore
         }, $fields);
     }
@@ -415,12 +423,12 @@ class site_restore extends operation_base {
     public function restore_db() {
         global $DB;
 
-        $tables = array_filter($this->dbstructure->get_backup_tables(), function(dbtable $tableobj, $tablename) {
+        $tables = array_filter($this->dbstructure->get_backup_tables(), function (dbtable $tableobj, $tablename) {
             return !siteinfo::is_table_preserved_in_restore($tablename, $tableobj);
         }, ARRAY_FILTER_USE_BOTH);
 
         $totaltables = count($tables);
-        $this->add_to_log('Starting database restore ('.$totaltables.' tables)...');
+        $this->add_to_log('Starting database restore (' . $totaltables . ' tables)...');
 
         $structurefiles = $this->get_files_restore(constants::FILENAME_DBSTRUCTURE)->get_all_files();
         $filepath = $structurefiles[constants::FILE_SEQUENCE] ?? null;
@@ -436,7 +444,7 @@ class site_restore extends operation_base {
         $totalorigsize = $helper->get_total_orig_size();
         $totalextracted = 0;
 
-        $logprogress = function($lastlog, $tablescnt, $totalextracted, $force = false) use ($totaltables, $totalorigsize) {
+        $logprogress = function ($lastlog, $tablescnt, $totalextracted, $force = false) use ($totaltables, $totalorigsize) {
             if (!$force && time() - $lastlog <= constants::LOG_FREQUENCY) {
                 return $lastlog;
             }
@@ -473,10 +481,10 @@ class site_restore extends operation_base {
                 try {
                     $DB->change_database_structure($altersql);
                     if ($originaltable) {
-                        $this->add_to_log('- table '.$tablename.' structure is modified');
+                        $this->add_to_log('- table ' . $tablename . ' structure is modified');
                     }
                 } catch (\Throwable $t) {
-                    $this->add_to_log('- table '.$tablename.' structure is modified, failed to apply modifications: '.
+                    $this->add_to_log('- table ' . $tablename . ' structure is modified, failed to apply modifications: ' .
                         $t->getMessage(), constants::LOGLEVEL_WARNING);
                 }
             }
@@ -486,8 +494,10 @@ class site_restore extends operation_base {
                 $totalextracted += filesize($filepath);
                 $data = json_decode(file_get_contents($filepath), true);
                 if ($data) {
-                    $this->add_to_log("- File ".basename($filepath)." -- table $tablename -- inserting ".count($data)." records",
-                        constants::LOGLEVEL_VERBOSE);
+                    $this->add_to_log(
+                        "- File " . basename($filepath) . " -- table $tablename -- inserting " . count($data) . " records",
+                        constants::LOGLEVEL_VERBOSE
+                    );
                     $fields = self::fix_field_quotes(array_shift($data));
                     dbops::insert_records($tablename, $fields, $data, $this);
                 }
@@ -501,8 +511,10 @@ class site_restore extends operation_base {
                 try {
                     $DB->change_database_structure($altersql);
                 } catch (\Throwable $t) {
-                    $this->add_to_log("- failed to change sequence for table $tablename: ".$t->getMessage(),
-                        constants::LOGLEVEL_WARNING);
+                    $this->add_to_log(
+                        "- failed to change sequence for table $tablename: " . $t->getMessage(),
+                        constants::LOGLEVEL_WARNING
+                    );
                 }
             }
 
@@ -553,8 +565,10 @@ class site_restore extends operation_base {
         $precheck = $this->prechecks[plugins_restore::get_name()] ?? null;
         if ($precheck) {
             $preservedplugins = siteinfo::get_excluded_plugins_restore();
-            $components = array_merge($components,
-                array_diff(array_keys($precheck->plugins_needing_upgrade() + $precheck->extra_plugins()), $preservedplugins));
+            $components = array_merge(
+                $components,
+                array_diff(array_keys($precheck->plugins_needing_upgrade() + $precheck->extra_plugins()), $preservedplugins)
+            );
         }
 
         if (empty($components)) {
@@ -572,7 +586,7 @@ class site_restore extends operation_base {
         // Drop extra tables.
         if ($extratables) {
             $this->add_to_log('Dropping database tables that are not present in the backup: ' .
-                join(', ', array_keys($extratables)).'...');
+                join(', ', array_keys($extratables)) . '...');
             foreach ($extratables as $table) {
                 $DB->get_manager()->drop_table($table->get_xmldb_table());
             }
@@ -596,10 +610,10 @@ class site_restore extends operation_base {
             $handle = opendir($CFG->dataroot);
             while (($file = readdir($handle)) !== false) {
                 if (!siteinfo::is_dataroot_path_skipped_restore($file) && $file !== '.' && $file !== '..') {
-                    $cnt = tempfiles::remove_temp_dir($CFG->dataroot.DIRECTORY_SEPARATOR.$file);
-                    if (!file_exists($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
+                    $cnt = tempfiles::remove_temp_dir($CFG->dataroot . DIRECTORY_SEPARATOR . $file);
+                    if (!file_exists($CFG->dataroot . DIRECTORY_SEPARATOR . $file)) {
                         continue;
-                    } else if (is_dir($CFG->dataroot.DIRECTORY_SEPARATOR.$file)) {
+                    } else if (is_dir($CFG->dataroot . DIRECTORY_SEPARATOR . $file)) {
                         $this->add_to_log("Failed to remove existing dataroot directory '$file'" .
                             ($cnt ? ", $cnt files in the directory were removed" : ''), constants::LOGLEVEL_WARNING);
                     } else {
@@ -618,7 +632,7 @@ class site_restore extends operation_base {
         // Start extracting files.
         while (($nextfile = $helper->get_next_file()) !== null) {
             [$path, $file] = $nextfile;
-            $newpath = $CFG->dataroot.DIRECTORY_SEPARATOR.$file;
+            $newpath = $CFG->dataroot . DIRECTORY_SEPARATOR . $file;
             if (is_dir($path) && !is_dir($newpath)) {
                 try {
                     make_writable_directory($newpath);
@@ -634,8 +648,10 @@ class site_restore extends operation_base {
                 if (!file_exists($newpath) || is_writable($newpath)) {
                     rename($path, $newpath);
                 } else {
-                    $this->add_to_log('- existing path '.$file.' in dataroot could not be replaced',
-                        constants::LOGLEVEL_WARNING);
+                    $this->add_to_log(
+                        '- existing path ' . $file . ' in dataroot could not be replaced',
+                        constants::LOGLEVEL_WARNING
+                    );
                 }
             }
         }
@@ -658,7 +674,7 @@ class site_restore extends operation_base {
         $lastlog = time();
         $totalorigsize = $helper->get_total_orig_size();
 
-        $logprogress = function($lastlog, $totalextracted, $force = false) use ($totalorigsize) {
+        $logprogress = function ($lastlog, $totalextracted, $force = false) use ($totalorigsize) {
             if (!$force && time() - $lastlog <= constants::LOG_FREQUENCY) {
                 return $lastlog;
             }
@@ -675,14 +691,16 @@ class site_restore extends operation_base {
             $file = basename($filepath);
             if ($subpath !== substr($file, 0, 2) . DIRECTORY_SEPARATOR . substr($file, 2, 2) . DIRECTORY_SEPARATOR . $file) {
                 // Integrity check.
-                debugging("Skipping unrecognised file detected in the filedir archive: ".$subpath);
+                debugging("Skipping unrecognised file detected in the filedir archive: " . $subpath);
                 continue;
             }
             try {
                 $fs->add_file_to_pool($filepath, $file);
             } catch (\Throwable $t) {
-                $this->add_to_log('- could not add file with contenthash '.$file.' to file system: '.$t->getMessage(),
-                    constants::LOGLEVEL_WARNING);
+                $this->add_to_log(
+                    '- could not add file with contenthash ' . $file . ' to file system: ' . $t->getMessage(),
+                    constants::LOGLEVEL_WARNING
+                );
             }
             // Add to log.
             $totalprocessed += filesize($filepath);
@@ -706,8 +724,8 @@ class site_restore extends operation_base {
             api::update_restore_ignoring_errors($restorekey, ['faileddetails' => $faileddetails], constants::STATUS_FAILED);
         }
         if ($this->model->is_db_restored()) {
-            $this->add_to_log_from_exception_handler('In some cases you will be able to resume the restore process. '.
-                'Please refer to '.api::get_frontend_url().'/faq', constants::LOGLEVEL_ERROR);
+            $this->add_to_log_from_exception_handler('In some cases you will be able to resume the restore process. ' .
+                'Please refer to ' . api::get_frontend_url() . '/faq', constants::LOGLEVEL_ERROR);
         }
     }
 }

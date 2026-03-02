@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// phpcs:ignoreFile
+
 /**
  * All upgrade scripts between 4.1.2 (2022112802.00) and 4.2.3 (2023042403.00)
  *

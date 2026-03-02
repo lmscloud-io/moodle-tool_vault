@@ -27,7 +27,6 @@ use ReflectionClass;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class dbops_test extends \advanced_testcase {
-
     public function test_get_max_allowed_packet(): void {
         global $DB;
 

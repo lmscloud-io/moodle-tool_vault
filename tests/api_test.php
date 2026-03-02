@@ -28,7 +28,6 @@ use tool_vault\local\helpers\tempfiles;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class api_test extends \advanced_testcase {
-
     /**
      * Cleanup all temp files
      *

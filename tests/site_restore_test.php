@@ -34,7 +34,7 @@ use tool_vault\local\models\restore_model;
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_backup_mock.php');
+require_once($CFG->dirroot . '/' . $CFG->admin . '/tool/vault/tests/fixtures/site_backup_mock.php');
 
 /**
  * The site_restore_test test class.
@@ -121,8 +121,8 @@ final class site_restore_test extends \advanced_testcase {
         // Prepare restore.
         $siterestore = $this->create_site_restore();
         files_restore::populate_backup_files($siterestore->get_model()->id, [
-            ['name' => constants::FILENAME_DBSTRUCTURE.'.zip'],
-            ['name' => constants::FILENAME_DBDUMP.'.zip'],
+            ['name' => constants::FILENAME_DBSTRUCTURE . '.zip'],
+            ['name' => constants::FILENAME_DBDUMP . '.zip'],
         ]);
         $this->curl_mock_file_download($filepathstructure);
         $siterestore->load_db_structure();
@@ -151,7 +151,7 @@ final class site_restore_test extends \advanced_testcase {
 
         // Make a directory under dataroot and store a file there.
         $hellodir = make_upload_directory('helloworld');
-        $hellofilepath = $hellodir.DIRECTORY_SEPARATOR.'hello.txt';
+        $hellofilepath = $hellodir . DIRECTORY_SEPARATOR . 'hello.txt';
         file_put_contents($hellofilepath, 'Hello world!');
         $this->assertTrue(file_exists($hellofilepath));
 
@@ -168,7 +168,7 @@ final class site_restore_test extends \advanced_testcase {
         // Restore.
         $siterestore = $this->create_site_restore();
         files_restore::populate_backup_files($siterestore->get_model()->id, [
-            ['name' => constants::FILENAME_DATAROOT.'.zip'],
+            ['name' => constants::FILENAME_DATAROOT . '.zip'],
         ]);
         $this->curl_mock_file_download($filepath);
         $siterestore->restore_dataroot();
@@ -186,7 +186,7 @@ final class site_restore_test extends \advanced_testcase {
         // Create a file in filedir.
         $file = $this->create_file();
         $chash = $file->get_contenthash();
-        $filepathondisk = $CFG->dataroot.'/filedir/'.substr($chash, 0, 2).'/'.substr($chash, 2, 2).'/'.$chash;
+        $filepathondisk = $CFG->dataroot . '/filedir/' . substr($chash, 0, 2) . '/' . substr($chash, 2, 2) . '/' . $chash;
         $this->assertTrue(file_exists($filepathondisk));
 
         // Perform backup.
@@ -201,7 +201,7 @@ final class site_restore_test extends \advanced_testcase {
         // Run restore, file is now back.
         $siterestore = $this->create_site_restore();
         files_restore::populate_backup_files($siterestore->get_model()->id, [
-            ['name' => constants::FILENAME_FILEDIR.'.zip'],
+            ['name' => constants::FILENAME_FILEDIR . '.zip'],
         ]);
         $this->curl_mock_file_download($filepaths[0]);
         $siterestore->restore_filedir();
@@ -240,7 +240,11 @@ final class site_restore_test extends \advanced_testcase {
      */
     protected function delete_file() {
         $sectionid = get_fast_modinfo(SITEID)->get_section_info_all()[1]->id;
-        get_file_storage()->delete_area_files(\context_course::instance(SITEID)->id,
-            'course', 'section', $sectionid);
+        get_file_storage()->delete_area_files(
+            \context_course::instance(SITEID)->id,
+            'course',
+            'section',
+            $sectionid
+        );
     }
 }

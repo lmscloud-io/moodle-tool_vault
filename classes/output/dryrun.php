@@ -101,6 +101,4 @@ class dryrun implements \templatable {
         }
         return $rv;
     }
-
-
 }

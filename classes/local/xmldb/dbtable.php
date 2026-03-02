@@ -189,8 +189,10 @@ class dbtable {
             foreach ($actualfields as $f => $afield) {
                 if ($deffield->getName() === $afield->getName()) {
                     $newfields[] = $afield;
-                    if ($this->get_field_sql($deftable->get_xmldb_table(), $deffield) !==
-                        $this->get_field_sql($this->get_xmldb_table(), $afield)) {
+                    if (
+                        $this->get_field_sql($deftable->get_xmldb_table(), $deffield) !==
+                        $this->get_field_sql($this->get_xmldb_table(), $afield)
+                    ) {
                         $changedcolumns[] = $afield;
                     } else if ($autofix) {
                         $newfields[count($newfields) - 1] = $deffield;
@@ -277,8 +279,10 @@ class dbtable {
      * @return bool true if matches, false if not
      */
     protected function compare_key_or_index(\xmldb_object $o1, \xmldb_object $o2): bool {
-        if (!in_array(get_class($o1), [xmldb_index::class, xmldb_key::class]) ||
-            !in_array(get_class($o2), [xmldb_index::class, xmldb_key::class])) {
+        if (
+            !in_array(get_class($o1), [xmldb_index::class, xmldb_key::class]) ||
+            !in_array(get_class($o2), [xmldb_index::class, xmldb_key::class])
+        ) {
             throw new \coding_exception('Each argument must be either xmldb_index or xmldb_key');
         }
         $f1 = join(',', $o1->getFields());
@@ -380,7 +384,7 @@ class dbtable {
         $tableparam = $table->getName();
         $dbgen = $DB->get_manager()->generator;
         // Get PK, UK and indexes info from ADODb.
-        $result = $DB->get_recordset_sql('SHOW INDEXES FROM '.$dbgen->getEncQuoted($CFG->prefix.$tableparam));
+        $result = $DB->get_recordset_sql('SHOW INDEXES FROM ' . $dbgen->getEncQuoted($CFG->prefix . $tableparam));
         $dbindexes = [];
         foreach ($result as $res) {
             if (!isset($dbindexes[$res->key_name])) {
@@ -580,9 +584,9 @@ class dbtable {
      * @return string
      */
     public function output() {
-        $component = "COMPONENT=\"".htmlspecialchars($this->component)."\"";
+        $component = "COMPONENT=\"" . htmlspecialchars($this->component) . "\"";
         $res = $this->get_xmldb_table()->xmlOutput();
-        $res = preg_replace('|( *<TABLE NAME="[^"]*")|', '$1'.' '.$component, $res);
+        $res = preg_replace('|( *<TABLE NAME="[^"]*")|', '$1' . ' ' . $component, $res);
         return $res;
     }
 

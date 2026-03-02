@@ -30,7 +30,6 @@ use tool_vault\output\last_operation;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class logs extends base {
-
     /**
      * Display name of the section (for the breadcrumb)
      *
@@ -75,7 +74,9 @@ class logs extends base {
      * @return string
      */
     public function display(\renderer_base $output) {
-        return $output->render_from_template('tool_vault/logs',
-            $this->export_for_template($output));
+        return $output->render_from_template(
+            'tool_vault/logs',
+            $this->export_for_template($output)
+        );
     }
 }

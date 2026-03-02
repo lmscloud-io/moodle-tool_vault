@@ -28,7 +28,6 @@ require_once("$CFG->libdir/filestorage/zip_archive.php");
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class zip_archive extends \zip_archive {
-
     /**
      * Allows to specify the compression level of the file
      *

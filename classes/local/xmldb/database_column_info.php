@@ -24,7 +24,6 @@ namespace tool_vault\local\xmldb;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class database_column_info extends \database_column_info {
-
     /**
      * Creates an instance of this class from \database_column_info
      *
@@ -67,8 +66,10 @@ class database_column_info extends \database_column_info {
             if ($this->type === 'float') {
                 // There is some code in pgsql_native_moodle_database::fetch_columns() that returns very weird small
                 // field size and precision for float type.
-                if ($deftable && ($deffield = $deftable->get_xmldb_table()->getField($this->name))
-                        && $deffield->getType() == $field->getType()) {
+                if (
+                    $deftable && ($deffield = $deftable->get_xmldb_table()->getField($this->name))
+                        && $deffield->getType() == $field->getType()
+                ) {
                     $field->setDecimals($deffield->getDecimals());
                     $field->setLength($deffield->getLength());
                 } else if ($field->getLength() == 4) {
@@ -98,15 +99,19 @@ class database_column_info extends \database_column_info {
      */
     protected function fix_field_precision(\xmldb_field $actualfield, dbtable $deftable) {
         global $DB;
-        if (!($deffield = $deftable->get_xmldb_table()->getField($this->name)) ||
-                $deffield->getType() != $actualfield->getType()) {
+        if (
+            !($deffield = $deftable->get_xmldb_table()->getField($this->name)) ||
+                $deffield->getType() != $actualfield->getType()
+        ) {
             // Field definition is not present in the schema or its type does not match the actual field.
             return;
         }
         $checksql = false;
-        if ($actualfield->getType() === XMLDB_TYPE_CHAR && $deffield->getType() === XMLDB_TYPE_CHAR &&
+        if (
+            $actualfield->getType() === XMLDB_TYPE_CHAR && $deffield->getType() === XMLDB_TYPE_CHAR &&
             $deffield->getNotNull() === $actualfield->getNotNull() && $deffield->getNotNull() &&
-            $deffield->getDefault() === null && $actualfield->getDefault() === '') {
+            $deffield->getDefault() === null && $actualfield->getDefault() === ''
+        ) {
             $checksql = true;
         }
 
@@ -114,8 +119,10 @@ class database_column_info extends \database_column_info {
             $actualfield->setLength($deffield->getLength());
         }
 
-        if (in_array($actualfield->getType(), [XMLDB_TYPE_NUMBER, XMLDB_TYPE_FLOAT]) &&
-            (float)$actualfield->getDefault() == (float)$deffield->getDefault()) {
+        if (
+            in_array($actualfield->getType(), [XMLDB_TYPE_NUMBER, XMLDB_TYPE_FLOAT]) &&
+            (float)$actualfield->getDefault() == (float)$deffield->getDefault()
+        ) {
             // Sometimes default value comes through as '0.0000' instead of '0'.
             $actualfield->setDefault($deffield->getDefault());
         }
@@ -126,8 +133,10 @@ class database_column_info extends \database_column_info {
         }
 
         if ($checksql) {
-            if ($deftable->get_field_sql($deftable->get_xmldb_table(), $actualfield) ===
-                    $deftable->get_field_sql($deftable->get_xmldb_table(), $deffield)) {
+            if (
+                $deftable->get_field_sql($deftable->get_xmldb_table(), $actualfield) ===
+                    $deftable->get_field_sql($deftable->get_xmldb_table(), $deffield)
+            ) {
                 $actualfield->setDefault($deffield->getDefault());
                 $actualfield->setLength($deffield->getLength());
                 $actualfield->setDecimals($deffield->getDecimals());
@@ -145,8 +154,10 @@ class database_column_info extends \database_column_info {
     protected function fix_field_properties(\xmldb_field $actualfield, ?dbtable $deftable) {
         // Non-null char column should have either no default or a default that is not empty string.
         // Otherwise the parser complains on restore.
-        if ($actualfield->getType() === XMLDB_TYPE_CHAR && $actualfield->getNotNull() &&
-                $actualfield->getDefault() === '') {
+        if (
+            $actualfield->getType() === XMLDB_TYPE_CHAR && $actualfield->getNotNull() &&
+                $actualfield->getDefault() === ''
+        ) {
             $actualfield->setDefault(null);
         }
     }

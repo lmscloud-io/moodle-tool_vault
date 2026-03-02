@@ -27,7 +27,6 @@ use tool_vault\local\models\operation_model;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class error_with_backtrace implements \templatable {
-
     /** @var string */
     protected $error;
     /** @var string */
@@ -71,7 +70,7 @@ class error_with_backtrace implements \templatable {
             return [];
         }
         return [
-            'uniqueid' => 'errormessage'.random_string(),
+            'uniqueid' => 'errormessage' . random_string(),
             'error' => $this->error,
             'backtrace' => debugging() ? $this->backtrace : null,
         ];

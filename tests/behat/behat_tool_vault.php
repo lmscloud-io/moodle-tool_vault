@@ -34,7 +34,6 @@ require_once(__DIR__ . '/../../../../../lib/behat/behat_base.php');
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class behat_tool_vault extends behat_base {
-
     /**
      * Skip tests if the test API url is not set
      *
@@ -43,14 +42,20 @@ class behat_tool_vault extends behat_base {
      */
     public function test_api_key_is_specified_for_tool_vault($type) {
         $key = '';
-        if (($type === 'pro' || $type === 'any')
-                && (defined('TOOL_VAULT_TEST_API_KEY') && !empty(TOOL_VAULT_TEST_API_KEY))) {
+        if (
+            ($type === 'pro' || $type === 'any')
+                && (defined('TOOL_VAULT_TEST_API_KEY') && !empty(TOOL_VAULT_TEST_API_KEY))
+        ) {
             $key = TOOL_VAULT_TEST_API_KEY;
-        } else if (($type === 'light' || $type === 'any')
-                && (defined('TOOL_VAULT_TEST_API_KEY_LIGHT') && !empty(TOOL_VAULT_TEST_API_KEY_LIGHT))) {
+        } else if (
+            ($type === 'light' || $type === 'any')
+                && (defined('TOOL_VAULT_TEST_API_KEY_LIGHT') && !empty(TOOL_VAULT_TEST_API_KEY_LIGHT))
+        ) {
             $key = TOOL_VAULT_TEST_API_KEY_LIGHT;
-        } else if (($type === 'free' || $type === 'any')
-                && (defined('TOOL_VAULT_TEST_API_KEY_FREE') && !empty(TOOL_VAULT_TEST_API_KEY_FREE))) {
+        } else if (
+            ($type === 'free' || $type === 'any')
+                && (defined('TOOL_VAULT_TEST_API_KEY_FREE') && !empty(TOOL_VAULT_TEST_API_KEY_FREE))
+        ) {
             $key = TOOL_VAULT_TEST_API_KEY_FREE;
         }
         if ($key) {
@@ -90,11 +95,12 @@ class behat_tool_vault extends behat_base {
         global $CFG;
         $isstaging = defined('TOOL_VAULT_TEST_API_URL') && !empty(TOOL_VAULT_TEST_API_URL);
         if (($env !== 'staging' && $isstaging) || ($env !== 'prod' && !$isstaging)) {
-            throw new \Moodle\BehatExtension\Exception\SkippedException('Environment '.$env.'does not match');
+            throw new \Moodle\BehatExtension\Exception\SkippedException('Environment ' . $env . 'does not match');
         }
         if (version_compare($version, normalize_version($CFG->release), '>')) {
             throw new \Moodle\BehatExtension\Exception\SkippedException(
-                'Moodle version '.$CFG->release.' is too old to restore backup made in version '.$version);
+                'Moodle version ' . $CFG->release . ' is too old to restore backup made in version ' . $version
+            );
         }
         set_config('behat_backup_name', $backup, 'tool_vault');
     }

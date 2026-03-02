@@ -28,7 +28,6 @@ use tool_vault\local\models\dryrun_model;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class version_restore extends check_base_restore {
-
     /**
      * Evaluate check and store results in model details
      */
@@ -81,7 +80,7 @@ class version_restore extends check_base_restore {
      */
     public static function get_required_core_intermediate_release(string $fromrelease, string $torelease): ?string {
         global $CFG;
-        require_once($CFG->dirroot.'/lib/environmentlib.php');
+        require_once($CFG->dirroot . '/lib/environmentlib.php');
 
         if (empty($fromrelease)) {
             // Release was not collected before tool_vault v1.5, skip this check.
@@ -119,7 +118,7 @@ class version_restore extends check_base_restore {
      */
     public function get_status_message(): string {
         global $CFG;
-        require_once($CFG->dirroot.'/lib/environmentlib.php');
+        require_once($CFG->dirroot . '/lib/environmentlib.php');
 
         $details = $this->model->get_details();
         $branch = $details['backupbranch'] ?? null;
@@ -175,24 +174,24 @@ class version_restore extends check_base_restore {
      */
     public function summary(): string {
         global $CFG;
-        require_once($CFG->dirroot.'/lib/environmentlib.php');
+        require_once($CFG->dirroot . '/lib/environmentlib.php');
 
         if ($this->model->status !== constants::STATUS_FINISHED) {
             return '';
         }
         $details = $this->model->get_details();
         return
-            $this->display_status_message($this->get_status_message(), $this->core_needs_upgrade()).
-            '<ul>'.
+            $this->display_status_message($this->get_status_message(), $this->core_needs_upgrade()) .
+            '<ul>' .
             '<li>' . get_string('moodleversion_backupinfo', 'tool_vault', (object)[
                 'version' => $details['backupversion'],
                 'branch' => !empty($details['backuprelease']) ? normalize_version($details['backuprelease']) :
                     $details['backupbranch'],
-            ]) . '</li>'.
+            ]) . '</li>' .
             '<li>' . get_string('moodleversion_siteinfo', 'tool_vault', (object)[
                 'version' => $CFG->version,
                 'branch' => normalize_version($CFG->release),
-            ]) . '</li>'.
+            ]) . '</li>' .
             '</ul>';
     }
 

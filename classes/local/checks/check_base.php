@@ -184,8 +184,10 @@ abstract class check_base extends operation_base {
     public static function create_and_run(?operation_model $parent = null): self {
         // TODO check - only to use from CLI.
         // TODO make sure there is nothing else scheduled.
-        $model = new check_model((object)['status' => constants::STATUS_INPROGRESS, 'parentid' => $parent ? $parent->id : null],
-            self::get_name());
+        $model = new check_model(
+            (object)['status' => constants::STATUS_INPROGRESS, 'parentid' => $parent ? $parent->id : null],
+            self::get_name()
+        );
         $obj = static::instance($model);
         $obj->parent = $parent;
         $model->save();
@@ -276,10 +278,12 @@ abstract class check_base extends operation_base {
      */
     protected function display_status_message(string $status, bool $iswarning = false): string {
         global $OUTPUT;
-        return $OUTPUT->notification($status,
+        return $OUTPUT->notification(
+            $status,
             !$this->success() ? 'error' :
                 ($iswarning ? 'warning' : 'success'),
-            false);
+            false
+        );
     }
 
     /**

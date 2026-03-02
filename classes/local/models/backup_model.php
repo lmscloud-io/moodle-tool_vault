@@ -66,7 +66,8 @@ class backup_model extends operation_model {
         /** @var backup_model[] $records */
         $records = self::get_records_select(
             "type = :type AND backupkey = :backupkey",
-            ['type' => self::$defaulttype, 'backupkey' => $backupkey]);
+            ['type' => self::$defaulttype, 'backupkey' => $backupkey]
+        );
         return $records ? reset($records) : null;
     }
 

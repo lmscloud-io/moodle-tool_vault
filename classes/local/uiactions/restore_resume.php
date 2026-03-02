@@ -29,7 +29,6 @@ use tool_vault\local\models\restore_model;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_resume extends base {
-
     /**
      * Process action
      */

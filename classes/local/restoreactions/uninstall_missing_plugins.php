@@ -28,7 +28,6 @@ use tool_vault\site_restore;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class uninstall_missing_plugins extends restore_action {
-
     /**
      * Executes individual action
      *
@@ -77,12 +76,14 @@ class uninstall_missing_plugins extends restore_action {
         }
 
         if ($needsupgrade) {
-            $logger->add_to_log('Cannot uninstall missing plugins ('.count($missingplugins).') because a Moodle upgrade is pending',
-                constants::LOGLEVEL_WARNING);
+            $logger->add_to_log(
+                'Cannot uninstall missing plugins (' . count($missingplugins) . ') because a Moodle upgrade is pending',
+                constants::LOGLEVEL_WARNING
+            );
             return;
         }
 
-        $logger->add_to_log('Uninstall missing plugins ('.count($missingplugins).')...');
+        $logger->add_to_log('Uninstall missing plugins (' . count($missingplugins) . ')...');
         foreach ($missingplugins as $pluginname) {
             if ($pluginman->can_uninstall_plugin($pluginname)) {
                 $logger->add_to_log('Uninstalling: ' . $pluginname);
@@ -91,9 +92,11 @@ class uninstall_missing_plugins extends restore_action {
                 try {
                     $pluginman->uninstall_plugin($pluginname, $progress);
                 } catch (\Throwable $e) {
-                    $logger->add_to_log('Error occurred while trying to uninstall plugin '. $pluginname .
+                    $logger->add_to_log(
+                        'Error occurred while trying to uninstall plugin ' . $pluginname .
                         ', some plugin data may still be present in the database: ' . $e->getMessage(),
-                        constants::LOGLEVEL_WARNING);
+                        constants::LOGLEVEL_WARNING
+                    );
                     api::report_error($e);
                 }
                 $progress->finished();

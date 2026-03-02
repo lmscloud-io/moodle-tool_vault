@@ -27,7 +27,6 @@ use tool_vault\local\models\backup_model;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_details extends base {
-
     /**
      * Display name of the section (for the breadcrumb)
      *

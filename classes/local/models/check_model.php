@@ -35,7 +35,7 @@ class check_model extends operation_model {
      */
     public function __construct(?\stdClass $record = null, ?string $type = null) {
         if ($record && isset($record->type) && !self::validate_type($record->type)) {
-            throw new \coding_exception('Type '.$record->type.' is invalid for a check');
+            throw new \coding_exception('Type ' . $record->type . ' is invalid for a check');
         }
         if ($type) {
             $record = $record ?? new \stdClass();
@@ -61,7 +61,7 @@ class check_model extends operation_model {
      * @return array
      */
     public static function get_checks_by_type(string $type): array {
-        return static::get_records_select('type=:type', ['type' => self::$defaulttypeprefix.$type]);
+        return static::get_records_select('type=:type', ['type' => self::$defaulttypeprefix . $type]);
     }
 
     /**

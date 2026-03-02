@@ -32,7 +32,6 @@ use tool_vault\site_restore;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class upgrade extends restore_action {
-
     /**
      * Executes individual action
      *
@@ -42,7 +41,7 @@ class upgrade extends restore_action {
      */
     public function execute(site_restore $logger, string $stage) {
         global $CFG, $DB, $USER;
-        require_once($CFG->libdir.'/upgradelib.php');
+        require_once($CFG->libdir . '/upgradelib.php');
 
         $codeinfo = recalc_version_hash::fetch_core_version();
         $codeversion = $codeinfo['version'];
@@ -60,25 +59,29 @@ class upgrade extends restore_action {
 
         if ($intermediaterelease && version_compare(normalize_version($CFG->release), '3.11.8', '<')) {
             $siteupgraded = true;
-            $logger->add_to_log('Upgrading Moodle from '.$CFG->release.' to 3.11.8...');
+            $logger->add_to_log('Upgrading Moodle from ' . $CFG->release . ' to 3.11.8...');
             upgrade_311::upgrade($logger);
             $logger->add_to_log('...done');
         }
 
-        if ($intermediaterelease
+        if (
+            $intermediaterelease
                 && version_compare(normalize_version($CFG->release), '4.1.2', '<')
-                && version_compare($intermediaterelease, '4.1.2', '>=')) {
+                && version_compare($intermediaterelease, '4.1.2', '>=')
+        ) {
             $siteupgraded = true;
-            $logger->add_to_log('Upgrading Moodle from '.$CFG->release.' to 4.1.2...');
+            $logger->add_to_log('Upgrading Moodle from ' . $CFG->release . ' to 4.1.2...');
             upgrade_401::upgrade($logger);
             $logger->add_to_log('...done');
         }
 
-        if ($intermediaterelease
+        if (
+            $intermediaterelease
                 && version_compare(normalize_version($CFG->release), '4.2.3', '<')
-                && version_compare($intermediaterelease, '4.2.3', '>=')) {
+                && version_compare($intermediaterelease, '4.2.3', '>=')
+        ) {
             $siteupgraded = true;
-            $logger->add_to_log('Upgrading Moodle from '.$CFG->release.' to 4.2.3...');
+            $logger->add_to_log('Upgrading Moodle from ' . $CFG->release . ' to 4.2.3...');
             upgrade_402::upgrade($logger);
             $logger->add_to_log('...done');
         }
@@ -86,7 +89,7 @@ class upgrade extends restore_action {
         // Upgrade required.
         if ($intermediaterelease || moodle_needs_upgrading()) {
             $siteupgraded = true;
-            $logger->add_to_log('Upgrading Moodle from '.$CFG->release.' to '.$coderelease.'...');
+            $logger->add_to_log('Upgrading Moodle from ' . $CFG->release . ' to ' . $coderelease . '...');
             try {
                 if ($codeversion > $CFG->version) {
                     upgrade_core($codeversion, true);
@@ -102,8 +105,10 @@ class upgrade extends restore_action {
                     \core\session\manager::set_user($curuser);
                 }
             } catch (\Throwable $e) {
-                $logger->add_to_log('Error occurred while upgrading: ' . $e->getMessage(),
-                    constants::LOGLEVEL_WARNING);
+                $logger->add_to_log(
+                    'Error occurred while upgrading: ' . $e->getMessage(),
+                    constants::LOGLEVEL_WARNING
+                );
                 api::report_error($e);
             }
             set_config('upgraderunning', 0);
@@ -135,8 +140,10 @@ class upgrade extends restore_action {
         foreach ($caps as $cap) {
             if (($info = get_deprecated_capability_info($cap))) {
                 if (!empty($info['replacement']) && !$DB->record_exists('capabilities', ['name' => $info['replacement']])) {
-                    $DB->execute('UPDATE {role_capabilities} SET capability = ? WHERE capability = ?',
-                        [$info['replacement'], $cap]);
+                    $DB->execute(
+                        'UPDATE {role_capabilities} SET capability = ? WHERE capability = ?',
+                        [$info['replacement'], $cap]
+                    );
                 } else {
                     $DB->delete_records('role_capabilities', ['capability' => $cap]);
                 }
@@ -154,8 +161,8 @@ class upgrade extends restore_action {
         global $CFG;
         // We can not redefine CACHE_DISABLE_ALL that normally has to be set during upgrade. But we can hack the
         // factory class to use the disabled factory instance.
-        if (file_exists($CFG->dirroot.'/cache/disabledlib.php')) {
-            require_once($CFG->dirroot.'/cache/disabledlib.php');
+        if (file_exists($CFG->dirroot . '/cache/disabledlib.php')) {
+            require_once($CFG->dirroot . '/cache/disabledlib.php');
         }
 
         $class = new \ReflectionClass(\cache_factory_disabled::class);

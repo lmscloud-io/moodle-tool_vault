@@ -98,8 +98,10 @@ class tempfiles {
         $cnt = 0;
         try {
             $it = new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS);
-            $files = new \RecursiveIteratorIterator($it,
-                \RecursiveIteratorIterator::CHILD_FIRST);
+            $files = new \RecursiveIteratorIterator(
+                $it,
+                \RecursiveIteratorIterator::CHILD_FIRST
+            );
             foreach ($files as $file) {
                 if ($file->isDir()) {
                     rmdir($file->getRealPath());

@@ -31,7 +31,6 @@ use tool_vault\local\xmldb\dbtable;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class dbstatus extends check_base {
-
     /** @var int */
     const STATUS_CLEAN = 1;
     /** @var int */
@@ -53,10 +52,10 @@ class dbstatus extends check_base {
             constants::DIFF_INVALIDTABLES => [],
         ];
 
-        $actualtables = array_filter($s->get_tables_actual(), function($tableobj, $tablename) use ($s) {
+        $actualtables = array_filter($s->get_tables_actual(), function ($tableobj, $tablename) use ($s) {
             return !siteinfo::is_table_excluded_from_backup($tablename, $s->find_table_definition($tablename));
         }, ARRAY_FILTER_USE_BOTH);
-        $deftables = array_filter($s->get_tables_definitions(), function($deftable, $tablename) {
+        $deftables = array_filter($s->get_tables_definitions(), function ($deftable, $tablename) {
             return !siteinfo::is_table_excluded_from_backup($tablename, $deftable);
         }, ARRAY_FILTER_USE_BOTH);
 
@@ -148,7 +147,7 @@ class dbstatus extends check_base {
         } else if (is_string($obj)) {
             return $obj;
         } else {
-            throw new \coding_exception('Unknown type: '.get_class($obj));
+            throw new \coding_exception('Unknown type: ' . get_class($obj));
         }
     }
 
@@ -193,16 +192,16 @@ class dbstatus extends check_base {
         $report = $this->get_report();
         if ($report) {
             return
-                $this->display_status_message($this->get_status_message(), !empty(array_filter($report))).
-                '<ul>'.
+                $this->display_status_message($this->get_status_message(), !empty(array_filter($report))) .
+                '<ul>' .
                 '<li>' . get_string('dbmodifications_missingtables', 'tool_vault') . ': ' .
-                    count($report[constants::DIFF_MISSINGTABLES]).'</li>'.
+                    count($report[constants::DIFF_MISSINGTABLES]) . '</li>' .
                 '<li>' . get_string('dbmodifications_extratables', 'tool_vault') . ': ' .
-                    count($report[constants::DIFF_EXTRATABLES]).'</li>'.
+                    count($report[constants::DIFF_EXTRATABLES]) . '</li>' .
                 '<li>' . get_string('dbmodifications_changedtables', 'tool_vault') . ': ' .
-                    count($report[constants::DIFF_CHANGEDTABLES]).'</li>'.
+                    count($report[constants::DIFF_CHANGEDTABLES]) . '</li>' .
                 '<li>' . get_string('dbmodifications_invalidtables', 'tool_vault') . ': ' .
-                    count($report[constants::DIFF_INVALIDTABLES]).'</li>'.
+                    count($report[constants::DIFF_INVALIDTABLES]) . '</li>' .
                 '</ul>';
         }
         return '';
@@ -275,13 +274,13 @@ class dbstatus extends check_base {
                         get_string('dbmodifications_missingtable_warning', 'tool_vault');
                 } else if ($errortype === constants::DIFF_EXTRATABLES) {
                     $tables[$tablename]['tablewarnings'][] =
-                        get_string('dbmodifications_extratable_warning', 'tool_vault').
+                        get_string('dbmodifications_extratable_warning', 'tool_vault') .
                         $this->add_to_excluded_tables_link($tablename);
                 } else if ($errortype === constants::DIFF_CHANGEDTABLES) {
                     foreach ($details[2] as $changetype => $list) {
                         foreach ($list as $l) {
                             // TODO more human readable?
-                            $tables[$tablename]['tablewarnings'][] = $changetype . ': '.s($l);
+                            $tables[$tablename]['tablewarnings'][] = $changetype . ': ' . s($l);
                         }
                     }
                 } else if ($errortype === constants::DIFF_INVALIDTABLES) {
@@ -305,7 +304,7 @@ class dbstatus extends check_base {
         $report = $this->get_report();
         if ($report !== null) {
             return
-                $this->display_status_message($this->get_status_message(), !empty(array_filter($report))).
+                $this->display_status_message($this->get_status_message(), !empty(array_filter($report))) .
                     $OUTPUT->render_from_template('tool_vault/check_dbstatus_details', $this->get_template_data());
         }
         return '';

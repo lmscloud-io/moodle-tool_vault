@@ -28,7 +28,7 @@ namespace tool_vault\fixtures;
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/files_backup_mock.php');
+require_once($CFG->dirroot . '/' . $CFG->admin . '/tool/vault/tests/fixtures/files_backup_mock.php');
 
 /**
  * Mock class for site backup

@@ -41,11 +41,13 @@ class diskspace extends check_base {
      */
     public function perform(): void {
         global $DB;
-        $record = $DB->get_record_sql('SELECT sum(filesize) AS sumfilesize, max(filesize) AS maxfilesize, count(1) AS countfiles
+        $record = $DB->get_record_sql(
+            'SELECT sum(filesize) AS sumfilesize, max(filesize) AS maxfilesize, count(1) AS countfiles
             FROM (SELECT distinct contenthash, filesize
                 from {files}
                 WHERE not (component=? AND filearea = ?)) a',
-            ['user', 'draft']);
+            ['user', 'draft']
+        );
         $totalsize = $record->sumfilesize;
         $maxfilesize = $record->maxfilesize;
         $countfiles = $record->countfiles;
@@ -180,27 +182,27 @@ class diskspace extends check_base {
         }
         $details = $this->model->get_details();
         return
-            $this->display_status_message($this->get_status_message()).
-            '<ul>'.
+            $this->display_status_message($this->get_status_message()) .
+            '<ul>' .
             '<li>' . get_string('diskspacebackup_totalfilesize', 'tool_vault') . ': ' .
-                display_size($details['totalfilesize']).'</li>'.
+                display_size($details['totalfilesize']) . '</li>' .
             '<li>' . get_string('diskspacebackup_maxfilesize', 'tool_vault') . ': ' .
-                display_size($details['maxfilesize']).'</li>'.
+                display_size($details['maxfilesize']) . '</li>' .
             '<li>' . get_string('diskspacebackup_countfiles', 'tool_vault') . ': ' .
-                number_format($details['countfiles'], 0).'</li>'.
+                number_format($details['countfiles'], 0) . '</li>' .
             '<li>' . get_string('diskspacebackup_dbrecords', 'tool_vault') . ': ' .
-                number_format($details['dbrecords'], 0).'</li>'.
+                number_format($details['dbrecords'], 0) . '</li>' .
             '<li>' . get_string('diskspacebackup_dbtotalsize', 'tool_vault') . ': ' .
-                display_size($details['dbtotalsize']).'</li>'.
+                display_size($details['dbtotalsize']) . '</li>' .
             '<li>' . get_string('diskspacebackup_dbmaxsize', 'tool_vault') . ': ' .
-                display_size($details['dbmaxsize']).'</li>'.
+                display_size($details['dbmaxsize']) . '</li>' .
             '<li>' . get_string('diskspacebackup_datarootsize', 'tool_vault') . ': ' .
-                display_size($details['datarootsize']).'</li>'.
+                display_size($details['datarootsize']) . '</li>' .
             '<li>' . get_string('diskspacebackup_maxdatarootfilesize', 'tool_vault') . ': ' .
-                display_size($details['maxdatarootfilesize'] ?? 0).'</li>'.
+                display_size($details['maxdatarootfilesize'] ?? 0) . '</li>' .
             ($details['freespace'] !== true ?
                 ('<li>' . get_string('diskspacebackup_freespace', 'tool_vault') . ': ' .
-                display_size($details['freespace']).'</li>') : '').
+                display_size($details['freespace']) . '</li>') : '') .
             '</ul>';
     }
 

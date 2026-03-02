@@ -74,7 +74,7 @@ abstract class operation_base implements logger {
                 $message = "$message ($t->debuginfo)";
             }
         }
-        $message .= "\n\nPHP ".PHP_VERSION." / Moodle {$CFG->release} / DB ".$DB->get_dbfamily()."\n";
+        $message .= "\n\nPHP " . PHP_VERSION . " / Moodle {$CFG->release} / DB " . $DB->get_dbfamily() . "\n";
         if ($t instanceof backup_precheck_failed || $t instanceof restore_precheck_failed) {
             $message .= "\n" . $t->extra_info();
         }
@@ -105,7 +105,7 @@ abstract class operation_base implements logger {
             // Sometimes mysql locks up so badly, it can't even insert or update logs, it triggers
             // "Mysql has gone away" exception.
         }
-        $this->add_to_log_from_exception_handler('Operation failed: '.$t->getMessage(), constants::LOGLEVEL_ERROR);
+        $this->add_to_log_from_exception_handler('Operation failed: ' . $t->getMessage(), constants::LOGLEVEL_ERROR);
     }
 
     /**

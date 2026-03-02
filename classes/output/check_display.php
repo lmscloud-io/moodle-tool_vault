@@ -28,7 +28,6 @@ use tool_vault\local\helpers\ui;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class check_display implements \templatable {
-
     /** @var check_base */
     protected $check;
     /** @var bool */
@@ -56,7 +55,7 @@ class check_display implements \templatable {
         $fullreporturl = $this->check->get_fullreport_url();
         $rv = [
             'title' => $this->check->get_display_name(),
-            'subtitle' => get_string('status', 'moodle') . ': '.
+            'subtitle' => get_string('status', 'moodle') . ': ' .
                 ui::format_status($this->check->get_model()->status) . ', ' .
                 userdate($this->check->get_model()->timemodified, get_string('strftimedatetimeshort', 'langconfig')),
             'inprogress' => $this->check->is_in_progress(),

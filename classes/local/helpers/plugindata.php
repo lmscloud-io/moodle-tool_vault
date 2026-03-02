@@ -58,7 +58,7 @@ class plugindata {
     public static function get_tables_with_possible_plugin_data(): array {
         return array_unique(array_merge(
             self::tables_with_component_field(),
-            array_map(function($r) {
+            array_map(function ($r) {
                 return $r[0];
             }, self::tables_with_dependent_component_field()),
             [
@@ -137,7 +137,7 @@ class plugindata {
 
             $sql1 = "plugin = :{$p}";
             $params[$p] = $plugin;
-            $sql2 = "plugin = :{$p1} AND ".$DB->sql_like('name', ":{$p2}", false);
+            $sql2 = "plugin = :{$p1} AND " . $DB->sql_like('name', ":{$p2}", false);
             $params[$p1] = 'message';
             $params[$p2] = "%_provider_{$plugin}_%";
             return ["({$sql1}) OR ({$sql2})", $params];
@@ -151,7 +151,7 @@ class plugindata {
         if ($tablename === 'config') {
             $p = self::generate_param_name();
             $sql = $DB->sql_like('name', ":{$p}", true, true, false, '|');
-            $params = [$p => $DB->sql_like_escape($plugin.'_', '|') . '%'];
+            $params = [$p => $DB->sql_like_escape($plugin . '_', '|') . '%'];
             return [$sql, $params];
         }
 
@@ -174,15 +174,15 @@ class plugindata {
         if ($plugins) {
             if (in_array($tablename, self::tables_with_component_field())) {
                 $p = self::generate_param_name();
-                [$s, $pp] = $DB->get_in_or_equal($plugins, SQL_PARAMS_NAMED, $p.'_', !$negated);
+                [$s, $pp] = $DB->get_in_or_equal($plugins, SQL_PARAMS_NAMED, $p . '_', !$negated);
                 $sqls[] = $negated ? "(component IS NULL OR component $s)" : "component $s";
                 $params += $pp;
             }
             foreach (self::tables_with_dependent_component_field() as $entry) {
                 if ($entry[0] === $tablename) {
                     $p = self::generate_param_name();
-                    [$s, $pp] = $DB->get_in_or_equal($plugins, SQL_PARAMS_NAMED, $p.'_');
-                    $sqls[] = "{$entry[1]} ".($negated ? ' NOT ' : '').
+                    [$s, $pp] = $DB->get_in_or_equal($plugins, SQL_PARAMS_NAMED, $p . '_');
+                    $sqls[] = "{$entry[1]} " . ($negated ? ' NOT ' : '') .
                         "IN (SELECT {$entry[3]} FROM {{$entry[2]}} WHERE component {$s})";
                     $params += $pp;
                 }
@@ -235,7 +235,8 @@ class plugindata {
                 'external_tokens',
                 'external_services_users',
                 'messageinbound_datakeys', // Generated for users or forum posts.
-            ]);
+            ]
+        );
     }
 
     /**
@@ -249,8 +250,11 @@ class plugindata {
      * @param int $substituteuserid
      * @return array
      */
-    public static function get_sql_for_plugins_data_in_table_to_preserve(string $tablename, array $plugins,
-                                                                         int $substituteuserid): array {
+    public static function get_sql_for_plugins_data_in_table_to_preserve(
+        string $tablename,
+        array $plugins,
+        int $substituteuserid
+    ): array {
         global $DB;
         $fields = '*';
         [$sql, $params] = self::get_sql_for_plugins_data_in_table($tablename, $plugins);
@@ -262,7 +266,7 @@ class plugindata {
             if (in_array($tablename, ['files'])) {
                 $sql .= ' AND referencefileid IS NULL';
                 // Replace userid with $substituteuserid in the fields.
-                $cols = array_map(function(\database_column_info $columninfo) use ($substituteuserid) {
+                $cols = array_map(function (\database_column_info $columninfo) use ($substituteuserid) {
                     $name = strtolower($columninfo->name);
                     return $name === 'userid' ? "{$substituteuserid} AS userid" : $name;
                     // Mdlcode-disable-next-line cannot-parse-db-tablename.

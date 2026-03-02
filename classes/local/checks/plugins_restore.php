@@ -31,7 +31,6 @@ use tool_vault\local\models\dryrun_model;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class plugins_restore extends check_base_restore {
-
     /**
      * Evaluate check and store results in model details
      */
@@ -56,7 +55,7 @@ class plugins_restore extends check_base_restore {
         $parent = $this->get_parent();
         $backupplugins = $parent->get_metadata()['plugins'];
         $list = $this->consolidate($backupplugins, $pluginlist);
-        $standardplugins = array_filter(array_keys($list), function($pluginname) {
+        $standardplugins = array_filter(array_keys($list), function ($pluginname) {
             return $this->is_standard_plugin($pluginname, true);
         });
         $this->model->set_details([
@@ -81,7 +80,6 @@ class plugins_restore extends check_base_restore {
             $list[$pluginname] = [$backupplugins[$pluginname] ?? [], $plugins[$pluginname] ?? []];
         }
         return $list;
-
     }
 
     /**
@@ -135,7 +133,7 @@ class plugins_restore extends check_base_restore {
      * @return array pluginname=>[null, ['version'=>...]]
      */
     public function extra_plugins(bool $includestandard = true): array {
-        return array_filter($this->model->get_details()['list'], function($info, $pluginname) use ($includestandard) {
+        return array_filter($this->model->get_details()['list'], function ($info, $pluginname) use ($includestandard) {
             return empty($info[0]) && !empty($info[1])
                 && ($includestandard || !$this->is_standard_plugin($pluginname));
         }, ARRAY_FILTER_USE_BOTH);
@@ -148,7 +146,7 @@ class plugins_restore extends check_base_restore {
      * @return array
      */
     protected function missing_plugins(bool $includestandard = true): array {
-        $plugins = array_filter($this->model->get_details()['list'], function($info, $pluginname) use ($includestandard)  {
+        $plugins = array_filter($this->model->get_details()['list'], function ($info, $pluginname) use ($includestandard) {
             return empty($info[1]) && !empty($info[0])
                 && ($includestandard || !$this->is_standard_plugin($pluginname));
         }, ARRAY_FILTER_USE_BOTH);
@@ -247,8 +245,8 @@ class plugins_restore extends check_base_restore {
                 join(', ', array_keys($p));
         }
         return
-            $this->display_status_message($this->get_status_message(), !empty($r)).
-            ($r ? ('<ul><li>'. join('</li><li>', $r).'</li></ul>') : '');
+            $this->display_status_message($this->get_status_message(), !empty($r)) .
+            ($r ? ('<ul><li>' . join('</li><li>', $r) . '</li></ul>') : '');
     }
 
     /**
@@ -309,7 +307,7 @@ class plugins_restore extends check_base_restore {
     protected function is_standard_plugin(string $pluginname, bool $realtime = false): bool {
         $standardplugins = $realtime ? null : ($this->model->get_details()['standardplugins'] ?? null);
         if (!isset($standardplugins) || !is_array($standardplugins)) {
-            list($type, $name) = \core_component::normalize_component($pluginname);
+            [$type, $name] = \core_component::normalize_component($pluginname);
             $allplugins = core_plugin_manager::standard_plugins_list($type) ?: [];
             return in_array($name, $allplugins) || core_plugin_manager::is_deleted_standard_plugin($type, $name)
                 || $this->is_deleted_standard_plugin_fix($type, $name);

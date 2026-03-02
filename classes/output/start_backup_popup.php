@@ -54,11 +54,14 @@ class start_backup_popup implements \templatable {
 
         $result = $this->precheckresults;
 
-        $description = get_string('defaultbackupdescription', 'tool_vault',
+        $description = get_string(
+            'defaultbackupdescription',
+            'tool_vault',
             (object)[
                 'site' => $CFG->wwwroot,
                 'name' => fullname($USER, true),
-            ]);
+            ]
+        );
         $data = ['description' => $description];
 
         if (!empty($result['buckets']) && is_array($result['buckets'])) {
@@ -121,7 +124,7 @@ class start_backup_popup implements \templatable {
             $clihelper->cli_writeln('Available backup storage (--storage option):');
             $tabledata = [];
             foreach ($buckets as $bucket) {
-                $tabledata['- ' . $bucket['id'].(!empty($bucket['isdefault']) ? ' (default)' : '')] =
+                $tabledata['- ' . $bucket['id'] . (!empty($bucket['isdefault']) ? ' (default)' : '')] =
                     $bucket['label'] . ($hasdifferentenc ?
                     (!empty($bucket['encryption']) ? "\nPassphrase supported" : "\nPassphrase not supported") : '');
             }

@@ -35,7 +35,7 @@ use tool_vault\site_restore;
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_backup_mock.php');
+require_once($CFG->dirroot . '/' . $CFG->admin . '/tool/vault/tests/fixtures/site_backup_mock.php');
 
 /**
  * The files_restore_test test class.
@@ -47,7 +47,6 @@ require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_back
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class files_restore_test extends \advanced_testcase {
-
     /**
      * Cleanup all temp files
      *
@@ -121,7 +120,7 @@ final class files_restore_test extends \advanced_testcase {
         $files1 = ['d4/a2/cccccccccccccccc', 'ab/df/aaaaaaaaaaaaaaaaaaaa'];
         $this->mock_backup_files($siterestore->get_model()->id, [
             [constants::FILENAME_FILEDIR, null, $files0],
-            [constants::FILENAME_FILEDIR.'-1', null, $files1],
+            [constants::FILENAME_FILEDIR . '-1', null, $files1],
         ]);
 
         $filesrestore = new files_restore($siterestore, constants::FILENAME_FILEDIR);
@@ -131,10 +130,14 @@ final class files_restore_test extends \advanced_testcase {
         $this->assertEquals($files1[1], $filesrestore->get_next_file()[1]);
 
         $this->assertFalse($filesrestore->is_first_archive());
-        $this->assertEquals(constants::STATUS_FINISHED,
-            $DB->get_field('tool_vault_backup_file', 'status', ['filetype' => constants::FILENAME_FILEDIR, 'seq' => 0]));
-        $this->assertEquals(constants::STATUS_SCHEDULED,
-            $DB->get_field('tool_vault_backup_file', 'status', ['filetype' => constants::FILENAME_FILEDIR, 'seq' => 1]));
+        $this->assertEquals(
+            constants::STATUS_FINISHED,
+            $DB->get_field('tool_vault_backup_file', 'status', ['filetype' => constants::FILENAME_FILEDIR, 'seq' => 0])
+        );
+        $this->assertEquals(
+            constants::STATUS_SCHEDULED,
+            $DB->get_field('tool_vault_backup_file', 'status', ['filetype' => constants::FILENAME_FILEDIR, 'seq' => 1])
+        );
 
         $this->assertEquals($files1[0], $filesrestore->get_next_file()[1]);
         $this->assertNull($filesrestore->get_next_file());
@@ -153,7 +156,7 @@ final class files_restore_test extends \advanced_testcase {
         $files1 = ['d/subdir/file.php'];
         $this->mock_backup_files($siterestore->get_model()->id, [
             [constants::FILENAME_DATAROOT, null, $files0],
-            [constants::FILENAME_DATAROOT.'-1', null, $files1],
+            [constants::FILENAME_DATAROOT . '-1', null, $files1],
         ]);
 
         // Check result of get_next_file().
@@ -176,9 +179,13 @@ final class files_restore_test extends \advanced_testcase {
      */
     protected function prepare_db_structure() {
         global $CFG;
-        return $this->create_archive(constants::FILENAME_DBSTRUCTURE.'.zip',
+        return $this->create_archive(
+            constants::FILENAME_DBSTRUCTURE . '.zip',
             [constants::FILE_STRUCTURE => file_get_contents(
-                $CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/dbstructure1.xml'), ]);
+                $CFG->dirroot . '/' . $CFG->admin . '/tool/vault/tests/fixtures/dbstructure1.xml'
+            ),
+            ]
+        );
     }
 
     /**
@@ -203,11 +210,11 @@ final class files_restore_test extends \advanced_testcase {
     protected function mock_backup_files(int $opid, array $files) {
         $apifiles = [];
         foreach ($files as $file) {
-            $apifiles[] = ['name' => $file[0].'.zip'];
+            $apifiles[] = ['name' => $file[0] . '.zip'];
         }
         files_restore::populate_backup_files($opid, $apifiles);
         foreach (array_reverse($files) as $file) {
-            $filepath = $file[1] ?? $this->create_archive($file[0].'.zip', $file[2]);
+            $filepath = $file[1] ?? $this->create_archive($file[0] . '.zip', $file[2]);
             $this->curl_mock_file_download($filepath);
         }
     }
@@ -234,7 +241,7 @@ final class files_restore_test extends \advanced_testcase {
         $this->mock_backup_files($siterestore->get_model()->id, [
             [constants::FILENAME_DBSTRUCTURE, $filepathstructure],
             [constants::FILENAME_DBDUMP, null, $files0],
-            [constants::FILENAME_DBDUMP.'-1', null, $files1],
+            [constants::FILENAME_DBDUMP . '-1', null, $files1],
         ]);
 
         // Read db structure.

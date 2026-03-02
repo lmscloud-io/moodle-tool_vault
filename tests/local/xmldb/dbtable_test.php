@@ -28,7 +28,6 @@ use tool_vault\constants;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class dbtable_test extends \advanced_testcase {
-
     /**
      * Test for get_alter_sql
      *
@@ -234,8 +233,10 @@ EOF;
 
         $table = $this->fixture_config_log_modified_fields();
         $res = $table->compare_with_other_table($deftable);
-        $this->assertEquals([constants::DIFF_EXTRACOLUMNS, constants::DIFF_MISSINGCOLUMNS, constants::DIFF_CHANGEDCOLUMNS],
-            array_keys($res));
+        $this->assertEquals(
+            [constants::DIFF_EXTRACOLUMNS, constants::DIFF_MISSINGCOLUMNS, constants::DIFF_CHANGEDCOLUMNS],
+            array_keys($res)
+        );
         $this->assertCount(1, $res[constants::DIFF_EXTRACOLUMNS]);
         $this->assertEquals('namerenamed', $res[constants::DIFF_EXTRACOLUMNS][0]->getName());
         $this->assertCount(1, $res[constants::DIFF_MISSINGCOLUMNS]);

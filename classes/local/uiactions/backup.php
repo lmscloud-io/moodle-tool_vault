@@ -30,7 +30,6 @@ use tool_vault\output\last_operation;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup extends base {
-
     /**
      * Display name of the section (for the breadcrumb)
      *
@@ -90,8 +89,10 @@ class backup extends base {
      * @return string
      */
     public function display(\renderer_base $output) {
-        $rv = $output->render_from_template('tool_vault/section_backup',
-            $this->export_for_template($output));
+        $rv = $output->render_from_template(
+            'tool_vault/section_backup',
+            $this->export_for_template($output)
+        );
 
         foreach (\tool_vault\local\checks\check_base::get_all_checks() as $check) {
             $data = (new check_display($check))->export_for_template($output);

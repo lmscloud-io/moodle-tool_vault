@@ -77,7 +77,7 @@ class cli_helper {
             }
         }
 
-        list($this->clioptions, $unrecognized) = cli_get_params(
+        [$this->clioptions, $unrecognized] = cli_get_params(
             $longoptions,
             $shortmapping
         );
@@ -103,7 +103,7 @@ class cli_helper {
                 'resume' => [
                     'hasvalue' => false,
                     'description' => 'Resume the last restore',
-                    'validation' => function($resume) {
+                    'validation' => function ($resume) {
                         if ($resume && !empty($this->clioptions['backupkey'])) {
                             $this->cli_error('When --resume is specified, the --backupkey argument is not needed');
                         }
@@ -128,7 +128,7 @@ class cli_helper {
             'apikey' => [
                 'hasvalue' => 'APIKEY',
                 'description' => 'API key, unless already specified in the Vault settings',
-                'validation' => function($apikey) {
+                'validation' => function ($apikey) {
                     $apikey = empty($apikey) ? api::get_api_key() : $apikey;
                     if (empty($apikey)) {
                         $this->cli_error('Argument --apikey is required');
@@ -144,12 +144,12 @@ class cli_helper {
                     'description' => 'Backup description, by default - site URL',
                     'hasvalue' => 'TEXT',
                     'default' => $CFG->wwwroot,
-                    'validation' => function($text) {
+                    'validation' => function ($text) {
                         if ($text !== clean_param($text, PARAM_TEXT)) {
                             $this->cli_error('Backup description can not contain HTML');
                         } else if (strlen($text) > constants::DESCRIPTION_MAX_LENGTH) {
-                            $this->cli_error('Description should not be longer than '.
-                                constants::DESCRIPTION_MAX_LENGTH.' characters');
+                            $this->cli_error('Description should not be longer than ' .
+                                constants::DESCRIPTION_MAX_LENGTH . ' characters');
                         }
                     },
                 ],
@@ -179,8 +179,8 @@ class cli_helper {
                 'expiredays' => [
                     'description' => 'Days before backup expires',
                     'hasvalue' => 'NUMBER',
-                    'validation' => function($text) {
-                        if (''.$text !== '' && $text !== ''.clean_param($text, PARAM_INT)) {
+                    'validation' => function ($text) {
+                        if ('' . $text !== '' && $text !== '' . clean_param($text, PARAM_INT)) {
                             $this->cli_error('Parameter expiredays must be a number');
                         }
                     },
@@ -217,7 +217,7 @@ class cli_helper {
         if (array_key_exists('backupkey', $this->options_definitions())) {
             $params = ' --backupkey=BACKUPKEY';
         }
-        $this->cli_writeln('$sudo -u www-data /usr/bin/php admin/tool/vault/cli/'.$this->scriptfilename.$params);
+        $this->cli_writeln('$sudo -u www-data /usr/bin/php admin/tool/vault/cli/' . $this->scriptfilename . $params);
     }
 
     /**
@@ -364,7 +364,7 @@ class cli_helper {
         if (!PHPUNIT_TEST) {
             die($errorcode);
         } else {
-            throw new \moodle_exception('CLI script finished with error code '.$errorcode);
+            throw new \moodle_exception('CLI script finished with error code ' . $errorcode);
         }
     }
 

@@ -59,7 +59,7 @@ class dbops {
         if (defined('PHPUNIT_TEST') && PHPUNIT_TEST) {
             self::$maxallowedpacket = $newvalue;
         } else {
-            debugging('Function '.__FUNCTION__.' can not be called outside of unittests', DEBUG_DEVELOPER);
+            debugging('Function ' . __FUNCTION__ . ' can not be called outside of unittests', DEBUG_DEVELOPER);
         }
     }
 
@@ -86,7 +86,7 @@ class dbops {
             try {
                 self::insert_chunk($tablename, $fields, $data, $startrow, $endrow);
             } catch (\Throwable $t) {
-                $logger->add_to_log("- failed to insert chunk of records into table $tablename: ".
+                $logger->add_to_log("- failed to insert chunk of records into table $tablename: " .
                     $t->getMessage(), constants::LOGLEVEL_WARNING);
                 if ($t instanceof \dml_exception) {
                     $logger->add_to_log(shorten_text($t->debuginfo, 1000, true), constants::LOGLEVEL_VERBOSE);
@@ -179,7 +179,7 @@ class dbops {
         if (!$nofrows) {
             return '';
         }
-        $valuerowsql = '('.implode(',', array_fill(0, $noffields, '?')).')';
+        $valuerowsql = '(' . implode(',', array_fill(0, $noffields, '?')) . ')';
         return implode(',', array_fill(0, $nofrows, $valuerowsql));
     }
 
@@ -198,7 +198,7 @@ class dbops {
             return $dbgen->getEncQuoted($f);
         }, $fields)) . ')';
         $valuessql = self::prepare_value_sql(count($fields), $nofrows);
-        return "INSERT INTO {".$tablename."} $fieldssql VALUES $valuessql";
+        return "INSERT INTO {" . $tablename . "} $fieldssql VALUES $valuessql";
     }
 
     /**
@@ -238,8 +238,14 @@ class dbops {
      * @param logger $logger
      * @return void
      */
-    protected static function insert_records_one_by_one(string $tablename, array $fields, array &$rows, int $startrow,
-            int $endrow, logger $logger) {
+    protected static function insert_records_one_by_one(
+        string $tablename,
+        array $fields,
+        array &$rows,
+        int $startrow,
+        int $endrow,
+        logger $logger
+    ) {
         global $DB;
         for ($i = $startrow; $i < $endrow; $i++) {
             $row = $rows[$i];
@@ -248,10 +254,9 @@ class dbops {
                 // Mdlcode-disable-next-line cannot-parse-db-tablename.
                 $DB->insert_record_raw($tablename, $entry, false, true, true);
             } catch (\Throwable $t) {
-                $logger->add_to_log("- failed to insert record with id {$entry['id']} into table $tablename: ".
+                $logger->add_to_log("- failed to insert record with id {$entry['id']} into table $tablename: " .
                     $t->getMessage(), constants::LOGLEVEL_WARNING);
             }
         }
     }
-
 }

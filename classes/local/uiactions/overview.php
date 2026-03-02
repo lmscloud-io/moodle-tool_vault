@@ -33,7 +33,6 @@ use tool_vault\output\last_operation;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class overview extends base {
-
     /**
      * Display
      *

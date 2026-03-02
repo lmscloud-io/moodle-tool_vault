@@ -30,7 +30,6 @@ use tool_vault\site_restore_dryrun;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_details extends base {
-
     /**
      * Display name of the section (for the breadcrumb)
      *

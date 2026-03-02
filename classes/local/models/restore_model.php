@@ -89,8 +89,12 @@ class restore_model extends restore_base_model {
             return $model;
         } else {
             // Other statuses - failed to start, inprogress, scheduled.
-            throw new moodle_exception('error_cannotresumerestore', 'tool_vault', '',
-                ui::format_status($model->status));
+            throw new moodle_exception(
+                'error_cannotresumerestore',
+                'tool_vault',
+                '',
+                ui::format_status($model->status)
+            );
         }
     }
 

@@ -26,7 +26,6 @@ use tool_vault\constants;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class restore_base_model extends operation_model {
-
     /**
      * Remote metadata
      *

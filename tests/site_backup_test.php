@@ -33,7 +33,7 @@ use tool_vault\local\xmldb\dbtable;
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_backup_mock.php');
+require_once($CFG->dirroot . '/' . $CFG->admin . '/tool/vault/tests/fixtures/site_backup_mock.php');
 
 /**
  * The site_backup_test test class.
@@ -45,7 +45,6 @@ require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/vault/tests/fixtures/site_back
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class site_backup_test extends \advanced_testcase {
-
     /**
      * Cleanup all temp files
      *
@@ -94,10 +93,12 @@ final class site_backup_test extends \advanced_testcase {
         $dir = tempfiles::make_temp_dir('test-dbstruct-');
         $sitebackup->export_table_data($tableobj, $dir);
 
-        $data = json_decode(file_get_contents($dir.DIRECTORY_SEPARATOR.'tool_vault_config.0.json'), true);
+        $data = json_decode(file_get_contents($dir . DIRECTORY_SEPARATOR . 'tool_vault_config.0.json'), true);
         $this->assertEquals(['name', 'n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6'], array_column($data, 1));
-        $this->assertEquals(['value', 'value', null, '', 'null', 'NULL', 'value "with" quotes', "value\nwith\nnewlines"],
-            array_column($data, 2));
+        $this->assertEquals(
+            ['value', 'value', null, '', 'null', 'NULL', 'value "with" quotes', "value\nwith\nnewlines"],
+            array_column($data, 2)
+        );
 
         // Close archive, remove temp folder and also clear the curl mock stack.
         $sitebackup->get_files_backup(constants::FILENAME_DBDUMP)->finish();
@@ -128,7 +129,7 @@ final class site_backup_test extends \advanced_testcase {
         $tableobj = dbtable::create_from_actual_db('test_table', $sitebackup->get_db_structure());
         $dir = tempfiles::make_temp_dir('test-dbstruct-');
         $sitebackup->export_table_data($tableobj, $dir);
-        $jsoncontens = json_decode(file_get_contents($dir.DIRECTORY_SEPARATOR.'test_table.0.json'), true);
+        $jsoncontens = json_decode(file_get_contents($dir . DIRECTORY_SEPARATOR . 'test_table.0.json'), true);
 
         $this->assertEquals([['id', 'desc'], [(string)$id, 'value']], $jsoncontens);
 
@@ -173,24 +174,26 @@ final class site_backup_test extends \advanced_testcase {
 
         $this->assertTrue(in_array('config.0', $files));
         $this->assertTrue(in_array('user.0', $files));
-        $this->assertTrue(file_exists($dirstruct.DIRECTORY_SEPARATOR.constants::FILE_STRUCTURE));
-        $this->assertTrue(file_exists($dirstruct.DIRECTORY_SEPARATOR.constants::FILE_SEQUENCE));
+        $this->assertTrue(file_exists($dirstruct . DIRECTORY_SEPARATOR . constants::FILE_STRUCTURE));
+        $this->assertTrue(file_exists($dirstruct . DIRECTORY_SEPARATOR . constants::FILE_SEQUENCE));
         $this->assertFalse(in_array('tool_vault_config.0', $files));
         $this->assertFalse(in_array('tool_vault_operation.0', $files));
         $this->assertFalse(in_array('tool_vault_log.0', $files));
 
         // Retrieve user file, just for checks.
-        $userlist = json_decode(file_get_contents($dir.'/'.'user.0.json'), true);
+        $userlist = json_decode(file_get_contents($dir . '/' . 'user.0.json'), true);
         $this->assertEquals('admin', $userlist[2][7]);
 
         // Retrieve config_plugins, make sure the version number for tool_vault is not included there.
-        $config = json_decode(file_get_contents($dir.'/'.'config_plugins.0.json'), true);
-        $this->assertEquals(['id', 'plugin', 'name', 'value'],
-            array_shift($config)); // Fist row are column names.
-        $f1 = array_filter($config, function($entry) {
+        $config = json_decode(file_get_contents($dir . '/' . 'config_plugins.0.json'), true);
+        $this->assertEquals(
+            ['id', 'plugin', 'name', 'value'],
+            array_shift($config)
+        ); // Fist row are column names.
+        $f1 = array_filter($config, function ($entry) {
             return $entry[1] === 'tool_vault';
         });
-        $f2 = array_filter($config, function($entry) {
+        $f2 = array_filter($config, function ($entry) {
             return $entry[1] === 'tool_monitor';
         });
         $this->assertEmpty($f1);
@@ -205,7 +208,7 @@ final class site_backup_test extends \advanced_testcase {
 
         // Make a directory under dataroot and store a file there.
         $hellodir = make_upload_directory('helloworld');
-        file_put_contents($hellodir.DIRECTORY_SEPARATOR.'hello.txt', 'Hello world!');
+        file_put_contents($hellodir . DIRECTORY_SEPARATOR . 'hello.txt', 'Hello world!');
 
         // Call export_dataroot() from site_backup.
         $sitebackup = $this->create_site_backup();

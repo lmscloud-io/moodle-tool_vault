@@ -26,7 +26,6 @@ namespace tool_vault\local\xmldb;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class dbstructure_test extends \advanced_testcase {
-
     /**
      * Test for loading structure
      */
@@ -35,9 +34,11 @@ final class dbstructure_test extends \advanced_testcase {
         // Loop through all tables and compare definitions with actual.
         foreach ($definitions->get_tables_actual() as $tablename => $actualtable) {
             $definition = $definitions->find_table_definition($tablename);
-            $this->assertEquals($definition->get_xmldb_table()->xmlOutput(),
+            $this->assertEquals(
+                $definition->get_xmldb_table()->xmlOutput(),
                 $actualtable->get_xmldb_table()->xmlOutput(),
-            'Output does not match for the table "'.$tablename.'"');
+                'Output does not match for the table "' . $tablename . '"'
+            );
         }
 
         // TODO add test when definition is different from actual.

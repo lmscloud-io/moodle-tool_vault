@@ -26,7 +26,6 @@ use tool_vault\local\uiactions\restore_checkreport;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class check_base_restore extends check_base {
-
     /**
      * Link to this check full review (if applicable)
      *
@@ -45,7 +44,7 @@ abstract class check_base_restore extends check_base {
      */
     protected function badge(string $class, string $text): string {
         if (!in_array($class, ['badge-info', 'badge-warning', 'badge-danger'])) {
-            throw new \coding_exception('Unrecognised badge class: '.s($class));
+            throw new \coding_exception('Unrecognised badge class: ' . s($class));
         }
         return "<span class=\"badge {$class} mx-1\">{$text}</span><span class=\"accesshide\">. </span>";
     }

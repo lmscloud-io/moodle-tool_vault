@@ -78,7 +78,7 @@ class restore_details implements \templatable {
             'restoreid' => $this->restore->id,
             'resumeurl' => $this->restore->can_resume() ?
                 \tool_vault\local\uiactions\restore_resume::url(['id' => $this->restore->id])->out(false) : null,
-            'vaultfaqurl' => api::get_frontend_url().'/faq',
+            'vaultfaqurl' => api::get_frontend_url() . '/faq',
         ];
 
         if ($this->restore->status == constants::STATUS_INPROGRESS) {

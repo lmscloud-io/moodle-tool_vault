@@ -35,7 +35,6 @@ function xmldb_tool_vault_upgrade($oldversion) {
     $dbman = $DB->get_manager();
 
     if ($oldversion < 2022070900) {
-
         // Define table tool_vault_checks to be created.
         // Mdlcode-disable-next-line unknown-db-tablename.
         $table = new xmldb_table('tool_vault_checks');
@@ -61,7 +60,6 @@ function xmldb_tool_vault_upgrade($oldversion) {
     }
 
     if ($oldversion < 2022071500) {
-
         // Define table tool_vault_operation to be created.
         $table = new xmldb_table('tool_vault_operation');
 
@@ -92,7 +90,6 @@ function xmldb_tool_vault_upgrade($oldversion) {
     }
 
     if ($oldversion < 2022071501) {
-
         // Define table tool_vault_log to be created.
         $table = new xmldb_table('tool_vault_log');
 
@@ -120,7 +117,6 @@ function xmldb_tool_vault_upgrade($oldversion) {
     }
 
     if ($oldversion < 2022071502) {
-
         // Define field accesskey to be added to tool_vault_operation.
         $table = new xmldb_table('tool_vault_operation');
         $field = new xmldb_field('accesskey', XMLDB_TYPE_CHAR, '100', null, null, null, null, 'details');
@@ -144,7 +140,6 @@ function xmldb_tool_vault_upgrade($oldversion) {
     }
 
     if ($oldversion < 2022071510) {
-
         // Define table tool_vault_backups to be dropped.
         // Mdlcode-disable-next-line unknown-db-tablename.
         $table = new xmldb_table('tool_vault_backups');
@@ -177,7 +172,6 @@ function xmldb_tool_vault_upgrade($oldversion) {
     }
 
     if ($oldversion < 2022072303) {
-
         // Define table tool_vault_backup_files to be dropped.
         // Mdlcode-disable-next-line unknown-db-tablename.
         $table = new xmldb_table('tool_vault_backup_files');
@@ -217,7 +211,6 @@ function xmldb_tool_vault_upgrade($oldversion) {
     }
 
     if ($oldversion < 2022072304) {
-
         // Changing type of field loglevel on table tool_vault_log to char.
         $table = new xmldb_table('tool_vault_log');
         $field = new xmldb_field('loglevel', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, 'info', 'timecreated');
@@ -239,7 +232,6 @@ function xmldb_tool_vault_upgrade($oldversion) {
     }
 
     if ($oldversion < 2022073000) {
-
         // Define field parentid to be added to tool_vault_operation.
         $table = new xmldb_table('tool_vault_operation');
         $field = new xmldb_field('parentid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'status');
@@ -261,7 +253,6 @@ function xmldb_tool_vault_upgrade($oldversion) {
     }
 
     if ($oldversion < 2023011800) {
-
         // Define table tool_vault_table_files_data to be created.
         $table = new xmldb_table('tool_vault_table_files_data');
 
@@ -286,7 +277,6 @@ function xmldb_tool_vault_upgrade($oldversion) {
     }
 
     if ($oldversion < 2024101304) {
-
         // Define field fullmessage to be added to tool_vault_log.
         $table = new xmldb_table('tool_vault_log');
         $oldfield = new xmldb_field('message');

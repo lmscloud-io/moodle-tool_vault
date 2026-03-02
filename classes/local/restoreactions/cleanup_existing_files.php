@@ -27,7 +27,6 @@ use tool_vault\site_restore;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class cleanup_existing_files extends restore_action {
-
     /**
      * Executes individual action
      *
@@ -81,8 +80,16 @@ class cleanup_existing_files extends restore_action {
         $DB->execute($sql);
         $fs = get_file_storage()->get_file_system();
 
-        while ($records = $DB->get_records('tool_vault_table_files_data', ['restoreid' => $restoreid],
-                'contenthash', 'id, contenthash', 0, 100)) {
+        while (
+            $records = $DB->get_records(
+                'tool_vault_table_files_data',
+                ['restoreid' => $restoreid],
+                'contenthash',
+                'id, contenthash',
+                0,
+                100
+            )
+        ) {
             $x = [];
             foreach ($records as $record) {
                 $fs->remove_file($record->contenthash);

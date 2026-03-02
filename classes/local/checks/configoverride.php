@@ -26,7 +26,6 @@ use tool_vault\constants;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class configoverride extends check_base {
-
     // TODO. Recommend not to include settings that contain paths to executables.
 
     /** @var string[] */
@@ -52,8 +51,8 @@ class configoverride extends check_base {
      */
     public function perform(): void {
         global $CFG;
-        list($included, $notincluded) = $this->get_config_overrides_core();
-        list($pincluded, $pnotincluded) = $this->get_config_overrides_plugins();
+        [$included, $notincluded] = $this->get_config_overrides_core();
+        [$pincluded, $pnotincluded] = $this->get_config_overrides_plugins();
         $this->model->set_details([
             'config_php_settings_included' => $included,
             'config_php_settings_notincluded' => $notincluded,
@@ -144,8 +143,8 @@ class configoverride extends check_base {
             'cachedir' => "$CFG->dataroot/cache",
             'localcachedir' => "$CFG->dataroot/localcache",
             'localrequestdir' => sys_get_temp_dir() . '/requestdir',
-            'langotherroot' => $CFG->dataroot.'/lang',
-            'langlocalroot' => $CFG->dataroot.'/lang',
+            'langotherroot' => $CFG->dataroot . '/lang',
+            'langlocalroot' => $CFG->dataroot . '/lang',
             'directorypermissions' => 02777,
             'filepermissions' => ($CFG->directorypermissions & 0666),
             'umaskpermissions' => (($CFG->directorypermissions & 0777) ^ 0777),
@@ -171,15 +170,15 @@ class configoverride extends check_base {
             return '';
         }
         return
-            '<ul>'.
-            '<li>' . get_string('configoverrides_willbeincluded', 'tool_vault') . ': '.
-            count($details['config_php_settings_included']).'</li>'.
-            '<li>' . get_string('configoverrides_willnotbeincluded', 'tool_vault') . ': '.
-            count($details['config_php_settings_notincluded']).'</li>'.
-            '<li>' . get_string('configoverrides_willbeincludedplugin', 'tool_vault') . ': '.
-            count($details['forced_plugin_settings_included']).'</li>'.
-            '<li>' . get_string('configoverrides_willnotbeincludedplugin', 'tool_vault') . ': '.
-            count($details['forced_plugin_settings_notincluded']).'</li>'.
+            '<ul>' .
+            '<li>' . get_string('configoverrides_willbeincluded', 'tool_vault') . ': ' .
+            count($details['config_php_settings_included']) . '</li>' .
+            '<li>' . get_string('configoverrides_willnotbeincluded', 'tool_vault') . ': ' .
+            count($details['config_php_settings_notincluded']) . '</li>' .
+            '<li>' . get_string('configoverrides_willbeincludedplugin', 'tool_vault') . ': ' .
+            count($details['forced_plugin_settings_included']) . '</li>' .
+            '<li>' . get_string('configoverrides_willnotbeincludedplugin', 'tool_vault') . ': ' .
+            count($details['forced_plugin_settings_notincluded']) . '</li>' .
             '</ul>';
     }
 

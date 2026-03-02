@@ -26,10 +26,7 @@ use core_privacy\local\metadata\null_provider;
  * @copyright  2024 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class provider implements null_provider,
-        \core_privacy\local\metadata\provider {
-
-
+class provider implements \core_privacy\local\metadata\provider, null_provider {
     /**
      * Get the language string identifier with the component's language
      * file to explain why this plugin stores no data.
@@ -47,11 +44,13 @@ class provider implements null_provider,
      * @return collection A listing of user data stored through this system.
      */
     public static function get_metadata(collection $collection): collection {
-        $collection->add_external_location_link('lmsvault.io',
+        $collection->add_external_location_link(
+            'lmsvault.io',
             [
                 '*' => 'privacy:metadata:alldata',
             ],
-            'privacy:metadata:lmsvault');
+            'privacy:metadata:lmsvault'
+        );
 
         return $collection;
     }

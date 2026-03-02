@@ -33,7 +33,6 @@ use tool_vault\output\last_operation;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class vaulttools extends base {
-
     /**
      * Display name of the section (for the breadcrumb)
      *
@@ -93,7 +92,9 @@ class vaulttools extends base {
      * @return string
      */
     public function display(\renderer_base $output) {
-        return $output->render_from_template('tool_vault/vaulttools',
-            $this->export_for_template($output));
+        return $output->render_from_template(
+            'tool_vault/vaulttools',
+            $this->export_for_template($output)
+        );
     }
 }

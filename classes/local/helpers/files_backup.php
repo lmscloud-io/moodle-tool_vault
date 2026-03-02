@@ -54,8 +54,12 @@ class files_backup {
         global $DB;
         $this->sitebackup = $sitebackup;
         $this->filetype = $filetype;
-        $records = $DB->get_records_select(backup_file::TABLE, "operationid = ? AND filetype = ?",
-            [$sitebackup->get_model()->id, $this->filetype], 'seq, id');
+        $records = $DB->get_records_select(
+            backup_file::TABLE,
+            "operationid = ? AND filetype = ?",
+            [$sitebackup->get_model()->id, $this->filetype],
+            'seq, id'
+        );
         foreach ($records as $record) {
             $backupfile = new backup_file((array)$record);
             $this->backupfiles[] = $backupfile;
@@ -79,7 +83,7 @@ class files_backup {
      * @throws \moodle_exception
      */
     public function start() {
-        $this->zipdir = tempfiles::make_temp_dir('filesbackup-'.$this->filetype.'-');
+        $this->zipdir = tempfiles::make_temp_dir('filesbackup-' . $this->filetype . '-');
         // Prepare model but do not save, In case of backup we don't save unfinished files.
         $seq = $this->backupfiles ? ($this->backupfiles[count($this->backupfiles) - 1]->seq + 1) : 0;
         $this->currentbackupfile = new backup_file([
@@ -92,7 +96,7 @@ class files_backup {
             'details' => json_encode([]),
         ]);
 
-        $this->sitebackup->add_to_log("Creating new zip file ".  $this->currentbackupfile->get_file_name());
+        $this->sitebackup->add_to_log("Creating new zip file " .  $this->currentbackupfile->get_file_name());
         $this->ziparchive = new zip_archive();
         if (!$this->ziparchive->open($this->get_archive_file_path(), \file_archive::CREATE)) {
             // TODO?
@@ -169,8 +173,13 @@ class files_backup {
      * @param bool $isarchive this file is already an arhive and should be added without compression
      * @return self
      */
-    public function add_file(string $filepath, ?string $localname = null, bool $allownewzip = true,
-                             bool $removesource = true, bool $isarchive = false): self {
+    public function add_file(
+        string $filepath,
+        ?string $localname = null,
+        bool $allownewzip = true,
+        bool $removesource = true,
+        bool $isarchive = false
+    ): self {
         $localname = $localname ?? basename($filepath);
         if (is_dir($filepath)) {
             $this->add_folder($filepath, $localname, $removesource);
@@ -202,8 +211,12 @@ class files_backup {
         $handle = opendir($filepath);
         while (($file = readdir($handle)) !== false) {
             if ($file !== '.' && $file !== '..') {
-                $this->add_file($filepath . DIRECTORY_SEPARATOR . $file,
-                    $localname . DIRECTORY_SEPARATOR . $file, false, $removesource);
+                $this->add_file(
+                    $filepath . DIRECTORY_SEPARATOR . $file,
+                    $localname . DIRECTORY_SEPARATOR . $file,
+                    false,
+                    $removesource
+                );
             }
         }
         closedir($handle);

@@ -43,7 +43,7 @@ class files_backup_mock extends \tool_vault\local\helpers\files_backup {
     public function finish(bool $startnew = false) {
         $zipfilepath = $this->get_archive_file_path();
         $this->ziparchive->close();
-        $newfilepath = make_request_directory().DIRECTORY_SEPARATOR.basename($zipfilepath);
+        $newfilepath = make_request_directory() . DIRECTORY_SEPARATOR . basename($zipfilepath);
         copy($zipfilepath, $newfilepath);
         $this->uploadedfiles[] = $newfilepath;
         $this->ziparchive = null;

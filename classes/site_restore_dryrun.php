@@ -38,7 +38,6 @@ use tool_vault\local\operations\operation_base;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class site_restore_dryrun extends operation_base {
-
     /** @var dryrun_model */
     protected $model;
     /** @var check_base[] */
@@ -80,7 +79,7 @@ class site_restore_dryrun extends operation_base {
         $encryptionkey = api::prepare_encryption_key($params['passphrase'] ?? '');
         $dryrun = new dryrun_model();
         $dryrun
-            ->set_status( constants::STATUS_SCHEDULED)
+            ->set_status(constants::STATUS_SCHEDULED)
             ->set_details(['encryptionkey' => $encryptionkey])
             ->set_backupkey($backupkey)
             ->save();
@@ -113,8 +112,11 @@ class site_restore_dryrun extends operation_base {
      * @param logger $logger
      * @return check_base[] array of executed prechecks
      */
-    public static function execute_prechecks(files_restore $restorehelper, restore_base_model $model,
-                                             logger $logger): array {
+    public static function execute_prechecks(
+        files_restore $restorehelper,
+        restore_base_model $model,
+        logger $logger
+    ): array {
         $backupmetadata = api::get_remote_backup($model->backupkey, constants::STATUS_FINISHED);
 
         files_restore::populate_backup_files($model->id, $backupmetadata->files ?? []);
@@ -125,12 +127,20 @@ class site_restore_dryrun extends operation_base {
         $files = $restorehelper->get_all_files();
 
         if (!array_key_exists(constants::FILE_STRUCTURE, $files)) {
-            throw new \moodle_exception('error_dbstructurenotvalid', 'tool_vault', '',
-                constants::FILENAME_DBSTRUCTURE . '.zip');
+            throw new \moodle_exception(
+                'error_dbstructurenotvalid',
+                'tool_vault',
+                '',
+                constants::FILENAME_DBSTRUCTURE . '.zip'
+            );
         }
         if (!array_key_exists(constants::FILE_METADATA, $files)) {
-            throw new \moodle_exception('error_metadatanotvalid', 'tool_vault', '',
-                constants::FILENAME_DBSTRUCTURE . '.zip');
+            throw new \moodle_exception(
+                'error_metadatanotvalid',
+                'tool_vault',
+                '',
+                constants::FILENAME_DBSTRUCTURE . '.zip'
+            );
         }
 
         $remotedetails = (array)$backupmetadata->to_object();
@@ -149,7 +159,7 @@ class site_restore_dryrun extends operation_base {
         ];
         $prechecks = [];
         foreach ($precheckclasses as $classname) {
-            $logger->add_to_log('Restore pre-check: '.$classname::get_display_name().'...');
+            $logger->add_to_log('Restore pre-check: ' . $classname::get_display_name() . '...');
             $chk = $classname::create_and_run($model);
             $prechecks[$chk->get_name()] = $chk;
             if ($chk->success()) {
@@ -159,7 +169,7 @@ class site_restore_dryrun extends operation_base {
                     $logger->add_to_log('...OK');
                 }
             } else {
-                $logger->add_to_log('...Failed: '.strip_tags($chk->get_status_message()), constants::LOGLEVEL_ERROR);
+                $logger->add_to_log('...Failed: ' . strip_tags($chk->get_status_message()), constants::LOGLEVEL_ERROR);
             }
         }
         return $prechecks;

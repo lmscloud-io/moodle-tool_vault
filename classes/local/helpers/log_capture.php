@@ -28,7 +28,6 @@ use tool_vault\local\models\operation_model;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class log_capture {
-
     /** @var int The level of output buffering in place before starting. */
     protected static $oblevel = null;
     /** @var operation_model current operation */
@@ -66,7 +65,8 @@ class log_capture {
         $CFG->debugdeveloper = true;
         if (!self::$olddebug['debugdeveloper']) {
             self::$model->add_log(
-                'Developer debugging is enabled for this operation even though it is not enabled at the site level.');
+                'Developer debugging is enabled for this operation even though it is not enabled at the site level.'
+            );
         }
         if (!self::$olddebug['debugdisplay']) {
             self::$model->add_log('Debug display is enabled for this operation even though it is not enabled at the site level.');
@@ -123,7 +123,7 @@ class log_capture {
     protected static function is_capturing(): bool {
         $buffers = ob_get_status(true);
         foreach ($buffers as $ob) {
-            if (self::class.'::add_line' == $ob['name']) {
+            if (self::class . '::add_line' == $ob['name']) {
                 return true;
             }
         }
@@ -156,7 +156,7 @@ class log_capture {
             // End and flush this buffer.
             ob_end_flush();
 
-            if (self::class.'::add_line' == $ob['name']) {
+            if (self::class . '::add_line' == $ob['name']) {
                 break;
             }
         }
@@ -205,7 +205,7 @@ class log_capture {
      */
     protected static function is_current_output_buffer(): bool {
         if ($ob = ob_get_status()) {
-            return self::class.'::add_line' == $ob['name'];
+            return self::class . '::add_line' == $ob['name'];
         }
         return false;
     }

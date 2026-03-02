@@ -27,7 +27,6 @@ use tool_vault\local\helpers\ui;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class environ extends check_base {
-
     /**
      * Display name of this check
      *
@@ -73,12 +72,15 @@ class environ extends check_base {
      */
     public function get_status_message(): string {
         if ($this->warning()) {
-            return get_string('environ_success_warning', 'tool_vault',
-                    ['value' => $this->formatted_max_execution_time(), 'url' => api::get_frontend_url().'/faq']);
+            return get_string(
+                'environ_success_warning',
+                'tool_vault',
+                ['value' => $this->formatted_max_execution_time(), 'url' => api::get_frontend_url() . '/faq']
+            );
         } else if ($this->success()) {
             return get_string('success', 'moodle');
         } else {
-            return get_string('environ_fail', 'tool_vault', api::get_frontend_url().'/faq');
+            return get_string('environ_fail', 'tool_vault', api::get_frontend_url() . '/faq');
         }
     }
 
@@ -110,10 +112,10 @@ class environ extends check_base {
             $highlightedstatus = $this->display_status_message($this->get_status_message(), $this->warning());
         }
         return
-            $highlightedstatus.
-            '<ul>'.
+            $highlightedstatus .
+            '<ul>' .
             '<li>' . get_string('environbackup_maxexecutiontime', 'tool_vault') . ': ' .
-                $this->formatted_max_execution_time().'</li>'.
+                $this->formatted_max_execution_time() . '</li>' .
             '</ul>';
     }
 

@@ -39,7 +39,7 @@ class siteinfo {
         foreach (core_component::get_plugin_types() as $type => $unused1) {
             $standard = \core_plugin_manager::standard_plugins_list($type) ?: [];
             foreach (core_component::get_plugin_list($type) as $plug => $dir) {
-                $pluginname = $type.'_'.$plug;
+                $pluginname = $type . '_' . $plug;
                 $isaddon = in_array($plug, $standard) ? null : true;
                 $list[$pluginname] = array_filter([
                     'version' => get_config($pluginname, 'version'),
@@ -286,7 +286,6 @@ class siteinfo {
             }
         }
         return false;
-
     }
 
     /**

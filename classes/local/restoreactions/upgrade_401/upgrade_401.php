@@ -48,12 +48,12 @@ class upgrade_401 {
      */
     protected static function upgrade_core(site_restore $logger) {
         global $CFG;
-        require_once(__DIR__ ."/core.php");
+        require_once(__DIR__ . "/core.php");
 
         try {
             tool_vault_401_core_upgrade($CFG->version);
         } catch (\Throwable $t) {
-            $logger->add_to_log("Exception executing core upgrade script: ".
+            $logger->add_to_log("Exception executing core upgrade script: " .
                $t->getMessage(), constants::LOGLEVEL_WARNING);
             api::report_error($t);
         }
@@ -77,14 +77,14 @@ class upgrade_401 {
                 // Standard plugin {$plugin} not found. It will be installed during the full upgrade.
                 continue;
             }
-            if (file_exists(__DIR__ ."/". $plugin .".php") && \core_component::get_component_directory($plugin)) {
-                require_once(__DIR__ ."/". $plugin .".php");
+            if (file_exists(__DIR__ . "/" . $plugin . ".php") && \core_component::get_component_directory($plugin)) {
+                require_once(__DIR__ . "/" . $plugin . ".php");
                 $pluginshort = preg_replace("/^mod_/", "", $plugin);
                 $funcname = "tool_vault_401_xmldb_{$pluginshort}_upgrade";
                 try {
                     $funcname($allcurversions[$plugin]);
                 } catch (\Throwable $t) {
-                    $logger->add_to_log("Exception executing upgrade script for plugin {$plugin}: ".
+                    $logger->add_to_log("Exception executing upgrade script for plugin {$plugin}: " .
                         $t->getMessage(), constants::LOGLEVEL_WARNING);
                     api::report_error($t);
                 }

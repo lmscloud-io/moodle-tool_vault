@@ -29,7 +29,6 @@ use tool_vault\local\models\dryrun_model;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class diskspace_restore extends check_base_restore {
-
     /**
      * Evaluate check and store results in model details
      */
@@ -113,20 +112,20 @@ class diskspace_restore extends check_base_restore {
         }
         $details = $this->model->get_details();
         return
-            $this->display_status_message($this->get_status_message(), $this->is_warning()).
-            '<ul>'.
+            $this->display_status_message($this->get_status_message(), $this->is_warning()) .
+            '<ul>' .
             ($details['freespace'] !== true ?
-            ('<li>'.get_string('diskspacebackup_freespace', 'tool_vault') . ': '.
-                display_size($details['freespace']).'</li>') : '').
-            '<li>'.get_string('diskspacerestore_mintmpspace', 'tool_vault') . ': '.
-                display_size($details['mintmpspace'] ?? 0).'</li>'.
-            '<li>'.get_string('diskspacebackup_datarootsize', 'tool_vault') . ': '.
-                display_size($details['datarootsize'] ?? 0).'</li>'.
-            '<li>'.get_string('diskspacerestore_filedirsize', 'tool_vault') . ': '.
-                display_size($details['filedirsize'] ?? 0).'</li>'.
-            '<li>'.get_string('diskspacebackup_dbtotalsize', 'tool_vault') . ' (*): '.
-                display_size($details['dbtotalsize'] ?? 0).'</li>'.
-            '</ul>'.
+            ('<li>' . get_string('diskspacebackup_freespace', 'tool_vault') . ': ' .
+                display_size($details['freespace']) . '</li>') : '') .
+            '<li>' . get_string('diskspacerestore_mintmpspace', 'tool_vault') . ': ' .
+                display_size($details['mintmpspace'] ?? 0) . '</li>' .
+            '<li>' . get_string('diskspacebackup_datarootsize', 'tool_vault') . ': ' .
+                display_size($details['datarootsize'] ?? 0) . '</li>' .
+            '<li>' . get_string('diskspacerestore_filedirsize', 'tool_vault') . ': ' .
+                display_size($details['filedirsize'] ?? 0) . '</li>' .
+            '<li>' . get_string('diskspacebackup_dbtotalsize', 'tool_vault') . ' (*): ' .
+                display_size($details['dbtotalsize'] ?? 0) . '</li>' .
+            '</ul>' .
             '<p>(*) ' . get_string('diskspacerestore_dbtotalsizefootnote', 'tool_vault') . '</p>';
     }
 

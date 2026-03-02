@@ -80,8 +80,12 @@ class files_restore {
         global $DB;
         $this->backupfiles = [];
         $this->currentseq = -1;
-        $records = $DB->get_records_select(backup_file::TABLE, "operationid = ? AND filetype = ?",
-            [$this->siterestore->get_model()->id, $this->filetype], 'seq, id');
+        $records = $DB->get_records_select(
+            backup_file::TABLE,
+            "operationid = ? AND filetype = ?",
+            [$this->siterestore->get_model()->id, $this->filetype],
+            'seq, id'
+        );
         foreach ($records as $record) {
             $backupfile = new backup_file((array)$record);
             $this->backupfiles[$backupfile->seq] = $backupfile;
@@ -126,8 +130,12 @@ class files_restore {
     public static function populate_backup_files(int $operationid, array $files) {
         global $DB;
         $existing = [];
-        $records = $DB->get_records_select(backup_file::TABLE, "operationid = ?",
-            [$operationid], 'filetype, seq, id');
+        $records = $DB->get_records_select(
+            backup_file::TABLE,
+            "operationid = ?",
+            [$operationid],
+            'filetype, seq, id'
+        );
         foreach ($records as $record) {
             $existing[] = new backup_file((array)$record);
         }
@@ -190,7 +198,7 @@ class files_restore {
         }
         $files = [];
         foreach ($this->curentfileslist as $localfilename) {
-            $files[$localfilename] = $this->dir.DIRECTORY_SEPARATOR.$localfilename;
+            $files[$localfilename] = $this->dir . DIRECTORY_SEPARATOR . $localfilename;
         }
         return $files;
     }
@@ -212,7 +220,7 @@ class files_restore {
         if (!$this->dir) {
             throw new \coding_exception('There is no open archive');
         }
-        return [$this->dir.DIRECTORY_SEPARATOR.$localpath, $localpath];
+        return [$this->dir . DIRECTORY_SEPARATOR . $localpath, $localpath];
     }
 
     /**
@@ -276,8 +284,8 @@ class files_restore {
         if (!$this->dir) {
             throw new \coding_exception('There is no open archive');
         }
-        $tablefiles = array_map(function($file) {
-            return $this->dir.DIRECTORY_SEPARATOR.$file;
+        $tablefiles = array_map(function ($file) {
+            return $this->dir . DIRECTORY_SEPARATOR . $file;
         }, $this->curenttables[$tablename] ?? []);
         return [$tablename, $tablefiles];
     }
@@ -384,7 +392,7 @@ class files_restore {
             // It is better to unzip the dataroot backup straight into dataroot directory so we can then
             // move them during restore faster (tmp path can be in a different filesystem/partition).
             try {
-                $basedir = $CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__';
+                $basedir = $CFG->dataroot . DIRECTORY_SEPARATOR . '__vault_restore__';
                 if (!file_exists($basedir)) {
                     make_writable_directory($basedir);
                 }
@@ -423,7 +431,7 @@ class files_restore {
         $lastkey = array_pop($keys);
         if ($this->is_dataroot_backup() && $this->currentseq == $lastkey) {
             // If it's the last file, remove the whole __vault_restore__ folder.
-            tempfiles::remove_temp_dir($CFG->dataroot.DIRECTORY_SEPARATOR.'__vault_restore__');
+            tempfiles::remove_temp_dir($CFG->dataroot . DIRECTORY_SEPARATOR . '__vault_restore__');
         }
     }
 

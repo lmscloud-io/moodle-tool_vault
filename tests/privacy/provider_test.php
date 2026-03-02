@@ -30,7 +30,6 @@ use core_privacy\local\metadata\collection;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class provider_test extends \advanced_testcase {
-
     /** @var string */
     const COMPONENT = 'tool_vault';
     /** @var string */

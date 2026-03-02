@@ -29,7 +29,6 @@ use tool_vault\local\xmldb\dbstructure;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class plugindata_test extends \advanced_testcase {
-
     /**
      * Cleanup all temp files
      *
@@ -65,15 +64,26 @@ final class plugindata_test extends \advanced_testcase {
                 $resyes[$setname] = $DB->get_records_select($table, $r[0], $r[1]);
                 $r = plugindata::get_sql_for_plugins_data_in_table($table, $pluginset, true);
                 $resno[$setname] = $DB->get_records_select($table, $r[0], $r[1]);
-                $this->assertEqualsCanonicalizing($resall[$setname], $resyes[$setname] + $resno[$setname],
-                    'Results do not add up for table '.$table.' for set '.$setname);
-                $this->assertEquals(count($resall[$setname]), count($resyes[$setname]) + count($resno[$setname]),
-                    'Results count do not add up for table '.$table.' for set '.$setname);
+                $this->assertEqualsCanonicalizing(
+                    $resall[$setname],
+                    $resyes[$setname] + $resno[$setname],
+                    'Results do not add up for table ' . $table . ' for set ' . $setname
+                );
+                $this->assertEquals(
+                    count($resall[$setname]),
+                    count($resyes[$setname]) + count($resno[$setname]),
+                    'Results count do not add up for table ' . $table . ' for set ' . $setname
+                );
             }
-            $this->assertEqualsCanonicalizing($resyes['pboth'], $resyes['p1'] + $resyes['p2'],
-                'Results do not add up for different sets for table '.$table);
-            $this->assertTrue(count($resyes['pboth']) == count($resyes['p1']) + count($resyes['p2']),
-                'Results counts do not add up for different sets for table '.$table);
+            $this->assertEqualsCanonicalizing(
+                $resyes['pboth'],
+                $resyes['p1'] + $resyes['p2'],
+                'Results do not add up for different sets for table ' . $table
+            );
+            $this->assertTrue(
+                count($resyes['pboth']) == count($resyes['p1']) + count($resyes['p2']),
+                'Results counts do not add up for different sets for table ' . $table
+            );
         }
     }
 

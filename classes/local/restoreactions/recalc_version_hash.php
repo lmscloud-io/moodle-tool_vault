@@ -30,7 +30,6 @@ use tool_vault\site_restore;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class recalc_version_hash extends restore_action {
-
     /** @var string[] */
     protected $alwaysexcluded = [
         // TODO reuse from admin/tool/vault/classes/local/checks/configoverride.php .
@@ -81,7 +80,8 @@ class recalc_version_hash extends restore_action {
         $preservekeys = array_merge(
             array_keys($CFG->config_php_settings),
             $this->otherexcluded,
-            $this->alwaysexcluded);
+            $this->alwaysexcluded
+        );
         $removekeys = array_diff(array_keys((array)$CFG), $preservekeys);
         foreach ($removekeys as $key) {
             unset($CFG->$key);

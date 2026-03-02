@@ -30,7 +30,7 @@ final class tempfiles_test extends \advanced_testcase {
         $dir = tempfiles::make_temp_dir('test-');
         $this->assertTrue(file_exists($dir) && is_dir($dir));
         $this->assertTrue(tempfiles::dir_is_empty($dir));
-        file_put_contents($dir.'/f1.txt', "hi");
+        file_put_contents($dir . '/f1.txt', "hi");
         $this->assertFalse(tempfiles::dir_is_empty($dir));
         tempfiles::remove_temp_dir($dir);
         $this->assertFalse(file_exists($dir));

@@ -38,7 +38,6 @@ use tool_vault\site_restore_dryrun;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class cron_task extends \core\task\scheduled_task {
-
     /**
      * Get a descriptive name for this task (shown to admins).
      *
@@ -137,11 +136,11 @@ class cron_task extends \core\task\scheduled_task {
     protected function fail_stuck_operation(operation_model $model) {
         $postfix = '';
         if ($model instanceof restore_model) {
-            $postfix = "\nIf the database restore did not finish, your site may be in an inconsistent state and will not work.".
+            $postfix = "\nIf the database restore did not finish, your site may be in an inconsistent state and will not work." .
             ' You will need to re-install Moodle and repeat the restore process.';
         }
         $model->add_log('There was no activity for over ' . (constants::LOCK_TIMEOUT / 60) .
-            ' minutes. It is possible that the cron process was interrupted or timed out. '.
+            ' minutes. It is possible that the cron process was interrupted or timed out. ' .
             'Operation is marked as failed, access to the site is now allowed.' . $postfix, constants::LOGLEVEL_ERROR);
         $model->set_status(constants::STATUS_FAILED)->save();
     }

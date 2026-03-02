@@ -27,7 +27,6 @@ use tool_vault\output\error_with_backtrace;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class vaulttools_details extends base {
-
     /**
      * Display name of the section (for the breadcrumb)
      *
@@ -59,7 +58,7 @@ class vaulttools_details extends base {
 
         $data = [
             'title' => $tool->get_display_name(),
-            'subtitle' => get_string('status', 'moodle') . ': '.
+            'subtitle' => get_string('status', 'moodle') . ': ' .
                 ui::format_status($tool->get_model()->status) . ', ' .
                 userdate($tool->get_model()->timemodified, get_string('strftimedatetimeshort', 'langconfig')),
             'inprogress' => $inprogress,

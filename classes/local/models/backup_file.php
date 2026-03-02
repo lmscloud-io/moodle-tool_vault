@@ -102,8 +102,10 @@ class backup_file {
         if (empty($this->data['id'])) {
             $this->data['timecreated'] = time();
             if (!array_key_exists('seq', $this->data)) {
-                $maxseq = $DB->get_field_sql('SELECT MAX(seq) FROM {'.self::TABLE.'} WHERE operationid = ? AND filetype = ?',
-                    [$this->data['operationid'], $this->data['filetype']]);
+                $maxseq = $DB->get_field_sql(
+                    'SELECT MAX(seq) FROM {' . self::TABLE . '} WHERE operationid = ? AND filetype = ?',
+                    [$this->data['operationid'], $this->data['filetype']]
+                );
                 $this->data['seq'] = ($maxseq === null) ? 1 : ($maxseq + 1);
             }
             $this->data['id'] = $DB->insert_record(self::TABLE, $this->data);

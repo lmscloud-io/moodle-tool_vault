@@ -25,7 +25,6 @@ use tool_vault\output\check_display;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_checkreport extends base {
-
     /**
      * Display name of the section (for the breadcrumb)
      *

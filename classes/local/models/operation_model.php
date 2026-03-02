@@ -69,7 +69,7 @@ abstract class operation_model {
         $record = $record ?? new \stdClass();
         foreach ($record as $key => $value) {
             if (!in_array($key, array_merge(self::$fields, ['id', 'timecreated', 'timemodified', 'parentid']))) {
-                throw new \coding_exception('Unknown field '.$key);
+                throw new \coding_exception('Unknown field ' . $key);
             }
         }
         if (!isset($record->type)) {
@@ -236,8 +236,10 @@ abstract class operation_model {
         $classes = \core_component::get_component_classes_in_namespace('tool_vault', 'local\models');
         foreach (array_keys($classes) as $class) {
             $rc = new \ReflectionClass($class);
-            if ($rc->isInstantiable() && is_subclass_of($class, self::class) &&
-                    $class::validate_type($record->type)) {
+            if (
+                $rc->isInstantiable() && is_subclass_of($class, self::class) &&
+                    $class::validate_type($record->type)
+            ) {
                 return new $class($record);
             }
         }
@@ -299,11 +301,16 @@ abstract class operation_model {
      * @param int $limit
      * @return operation_model[]
      */
-    protected static function get_records_select(string $sql, array $params = [],
-                     string $sort = 'timecreated DESC', int $offset = 0, int $limit = 0): array {
+    protected static function get_records_select(
+        string $sql,
+        array $params = [],
+        string $sort = 'timecreated DESC',
+        int $offset = 0,
+        int $limit = 0
+    ): array {
         global $DB;
         $records = $DB->get_records_select(self::TABLE, $sql, $params ?? [], $sort, '*', $offset, $limit);
-        return array_filter(array_map(function($b) {
+        return array_filter(array_map(function ($b) {
             return static::instance($b);
         }, $records));
     }
@@ -320,7 +327,7 @@ abstract class operation_model {
             $class = 'tool_vault-log tool_vault-log-level-skipped';
             return $usehtml ? \html_writer::span('...', $class) : '...';
         }
-        $class = 'tool_vault-log tool_vault-log-level-'.($log->loglevel ?: constants::LOGLEVEL_INFO);
+        $class = 'tool_vault-log tool_vault-log-level-' . ($log->loglevel ?: constants::LOGLEVEL_INFO);
         if (get_string_manager()->string_exists('strftimedatetimeshortaccurate', 'core_langconfig')) {
             $format = get_string('strftimedatetimeshortaccurate', 'core_langconfig');
         } else {
@@ -333,7 +340,7 @@ abstract class operation_model {
             $message = $log->message;
         } else {
             $message =
-                "[".userdate($log->timecreated, $format, 99, false, false)."] ".
+                "[" . userdate($log->timecreated, $format, 99, false, false) . "] " .
                 ($log->loglevel ? "[{$log->loglevel}] " : '') .
                 ($log->pid ? "[pid {$log->pid}] " : '') .
                 $log->message;
@@ -433,14 +440,14 @@ abstract class operation_model {
             $params = ['type' => static::$defaulttype];
         } else if (static::$defaulttypeprefix) {
             $sql = 'type LIKE :type';
-            $params = ['type' => static::$defaulttypeprefix.'%'];
+            $params = ['type' => static::$defaulttypeprefix . '%'];
         } else {
             $sql = '1=1';
             $params = [];
         }
         if ($statuses) {
             [$sql2, $params2] = $DB->get_in_or_equal($statuses, SQL_PARAMS_NAMED);
-            $sql .= ' AND status '.$sql2;
+            $sql .= ' AND status ' . $sql2;
         }
         return static::get_records_select($sql, ($params2 ?? []) + $params, $sort, $offset, $limit);
     }
@@ -453,9 +460,11 @@ abstract class operation_model {
      */
     public static function get_active_processes(bool $includestuck = true): array {
         if (static::class === self::class) {
-            $records = static::get_records_select("(status = :s1 OR status = :s2) AND (type = :t1 OR type = :t2)",
+            $records = static::get_records_select(
+                "(status = :s1 OR status = :s2) AND (type = :t1 OR type = :t2)",
                 ['s1' => constants::STATUS_SCHEDULED, 's2' => constants::STATUS_INPROGRESS, 't1' => 'backup', 't2' => 'restore'],
-                'id');
+                'id'
+            );
         } else {
             $records = static::get_records([constants::STATUS_SCHEDULED, constants::STATUS_INPROGRESS], 'id');
         }
@@ -497,9 +506,12 @@ abstract class operation_model {
      */
     public function get_last_modified(): int {
         global $DB;
-        $sql = 'SELECT MAX(timecreated) FROM {'.self::LOGTABLE.'} WHERE operationid = ?';
-        return max($this->timecreated, $this->timemodified,
-            $DB->get_field_sql($sql, [$this->id]));
+        $sql = 'SELECT MAX(timecreated) FROM {' . self::LOGTABLE . '} WHERE operationid = ?';
+        return max(
+            $this->timecreated,
+            $this->timemodified,
+            $DB->get_field_sql($sql, [$this->id])
+        );
     }
 
     /**
@@ -533,11 +545,11 @@ abstract class operation_model {
      */
     public static function get_last_of(array $classes, array $extra = []): ?operation_model {
         global $DB;
-        $types = array_filter(array_map(function($class) {
+        $types = array_filter(array_map(function ($class) {
             return is_subclass_of($class, operation_model::class) ? ($class::$defaulttype) : null;
         }, $classes));
         [$sql, $params] = $DB->get_in_or_equal($types, SQL_PARAMS_NAMED);
-        $sql = 'type '.$sql;
+        $sql = 'type ' . $sql;
         if (!empty($extra['backupkey'])) {
             $sql .= ' AND backupkey = :backupkey';
             $params['backupkey'] = $extra['backupkey'];
@@ -575,21 +587,23 @@ abstract class operation_model {
 
         if ($this instanceof backup_model || $this instanceof restore_model) {
             $this->add_log('There was no activity for over ' . (constants::LOCK_TIMEOUT / 60) .
-                ' minutes. It is possible that the cron process was interrupted or timed out. '.
+                ' minutes. It is possible that the cron process was interrupted or timed out. ' .
                 'Operation is marked as failed, access to the site is now allowed.', constants::LOGLEVEL_ERROR);
             if ($this instanceof restore_model) {
                 if ($this->is_db_restored()) {
-                    $this->add_log('In some cases you will be able to resume the restore process. '.
-                        'Please refer to '.api::get_frontend_url().'/faq', constants::LOGLEVEL_ERROR);
+                    $this->add_log('In some cases you will be able to resume the restore process. ' .
+                        'Please refer to ' . api::get_frontend_url() . '/faq', constants::LOGLEVEL_ERROR);
                 } else {
-                    $this->add_log("If the database restore did not finish, ".
-                        "your site may be in an inconsistent state and will not work.".
+                    $this->add_log("If the database restore did not finish, " .
+                        "your site may be in an inconsistent state and will not work." .
                         ' You will need to re-install Moodle and repeat the restore process.', constants::LOGLEVEL_ERROR);
                 }
             }
-        } else if ($this instanceof check_model && $this->parentid
+        } else if (
+            $this instanceof check_model && $this->parentid
                 && ($parent = self::get_by_id($this->parentid))
-                && $parent->status !== constants::STATUS_INPROGRESS) {
+                && $parent->status !== constants::STATUS_INPROGRESS
+        ) {
             // The check has a parent in progress - ignore it, we will process the parent when they get stuck.
             return false;
         } else {

@@ -59,8 +59,12 @@ class api {
      */
     public static function get_setting_array(string $name): array {
         global $DB, $CFG;
-        $values = preg_split('/[\\s,]+/',
-            trim(strtolower(get_config('tool_vault', $name) ?? '')), -1, PREG_SPLIT_NO_EMPTY);
+        $values = preg_split(
+            '/[\\s,]+/',
+            trim(strtolower(get_config('tool_vault', $name) ?? '')),
+            -1,
+            PREG_SPLIT_NO_EMPTY
+        );
         return array_values(array_unique($values));
     }
 
@@ -88,9 +92,11 @@ class api {
      * @return string
      */
     public static function get_api_url() {
-        if (((defined('PHPUNIT_TEST') && PHPUNIT_TEST)
+        if (
+            ((defined('PHPUNIT_TEST') && PHPUNIT_TEST)
                 || defined('BEHAT_SITE_RUNNING') || defined('BEHAT_TEST'))
-            && (defined('TOOL_VAULT_TEST_API_URL') && !empty(TOOL_VAULT_TEST_API_URL))) {
+            && (defined('TOOL_VAULT_TEST_API_URL') && !empty(TOOL_VAULT_TEST_API_URL))
+        ) {
             return TOOL_VAULT_TEST_API_URL;
         }
         return self::get_config('apiurl') ?: preg_replace('|^(https?://)|', '\1v1.api.', self::FRONTENDURL);
@@ -189,10 +195,16 @@ class api {
      * @return mixed
      * @throws api_exception
      */
-    protected static function api_call(string $endpoint, string $method, array $params = [],
-                                    ?logger $logger = null, bool $authheader = true, ?string $apikey = null) {
+    protected static function api_call(
+        string $endpoint,
+        string $method,
+        array $params = [],
+        ?logger $logger = null,
+        bool $authheader = true,
+        ?string $apikey = null
+    ) {
         global $CFG;
-        require_once($CFG->dirroot.'/lib/filelib.php');
+        require_once($CFG->dirroot . '/lib/filelib.php');
 
         $headers = [];
         if ($authheader) {
@@ -221,7 +233,7 @@ class api {
             case 'delete':
                 break;
             default:
-                throw new \coding_exception('Unsupported method: '.$method);
+                throw new \coding_exception('Unsupported method: ' . $method);
         }
 
         for ($i = 0; $i < constants::REQUEST_API_RETRIES; $i++) {
@@ -238,8 +250,8 @@ class api {
                 }
                 $delay = ($i + 1) * 2;
                 if ($logger) {
-                    $logger->add_to_log($apiexception->getMessage() . " (attempt ".($i + 1)."/".
-                        constants::REQUEST_API_RETRIES.")", constants::LOGLEVEL_WARNING);
+                    $logger->add_to_log($apiexception->getMessage() . " (attempt " . ($i + 1) . "/" .
+                        constants::REQUEST_API_RETRIES . ")", constants::LOGLEVEL_WARNING);
                 }
                 sleep($delay);
             } else {
@@ -281,7 +293,7 @@ class api {
             // This is a connection error.
             // List of errno: https://www.php.net/manual/en/function.curl-errno.php , for example CURLE_OPERATION_TIMEDOUT.
             // Also, sometimes randomly Moodle reports that URL is blocked.
-            return new api_exception("Can not connect to Vault API while requesting $url, errno $errno: ". $error, 0);
+            return new api_exception("Can not connect to Vault API while requesting $url, errno $errno: " . $error, 0);
         }
     }
 
@@ -318,7 +330,7 @@ class api {
             // This is a connection error.
             $url = $curl->get_info()['url'] ?? '';
             $url = parse_url($url, PHP_URL_HOST);
-            return new api_exception("Can not connect to $url, errno $errno: ". $error, 0);
+            return new api_exception("Can not connect to $url, errno $errno: " . $error, 0);
         }
     }
 
@@ -333,12 +345,14 @@ class api {
      * @param int $partno number of the file part being uploaded (0-based)
      * @return string
      */
-    protected static function upload_file_to_presigned_url(site_backup $sitebackup,
-            string $s3url,
-            array $uploadheaders,
-            string $filepath,
-            int $filesize,
-            int $partno): string {
+    protected static function upload_file_to_presigned_url(
+        site_backup $sitebackup,
+        string $s3url,
+        array $uploadheaders,
+        string $filepath,
+        int $filesize,
+        int $partno
+    ): string {
         $filename = basename($filepath);
         $parts = $filesize >= constants::S3_MULTIPART_UPLOAD_THRESHOLD ?
             ceil($filesize / constants::S3_MULTIPART_UPLOAD_PARTSIZE) : 1;
@@ -346,12 +360,12 @@ class api {
         if ($parts > 1) {
             $size = ($partno == $parts - 1) ? ($filesize % constants::S3_MULTIPART_UPLOAD_PARTSIZE) :
                 constants::S3_MULTIPART_UPLOAD_PARTSIZE;
-            $sitebackup->add_to_log('Uploading file '.$filename.' ('.display_size($filesize).
-                ') using multipart upload: part '.($partno + 1).' of '.$parts.' ('.
-                display_size($size).')...');
+            $sitebackup->add_to_log('Uploading file ' . $filename . ' (' . display_size($filesize) .
+                ') using multipart upload: part ' . ($partno + 1) . ' of ' . $parts . ' (' .
+                display_size($size) . ')...');
         } else {
             $size = $filesize;
-            $sitebackup->add_to_log('Uploading file '.$filename.' ('.display_size($filesize).')...');
+            $sitebackup->add_to_log('Uploading file ' . $filename . ' (' . display_size($filesize) . ')...');
         }
 
         $options = [
@@ -369,8 +383,8 @@ class api {
             if ($curl->request_failed()) {
                 // On error retry several times.
                 $s3exception = self::prepare_s3_exception($curl, $res);
-                $sitebackup->add_to_log("Error uploading file $filename (attempt ".($i + 1)."/".
-                    constants::REQUEST_S3_RETRIES."): ".$s3exception->getMessage(), constants::LOGLEVEL_WARNING);
+                $sitebackup->add_to_log("Error uploading file $filename (attempt " . ($i + 1) . "/" .
+                    constants::REQUEST_S3_RETRIES . "): " . $s3exception->getMessage(), constants::LOGLEVEL_WARNING);
                 if ($i == constants::REQUEST_S3_RETRIES - 1) {
                     throw $s3exception;
                 }
@@ -382,8 +396,10 @@ class api {
                 if (preg_match('/\nETag: (.+?)\r?\n/', "\n{$resheader}\n", $match)) {
                     $etag = trim($match[1]);
                 } else {
-                    $sitebackup->add_to_log("Unable to detect 'ETag' header of the uploaded file $filename",
-                        constants::LOGLEVEL_WARNING);
+                    $sitebackup->add_to_log(
+                        "Unable to detect 'ETag' header of the uploaded file $filename",
+                        constants::LOGLEVEL_WARNING
+                    );
                     $etag = 'Unknown';
                 }
                 break;
@@ -414,8 +430,8 @@ class api {
             if ($curl->request_failed()) {
                 // On error retry several times.
                 $s3exception = self::prepare_s3_exception($curl, $res);
-                $sitebackup->add_to_log("Error initiating upload (attempt ".($i + 1)."/".
-                    constants::REQUEST_S3_RETRIES."): ".$s3exception->getMessage(), constants::LOGLEVEL_WARNING);
+                $sitebackup->add_to_log("Error initiating upload (attempt " . ($i + 1) . "/" .
+                    constants::REQUEST_S3_RETRIES . "): " . $s3exception->getMessage(), constants::LOGLEVEL_WARNING);
                 if ($i == constants::REQUEST_S3_RETRIES - 1) {
                     throw $s3exception;
                 }
@@ -459,8 +475,12 @@ class api {
             $parts = ceil($backupfile->filesize / constants::S3_MULTIPART_UPLOAD_PARTSIZE);
 
             // Get pre-signed URL to initiate multipart upload.
-            $result = self::api_call("backups/$backupkey/upload/$filename", 'post',
-                ['contenttype' => $contenttype, 'multipart' => ['parts' => $parts]], $sitebackup);
+            $result = self::api_call(
+                "backups/$backupkey/upload/$filename",
+                'post',
+                ['contenttype' => $contenttype, 'multipart' => ['parts' => $parts]],
+                $sitebackup
+            );
             $s3url = $result['multiplarturl'] ?? null;
 
             // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
@@ -471,8 +491,12 @@ class api {
             // Get the list of the upload urls.
             $uploadheaders = array_merge($encryptionheaders, $result['uploadheaders'] ?? []);
             $uploadid = self::initiate_multipart_upload($sitebackup, $s3url, $uploadheaders);
-            $result = self::api_call("backups/$backupkey/upload/$filename", 'post',
-                ['contenttype' => $contenttype, 'multipart' => ['parts' => $parts, 'uploadid' => $uploadid]], $sitebackup);
+            $result = self::api_call(
+                "backups/$backupkey/upload/$filename",
+                'post',
+                ['contenttype' => $contenttype, 'multipart' => ['parts' => $parts, 'uploadid' => $uploadid]],
+                $sitebackup
+            );
             $s3urls = $result['uploadurls'];
         } else {
             $parts = 1;
@@ -488,8 +512,14 @@ class api {
                 throw new \moodle_exception('error_invaliduploadlink', 'tool_vault', '', $filename);
             }
             // Upload the file or a part of the file to the pre-signed URL.
-            $etag = self::upload_file_to_presigned_url($sitebackup, $s3url, $uploadheaders,
-                $filepath, $backupfile->filesize, $partno);
+            $etag = self::upload_file_to_presigned_url(
+                $sitebackup,
+                $s3url,
+                $uploadheaders,
+                $filepath,
+                $backupfile->filesize,
+                $partno
+            );
             $etags[] = $etag;
         }
 
@@ -546,7 +576,7 @@ class api {
                 $backups[$backup->backupkey] = $backup;
             }
         }
-        uasort($backups, function($a, $b) {
+        uasort($backups, function ($a, $b) {
             return - $a->timecreated + $b->timecreated;
         });
         return $backups;
@@ -599,7 +629,7 @@ class api {
      * @return string
      */
     public static function format_date_for_logs(int $timestamp) {
-        return "[".userdate($timestamp, get_string('strftimedatetimeshort', 'core_langconfig'))."]";
+        return "[" . userdate($timestamp, get_string('strftimedatetimeshort', 'core_langconfig')) . "]";
     }
 
     /**
@@ -610,8 +640,11 @@ class api {
      * @throws api_exception
      */
     public static function validate_backup(string $backupkey, string $passphrase) {
-        $result = self::api_call("backups/$backupkey/validate", 'get',
-            ['vaultversion' => get_config('tool_vault', 'version')]);
+        $result = self::api_call(
+            "backups/$backupkey/validate",
+            'get',
+            ['vaultversion' => get_config('tool_vault', 'version')]
+        );
         $s3url = $result['downloadurl'] ?? null;
         $encrypted = $result['encrypted'] ?? false;
 
@@ -628,8 +661,10 @@ class api {
         $encryptionkey = self::prepare_encryption_key($passphrase);
         $options = [
             'CURLOPT_TIMEOUT' => constants::REQUEST_API_TIMEOUT, // Smaller timeout here.
-            'CURLOPT_HTTPHEADER' => array_merge(self::prepare_s3_headers($encryptionkey),
-                $result['downloadheaders'] ?? []),
+            'CURLOPT_HTTPHEADER' => array_merge(
+                self::prepare_s3_headers($encryptionkey),
+                $result['downloadheaders'] ?? []
+            ),
             'CURLOPT_HTTPAUTH' => CURLAUTH_NONE,
         ];
         $curl = new curl();
@@ -665,15 +700,21 @@ class api {
 
         // Make sure the returned URL is in fact an AWS S3 pre-signed URL, and we send the encryption key only to AWS.
         if ($encrypted && !preg_match('|^https://[^/]+\\.s3\\.amazonaws\\.com/|', $s3url)) {
-            throw new \moodle_exception('error_invaliddownloadlink', 'tool_vault', '',
-                (object)['filename' => $filename, 'url' => $s3url]);
+            throw new \moodle_exception(
+                'error_invaliddownloadlink',
+                'tool_vault',
+                '',
+                (object)['filename' => $filename, 'url' => $s3url]
+            );
         }
 
         $encryptionkey = $encrypted ? ($model->get_details()['encryptionkey'] ?? '') : '';
         $options = [
             'CURLOPT_TIMEOUT' => constants::REQUEST_S3_TIMEOUT,
-            'CURLOPT_HTTPHEADER' => array_merge(self::prepare_s3_headers($encryptionkey),
-                $result['downloadheaders'] ?? []),
+            'CURLOPT_HTTPHEADER' => array_merge(
+                self::prepare_s3_headers($encryptionkey),
+                $result['downloadheaders'] ?? []
+            ),
             'CURLOPT_RETURNTRANSFER' => 1,
             'CURLOPT_HTTPAUTH' => CURLAUTH_NONE,
         ];
@@ -687,8 +728,8 @@ class api {
             if ($curl->errno || (($curl->get_info()['http_code'] ?? 0) != 200)) {
                 $s3exception = self::prepare_s3_exception($curl, filesize($filepath) < 10000 ? file_get_contents($filepath) : '');
                 if ($logger) {
-                    $logger->add_to_log("Error downloading file $filename (attempt ".($i + 1)."/".
-                        constants::REQUEST_S3_RETRIES."): ".$s3exception->getMessage(), constants::LOGLEVEL_WARNING);
+                    $logger->add_to_log("Error downloading file $filename (attempt " . ($i + 1) . "/" .
+                        constants::REQUEST_S3_RETRIES . "): " . $s3exception->getMessage(), constants::LOGLEVEL_WARNING);
                 }
                 unlink($filepath);
                 if ($i == constants::REQUEST_S3_RETRIES - 1) {
@@ -732,8 +773,8 @@ class api {
         $encodedmd5 = base64_encode(md5(base64_decode($key), true));
         return [
             "x-amz-server-side-encryption-customer-algorithm: AES256",
-            "x-amz-server-side-encryption-customer-key: ". $key,
-            "x-amz-server-side-encryption-customer-key-MD5: ". $encodedmd5,
+            "x-amz-server-side-encryption-customer-key: " . $key,
+            "x-amz-server-side-encryption-customer-key-MD5: " . $encodedmd5,
             "Authorization: ",
         ];
     }
@@ -879,7 +920,7 @@ class api {
         try {
             $records = operation_model::get_active_processes(false);
             if ($records) {
-                $records = array_filter($records, function(operation_model $record) {
+                $records = array_filter($records, function (operation_model $record) {
                     return $record->status == constants::STATUS_INPROGRESS;
                 });
             }
@@ -903,7 +944,7 @@ class api {
     public static function parse_xml($text) {
         global $CFG;
         if ($CFG->branch < 501) {
-            require_once($CFG->libdir.'/xmlize.php');
+            require_once($CFG->libdir . '/xmlize.php');
             return xmlize($text);
         } else {
             return (new \core\xml_parser())->parse($text);

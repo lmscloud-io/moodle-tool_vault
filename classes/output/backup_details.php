@@ -55,8 +55,12 @@ class backup_details implements \templatable {
      * @param bool $fulldetails
      * @param bool $isprogresspage
      */
-    public function __construct(?backup_model $backup, ?remote_backup $remotebackup = null,
-                                bool $fulldetails = true, bool $isprogresspage = false) {
+    public function __construct(
+        ?backup_model $backup,
+        ?remote_backup $remotebackup = null,
+        bool $fulldetails = true,
+        bool $isprogresspage = false
+    ) {
         $this->backup = $backup;
         $this->remotebackup = $remotebackup;
         if (!$backup && !$remotebackup) {
@@ -134,8 +138,10 @@ class backup_details implements \templatable {
                 $rv['restoreallowed'] = true;
             }
             if ($this->fulldetails) {
-                $lastoperation = operation_model::get_last_of([restore_model::class, dryrun_model::class],
-                    ['backupkey' => $backupkey]);
+                $lastoperation = operation_model::get_last_of(
+                    [restore_model::class, dryrun_model::class],
+                    ['backupkey' => $backupkey]
+                );
                 if ($lastoperation) {
                     $rv['lastdryrun'] = (new last_operation($lastoperation))->export_for_template($output);
                 }

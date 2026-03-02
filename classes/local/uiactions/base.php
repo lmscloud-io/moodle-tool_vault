@@ -30,7 +30,6 @@ use tool_vault\local\helpers\ui;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class base {
-
     /**
      * Get handler for the action
      *
@@ -41,7 +40,7 @@ abstract class base {
         $section = class_exists('tool_vault\local\uiactions\\' . $section) ? $section : 'main';
 
         $action = optional_param('action', '', PARAM_ALPHANUMEXT);
-        $class2 = 'tool_vault\local\uiactions\\'.$section.'_'.$action;
+        $class2 = 'tool_vault\local\uiactions\\' . $section . '_' . $action;
         $class = (strlen($action) && class_exists($class2)) ? $class2 : 'tool_vault\local\uiactions\\' . $section;
         return new $class();
     }
@@ -148,8 +147,10 @@ abstract class base {
         global $CFG;
 
         if (!api::is_registered()) {
-            $registerurl = new moodle_url(api::get_frontend_url() . '/getapikey',
-                ['siteid' => api::get_site_id(), 'siteurl' => $CFG->wwwroot]);
+            $registerurl = new moodle_url(
+                api::get_frontend_url() . '/getapikey',
+                ['siteid' => api::get_site_id(), 'siteurl' => $CFG->wwwroot]
+            );
             $data = [
                 'vaulturl' => api::get_frontend_url(),
                 'loginsrc' => $registerurl->out(false),

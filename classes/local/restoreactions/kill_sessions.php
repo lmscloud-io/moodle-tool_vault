@@ -26,7 +26,6 @@ use tool_vault\site_restore;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class kill_sessions extends restore_action {
-
     /**
      * Executes individual action
      *

@@ -27,7 +27,6 @@ use tool_vault\local\models\tool_model;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class uninstall_missing_plugins extends tool_base {
-
     /**
      * Execute operation
      * @return void

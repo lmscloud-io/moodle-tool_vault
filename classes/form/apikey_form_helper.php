@@ -26,7 +26,6 @@ use tool_vault\api;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class apikey_form_helper {
-
     /**
      * Form definition.
      *

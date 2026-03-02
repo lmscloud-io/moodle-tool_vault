@@ -30,7 +30,6 @@ use xmldb_table;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class dbstructure {
-
     /** @var dbtable[] */
     protected $deftables = [];
     /** @var dbtable[] */
@@ -113,12 +112,12 @@ class dbstructure {
      */
     protected static function get_db_directories() {
         global $CFG;
-        $dbdirs = ['core' => $CFG->libdir.'/db'];
+        $dbdirs = ['core' => $CFG->libdir . '/db'];
         $plugintypes = \core_component::get_plugin_types();
         foreach ($plugintypes as $plugintype => $pluginbasedir) {
             if ($plugins = \core_component::get_plugin_list($plugintype)) {
                 foreach ($plugins as $plugin => $plugindir) {
-                    $dbdirs[$plugintype.'_'.$plugin] = $plugindir.'/db';
+                    $dbdirs[$plugintype . '_' . $plugin] = $plugindir . '/db';
                 }
             }
         }
@@ -130,12 +129,12 @@ class dbstructure {
      */
     protected function load_definitions() {
         global $CFG;
-        require_once($CFG->dirroot.'/lib/adminlib.php');
+        require_once($CFG->dirroot . '/lib/adminlib.php');
 
         $dbdirs = self::get_db_directories();
 
         foreach ($dbdirs as $pluginname => $dbdir) {
-            $xmldbfile = new \xmldb_file($dbdir.'/install.xml');
+            $xmldbfile = new \xmldb_file($dbdir . '/install.xml');
             if ($xmldbfile->fileExists()) {
                 $loaded = $xmldbfile->loadXMLStructure();
                 $structure = $xmldbfile->getStructure();
@@ -251,7 +250,7 @@ class dbstructure {
                      JOIN information_schema.columns AS c ON c.table_schema = tc.constraint_schema
                 AND tc.table_name = c.table_name AND ccu.column_name = c.column_name
             WHERE constraint_type = 'PRIMARY KEY' and tc.table_name LIKE :tableprefix";
-        $rs = $DB->get_recordset_sql($sql, ['tableprefix' => $CFG->prefix.'%']);
+        $rs = $DB->get_recordset_sql($sql, ['tableprefix' => $CFG->prefix . '%']);
         $this->primarykeys = [];
         foreach ($rs as $record) {
             $record->keyname = substr($record->keyname, strlen($CFG->prefix));
@@ -301,7 +300,7 @@ class dbstructure {
         } catch (\Throwable $e) {
             $oldval = null;
         }
-        $rs = $DB->get_recordset_sql("SHOW TABLE STATUS LIKE ?", [$prefix.'%']);
+        $rs = $DB->get_recordset_sql("SHOW TABLE STATUS LIKE ?", [$prefix . '%']);
 
         foreach ($rs as $info) {
             $table = strtolower($info->name);
@@ -310,13 +309,13 @@ class dbstructure {
                 continue;
             }
             if (!is_null($info->auto_increment) && (int)$info->auto_increment) {
-                $table = preg_replace('/^'.preg_quote($prefix, '/').'/', '', $table);
+                $table = preg_replace('/^' . preg_quote($prefix, '/') . '/', '', $table);
                 $sequences[$table] = (int)$info->auto_increment;
             }
         }
         $rs->close();
         if ($oldval) {
-            $DB->execute('set session information_schema_stats_expiry='.$oldval);
+            $DB->execute('set session information_schema_stats_expiry=' . $oldval);
         }
         return $sequences;
     }
@@ -335,7 +334,8 @@ class dbstructure {
                 $seqname = $matches[1];
                 try {
                     $value = $DB->get_field_sql(
-                        'SELECT CASE when is_called then last_value + 1 else last_value END FROM '.$seqname);
+                        'SELECT CASE when is_called then last_value + 1 else last_value END FROM ' . $seqname
+                    );
                     if ($value) {
                         $sequences[$key->tablename] = $value;
                     }
@@ -359,8 +359,8 @@ class dbstructure {
         $o = '<?xml version="1.0" encoding="UTF-8" ?>' . "\n";
         $o .= '<XMLDB ';
         $rel = '../../../..';
-        $o .= '    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'."\n";
-        $o .= '    xsi:noNamespaceSchemaLocation="xmldb.xsd"'."\n";
+        $o .= '    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' . "\n";
+        $o .= '    xsi:noNamespaceSchemaLocation="xmldb.xsd"' . "\n";
         $o .= '>' . "\n";
         // Now the tables.
         $tables = $showdefinitions ? $this->get_tables_definitions() : $this->get_tables_actual();
@@ -376,7 +376,6 @@ class dbstructure {
         $o .= '</XMLDB>' . "\n";
 
         return $o;
-
     }
 
     /**
@@ -390,16 +389,20 @@ class dbstructure {
         if ($DB->get_dbfamily() === 'postgres') {
             foreach ($this->get_tables_actual() as $tablename => $table) {
                 $sizes[$tablename] =
-                    $DB->get_field_sql("SELECT pg_total_relation_size(?)",
-                        [$CFG->prefix . $tablename]);
+                    $DB->get_field_sql(
+                        "SELECT pg_total_relation_size(?)",
+                        [$CFG->prefix . $tablename]
+                    );
             }
         } else {
-            $records = $DB->get_records_sql_menu("SELECT
+            $records = $DB->get_records_sql_menu(
+                "SELECT
                     table_name AS tablename,
                     data_length AS tablesize
                 FROM information_schema.TABLES
                 WHERE table_schema = ? AND table_name like ?",
-                [$CFG->dbname, $CFG->prefix . '%']);
+                [$CFG->dbname, $CFG->prefix . '%']
+            );
             foreach ($this->get_tables_actual() as $tablename => $table) {
                 $sizes[$tablename] = $records[$CFG->prefix . $tablename] ?? 0;
             }

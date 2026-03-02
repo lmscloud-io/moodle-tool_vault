@@ -36,8 +36,10 @@ class dryrun_model extends restore_base_model {
      * @return static|null
      */
     public static function get_last_dry_run(string $backupkey): ?self {
-        $records = self::get_records_select('type = ? AND backupkey = ?',
-            [static::$defaulttype, $backupkey]);
+        $records = self::get_records_select(
+            'type = ? AND backupkey = ?',
+            [static::$defaulttype, $backupkey]
+        );
         return $records ? reset($records) : null;
     }
 }

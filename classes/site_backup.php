@@ -64,8 +64,10 @@ class site_backup extends operation_base {
      */
     public static function schedule(array $params = []): operation_base {
         global $USER;
-        if (!(defined('CLI_SCRIPT') && CLI_SCRIPT)
-                && $records = backup_model::get_records([constants::STATUS_SCHEDULED])) {
+        if (
+            !(defined('CLI_SCRIPT') && CLI_SCRIPT)
+                && $records = backup_model::get_records([constants::STATUS_SCHEDULED])
+        ) {
             // Pressed button twice maybe?
             return new static(reset($records));
         }
@@ -142,7 +144,7 @@ class site_backup extends operation_base {
             ->set_status(constants::STATUS_INPROGRESS)
             ->set_details($params)
             ->save();
-        $this->add_to_log('Backup started, backup key is '.$backupkey);
+        $this->add_to_log('Backup started, backup key is ' . $backupkey);
     }
 
     /**
@@ -175,7 +177,7 @@ class site_backup extends operation_base {
         } catch (\Throwable $tapi) {
             // One of the reason for the failed backup - impossible to communicate with the API,
             // in which case this request will also fail.
-            $this->add_to_log_from_exception_handler('Could not mark remote backup as failed: '.
+            $this->add_to_log_from_exception_handler('Could not mark remote backup as failed: ' .
                 $tapi->getMessage(), constants::LOGLEVEL_WARNING);
         }
     }
@@ -203,7 +205,7 @@ class site_backup extends operation_base {
         /** @var check_base[] $prechecks */
         $prechecks = self::backup_prechecks();
         foreach ($prechecks as $classname) {
-            $this->add_to_log('Backup pre-check: '.$classname::get_display_name().'...');
+            $this->add_to_log('Backup pre-check: ' . $classname::get_display_name() . '...');
             if (($chk = $classname::create_and_run($this->model)) && $chk->success()) {
                 $this->prechecks[$chk->get_name()] = $chk;
                 if ($chk->warning()) {
@@ -214,8 +216,12 @@ class site_backup extends operation_base {
             } else if ($chk) {
                 throw new backup_precheck_failed($chk);
             } else {
-                throw new \moodle_exception('error_unabletorunprecheck', 'tool_vault',
-                    '', $classname::get_display_name());
+                throw new \moodle_exception(
+                    'error_unabletorunprecheck',
+                    'tool_vault',
+                    '',
+                    $classname::get_display_name()
+                );
             }
         }
     }
@@ -240,7 +246,7 @@ class site_backup extends operation_base {
             $totalsize += $filesbackup->get_uploaded_size();
         }
 
-        $this->add_to_log('Total size of backup: '.display_size($totalsize));
+        $this->add_to_log('Total size of backup: ' . display_size($totalsize));
         api::update_backup($this->model->backupkey, ['totalsize' => $totalsize], constants::STATUS_FINISHED);
         $this->model
             ->set_status(constants::STATUS_FINISHED)
@@ -309,10 +315,10 @@ class site_backup extends operation_base {
         global $DB;
         $dbgen = $DB->get_manager()->generator;
 
-        $fields = array_map(function(\xmldb_field $f) {
+        $fields = array_map(function (\xmldb_field $f) {
             return $f->getName();
         }, $table->get_xmldb_table()->getFields());
-        $quotedfields = array_map(function($f) use ($dbgen) {
+        $quotedfields = array_map(function ($f) use ($dbgen) {
             return $dbgen->getEncQuoted($f);
         }, $fields);
         $sortby = in_array('id', $fields) ? 'id' : reset($quotedfields);
@@ -321,26 +327,36 @@ class site_backup extends operation_base {
         $chunksize = $this->get_chunk_size($table->get_xmldb_table()->getName());
         $lastvalue = null;
         for ($cnt = 0; true; $cnt++) {
-            [$sql, $params] = plugindata::get_sql_for_plugins_data_in_table($table->get_xmldb_table()->getName(),
-                siteinfo::get_excluded_plugins_backup(), true);
+            [$sql, $params] = plugindata::get_sql_for_plugins_data_in_table(
+                $table->get_xmldb_table()->getName(),
+                siteinfo::get_excluded_plugins_backup(),
+                true
+            );
             if ($lastvalue !== null) {
-                $sql .= (strlen($sql) ? ' AND ' : '') . $sortby. ' > :lastvalue';
+                $sql .= (strlen($sql) ? ' AND ' : '') . $sortby . ' > :lastvalue';
             }
             // Mdlcode-disable-next-line cannot-parse-db-tablename.
-            $rs = $DB->get_recordset_select($table->get_xmldb_table()->getName(), $sql, $params + ['lastvalue' => $lastvalue],
-                $sortby, $fieldslist, 0, $chunksize);
+            $rs = $DB->get_recordset_select(
+                $table->get_xmldb_table()->getName(),
+                $sql,
+                $params + ['lastvalue' => $lastvalue],
+                $sortby,
+                $fieldslist,
+                0,
+                $chunksize
+            );
             $hasrows = $rs->valid();
             if ($cnt && !$hasrows) {
                 $rs->close();
                 break;
             }
-            $filename = $table->get_xmldb_table()->getName().'.'.$cnt.'.json';
-            $filepath = $dir.DIRECTORY_SEPARATOR.$filename;
+            $filename = $table->get_xmldb_table()->getName() . '.' . $cnt . '.json';
+            $filepath = $dir . DIRECTORY_SEPARATOR . $filename;
             $fp = fopen($filepath, 'w');
             fwrite($fp, "[\n" . json_encode($fields));
             if ($hasrows) {
                 foreach ($rs as $record) {
-                    fwrite($fp, ",\n".json_encode(array_values((array)$record)));
+                    fwrite($fp, ",\n" . json_encode(array_values((array)$record)));
                     $lastvalue = $record->$sortby;
                 }
             }
@@ -369,11 +385,13 @@ class site_backup extends operation_base {
         $confs = $confprecheck ? $confprecheck->get_config_overrides_for_backup() : [];
 
         $this->get_files_backup(constants::FILENAME_DBSTRUCTURE)
-            ->add_file($CFG->dirroot.'/lib/xmldb/xmldb.xsd', null, true, false)
+            ->add_file($CFG->dirroot . '/lib/xmldb/xmldb.xsd', null, true, false)
             ->add_file_from_string(constants::FILE_STRUCTURE, $structure->output($tablenames))
             ->add_file_from_string(constants::FILE_METADATA, json_encode($this->get_metadata()))
-            ->add_file_from_string(constants::FILE_SEQUENCE,
-                json_encode(array_intersect_key($structure->retrieve_sequences(), array_combine($tablenames, $tablenames))))
+            ->add_file_from_string(
+                constants::FILE_SEQUENCE,
+                json_encode(array_intersect_key($structure->retrieve_sequences(), array_combine($tablenames, $tablenames)))
+            )
             ->add_file_from_string(constants::FILE_CONFIGOVERRIDE, json_encode($confs))
             ->finish();
     }
@@ -419,9 +437,11 @@ class site_backup extends operation_base {
         $pathstoexport = [];
         $handle = opendir($CFG->dataroot);
         while (($file = readdir($handle)) !== false) {
-            if (!siteinfo::is_dataroot_path_skipped_backup($file)
+            if (
+                !siteinfo::is_dataroot_path_skipped_backup($file)
                     && $file !== '.' && $file !== '..'
-                    && ($lastfile === null || strcmp($file, $lastfile) > 0)) {
+                    && ($lastfile === null || strcmp($file, $lastfile) > 0)
+            ) {
                 $pathstoexport[] = $file;
             }
         }
@@ -505,7 +525,7 @@ class site_backup extends operation_base {
 
         $filesbackup->finish();
         tempfiles::remove_temp_dir($dir);
-        $this->add_to_log('Finished files backup, '.$cntexported.' files exported');
+        $this->add_to_log('Finished files backup, ' . $cntexported . ' files exported');
     }
 
     /**
@@ -529,7 +549,7 @@ class site_backup extends operation_base {
 
         // Id is specifically named to prevent overlaping between the two tables.
         $fields = [];
-        $fields[] = $filesprefix.'.id AS id';
+        $fields[] = $filesprefix . '.id AS id';
         foreach ($filefields as $field) {
             $fields[] = "{$filesprefix}.{$field}";
         }

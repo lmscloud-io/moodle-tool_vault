@@ -28,7 +28,6 @@ use core\task\adhoc_task;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class after_upgrade_task extends adhoc_task {
-
     /**
      * Schedule an ad-hoc task to be executed after upgrade.
      *
