@@ -40,6 +40,7 @@
     {{/backtrace}}
 </div>
 {{#js}}
+(function() {
     var el = document.getElementById('{{uniqueid}}');
     var showBacktrace = el.querySelector('.action-backtrace-show');
     var hideBacktrace = el.querySelector('.action-backtrace-hide');
@@ -57,4 +58,5 @@
             el.querySelector('.backtrace').style.display = 'none';
         };
     }
+})();
 {{/js}}
