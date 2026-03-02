@@ -74,4 +74,58 @@ final class siteinfo_test extends \advanced_testcase {
         set_config('restorepreservedataroot', 'hellothere', 'tool_vault');
         $this->assertTrue(siteinfo::is_dataroot_path_skipped_restore('hellothere'));
     }
+
+    public function test_matches_wildcard_pattern(): void {
+        // Exact match.
+        $this->assertTrue(siteinfo::matches_wildcard_pattern('mdl_user', ['mdl_user']));
+        $this->assertFalse(siteinfo::matches_wildcard_pattern('mdl_user', ['mdl_role']));
+
+        // Wildcard * matches all.
+        $this->assertTrue(siteinfo::matches_wildcard_pattern('mdl_user', ['*']));
+        $this->assertTrue(siteinfo::matches_wildcard_pattern('anything', ['*']));
+
+        // Prefix wildcard.
+        $this->assertTrue(siteinfo::matches_wildcard_pattern('mdl_custom_table', ['mdl_custom_*']));
+        $this->assertFalse(siteinfo::matches_wildcard_pattern('mdl_other_table', ['mdl_custom_*']));
+
+        // Suffix wildcard.
+        $this->assertTrue(siteinfo::matches_wildcard_pattern('mdl_user', ['*_user']));
+        $this->assertFalse(siteinfo::matches_wildcard_pattern('mdl_user', ['*_role']));
+
+        // Middle wildcard.
+        $this->assertTrue(siteinfo::matches_wildcard_pattern('mdl_311_custom', ['mdl_311_*']));
+        $this->assertTrue(siteinfo::matches_wildcard_pattern('mdl_something_custom', ['mdl_*_custom']));
+        $this->assertFalse(siteinfo::matches_wildcard_pattern('mdl_something_other', ['mdl_*_custom']));
+
+        // Multiple patterns - match if any pattern matches.
+        $this->assertTrue(siteinfo::matches_wildcard_pattern('mdl_user', ['mdl_role', 'mdl_user']));
+        $this->assertTrue(siteinfo::matches_wildcard_pattern('mdl_foo', ['mdl_bar', 'mdl_f*']));
+        $this->assertFalse(siteinfo::matches_wildcard_pattern('mdl_foo', ['mdl_bar', 'mdl_baz']));
+
+        // Empty patterns list.
+        $this->assertFalse(siteinfo::matches_wildcard_pattern('mdl_user', []));
+    }
+
+    public function test_is_table_excluded_from_backup_wildcard(): void {
+        global $CFG;
+        $this->resetAfterTest();
+
+        // Without any setting, nothing is excluded.
+        $this->assertFalse(siteinfo::is_table_excluded_from_backup('sometable', null));
+
+        // Exact match works.
+        set_config('backupexcludetables', $CFG->prefix . 'sometable', 'tool_vault');
+        $this->assertTrue(siteinfo::is_table_excluded_from_backup('sometable', null));
+        $this->assertFalse(siteinfo::is_table_excluded_from_backup('othertable', null));
+
+        // Wildcard * excludes all.
+        set_config('backupexcludetables', '*', 'tool_vault');
+        $this->assertTrue(siteinfo::is_table_excluded_from_backup('sometable', null));
+        $this->assertTrue(siteinfo::is_table_excluded_from_backup('anytable', null));
+
+        // Prefix wildcard.
+        set_config('backupexcludetables', $CFG->prefix . 'custom_*', 'tool_vault');
+        $this->assertTrue(siteinfo::is_table_excluded_from_backup('custom_foo', null));
+        $this->assertFalse(siteinfo::is_table_excluded_from_backup('other_foo', null));
+    }
 }

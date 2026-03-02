@@ -244,6 +244,26 @@ class siteinfo {
     }
 
     /**
+     * Check if a value matches any of the given patterns (supports * wildcards)
+     *
+     * @param string $value The value to check
+     * @param string[] $patterns The list of patterns, which may contain * wildcards
+     * @return bool
+     */
+    public static function matches_wildcard_pattern(string $value, array $patterns): bool {
+        foreach ($patterns as $pattern) {
+            if ($pattern === $value) {
+                // Exact match (fast path, also handles patterns without wildcards).
+                return true;
+            }
+            if (strpos($pattern, '*') !== false && fnmatch($pattern, $value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Is given table excluded from backup
      *
      * @param string $tablename
@@ -256,7 +276,7 @@ class siteinfo {
             // This is a table that is not present in the install.xml files of core or any plugins.
             // Exclude this table if it's name is in the 'backupexcludetables' setting.
             $tables = api::get_setting_array('backupexcludetables');
-            if (in_array($CFG->prefix . $tablename, $tables)) {
+            if (self::matches_wildcard_pattern($CFG->prefix . $tablename, $tables)) {
                 return true;
             }
         } else {
@@ -299,7 +319,7 @@ class siteinfo {
             // Exclude this table if it's name is in the 'backupexcludetables' setting.
             $tables = api::get_setting_array('restorepreservetables');
             // TODO this setting does not exist!
-            if (in_array($CFG->prefix . $tablename, $tables)) {
+            if (self::matches_wildcard_pattern($CFG->prefix . $tablename, $tables)) {
                 return true;
             }
         } else {
