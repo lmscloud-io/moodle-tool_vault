@@ -89,6 +89,7 @@ class tempfiles {
      * @return int count of removed files
      */
     public static function remove_temp_dir(string $dir): int {
+        unset(self::$createddirs[$dir]);
         if (!file_exists($dir)) {
             return 0;
         }
@@ -114,7 +115,6 @@ class tempfiles {
         } catch (\Exception $e) {
             // Some subpaths were not readable.
         }
-        unset(self::$createddirs[$dir]);
         return $cnt;
     }
 
@@ -194,7 +194,7 @@ class tempfiles {
     public static function cleanup(): void {
         foreach (self::$createddirs as $dir => $unused) {
             if (file_exists($dir)) {
-                debugging('Removing abandonded temporary directory: ' . $dir, DEBUG_DEVELOPER);
+                debugging('Removing abandoned temporary directory: ' . $dir, DEBUG_DEVELOPER);
                 self::remove_temp_dir($dir);
             } else {
                 unset(self::$createddirs[$dir]);

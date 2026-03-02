@@ -161,46 +161,48 @@ final class site_backup_test extends \advanced_testcase {
         $x = new \zip_packer();
         $dirstruct = tempfiles::make_temp_dir('test-dbstruct-');
         $dir = tempfiles::make_temp_dir('test-dbdump-');
-        $x->extract_to_pathname($filepathstructure, $dirstruct);
-        $x->extract_to_pathname($filepath, $dir);
-        $handle = opendir($dir);
-        $files = [];
-        while (($file = readdir($handle)) !== false) {
-            if (!preg_match('/^[\\._]/', $file) && ($p = pathinfo($file)) && ($p['extension'] === 'json')) {
-                $files[] = $p['filename'];
+        try {
+            $x->extract_to_pathname($filepathstructure, $dirstruct);
+            $x->extract_to_pathname($filepath, $dir);
+            $handle = opendir($dir);
+            $files = [];
+            while (($file = readdir($handle)) !== false) {
+                if (!preg_match('/^[\\._]/', $file) && ($p = pathinfo($file)) && ($p['extension'] === 'json')) {
+                    $files[] = $p['filename'];
+                }
             }
+            closedir($handle);
+
+            $this->assertTrue(in_array('config.0', $files));
+            $this->assertTrue(in_array('user.0', $files));
+            $this->assertTrue(file_exists($dirstruct . DIRECTORY_SEPARATOR . constants::FILE_STRUCTURE));
+            $this->assertTrue(file_exists($dirstruct . DIRECTORY_SEPARATOR . constants::FILE_SEQUENCE));
+            $this->assertFalse(in_array('tool_vault_config.0', $files));
+            $this->assertFalse(in_array('tool_vault_operation.0', $files));
+            $this->assertFalse(in_array('tool_vault_log.0', $files));
+
+            // Retrieve user file, just for checks.
+            $userlist = json_decode(file_get_contents($dir . '/' . 'user.0.json'), true);
+            $this->assertEquals('admin', $userlist[2][7]);
+
+            // Retrieve config_plugins, make sure the version number for tool_vault is not included there.
+            $config = json_decode(file_get_contents($dir . '/' . 'config_plugins.0.json'), true);
+            $this->assertEquals(
+                ['id', 'plugin', 'name', 'value'],
+                array_shift($config)
+            ); // Fist row are column names.
+            $f1 = array_filter($config, function ($entry) {
+                return $entry[1] === 'tool_vault';
+            });
+            $f2 = array_filter($config, function ($entry) {
+                return $entry[1] === 'tool_monitor';
+            });
+            $this->assertEmpty($f1);
+            $this->assertNotEmpty($f2);
+        } finally {
+            tempfiles::remove_temp_dir($dirstruct);
+            tempfiles::remove_temp_dir($dir);
         }
-        closedir($handle);
-
-        $this->assertTrue(in_array('config.0', $files));
-        $this->assertTrue(in_array('user.0', $files));
-        $this->assertTrue(file_exists($dirstruct . DIRECTORY_SEPARATOR . constants::FILE_STRUCTURE));
-        $this->assertTrue(file_exists($dirstruct . DIRECTORY_SEPARATOR . constants::FILE_SEQUENCE));
-        $this->assertFalse(in_array('tool_vault_config.0', $files));
-        $this->assertFalse(in_array('tool_vault_operation.0', $files));
-        $this->assertFalse(in_array('tool_vault_log.0', $files));
-
-        // Retrieve user file, just for checks.
-        $userlist = json_decode(file_get_contents($dir . '/' . 'user.0.json'), true);
-        $this->assertEquals('admin', $userlist[2][7]);
-
-        // Retrieve config_plugins, make sure the version number for tool_vault is not included there.
-        $config = json_decode(file_get_contents($dir . '/' . 'config_plugins.0.json'), true);
-        $this->assertEquals(
-            ['id', 'plugin', 'name', 'value'],
-            array_shift($config)
-        ); // Fist row are column names.
-        $f1 = array_filter($config, function ($entry) {
-            return $entry[1] === 'tool_vault';
-        });
-        $f2 = array_filter($config, function ($entry) {
-            return $entry[1] === 'tool_monitor';
-        });
-        $this->assertEmpty($f1);
-        $this->assertNotEmpty($f2);
-
-        tempfiles::remove_temp_dir($dirstruct);
-        tempfiles::remove_temp_dir($dir);
     }
 
     public function test_export_dataroot(): void {
