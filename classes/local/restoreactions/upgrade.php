@@ -22,6 +22,7 @@ use tool_vault\local\checks\version_restore;
 use tool_vault\local\restoreactions\upgrade_311\upgrade_311;
 use tool_vault\local\restoreactions\upgrade_401\upgrade_401;
 use tool_vault\local\restoreactions\upgrade_402\upgrade_402;
+use tool_vault\local\restoreactions\upgrade_405\upgrade_405;
 use tool_vault\site_restore;
 
 /**
@@ -86,6 +87,17 @@ class upgrade extends restore_action {
             $logger->add_to_log('...done');
         }
 
+        if (
+            $intermediaterelease
+                && version_compare(normalize_version($CFG->release), '4.5.10', '<')
+                && version_compare($intermediaterelease, '4.5.10', '>=')
+        ) {
+            $siteupgraded = true;
+            $logger->add_to_log('Upgrading Moodle from ' . $CFG->release . ' to 4.5.10...');
+            upgrade_405::upgrade($logger);
+            $logger->add_to_log('...done');
+        }
+
         // Upgrade required.
         if ($intermediaterelease || moodle_needs_upgrading()) {
             $siteupgraded = true;
@@ -131,6 +143,7 @@ class upgrade extends restore_action {
         if (!function_exists('get_deprecated_capability_info')) {
             return;
         }
+        // Mdlcode-disable unknown-capability.
         $caps = [
             'mod/data:comment',
             'mod/data:managecomments',
@@ -162,6 +175,7 @@ class upgrade extends restore_action {
         // We can not redefine CACHE_DISABLE_ALL that normally has to be set during upgrade. But we can hack the
         // factory class to use the disabled factory instance.
         if (file_exists($CFG->dirroot . '/cache/disabledlib.php')) {
+            // Mdlcode-disable-next-line file-not-found.
             require_once($CFG->dirroot . '/cache/disabledlib.php');
         }
 
