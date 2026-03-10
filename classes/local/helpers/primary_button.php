@@ -35,23 +35,14 @@ class primary_button extends single_button {
      * @param bool $isprimary Whether the button is primary or secondary
      */
     public function __construct(string $text, array $attributes = [], bool $disabled = false, bool $isprimary = true) {
-        global $CFG, $PAGE;
+        global $PAGE;
         $url = $PAGE->url;
-        if ((int)$CFG->branch == 401) {
-            parent::__construct(
-                $url,
-                $text,
-                'get',
-                $isprimary,
-                $attributes);
-        } else {
-            parent::__construct(
-                $url,
-                $text,
-                'get',
-                $isprimary ? single_button::BUTTON_PRIMARY : single_button::BUTTON_SECONDARY,
-                $attributes);
-        }
+        parent::__construct(
+            $url,
+            $text,
+            'get',
+            $isprimary ? self::BUTTON_PRIMARY : self::BUTTON_SECONDARY,
+            $attributes);
         if ($disabled) {
             $this->disabled = true;
         }
