@@ -55,7 +55,7 @@
  *     - ....
  *
  * In order to keep the contents of this file reduced, it's allowed to create some helper
- * functions to be used here in the {@see upgradelib.php} file at the same directory. Note
+ * functions to be used here in the `upgradelib.php` file at the same directory. Note
  * that such a file must be manually included from upgrade.php, and there are some restrictions
  * about what can be used within it.
  *
