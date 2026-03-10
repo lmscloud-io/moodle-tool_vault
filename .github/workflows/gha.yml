@@ -100,7 +100,12 @@ jobs:
             moodle-branch: 'MOODLE_501_STABLE'
             database: 'pgsql'
             scssdeprecations: '1'
-
+          - php: '8.3'
+            moodle-branch: 'main'
+            database: 'mariadb'
+          - php: '8.4'
+            moodle-branch: 'main'
+            database: 'pgsql'
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
