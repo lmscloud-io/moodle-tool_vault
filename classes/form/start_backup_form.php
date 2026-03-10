@@ -28,7 +28,6 @@ use tool_vault\output\start_backup_popup;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class start_backup_form extends dynamic_form {
-
     /** @var start_backup_popup|null */
     protected $startbackuppopup = null;
 
@@ -98,11 +97,14 @@ class start_backup_form extends dynamic_form {
      */
     public function set_data_for_dynamic_submission(): void {
         global $USER, $CFG;
-        $description = get_string('defaultbackupdescription', 'tool_vault',
+        $description = get_string(
+            'defaultbackupdescription',
+            'tool_vault',
             (object)[
                 'site' => $CFG->wwwroot,
                 'name' => fullname($USER, true),
-            ]);
+            ]
+        );
         $this->set_data([
             'description' => $description,
             'expiredays' => $this->get_info()->get_expiration_days() ?: '',
@@ -125,8 +127,12 @@ class start_backup_form extends dynamic_form {
         } else {
             $mform->addElement('html', get_string('startbackup_noenc_desc', 'tool_vault'));
         }
-        $mform->addElement('text', 'description', get_string('backupdescription', 'tool_vault'),
-            ['style' => 'width:100%', 'maxlength' => 255]);
+        $mform->addElement(
+            'text',
+            'description',
+            get_string('backupdescription', 'tool_vault'),
+            ['style' => 'width:100%', 'maxlength' => 255]
+        );
         $mform->addRule('description', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
         $mform->setType('description', PARAM_NOTAGS);
 
@@ -134,8 +140,12 @@ class start_backup_form extends dynamic_form {
         $showupgrademessage = !$this->get_info()->get_can_change_expiration() || $limit > 0;
 
         $group = [];
-        $group[] = $textel = $mform->createElement('text', 'expiredays',
-            get_string('startbackup_expiredays_prefix', 'tool_vault'), ['style' => 'width:50px']);
+        $group[] = $textel = $mform->createElement(
+            'text',
+            'expiredays',
+            get_string('startbackup_expiredays_prefix', 'tool_vault'),
+            ['style' => 'width:50px']
+        );
         $group[] = $mform->createElement('static', 's2', '', get_string('startbackup_expiredays_suffix', 'tool_vault'));
         $mform->addGroup($group, 'expiredaysgroup', get_string('startbackup_expiredays_prefix', 'tool_vault'), null, false);
         $mform->setType('expiredays', PARAM_INT);
@@ -144,8 +154,10 @@ class start_backup_form extends dynamic_form {
             $textel->freeze();
         }
         if ($limit) {
-            $mform->addElement('html', \html_writer::tag('p',
-                get_string('startbackup_limit_desc', 'tool_vault', display_size($limit))));
+            $mform->addElement('html', \html_writer::tag(
+                'p',
+                get_string('startbackup_limit_desc', 'tool_vault', display_size($limit))
+            ));
         }
         if ($showupgrademessage) {
             $mform->addElement('html', \html_writer::tag('p', get_string('startbackup_cta', 'tool_vault', [

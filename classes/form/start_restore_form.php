@@ -30,7 +30,6 @@ use tool_vault\site_restore_dryrun;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class start_restore_form extends dynamic_form {
-
     /**
      * Returns context where this form is used
      *

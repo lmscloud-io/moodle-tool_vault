@@ -148,7 +148,6 @@ class backup_details implements \templatable {
             $rv['startdryrunbutton'] = $startdryrunbutton->export_for_template($output);
             $startrestorebutton = primary_button::restore_button($backupkey, $encrypted, !$rv['restoreallowed']);
             $rv['startrestorebutton'] = $startrestorebutton->export_for_template($output);
-
         } else if ($this->fulldetails && !$this->isprogresspage && $this->backup->status === constants::STATUS_FINISHED) {
             $error = get_string('error_backupnotavailable', 'tool_vault', $backupkey);
             // TODO explanation why:
