@@ -52,7 +52,7 @@ class backup extends base {
             self::url(),
             get_string('startbackup', 'tool_vault'),
             'get',
-            true,
+            \single_button::BUTTON_PRIMARY,
             ['data-action' => 'startbackup']
         );
         $whybackupdisabled = null;
