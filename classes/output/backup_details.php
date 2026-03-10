@@ -127,6 +127,7 @@ class backup_details implements \templatable {
             $rv['totalsize'] = $this->remotebackup->get_total_size();
             $rv['totalsizestr'] = display_size($this->remotebackup->get_total_size());
             $rv['samesite'] = $this->remotebackup->is_same_site();
+            $rv['restoreallowed'] = false;
             if (api::is_cli_only()) {
                 $error = get_string('error_usecli', 'tool_vault');
             } else if (!api::are_restores_allowed()) {
