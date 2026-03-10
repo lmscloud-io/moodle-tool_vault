@@ -66,7 +66,7 @@
  * @param int $oldversion
  * @return bool always true
  */
-function tool_vault_405_xmldb_main_upgrade($oldversion) {
+function tool_vault_405_core_upgrade($oldversion) {
     global $CFG, $DB;
 
     $dbman = $DB->get_manager(); // Loads ddl manager and xmldb classes.
@@ -1119,6 +1119,7 @@ function tool_vault_405_xmldb_main_upgrade($oldversion) {
         foreach ($providers as $provider) {
             // Replace the provider's language string with the provider component's name.
             if (get_string_manager()->string_exists('pluginname', $provider)) {
+                // Mdlcode-disable-next-line cannot-parse-string.
                 $providername = get_string('pluginname', $provider);
                 $sql = 'UPDATE {ai_action_register}
                         SET provider = :provider
