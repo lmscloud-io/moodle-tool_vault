@@ -42,7 +42,8 @@ class primary_button extends single_button {
             $text,
             'get',
             $isprimary ? self::BUTTON_PRIMARY : self::BUTTON_SECONDARY,
-            $attributes);
+            $attributes
+        );
         if ($disabled) {
             $this->disabled = true;
         }
@@ -76,8 +77,12 @@ class primary_button extends single_button {
      * @param string|null $label
      * @return single_button
      */
-    public static function restore_button(string $backupkey, bool $encrypted, bool $disabled,
-            ?string $label = null): single_button {
+    public static function restore_button(
+        string $backupkey,
+        bool $encrypted,
+        bool $disabled,
+        ?string $label = null
+    ): single_button {
         $label = $label ?? get_string('startrestore', 'tool_vault');
         $attributes = [
             'data-action' => 'startrestore',

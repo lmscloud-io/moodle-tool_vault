@@ -49,8 +49,10 @@ class backup extends base {
      */
     public function export_for_template($output): array {
         global $CFG, $USER;
-        $button = new primary_button(get_string('startbackup', 'tool_vault'),
-            ['data-action' => 'startbackup']);
+        $button = new primary_button(
+            get_string('startbackup', 'tool_vault'),
+            ['data-action' => 'startbackup']
+        );
         $whybackupdisabled = null;
         $activeprocesses = operation_model::get_active_processes(true);
         if (api::is_cli_only()) {
