@@ -29,7 +29,7 @@
 /**
  * Upgrade procedures for the matrix plugin.
  *
- * @return bool
+ * @param int $oldversion The old version of the plugin.
  */
 function tool_vault_404_xmldb_communication_matrix_upgrade($oldversion) {
     global $DB;
