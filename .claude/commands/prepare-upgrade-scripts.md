@@ -288,6 +288,8 @@ foreach ($plugininfo as $type => $plugins) {
    // Mdlcode-disable incorrect-package-name.
    ```
 
+   g. **Preserve all PHPDoc comments**: Do NOT remove file-level or function-level docblocks from the original files. Keep them intact (the file description docblock and the function description docblock).
+
 ### Step 6: Update upgrade_base.php
 
 1. Edit `{PLUGIN_PATH}/classes/local/restoreactions/upgrade_base.php`
