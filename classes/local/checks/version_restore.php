@@ -91,10 +91,6 @@ class version_restore extends check_base_restore {
         $majorversion = get_latest_version_available(normalize_version($torelease), ENV_SELECT_RELEASE);
         $data = get_environment_for_version($majorversion, ENV_SELECT_RELEASE);
         $requires = $data['@']['requires'] ?? '1.0';
-        if (version_compare($requires, '4.5.10', '<') && version_compare($requires, '4.2.3', '>')) {
-            // Vault does not include upgrade steps for 4.4, instead upgrade to 4.5.10 .
-            $requires = '4.5.10';
-        }
         if (version_compare($normrelease, $requires, '>=')) {
             // Direct upgrade is possible by Moodle.
             return null;
