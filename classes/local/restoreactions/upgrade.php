@@ -19,9 +19,6 @@ namespace tool_vault\local\restoreactions;
 use tool_vault\api;
 use tool_vault\constants;
 use tool_vault\local\checks\version_restore;
-use tool_vault\local\restoreactions\upgrade_311\upgrade_311;
-use tool_vault\local\restoreactions\upgrade_401\upgrade_401;
-use tool_vault\local\restoreactions\upgrade_402\upgrade_402;
 use tool_vault\site_restore;
 
 /**
@@ -57,33 +54,18 @@ class upgrade extends restore_action {
         // Upgrade to intermediate release.
         $intermediaterelease = version_restore::get_required_core_intermediate_release($CFG->release, $coderelease);
 
-        if ($intermediaterelease && version_compare(normalize_version($CFG->release), '3.11.8', '<')) {
-            $siteupgraded = true;
-            $logger->add_to_log('Upgrading Moodle from ' . $CFG->release . ' to 3.11.8...');
-            upgrade_311::upgrade($logger);
-            $logger->add_to_log('...done');
-        }
-
-        if (
-            $intermediaterelease
-                && version_compare(normalize_version($CFG->release), '4.1.2', '<')
-                && version_compare($intermediaterelease, '4.1.2', '>=')
-        ) {
-            $siteupgraded = true;
-            $logger->add_to_log('Upgrading Moodle from ' . $CFG->release . ' to 4.1.2...');
-            upgrade_401::upgrade($logger);
-            $logger->add_to_log('...done');
-        }
-
-        if (
-            $intermediaterelease
-                && version_compare(normalize_version($CFG->release), '4.2.3', '<')
-                && version_compare($intermediaterelease, '4.2.3', '>=')
-        ) {
-            $siteupgraded = true;
-            $logger->add_to_log('Upgrading Moodle from ' . $CFG->release . ' to 4.2.3...');
-            upgrade_402::upgrade($logger);
-            $logger->add_to_log('...done');
+        foreach (upgrade_base::get_upgrade_classes() as $upgradeclass) {
+            $release = $upgradeclass::get_release();
+            if (
+                $intermediaterelease
+                    && version_compare(normalize_version($CFG->release), $release, '<')
+                    && version_compare($intermediaterelease, $release, '>=')
+            ) {
+                $siteupgraded = true;
+                $logger->add_to_log('Upgrading Moodle from ' . $CFG->release . ' to ' . $release . '...');
+                $upgradeclass::upgrade($logger);
+                $logger->add_to_log('...done');
+            }
         }
 
         // Upgrade required.
