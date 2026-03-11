@@ -16,6 +16,7 @@
 
 // phpcs:ignoreFile
 // Mdlcode-disable incorrect-package-name.
+// Mdlcode-disable unknown-db-tablename.
 
 /**
  * Install steps for communication_matrix.
@@ -36,10 +37,12 @@ function tool_vault_404_xmldb_communication_matrix_upgrade($oldversion) {
     $dbman = $DB->get_manager();
     if ($oldversion < 2023060101) {
         $table = new xmldb_table('matrix_rooms');
-        $field = new xmldb_field('topic', XMLDB_TYPE_CHAR, '255', null, false, false, null, 'roomid');
+        if ($dbman->table_exists($table)) {
+            $field = new xmldb_field('topic', XMLDB_TYPE_CHAR, '255', null, false, false, null, 'roomid');
 
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
         }
 
         // Plugin savepoint reached.
@@ -48,7 +51,9 @@ function tool_vault_404_xmldb_communication_matrix_upgrade($oldversion) {
 
     if ($oldversion < 2023071900) {
         $table = new xmldb_table('matrix_rooms');
-        $dbman->rename_table($table, 'matrix_room');
+        if ($dbman->table_exists($table)) {
+            $dbman->rename_table($table, 'matrix_room');
+        }
 
         // Plugin savepoint reached.
         upgrade_plugin_savepoint(true, 2023071900, 'communication', 'matrix');

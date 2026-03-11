@@ -26,7 +26,6 @@
  */
 
 use tool_usertours\manager;
-use tool_usertours\tour;
 
 /**
  * Upgrade the user tours plugin.
