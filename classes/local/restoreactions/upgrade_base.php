@@ -21,6 +21,7 @@ use tool_vault\constants;
 use tool_vault\local\restoreactions\upgrade_311\upgrade_311;
 use tool_vault\local\restoreactions\upgrade_401\upgrade_401;
 use tool_vault\local\restoreactions\upgrade_402\upgrade_402;
+use tool_vault\local\restoreactions\upgrade_404\upgrade_404;
 use tool_vault\site_restore;
 
 /**
@@ -79,6 +80,7 @@ abstract class upgrade_base {
             upgrade_311::class,
             upgrade_401::class,
             upgrade_402::class,
+            upgrade_404::class,
         ];
     }
 
