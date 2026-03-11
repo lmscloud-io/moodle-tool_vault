@@ -16,6 +16,7 @@
 
 // phpcs:ignoreFile
 // Mdlcode-disable incorrect-package-name.
+// Mdlcode-disable unknown-db-tablename.
 
 /**
  * Upgrade script for the scorm module.
@@ -100,48 +101,48 @@ function tool_vault_404_xmldb_scorm_upgrade($oldversion) {
     }
 
     if ($oldversion < 2023042402) {
-        $trans = $DB->start_delegated_transaction();
+        if ($dbman->table_exists('scorm_scoes_track')) {
+            $trans = $DB->start_delegated_transaction();
 
-        // First grab all elements and store those.
-        $sql = "INSERT INTO {scorm_element} (element)
-                    SELECT DISTINCT element FROM {scorm_scoes_track}";
-        $DB->execute($sql);
+            // First grab all elements and store those.
+            $sql = "INSERT INTO {scorm_element} (element)
+                        SELECT DISTINCT element FROM {scorm_scoes_track}";
+            $DB->execute($sql);
 
-        // Now store all data in the scorm_attempt table.
-        $sql = "INSERT INTO {scorm_attempt} (userid, scormid, attempt)
-                    SELECT DISTINCT userid, scormid, attempt FROM {scorm_scoes_track}";
-        $DB->execute($sql);
+            // Now store all data in the scorm_attempt table.
+            $sql = "INSERT INTO {scorm_attempt} (userid, scormid, attempt)
+                        SELECT DISTINCT userid, scormid, attempt FROM {scorm_scoes_track}";
+            $DB->execute($sql);
 
-        $trans->allow_commit();
+            $trans->allow_commit();
+        }
         // Scorm savepoint reached.
         upgrade_mod_savepoint(true, 2023042402, 'scorm');
     }
     if ($oldversion < 2023042403) {
-        // Now store all translated data in the scorm_scoes_value table.
-        $total = $DB->count_records('scorm_scoes_track');
-        if ($total > 500000) {
-            // This site has a large number of user track records, lets warn that this next part may take some time.
-            $notification = new \core\output\notification(
-                get_string('largetrackupgrade', 'scorm', format_float($total, 0)),
-                \core\output\notification::NOTIFY_WARNING
-            );
-            $notification->set_show_closebutton(false);
-            echo $OUTPUT->render($notification);
-        }
+        if ($dbman->table_exists('scorm_scoes_track')) {
+            // Now store all translated data in the scorm_scoes_value table.
+            $total = $DB->count_records('scorm_scoes_track');
+            if ($total > 500000) {
+                // This site has a large number of user track records, lets warn that this next part may take some time.
+                $notification = new \core\output\notification(
+                    get_string('largetrackupgrade', 'scorm', format_float($total, 0)),
+                    \core\output\notification::NOTIFY_WARNING
+                );
+                $notification->set_show_closebutton(false);
+                echo $OUTPUT->render($notification);
+            }
 
-        // We don't need a progress bar - just run the fastest option possible.
-        $sql = "INSERT INTO {scorm_scoes_value} (attemptid, scoid, elementid, value, timemodified)
-                SELECT a.id as attemptid, t.scoid as scoid, e.id as elementid, t.value as value, t.timemodified
-                  FROM {scorm_scoes_track} t
-                  JOIN {scorm_element} e ON e.element = t.element
-                  JOIN {scorm_attempt} a ON (t.userid = a.userid AND t.scormid = a.scormid AND a.attempt = t.attempt)";
-        $DB->execute($sql);
+            // We don't need a progress bar - just run the fastest option possible.
+            $sql = "INSERT INTO {scorm_scoes_value} (attemptid, scoid, elementid, value, timemodified)
+                    SELECT a.id as attemptid, t.scoid as scoid, e.id as elementid, t.value as value, t.timemodified
+                      FROM {scorm_scoes_track} t
+                      JOIN {scorm_element} e ON e.element = t.element
+                      JOIN {scorm_attempt} a ON (t.userid = a.userid AND t.scormid = a.scormid AND a.attempt = t.attempt)";
+            $DB->execute($sql);
 
-        // Drop old table scorm_scoes_track.
-        $table = new xmldb_table('scorm_scoes_track');
-
-        // Conditionally launch drop table for scorm_scoes_track.
-        if ($dbman->table_exists($table)) {
+            // Drop old table scorm_scoes_track.
+            $table = new xmldb_table('scorm_scoes_track');
             $dbman->drop_table($table);
         }
 

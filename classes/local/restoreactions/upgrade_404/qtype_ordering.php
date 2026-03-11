@@ -36,31 +36,39 @@ function tool_vault_404_xmldb_qtype_ordering_upgrade($oldversion) {
     $dbman = $DB->get_manager();
 
     if ($oldversion < 2013062800) {
-        $select = 'qn.*, qo.id AS questionorderingid';
-        $from   = '{question} qn LEFT JOIN {question_ordering} qo ON qn.id = qo.question';
-        $where  = 'qn.qtype = ? AND qo.id IS NULL';
-        $params = ['ordering'];
-        if ($questions = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
-            foreach ($questions as $question) {
-                if ($answers = $DB->get_records('question_answers', ['question' => $question->id])) {
-                    // Add "options" for this ordering question.
-                    $questionordering = (object) [
-                        'question'   => $question->id,
-                        'logical'    => 1,
-                        'studentsee' => min(6, count($answers)),
-                        'correctfeedback' => '',
-                        'partiallycorrectfeedback' => '',
-                        'incorrectfeedback' => '',
-                    ];
-                    $questionordering->id = $DB->insert_record('question_ordering', $questionordering);
-                } else {
-                    // This is a faulty ordering question - remove it.
-                    $DB->delete_records('question', ['id' => $question->id]);
-                    if ($dbman->table_exists('quiz_question_instances')) {
-                        $DB->delete_records('quiz_question_instances', ['question' => $question->id]);
-                    }
-                    if ($dbman->table_exists('reader_question_instances')) {
-                        $DB->delete_records('reader_question_instances', ['question' => $question->id]);
+        if ($dbman->table_exists('question_ordering')) {
+            $select = 'qn.*, qo.id AS questionorderingid';
+            // Mdlcode-disable-next-line unknown-db-tablename.
+            $from   = '{question} qn LEFT JOIN {question_ordering} qo ON qn.id = qo.question';
+            $where  = 'qn.qtype = ? AND qo.id IS NULL';
+            $params = ['ordering'];
+            if ($questions = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+                foreach ($questions as $question) {
+                    if ($answers = $DB->get_records('question_answers', ['question' => $question->id])) {
+                        // Add "options" for this ordering question.
+                        $questionordering = (object) [
+                            'question'   => $question->id,
+                            'logical'    => 1,
+                            'studentsee' => min(6, count($answers)),
+                            'correctfeedback' => '',
+                            'partiallycorrectfeedback' => '',
+                            'incorrectfeedback' => '',
+                        ];
+                        // Mdlcode-disable-next-line unknown-db-tablename.
+                        $questionordering->id = $DB->insert_record('question_ordering', $questionordering);
+                    } else {
+                        // This is a faulty ordering question - remove it.
+                        $DB->delete_records('question', ['id' => $question->id]);
+                        // Mdlcode-disable-next-line unknown-db-tablename.
+                        if ($dbman->table_exists('quiz_question_instances')) {
+                            // Mdlcode-disable-next-line unknown-db-tablename.
+                            $DB->delete_records('quiz_question_instances', ['question' => $question->id]);
+                        }
+                        // Mdlcode-disable-next-line unknown-db-tablename.
+                        if ($dbman->table_exists('reader_question_instances')) {
+                            // Mdlcode-disable-next-line unknown-db-tablename.
+                            $DB->delete_records('reader_question_instances', ['question' => $question->id]);
+                        }
                     }
                 }
             }
@@ -71,6 +79,7 @@ function tool_vault_404_xmldb_qtype_ordering_upgrade($oldversion) {
     if ($oldversion < 2015011915) {
 
         // Rename "ordering" table for Moodle >= 2.5.
+        // Mdlcode-disable-next-line unknown-db-tablename.
         $oldname = 'question_ordering';
         $newname = 'qtype_ordering_options';
 
@@ -192,6 +201,7 @@ function tool_vault_404_xmldb_qtype_ordering_upgrade($oldversion) {
     if ($oldversion < 2016032949) {
         if ($dbman->table_exists('reader_question_instances')) {
             $select = 'rqi.question, COUNT(*) AS countquestion';
+            // Mdlcode-disable-next-line unknown-db-tablename.
             $from   = '{reader_question_instances} rqi '.
                       'LEFT JOIN {question} q ON rqi.question = q.id';
             $where  = 'q.qtype = ?';
