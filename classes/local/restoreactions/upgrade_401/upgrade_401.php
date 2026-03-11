@@ -16,9 +16,7 @@
 
 namespace tool_vault\local\restoreactions\upgrade_401;
 
-use tool_vault\api;
-use tool_vault\constants;
-use tool_vault\site_restore;
+use tool_vault\local\restoreactions\upgrade_base;
 
 /**
  * Class upgrade_401
@@ -27,70 +25,32 @@ use tool_vault\site_restore;
  * @copyright  2024 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class upgrade_401 {
+class upgrade_401 extends upgrade_base {
     /**
-     * Upgrade the restored site to 4.1.2
+     * Release version string
      *
-     * @param site_restore $logger
-     * @return void
+     * @return string
      */
-    public static function upgrade(site_restore $logger) {
-        self::upgrade_core($logger);
-        self::upgrade_plugins($logger);
-        set_config('upgraderunning', 0);
+    public static function get_release(): string {
+        return '4.1.2';
     }
 
     /**
-     * Upgrade core to 4.1.2
+     * Core version number
      *
-     * @param site_restore $logger
-     * @return void
+     * @return float
      */
-    protected static function upgrade_core(site_restore $logger) {
-        global $CFG;
-        require_once(__DIR__ . "/core.php");
-
-        try {
-            tool_vault_401_core_upgrade($CFG->version);
-        } catch (\Throwable $t) {
-            $logger->add_to_log("Exception executing core upgrade script: " .
-               $t->getMessage(), constants::LOGLEVEL_WARNING);
-            api::report_error($t);
-        }
-
-        set_config('version', 2022112802.00);
-        set_config('release', '4.1.2');
-        set_config('branch', '401');
+    public static function get_version(): float {
+        return 2022112802.00;
     }
 
     /**
-     * Upgrade all standard plugins to 4.1.2
+     * Branch identifier
      *
-     * @param site_restore $logger
-     * @return void
+     * @return string
      */
-    protected static function upgrade_plugins(site_restore $logger) {
-        global $DB;
-        $allcurversions = $DB->get_records_menu('config_plugins', ['name' => 'version'], '', 'plugin, value');
-        foreach (self::plugin_versions() as $plugin => $version) {
-            if (empty($allcurversions[$plugin])) {
-                // Standard plugin {$plugin} not found. It will be installed during the full upgrade.
-                continue;
-            }
-            if (file_exists(__DIR__ . "/" . $plugin . ".php") && \core_component::get_component_directory($plugin)) {
-                require_once(__DIR__ . "/" . $plugin . ".php");
-                $pluginshort = preg_replace("/^mod_/", "", $plugin);
-                $funcname = "tool_vault_401_xmldb_{$pluginshort}_upgrade";
-                try {
-                    $funcname($allcurversions[$plugin]);
-                } catch (\Throwable $t) {
-                    $logger->add_to_log("Exception executing upgrade script for plugin {$plugin}: " .
-                        $t->getMessage(), constants::LOGLEVEL_WARNING);
-                    api::report_error($t);
-                }
-            }
-            set_config('version', $version, $plugin);
-        }
+    public static function get_branch(): string {
+        return '401';
     }
 
     /**
@@ -98,7 +58,7 @@ class upgrade_401 {
      *
      * @return array
      */
-    protected static function plugin_versions() {
+    protected static function plugin_versions(): array {
         return [
             "mod_assign" => 2022112801,
             "mod_assignment" => 2022112800,
