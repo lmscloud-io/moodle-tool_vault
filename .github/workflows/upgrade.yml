@@ -101,6 +101,14 @@ jobs:
           WEBROOT=$(grep 'webroot=' $GITHUB_OUTPUT | tail -1 | cut -d= -f2)
           mv source_vault_tmp source_moodle/${WEBROOT}admin/tool/vault
 
+      - name: Create source database
+        run: |
+          if [[ "${{ inputs.source_db }}" == "pgsql" ]]; then
+            PGPASSWORD='' createdb -h 127.0.0.1 -U postgres moodle_source
+          else
+            mysql -h 127.0.0.1 -u root -e "CREATE DATABASE moodle_source DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+          fi
+
       - name: Install source Moodle
         working-directory: source_moodle
         run: |
@@ -179,6 +187,14 @@ jobs:
           fi
           WEBROOT=$(grep 'webroot=' $GITHUB_OUTPUT | tail -1 | cut -d= -f2)
           mv target_vault_tmp target_moodle/${WEBROOT}admin/tool/vault
+
+      - name: Create target database
+        run: |
+          if [[ "${{ inputs.target_db }}" == "pgsql" ]]; then
+            PGPASSWORD='' createdb -h 127.0.0.1 -U postgres moodle_target
+          else
+            mysql -h 127.0.0.1 -u root -e "CREATE DATABASE moodle_target DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+          fi
 
       - name: Install target Moodle
         working-directory: target_moodle
