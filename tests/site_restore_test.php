@@ -103,7 +103,11 @@ final class site_restore_test extends \advanced_testcase {
 
         // Add and delete a record in table 'book' so that sequence is not the same as max(id).
         $booktemp = $this->getDataGenerator()->create_module('book', ['course' => $course->id]);
-        course_delete_module($booktemp->cmid);
+        if ($CFG->branch >= 502) {
+            (new \core_courseformat\local\cmactions($course))->delete($booktemp->cmid);
+        } else {
+            course_delete_module($booktemp->cmid);
+        }
         $this->assertCount(1, $DB->get_records('book'));
 
         // Perform backup.
