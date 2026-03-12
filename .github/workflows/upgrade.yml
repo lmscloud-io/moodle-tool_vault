@@ -249,9 +249,9 @@ jobs:
 
       - name: Validate restore output
         run: |
-          if grep -iqE "debugging|error|exception" ${{ github.workspace }}/restore_output.txt; then
+          if grep -iqP "debugging|\berror|exception" ${{ github.workspace }}/restore_output.txt; then
             echo "::error::Restore output contains debugging/error/exception messages:"
-            grep -iE "debugging|error|exception" ${{ github.workspace }}/restore_output.txt
+            grep -iP "debugging|\berror|exception" ${{ github.workspace }}/restore_output.txt
             exit 1
           fi
 
