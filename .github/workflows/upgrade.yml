@@ -1,0 +1,258 @@
+name: Upgrade testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_moodle:
+        description: 'Source Moodle tag/branch (e.g., MOODLE_405_STABLE)'
+        type: string
+        required: true
+      source_db:
+        description: 'Source DB type'
+        type: choice
+        options:
+          - mariadb
+          - pgsql
+        required: true
+      source_php:
+        description: 'Source PHP version (e.g., 8.1, 8.3)'
+        type: string
+        required: true
+      source_vault_branch:
+        description: 'Source tool_vault branch'
+        type: string
+        required: false
+        default: 'main'
+      target_moodle:
+        description: 'Target Moodle tag/branch'
+        type: string
+        required: true
+      target_db:
+        description: 'Target DB type'
+        type: choice
+        options:
+          - mariadb
+          - pgsql
+        required: true
+      target_php:
+        description: 'Target PHP version (e.g., 8.3, 8.4)'
+        type: string
+        required: true
+      apikey:
+        description: 'API key (optional, uses repository secret if empty)'
+        type: string
+        required: false
+
+jobs:
+  upgrade_test:
+    runs-on: ubuntu-22.04
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: 'postgres'
+          POSTGRES_HOST_AUTH_METHOD: 'trust'
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
+
+      mariadb:
+        image: mariadb:10
+        env:
+          MYSQL_USER: 'root'
+          MYSQL_ALLOW_EMPTY_PASSWORD: "true"
+          MYSQL_CHARACTER_SET_SERVER: "utf8mb4"
+          MYSQL_COLLATION_SERVER: "utf8mb4_unicode_ci"
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 3
+
+    steps:
+      # ============================================================
+      # Source phase: install Moodle, add plugin, run backup
+      # ============================================================
+
+      - name: Setup source PHP ${{ inputs.source_php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ inputs.source_php }}
+          extensions: pgsql, mysqli, zip, gd, soap, intl, exif, sodium
+          ini-values: max_input_vars=5000
+          coverage: none
+
+      - name: Clone source Moodle (${{ inputs.source_moodle }})
+        run: git clone --depth=1 --branch=${{ inputs.source_moodle }} https://github.com/moodle/moodle.git source_moodle
+
+      - name: Checkout tool_vault (source branch ${{ inputs.source_vault_branch }})
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_vault_branch }}
+          path: source_vault_tmp
+
+      - name: Detect source webroot and install plugin
+        id: source_detect
+        run: |
+          if [[ -f source_moodle/public/version.php ]]; then
+            echo "webroot=public/" >> $GITHUB_OUTPUT
+          else
+            echo "webroot=" >> $GITHUB_OUTPUT
+          fi
+          WEBROOT=$(grep 'webroot=' $GITHUB_OUTPUT | tail -1 | cut -d= -f2)
+          mv source_vault_tmp source_moodle/${WEBROOT}admin/tool/vault
+
+      - name: Install source Moodle
+        working-directory: source_moodle
+        run: |
+          mkdir -p ${{ github.workspace }}/source_moodledata
+          DB_TYPE="${{ inputs.source_db }}"
+          DB_USER="root"
+          if [[ "$DB_TYPE" == "pgsql" ]]; then
+            DB_USER="postgres"
+          fi
+          php admin/cli/install.php \
+            --wwwroot="http://localhost/source" \
+            --dataroot="${{ github.workspace }}/source_moodledata" \
+            --dbtype="$DB_TYPE" \
+            --dbhost="127.0.0.1" \
+            --dbname="moodle_source" \
+            --dbuser="$DB_USER" \
+            --dbpass="" \
+            --adminpass="Admin1234!" \
+            --adminemail="a@a.invalid" \
+            --fullname="Source Moodle" \
+            --shortname="source" \
+            --agree-license \
+            --allow-unstable \
+            --non-interactive
+
+      - name: Configure source Moodle
+        working-directory: source_moodle
+        run: |
+          php admin/cli/cfg.php --name=debug --set=32767
+          php admin/cli/cfg.php --name=debugdisplay --set=1
+          php admin/cli/cfg.php --name=supportemail --set="a@a.invalid"
+          php admin/cli/cfg.php --name=noreplyaddress --set="a@a.invalid"
+
+      - name: Run site backup on source
+        id: backup
+        working-directory: source_moodle
+        run: |
+          WEBROOT="${{ steps.source_detect.outputs.webroot }}"
+          APIKEY="${{ inputs.apikey || secrets.TESTAPIKEYLIGHT }}"
+          set -o pipefail
+          OUTPUT=$(php ${WEBROOT}admin/tool/vault/cli/site_backup.php --expiredays=2 --apikey="$APIKEY" 2>&1 | tee /dev/stderr)
+          BACKUP_KEY=$(echo "$OUTPUT" | grep -oP 'Backup key: \K\S+')
+          if [[ -z "$BACKUP_KEY" ]]; then
+            echo "::error::Failed to capture backup key from output"
+            exit 1
+          fi
+          echo "backup_key=$BACKUP_KEY" >> $GITHUB_OUTPUT
+
+      # ============================================================
+      # Target phase: install Moodle, add plugin, run restore
+      # ============================================================
+
+      - name: Setup target PHP ${{ inputs.target_php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ inputs.target_php }}
+          extensions: pgsql, mysqli, zip, gd, soap, intl, exif, sodium
+          ini-values: max_input_vars=5000
+          coverage: none
+
+      - name: Clone target Moodle (${{ inputs.target_moodle }})
+        run: git clone --depth=1 --branch=${{ inputs.target_moodle }} https://github.com/moodle/moodle.git target_moodle
+
+      - name: Checkout tool_vault (current branch)
+        uses: actions/checkout@v4
+        with:
+          path: target_vault_tmp
+
+      - name: Detect target webroot and install plugin
+        id: target_detect
+        run: |
+          if [[ -f target_moodle/public/version.php ]]; then
+            echo "webroot=public/" >> $GITHUB_OUTPUT
+          else
+            echo "webroot=" >> $GITHUB_OUTPUT
+          fi
+          WEBROOT=$(grep 'webroot=' $GITHUB_OUTPUT | tail -1 | cut -d= -f2)
+          mv target_vault_tmp target_moodle/${WEBROOT}admin/tool/vault
+
+      - name: Install target Moodle
+        working-directory: target_moodle
+        run: |
+          mkdir -p ${{ github.workspace }}/target_moodledata
+          DB_TYPE="${{ inputs.target_db }}"
+          DB_USER="root"
+          if [[ "$DB_TYPE" == "pgsql" ]]; then
+            DB_USER="postgres"
+          fi
+          php admin/cli/install.php \
+            --wwwroot="http://localhost/target" \
+            --dataroot="${{ github.workspace }}/target_moodledata" \
+            --dbtype="$DB_TYPE" \
+            --dbhost="127.0.0.1" \
+            --dbname="moodle_target" \
+            --dbuser="$DB_USER" \
+            --dbpass="" \
+            --adminpass="Admin1234!" \
+            --adminemail="a@a.invalid" \
+            --fullname="Target Moodle" \
+            --shortname="target" \
+            --agree-license \
+            --allow-unstable \
+            --non-interactive
+
+      - name: Configure target Moodle
+        working-directory: target_moodle
+        run: |
+          php admin/cli/cfg.php --name=debug --set=32767
+          php admin/cli/cfg.php --name=debugdisplay --set=1
+          php admin/cli/cfg.php --name=supportemail --set="a@a.invalid"
+          php admin/cli/cfg.php --name=noreplyaddress --set="a@a.invalid"
+
+      - name: Configure target for restore
+        working-directory: target_moodle
+        run: |
+          php admin/cli/cfg.php --component=tool_vault --name=allowrestore --set=1
+          php admin/cli/cfg.php --component=tool_vault --name=upgradeafterrestore --set=1
+
+      - name: Run site restore on target
+        id: restore
+        working-directory: target_moodle
+        run: |
+          WEBROOT="${{ steps.target_detect.outputs.webroot }}"
+          APIKEY="${{ inputs.apikey || secrets.TESTAPIKEYLIGHT }}"
+          set -o pipefail
+          php ${WEBROOT}admin/tool/vault/cli/site_restore.php \
+            --backupkey=${{ steps.backup.outputs.backup_key }} \
+            --apikey="$APIKEY" \
+            --allow-restore 2>&1 | tee ${{ github.workspace }}/restore_output.txt
+
+      - name: Validate restore output
+        run: |
+          if grep -iqE "debugging|error|exception" ${{ github.workspace }}/restore_output.txt; then
+            echo "::error::Restore output contains debugging/error/exception messages:"
+            grep -iE "debugging|error|exception" ${{ github.workspace }}/restore_output.txt
+            exit 1
+          fi
+
+      # ============================================================
+      # Validation phase: check database schema
+      # ============================================================
+
+      - name: Check database schema
+        working-directory: target_moodle
+        run: |
+          OUTPUT=$(php admin/cli/check_database_schema.php 2>&1)
+          echo "$OUTPUT"
+          if ! echo "$OUTPUT" | grep -q "Database structure is ok"; then
+            echo "::error::Database schema check failed"
+            exit 1
+          fi
+
+      - name: Mark cancelled jobs as failed
+        if: ${{ cancelled() }}
+        run: exit 1
