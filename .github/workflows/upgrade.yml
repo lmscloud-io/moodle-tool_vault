@@ -13,11 +13,12 @@ on:
         options:
           - mariadb
           - pgsql
-        required: true
+        default: 'mariadb'
+        required: false
       source_php:
-        description: 'Source PHP version (e.g., 8.1, 8.3)'
+        description: 'Source PHP version (optional, auto-detected from branch)'
         type: string
-        required: true
+        required: false
       source_vault_branch:
         description: 'Source tool_vault branch'
         type: string
@@ -31,17 +32,33 @@ on:
         description: 'Target DB type'
         type: choice
         options:
-          - mariadb
           - pgsql
-        required: true
+          - mariadb
+        default: 'pgsql'
+        required: false
       target_php:
-        description: 'Target PHP version (e.g., 8.3, 8.4)'
+        description: 'Target PHP version (optional, auto-detected from branch)'
         type: string
-        required: true
+        required: false
       apikey:
         description: 'API key (optional, uses repository secret if empty)'
         type: string
         required: false
+
+# Default PHP versions for each Moodle branch. Update when new versions are released.
+env:
+  PHP_VERSION_MAP: >-
+    MOODLE_39_STABLE=7.2
+    MOODLE_400_STABLE=7.3
+    MOODLE_401_STABLE=7.4
+    MOODLE_402_STABLE=8.0
+    MOODLE_403_STABLE=8.0
+    MOODLE_404_STABLE=8.1
+    MOODLE_405_STABLE=8.1
+    MOODLE_500_STABLE=8.2
+    MOODLE_501_STABLE=8.2
+    MOODLE_502_STABLE=8.3
+    main=8.3
 
 jobs:
   upgrade_test:
@@ -69,14 +86,43 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 3
 
     steps:
+      - name: Resolve PHP versions
+        id: php
+        run: |
+          resolve_php() {
+            local input_php="$1"
+            local branch="$2"
+            local label="$3"
+            if [[ -n "$input_php" ]]; then
+              echo "$input_php"
+              return
+            fi
+            for entry in $PHP_VERSION_MAP; do
+              key="${entry%%=*}"
+              val="${entry#*=}"
+              if [[ "$key" == "$branch" ]]; then
+                echo "$val"
+                return
+              fi
+            done
+            echo "::error::Cannot determine $label PHP version: branch '$branch' not found in PHP_VERSION_MAP and no PHP version specified"
+            exit 1
+          }
+          SOURCE_PHP=$(resolve_php "${{ inputs.source_php }}" "${{ inputs.source_moodle }}" "source")
+          TARGET_PHP=$(resolve_php "${{ inputs.target_php }}" "${{ inputs.target_moodle }}" "target")
+          echo "source=$SOURCE_PHP" >> $GITHUB_OUTPUT
+          echo "target=$TARGET_PHP" >> $GITHUB_OUTPUT
+          echo "Source PHP: $SOURCE_PHP"
+          echo "Target PHP: $TARGET_PHP"
+
       # ============================================================
       # Source phase: install Moodle, add plugin, run backup
       # ============================================================
 
-      - name: Setup source PHP ${{ inputs.source_php }}
+      - name: Setup source PHP ${{ steps.php.outputs.source }}
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ inputs.source_php }}
+          php-version: ${{ steps.php.outputs.source }}
           extensions: pgsql, mysqli, zip, gd, soap, intl, exif, sodium
           ini-values: max_input_vars=5000
           coverage: none
@@ -161,10 +207,10 @@ jobs:
       # Target phase: install Moodle, add plugin, run restore
       # ============================================================
 
-      - name: Setup target PHP ${{ inputs.target_php }}
+      - name: Setup target PHP ${{ steps.php.outputs.target }}
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ inputs.target_php }}
+          php-version: ${{ steps.php.outputs.target }}
           extensions: pgsql, mysqli, zip, gd, soap, intl, exif, sodium
           ini-values: max_input_vars=5000
           coverage: none
