@@ -196,9 +196,12 @@ jobs:
           php admin/cli/cfg.php --name=debugdisplay --set=1
           php admin/cli/cfg.php --name=supportemail --set="a@a.invalid"
           php admin/cli/cfg.php --name=noreplyaddress --set="a@a.invalid"
-          if [[ "${{ inputs.runonstaging }}" == "true" ]]; then
-            php admin/cli/cfg.php --component=tool_vault --name=apiurl --set="${{ secrets.LMSVAULTSTAGING }}"
-          fi
+
+      - name: Configure source for staging
+        if: ${{ inputs.runonstaging == true }}
+        working-directory: source_moodle
+        run: |
+          sed -i "/require_once.*setup.php/i \\\$CFG->forced_plugin_settings=['tool_vault' => ['apiurl'=> '${{ secrets.LMSVAULTSTAGING }}']];" config.php
 
       - name: Run site backup on source
         id: backup
@@ -296,9 +299,12 @@ jobs:
           php admin/cli/cfg.php --name=debugdisplay --set=1
           php admin/cli/cfg.php --name=supportemail --set="a@a.invalid"
           php admin/cli/cfg.php --name=noreplyaddress --set="a@a.invalid"
-          if [[ "${{ inputs.runonstaging }}" == "true" ]]; then
-            php admin/cli/cfg.php --component=tool_vault --name=apiurl --set="${{ secrets.LMSVAULTSTAGING }}"
-          fi
+
+      - name: Configure target for staging
+        if: ${{ inputs.runonstaging == true }}
+        working-directory: target_moodle
+        run: |
+          sed -i "/require_once.*setup.php/i \\\$CFG->forced_plugin_settings=['tool_vault' => ['apiurl'=> '${{ secrets.LMSVAULTSTAGING }}']];" config.php
 
       - name: Configure target for restore
         working-directory: target_moodle
