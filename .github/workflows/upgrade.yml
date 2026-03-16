@@ -44,6 +44,15 @@ on:
         description: 'API key (optional, uses repository secret if empty)'
         type: string
         required: false
+      backup_description:
+        description: 'Backup description (optional)'
+        type: string
+        required: false
+      runonstaging:
+        description: 'Run on staging backend'
+        type: boolean
+        required: false
+        default: false
 
 # Default PHP versions for each Moodle branch. Update when new versions are released.
 env:
@@ -187,15 +196,28 @@ jobs:
           php admin/cli/cfg.php --name=debugdisplay --set=1
           php admin/cli/cfg.php --name=supportemail --set="a@a.invalid"
           php admin/cli/cfg.php --name=noreplyaddress --set="a@a.invalid"
+          if [[ "${{ inputs.runonstaging }}" == "true" ]]; then
+            php admin/cli/cfg.php --component=tool_vault --name=apiurl --set="${{ secrets.LMSVAULTSTAGING }}"
+          fi
 
       - name: Run site backup on source
         id: backup
         working-directory: source_moodle
         run: |
           WEBROOT="${{ steps.source_detect.outputs.webroot }}"
-          APIKEY="${{ inputs.apikey || secrets.TESTAPIKEYLIGHT }}"
+          if [[ -n "${{ inputs.apikey }}" ]]; then
+            APIKEY="${{ inputs.apikey }}"
+          elif [[ "${{ inputs.runonstaging }}" == "true" ]]; then
+            APIKEY="${{ secrets.TESTAPIKEYLIGHT2 }}"
+          else
+            APIKEY="${{ secrets.TESTAPIKEYLIGHT }}"
+          fi
           set -o pipefail
-          OUTPUT=$(php ${WEBROOT}admin/tool/vault/cli/site_backup.php --expiredays=2 --apikey="$APIKEY" 2>&1 | tee /dev/stderr)
+          DESC_ARGS=()
+          if [[ -n "${{ inputs.backup_description }}" ]]; then
+            DESC_ARGS=("--description=${{ inputs.backup_description }}")
+          fi
+          OUTPUT=$(php ${WEBROOT}admin/tool/vault/cli/site_backup.php --expiredays=2 --apikey="$APIKEY" "${DESC_ARGS[@]}" 2>&1 | tee /dev/stderr)
           BACKUP_KEY=$(echo "$OUTPUT" | grep -oP 'Backup key: \K\S+')
           if [[ -z "$BACKUP_KEY" ]]; then
             echo "::error::Failed to capture backup key from output"
@@ -274,6 +296,9 @@ jobs:
           php admin/cli/cfg.php --name=debugdisplay --set=1
           php admin/cli/cfg.php --name=supportemail --set="a@a.invalid"
           php admin/cli/cfg.php --name=noreplyaddress --set="a@a.invalid"
+          if [[ "${{ inputs.runonstaging }}" == "true" ]]; then
+            php admin/cli/cfg.php --component=tool_vault --name=apiurl --set="${{ secrets.LMSVAULTSTAGING }}"
+          fi
 
       - name: Configure target for restore
         working-directory: target_moodle
@@ -286,7 +311,13 @@ jobs:
         working-directory: target_moodle
         run: |
           WEBROOT="${{ steps.target_detect.outputs.webroot }}"
-          APIKEY="${{ inputs.apikey || secrets.TESTAPIKEYLIGHT }}"
+          if [[ -n "${{ inputs.apikey }}" ]]; then
+            APIKEY="${{ inputs.apikey }}"
+          elif [[ "${{ inputs.runonstaging }}" == "true" ]]; then
+            APIKEY="${{ secrets.TESTAPIKEYLIGHT2 }}"
+          else
+            APIKEY="${{ secrets.TESTAPIKEYLIGHT }}"
+          fi
           set -o pipefail
           php ${WEBROOT}admin/tool/vault/cli/site_restore.php \
             --backupkey=${{ steps.backup.outputs.backup_key }} \
