@@ -2,6 +2,23 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## [4.5.0] - Unreleased
+### Changed
+- Bumped minimum supported Moodle version to 4.5. Older Moodle versions (pre-4.5)
+  are supported for backup only and continue to receive updates under the 3.9.x
+  version numbering series.
+- Start backup, start restore and dry-run popups have been converted to proper
+  dynamic forms.
+- Refactored upgrade classes to use a shared base class.
+### Added
+- Support for Moodle 5.2.
+- Built-in upgrade steps to upgrade to Moodle 4.4 (requirement for Moodle 5.2)
+### Removed
+- Legacy API key check form (no longer needed on Moodle 4.5+).
+- Other legacy code paths that were only required for pre-4.5 versions of Moodle.
+### Fixed
+- Fixed fully qualified exception class name in restore model and site_restore.
+
 ## [3.9.16] - 2026-03-02
 ### Fixed
 - Fixed wildcard pattern matching in the backup exclude tables setting #21
