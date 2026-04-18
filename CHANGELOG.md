@@ -2,7 +2,7 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-## Unreleased
+## [3.9.17] - 2026-04-18
 ### Fixed
 - Changed reference to namespaced moodle_exception class not available in the old Moodle versions
 
