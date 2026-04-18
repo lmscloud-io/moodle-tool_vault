@@ -2,7 +2,7 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-## [4.5.0] - Unreleased
+## [4.5.0] - 2026-04-18
 ### Changed
 - Bumped minimum supported Moodle version to 4.5. Older Moodle versions (pre-4.5)
   are supported for backup only and continue to receive updates under the 3.9.x
