@@ -1,4 +1,6 @@
-# Vault - Site backup and migration #
+[![MDL Shield](https://img.shields.io/endpoint?url=https%3A%2F%2Fmdlshield.com%2Fapi%2Fbadge%2Ftool_vault)](https://mdlshield.com/plugins/tool_vault)
+
+# Vault - Site backup and migration
 
 Vault allows you to make a **full backup of the site**, push it to the cloud and then **restore** on any Moodle site.
 
