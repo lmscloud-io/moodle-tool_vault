@@ -2,6 +2,10 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## [Unreleased]
+### Fixed
+- Restore plugins pre-check no longer fails on version mismatches for plugins listed in the `restorepreserveplugins` setting, since those plugins are skipped during restore.
+
 ## [3.9.17] - 2026-04-18
 ### Fixed
 - Changed reference to namespaced moodle_exception class not available in the old Moodle versions

@@ -50,10 +50,10 @@ class plugins_restore extends check_base_restore {
             return;
         }
 
-        $excludedplugins = ['tool_vault']; // TODO more from settings.
+        // Preserved plugins are skipped during restore, so a version mismatch on them is irrelevant.
+        $excludedplugins = siteinfo::get_excluded_plugins_restore();
         $pluginlist = array_diff_key(siteinfo::get_plugins_list_full(true), array_fill_keys($excludedplugins, true));
-        $parent = $this->get_parent();
-        $backupplugins = $parent->get_metadata()['plugins'];
+        $backupplugins = array_diff_key($parent->get_metadata()['plugins'], array_fill_keys($excludedplugins, true));
         $list = $this->consolidate($backupplugins, $pluginlist);
         $standardplugins = array_filter(array_keys($list), function ($pluginname) {
             return $this->is_standard_plugin($pluginname, true);
