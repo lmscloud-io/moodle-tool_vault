@@ -2,7 +2,7 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-## [Unreleased]
+## [3.9.18] - 2026-05-12
 ### Fixed
 - Restore plugins pre-check no longer fails on version mismatches for plugins listed in the `restorepreserveplugins` setting, since those plugins are skipped during restore.
 
