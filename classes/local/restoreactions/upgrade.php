@@ -100,6 +100,15 @@ class upgrade extends restore_action {
         if (!$siteupgraded) {
             $logger->add_to_log('Moodle core and plugins are up to date. No upgrade is required.');
         }
+
+        // The upgrade above runs with caches disabled (see disable_caches() at the start of this
+        // method). While upgraderunning is set, a concurrent Moodle bootstrap (e.g. a scheduled
+        // cron tick) can read that lock and write it into the file config cache. set_config() above
+        // clears the DB value but, with caches disabled, cannot evict that cached copy, so the next
+        // CLI process would abort with the 'upgraderunning' exception. Re-enable caches and purge so
+        // the cleared lock is the only surviving value.
+        $this->enable_caches();
+        purge_all_caches();
     }
 
     /**
