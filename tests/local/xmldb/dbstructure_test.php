@@ -45,6 +45,59 @@ final class dbstructure_test extends \advanced_testcase {
     }
 
     /**
+     * A backup made on an older DB may contain NOT NULL integer fields with an empty-string
+     * default (DEFAULT=""). This must not produce malformed "... NOT NULL DEFAULT ," SQL on restore.
+     *
+     * @covers \tool_vault\local\xmldb\dbstructure::fix_table_xml_from_backup
+     */
+    public function test_backup_xml_empty_numeric_default(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $xml = <<<EOF
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="xmldb.xsd">
+  <TABLES>
+    <TABLE NAME="tool_vault_unittest" COMPONENT="core">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="starttime" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="" SEQUENCE="false"/>
+        <FIELD NAME="endtime" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="" SEQUENCE="false"/>
+        <FIELD NAME="sampleorigin" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>
+EOF;
+        $tmpfile = make_request_directory() . '/structure.xml';
+        file_put_contents($tmpfile, $xml);
+
+        // Call the protected backup-xml loader directly (skips the full DB scan done by load_from_backup()).
+        $structure = new dbstructure();
+        $rm = new \ReflectionMethod(dbstructure::class, 'load_definitions_from_backup_xml');
+        $rm->setAccessible(true);
+        $rm->invoke($structure, $tmpfile);
+
+        // Mdlcode-disable-next-line cannot-parse-db-tablename.
+        $table = $structure->get_backup_tables()['tool_vault_unittest'];
+        $sqls = $table->get_alter_sql(null);
+
+        // The generated CREATE TABLE must not contain an empty DEFAULT clause.
+        $this->assertStringNotContainsString('DEFAULT ,', implode("\n", $sqls));
+
+        // And it must actually be executable against the database.
+        $DB->change_database_structure($sqls);
+        $dbman = $DB->get_manager();
+        // Mdlcode-disable-next-line cannot-parse-db-tablename.
+        $xmldbtable = new \xmldb_table('tool_vault_unittest');
+        $this->assertTrue($dbman->table_exists($xmldbtable));
+        $dbman->drop_table($xmldbtable);
+    }
+
+    /**
      * Test function retrieve_sequences()
      */
     public function test_sequences(): void {

@@ -160,5 +160,14 @@ class database_column_info extends \database_column_info {
         ) {
             $actualfield->setDefault(null);
         }
+        // Numeric columns must never have an empty string as a default value. Some older databases report
+        // NOT NULL integer columns that have no explicit default with an empty string default, which would
+        // generate invalid "... NOT NULL DEFAULT ," SQL on restore. An empty default means "no default".
+        if (
+            in_array($actualfield->getType(), [XMLDB_TYPE_INTEGER, XMLDB_TYPE_NUMBER, XMLDB_TYPE_FLOAT]) &&
+                $actualfield->getDefault() === ''
+        ) {
+            $actualfield->setDefault(null);
+        }
     }
 }
