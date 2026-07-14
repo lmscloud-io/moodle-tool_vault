@@ -191,9 +191,21 @@ class dbstructure {
     protected function fix_table_xml_from_backup(&$xmltable) {
         foreach ($xmltable['#']['FIELDS']['0']['#']['FIELD'] as &$xmlarr) {
             $type = strtolower(trim($xmlarr['@']['TYPE'] ?? ''));
+            $hasdefault = isset($xmlarr['@']['DEFAULT']);
+            $emptydefault = $hasdefault && trim($xmlarr['@']['DEFAULT']) === '';
+            $notnull = strtolower(trim($xmlarr['@']['NOTNULL'] ?? '')) === 'true';
             // Old versions of Moodle had 'text' or 'binary' fields with default values, they are no longer valid in
             // the current versions of Moodle. To avoid debugging messages, remove default.
-            if (in_array($type, ['text', 'binary']) && isset($xmlarr['@']['DEFAULT'])) {
+            if (in_array($type, ['text', 'binary']) && $hasdefault) {
+                unset($xmlarr['@']['DEFAULT']);
+            }
+            // Backups made on older databases may contain numeric (int/number/float) fields with an empty
+            // string as the default value (DEFAULT="").
+            if (in_array($type, ['int', 'number', 'float']) && $emptydefault) {
+                unset($xmlarr['@']['DEFAULT']);
+            }
+            // A NOT NULL char column with an empty string default would trigger debugging message.
+            if ($type === 'char' && $notnull && $emptydefault) {
                 unset($xmlarr['@']['DEFAULT']);
             }
         }
