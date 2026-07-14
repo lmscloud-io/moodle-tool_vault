@@ -97,6 +97,13 @@ final class site_restore_test extends \advanced_testcase {
         }
         $this->resetAfterTest();
         $this->setAdminUser();
+
+        // Disable the recycle bin: deleting a module/course sends it there, which runs a backup. On Moodle 4.2
+        // that backup hits a core PHP 8.2 preg_replace() bug in the XML writer (fixed in 4.3 by MDL-84907, not
+        // backported). This test does not need the recycle bin.
+        set_config('coursebinenable', 0, 'tool_recyclebin');
+        set_config('categorybinenable', 0, 'tool_recyclebin');
+
         // Create a course and an instance of book module.
         $course = $this->getDataGenerator()->create_course();
         $book1 = $this->getDataGenerator()->create_module('book', ['course' => $course->id]);
