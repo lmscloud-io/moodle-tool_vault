@@ -2,6 +2,11 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
+## [3.9.19] - 2026-07-26
+### Fixed
+- Restore no longer fails when the backed up site had numeric columns with an empty string as the default value (a legacy trait of very old databases).
+- Caches are now re-enabled and purged after the post-restore upgrade, so a stale `upgraderunning` lock no longer aborts subsequent cron/CLI runs.
+
 ## [3.9.18] - 2026-05-12
 ### Fixed
 - Restore plugins pre-check no longer fails on version mismatches for plugins listed in the `restorepreserveplugins` setting, since those plugins are skipped during restore.
