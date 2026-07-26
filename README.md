@@ -10,6 +10,20 @@ Find more information about Vault features at <a href="https://lmsvault.io">http
 
 This README file contains information for the **server administrators**.
 
+## Supported Moodle versions
+
+Plugin releases are numbered `X.Y.Z`, where `X.Y` is the **minimum** supported version of Moodle
+and `Z` is the release number within that series. The **maximum** supported version is always
+listed in `version.php` as `$plugin->supported`.
+
+- Moodle 4.5 and newer: install the latest release of the **4.5.x** series (currently Moodle 4.5 to 5.2).
+- Older sites: install the latest release of the **3.9.x** series (currently Moodle 3.9 to 5.1),
+  which is maintained in the `MOODLE_39_STABLE` branch.
+
+The plugin must be installed on both sites, the one you back up and the one you restore to, and
+the site you restore to must run the same or a higher version of Moodle than the backed up site.
+See [CHANGELOG.md](CHANGELOG.md) for the list of changes in each release.
+
 ### Protecting your site from restores
 
 The ability to restore is disabled by default when `tool_vault` is installed. Restores are not
@@ -36,8 +50,9 @@ $CFG->forced_plugin_settings['tool_vault'] = ['allowrestore' => 0];
 
 ## CLI access
 
-The plugin contains three CLI scripts that can be used to perform backup, restore, or list remote
-backups. When using CLI commands there is no need to run cron.
+The plugin contains three CLI scripts that can be used to perform backup (`cli/site_backup.php`),
+restore (`cli/site_restore.php`), or list remote backups (`cli/list_remote_backups.php`). Each
+script accepts `--help`. When using CLI commands there is no need to run cron.
 
 You can completely prevent access to the web interface and use the plugin from CLI only by changing the
 settings or adding the following to `config.php`:
