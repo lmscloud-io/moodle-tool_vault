@@ -2,7 +2,7 @@
 
 All notable changes to the tool_vault plugin will be documented in this file.
 
-## [Unreleased]
+## [4.5.3] - 2026-09-29
 ### Added
 - Support for Moodle 5.3.
 ### Fixed
