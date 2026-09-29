@@ -36,6 +36,7 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/' . $CFG->admin . '/tool/vault/tests/fixtures/site_backup_mock.php');
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\tool_vault\site_restore::class)]
 /**
  * The site_restore_test test class.
  *

@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\xmldb;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\tool_vault\local\xmldb\dbstructure::class)]
 /**
  * The dbstructure_test test class.
  *
@@ -47,8 +48,6 @@ final class dbstructure_test extends \advanced_testcase {
     /**
      * A backup made on an older DB may contain NOT NULL integer fields with an empty-string
      * default (DEFAULT=""). This must not produce malformed "... NOT NULL DEFAULT ," SQL on restore.
-     *
-     * @covers \tool_vault\local\xmldb\dbstructure::fix_table_xml_from_backup
      */
     public function test_backup_xml_empty_numeric_default(): void {
         global $DB;
@@ -98,8 +97,6 @@ EOF;
 
     /**
      * Loading the backup xml temporarily changes $CFG->xmldbdisablecommentchecking and restores it without saving to the DB
-     *
-     * @covers \tool_vault\local\xmldb\dbstructure::load_definitions_from_backup_xml
      */
     public function test_backup_xml_restores_cfg(): void {
         global $CFG, $DB;

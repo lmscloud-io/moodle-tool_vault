@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\xmldb;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\tool_vault\local\xmldb\database_column_info::class)]
 /**
  * The database_column_info_test test class.
  *

@@ -16,6 +16,7 @@
 
 namespace tool_vault\local\helpers;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\tool_vault\local\helpers\tempfiles::class)]
 /**
  * Tests for Vault - Site backup and migration
  *

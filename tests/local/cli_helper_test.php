@@ -18,6 +18,7 @@ namespace tool_vault\local;
 
 use tool_vault\constants;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\tool_vault\local\cli_helper::class)]
 /**
  * Tests for \tool_vault\local\cli_helper
  *

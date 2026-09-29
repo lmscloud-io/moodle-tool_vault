@@ -19,6 +19,7 @@ namespace tool_vault\local\helpers;
 use tool_vault\api;
 use tool_vault\local\xmldb\dbstructure;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\tool_vault\local\helpers\plugindata::class)]
 /**
  * The plugindata_test test class.
  *

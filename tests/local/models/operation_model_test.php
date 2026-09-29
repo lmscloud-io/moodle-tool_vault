@@ -27,6 +27,7 @@ namespace tool_vault\local\models;
 
 use tool_vault\constants;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\tool_vault\local\models\operation_model::class)]
 /**
  * The files_restore_test test class.
  *

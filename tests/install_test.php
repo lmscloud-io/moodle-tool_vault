@@ -16,9 +16,11 @@
 
 namespace tool_vault;
 
+#[\PHPUnit\Framework\Attributes\CoversFunction('xmldb_tool_vault_install')]
 /**
  * Tests for \tool_vault\db\install.php
  *
+ * @covers      ::xmldb_tool_vault_install
  * @package     tool_vault
  * @category    test
  * @copyright   2024 Petr Skoda
@@ -27,8 +29,6 @@ namespace tool_vault;
 final class install_test extends \advanced_testcase {
     /**
      * Test pre-checks that are normally scheduled via db/install.php
-     *
-     * @covers ::xmldb_tool_vault_install
      */
     public function test_xmldb_tool_vault_install(): void {
         $this->resetAfterTest();

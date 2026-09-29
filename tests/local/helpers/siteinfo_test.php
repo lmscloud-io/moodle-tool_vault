@@ -18,6 +18,7 @@ namespace tool_vault\local\helpers;
 
 use tool_vault\api;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\tool_vault\local\helpers\siteinfo::class)]
 /**
  * The siteinfo_test test class.
  *

@@ -19,6 +19,7 @@ namespace tool_vault\local\checks;
 use tool_vault\constants;
 use tool_vault\local\models\dryrun_model;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\tool_vault\local\checks\version_restore::class)]
 /**
  * Tests for the restore pre-check that compares Moodle versions.
  *

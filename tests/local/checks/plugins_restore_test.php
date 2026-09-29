@@ -29,6 +29,7 @@ use tool_vault\constants;
 use tool_vault\local\helpers\siteinfo;
 use tool_vault\local\models\dryrun_model;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\tool_vault\local\checks\plugins_restore::class)]
 /**
  * Tests for the restore pre-check that compares plugin versions.
  *

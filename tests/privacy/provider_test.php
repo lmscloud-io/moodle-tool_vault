@@ -20,6 +20,7 @@ use core_privacy\local\metadata\types\external_location;
 use core_privacy\manager;
 use core_privacy\local\metadata\collection;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\tool_vault\privacy\provider::class)]
 /**
  * Tests for Vault - Site backup and migration
  *

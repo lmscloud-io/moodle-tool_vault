@@ -35,6 +35,7 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/' . $CFG->admin . '/tool/vault/tests/fixtures/site_backup_mock.php');
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\tool_vault\local\restoreactions\cleanup_existing_files::class)]
 /**
  * The cleanup_existing_files test class.
  *

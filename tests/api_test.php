@@ -18,6 +18,7 @@ namespace tool_vault;
 
 use tool_vault\local\helpers\tempfiles;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\tool_vault\api::class)]
 /**
  * The api_test test class.
  *
@@ -69,6 +70,7 @@ final class api_test extends \advanced_testcase {
         ];
     }
 
+    #[\PHPUnit\Framework\Attributes\DataProvider('is_s3_url_provider')]
     /**
      * Test for is_s3_url()
      *

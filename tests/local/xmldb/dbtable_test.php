@@ -18,6 +18,7 @@ namespace tool_vault\local\xmldb;
 
 use tool_vault\constants;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\tool_vault\local\xmldb\dbtable::class)]
 /**
  * The dbtable_test test class.
  *

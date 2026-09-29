@@ -18,6 +18,7 @@ namespace tool_vault\local\checks;
 
 use tool_vault\constants;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\tool_vault\local\checks\configoverride::class)]
 /**
  * Tests for the backup pre-check that analyses settings overridden in config.php
  *

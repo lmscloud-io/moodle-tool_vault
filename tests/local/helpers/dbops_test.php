@@ -17,6 +17,7 @@
 namespace tool_vault\local\helpers;
 use ReflectionClass;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\tool_vault\local\helpers\dbops::class)]
 /**
  * Tests for Vault - Site backup and migration
  *
@@ -73,7 +74,6 @@ EOF;
 
     /**
      * Test for method prepare_insert_sql
-     * @uses dbops::prepare_insert_sql()
      */
     public function test_prepare_insert_sql(): void {
         global $DB;
@@ -105,7 +105,6 @@ EOF;
 
     /**
      * Test for method calculate_row_packet_sizes
-     * @uses dbops::calculate_row_packet_sizes()
      */
     public function test_calculate_row_packet_sizes(): void {
         global $DB;
@@ -120,7 +119,6 @@ EOF;
 
     /**
      * Test for method prepare_next_chunk
-     * @uses dbops::prepare_next_chunk()
      */
     public function test_prepare_next_chunk(): void {
         global $CFG;
