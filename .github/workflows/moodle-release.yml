@@ -1,66 +1,78 @@
-#
-# Whenever a new tag starting with "v" is pushed, add the tagged version
-# to the Moodle Plugins directory at https://moodle.org/plugins
-#
-# revision: 2021070201
-#
-name: Releasing in the Plugins directory
+# See https://github.com/moodlehq/moodle-plugin-release
+name: Release Plugin version to Moodle Marketplace
 
 on:
   push:
     tags:
-      - v*
-
+      - 'v*'
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to be released'
+        description: 'Tag to be released (e.g. v1.4.0)'
         required: true
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
-  release-at-moodle-org:
+  release-notes:
     runs-on: ubuntu-latest
-    env:
-      PLUGIN: tool_vault
-      CURL: curl -s
-      ENDPOINT: https://moodle.org/webservice/rest/server.php
-      TOKEN: ${{ secrets.MOODLE_ORG_TOKEN }}
-      FUNCTION: local_plugins_add_version
-
+    outputs:
+      notes: ${{ steps.extract.outputs.notes }}
     steps:
-      - name: Call the service function
-        id: add-version
+      - name: Check out the tag
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+
+      - name: Extract this version's section of the changelog
+        id: extract
+        shell: bash
+        env:
+          TAGNAME: ${{ inputs.tag || github.ref_name }}
+          LC_ALL: C.UTF-8
         run: |
-          if [[ ! -z "${{ github.event.inputs.tag }}" ]]; then
-            TAGNAME="${{ github.event.inputs.tag }}"
-          elif [[ $GITHUB_REF = refs/tags/* ]]; then
-            TAGNAME="${GITHUB_REF##*/}"
-          fi
-          if [[ -z "${TAGNAME}" ]]; then
-            echo "No tag name has been provided!"
+          # The release notes are this version's section of the changelog only.
+          VERSION="${TAGNAME#v}"
+          FILE=$(find . -maxdepth 1 -type f \( -iname CHANGES.md -o -iname CHANGELOG.md \) -printf '%f\n' -quit)
+          if [[ -z "${FILE}" ]]; then
+            echo "::error::No CHANGES.md or CHANGELOG.md"
             exit 1
           fi
-          ZIPURL="https://api.github.com/repos/${{ github.repository }}/zipball/${TAGNAME}"
-          RESPONSE=$(${CURL} ${ENDPOINT} --data-urlencode "wstoken=${TOKEN}" \
-                                         --data-urlencode "wsfunction=${FUNCTION}" \
-                                         --data-urlencode "moodlewsrestformat=json" \
-                                         --data-urlencode "frankenstyle=${PLUGIN}" \
-                                         --data-urlencode "zipurl=${ZIPURL}" \
-                                         --data-urlencode "vcssystem=git" \
-                                         --data-urlencode "vcsrepositoryurl=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
-                                         --data-urlencode "vcstag=${TAGNAME}" \
-                                         --data-urlencode "changelogurl=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commits/${TAGNAME}" \
-                                         --data-urlencode "altdownloadurl=${ZIPURL}")
-          echo "response=${RESPONSE}" >> $GITHUB_OUTPUT
+          # The section starts at a heading with the version as one of its words ("## [1.2.3] - 2026-01-31",
+          # "## 1.2.3", "### v1.2.3", "## Version 1.2.3 (2026-01-31)") and ends at the next heading of
+          # the same or a higher level.
+          NOTES=$(awk -v version="${VERSION}" '
+            /^#+[ \t]/ {
+              level = match($0, /[^#]/) - 1
+              if (found && level <= foundlevel) exit
+              if (!found) {
+                n = split($0, words, /[^0-9A-Za-z._+-]+/)
+                for (i = 1; i <= n; i++) {
+                  word = words[i]; sub(/^[vV]/, "", word); sub(/\.+$/, "", word)
+                  if (word == version) { found = 1; foundlevel = level; next }
+                }
+              }
+            }
+            found' "${FILE}" | sed '/./,$!d')
+          if [[ -z "${NOTES}" ]]; then
+            echo "::error::${FILE} has no section for ${VERSION}"
+            exit 1
+          fi
+          # The Marketplace takes at most 10,000 characters.
+          if (( ${#NOTES} > 10000 )); then
+            echo "::warning::The ${VERSION} section of ${FILE} has ${#NOTES} characters; sending the first 9,997 and ..."
+            NOTES="${NOTES:0:9997}..."
+          fi
+          DELIMITER="notes-7f3c1e9a5b2d4086a1c3e5f7092b4d6e"
+          {
+            echo "notes<<${DELIMITER}"
+            echo "${NOTES}"
+            echo "${DELIMITER}"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Evaluate the response
-        id: evaluate-response
-        env:
-          RESPONSE: ${{ steps.add-version.outputs.response }}
-        run: |
-          jq <<< ${RESPONSE}
-          jq --exit-status ".id" <<< ${RESPONSE} > /dev/null
+  release-to-marketplace:
+    needs: release-notes
+    uses: moodlehq/moodle-plugin-release/.github/workflows/moodle-release.yml@main
+    with:
+      tag: ${{ inputs.tag }}
+      release_notes: ${{ needs.release-notes.outputs.notes }}
+    secrets:
+      MOODLE_MARKETPLACE_TOKEN: ${{ secrets.MOODLE_MARKETPLACE_TOKEN }}
